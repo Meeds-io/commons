@@ -296,6 +296,7 @@ abstract public class HTMLSanitizer {
                                                                                                                                         "col",
                                                                                                                                         "font",
                                                                                                                                         "map",
+                                                                                                                                        "mark",
                                                                                                                                         "span",
                                                                                                                                         "div",
                                                                                                                                         "img",
