@@ -274,6 +274,7 @@ abstract public class HTMLSanitizer {
                                                                                                                                         "i",
                                                                                                                                         "b",
                                                                                                                                         "u",
+                                                                                                                                        "s",
                                                                                                                                         "strong",
                                                                                                                                         "em",
                                                                                                                                         "small",
