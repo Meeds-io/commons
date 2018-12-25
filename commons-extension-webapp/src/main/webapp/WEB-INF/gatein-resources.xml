@@ -339,6 +339,15 @@
       </depends>
   </module>
   <module>
+      <name>vueCustomElement</name>
+      <script>
+          <path>/javascript/vue-custom-element.min.js</path>
+      </script>
+      <depends>
+          <module>vue</module>
+      </depends>
+  </module>
+  <module>
       <name>filedrop</name>
       <script>
           <path>/javascript/jquery.filedrop.js</path>
