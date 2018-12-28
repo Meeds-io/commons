@@ -317,7 +317,8 @@ abstract public class HTMLSanitizer {
                                                                                                                                         "fieldset",
                                                                                                                                         "legend",
                                                                                                                                         "ins",
-                                                                                                                                        "exo-wiki-children-pages")
+                                                                                                                                        "exo-wiki-children-pages",
+																																		"exo-wiki-include-page")
 
                                                                                                                                  //Allows the named elements for xwiki input
                                                                                                                                 .allowElements("wikiimage","wikilink","wikimacro")
