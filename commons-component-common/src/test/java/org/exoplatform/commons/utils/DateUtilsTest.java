@@ -45,10 +45,11 @@ public class DateUtilsTest extends TestCase {
 
     @Test
     public void testGetRelativeTimeLabel() {
-        assertEquals("less than a minute ago", DateUtils.getRelativeTimeLabel(Locale.ENGLISH, System.currentTimeMillis() - 30L));
-        assertEquals("about a month ago", DateUtils.getRelativeTimeLabel(Locale.ENGLISH, System.currentTimeMillis() - 3000000000L));
-        assertEquals("about 2 months ago", DateUtils.getRelativeTimeLabel(Locale.ENGLISH, System.currentTimeMillis() - 7000000000L));
-        assertEquals("about 3 months ago", DateUtils.getRelativeTimeLabel(Locale.ENGLISH, System.currentTimeMillis() - 10000000000L));
+        long timeInMillis = System.currentTimeMillis();
+        assertEquals("less than a minute ago", DateUtils.getRelativeTimeLabel(Locale.ENGLISH, timeInMillis - 30L));
+        assertEquals("about a month ago", DateUtils.getRelativeTimeLabel(Locale.ENGLISH, timeInMillis - 3000000000L));
+        assertEquals("about 2 months ago", DateUtils.getRelativeTimeLabel(Locale.ENGLISH, timeInMillis - 7000000000L));
+        assertEquals("about 3 months ago", DateUtils.getRelativeTimeLabel(Locale.ENGLISH, timeInMillis - 10000000000L));
 
     }
 }
