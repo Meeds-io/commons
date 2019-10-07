@@ -50,6 +50,5 @@ public class DateUtilsTest extends TestCase {
         assertEquals("about a month ago", DateUtils.getRelativeTimeLabel(Locale.ENGLISH, timeInMillis - 3000000000L));
         assertEquals("about 2 months ago", DateUtils.getRelativeTimeLabel(Locale.ENGLISH, timeInMillis - 7000000000L));
         assertEquals("about 3 months ago", DateUtils.getRelativeTimeLabel(Locale.ENGLISH, timeInMillis - 10000000000L));
-
     }
 }
