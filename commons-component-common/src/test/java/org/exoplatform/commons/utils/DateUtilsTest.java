@@ -18,12 +18,11 @@
  */
 package org.exoplatform.commons.utils;
 
-import junit.framework.TestCase;
+import org.exoplatform.commons.testing.BaseCommonsTestCase;
 import org.exoplatform.container.ExoContainer;
 import org.exoplatform.container.ExoContainerContext;
 import org.junit.Test;
 
-import java.util.Date;
 import java.util.Locale;
 import java.util.TimeZone;
 
@@ -32,7 +31,7 @@ import java.util.TimeZone;
  * Author : Aymen Boughzela
  *          aboughzela@exoplatform.com
  */
-public class DateUtilsTest extends TestCase {
+public class DateUtilsTest extends BaseCommonsTestCase {
     ExoContainer container = new ExoContainer();
     
     public void testGetTimeZone() {
