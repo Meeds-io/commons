@@ -219,7 +219,7 @@ public class ElasticSearchServiceConnector extends SearchServiceConnector {
                 .append("          \"fragment_size\" : " + this.highlightFragmentSize + ",\n")
                 .append("          \"number_of_fragments\" : " + this.highlightFragmentNumber + "}");
       }
-      if ((searchFields.get(i)).equals("attachment.content")) {
+      else {
         esQuery.append("         \"" + searchFields.get(i) + "\" : {\n")
                 .append("          \"type\" : \"fvh\",\n")
                 .append("          \"fragment_size\" : " + this.highlightFragmentSize + ",\n")
