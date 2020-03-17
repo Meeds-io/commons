@@ -263,6 +263,7 @@ abstract public class HTMLSanitizer {
                                                                                                                                 .onElements("colgroup",
                                                                                                                                         "col")
                                                                                                                                 .allowElements("a",
+                                                                                                                                        "oembed",
                                                                                                                                         "label",
                                                                                                                                         "noscript",
                                                                                                                                         "h1",
