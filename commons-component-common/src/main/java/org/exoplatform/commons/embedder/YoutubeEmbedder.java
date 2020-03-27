@@ -66,14 +66,6 @@ public class YoutubeEmbedder extends AbstractEmbedder {
       Matcher matcher = pattern.matcher(url);
       if (matcher.find()) {
         feedsURL = schemeEndpointMap.get(pattern);
-        try {
-          PortalRequestContext portalRequestContext = Util.getPortalRequestContext();
-          if (portalRequestContext != null && portalRequestContext.getRequest() != null) {
-            scheme = portalRequestContext.getRequest().getScheme();
-          }
-        } catch (Exception e) {
-          LOG.info("Cannot get scheme from Portal Request Context", e);
-        }
       }
     }
     if (feedsURL == null) {
