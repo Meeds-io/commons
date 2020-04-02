@@ -21,6 +21,7 @@ import java.net.URL;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.exoplatform.commons.utils.CommonsUtils;
 import org.exoplatform.container.xml.InitParams;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
@@ -67,9 +68,9 @@ public class YoutubeEmbedder extends AbstractEmbedder {
       if (matcher.find()) {
         feedsURL = schemeEndpointMap.get(pattern);
         try {
-          PortalRequestContext portalRequestContext = Util.getPortalRequestContext();
-          if (portalRequestContext != null && portalRequestContext.getRequest() != null) {
-            scheme = portalRequestContext.getRequest().getScheme();
+          String currentDomain = CommonsUtils.getCurrentDomain();
+          if (currentDomain.startsWith("https")) {
+            scheme = "https";
           }
         } catch (Exception e) {
           LOG.info("Cannot get scheme from Portal Request Context", e);
