@@ -67,6 +67,7 @@ public class ElasticSearchServiceConnector extends SearchServiceConnector {
   //SearchResult information
   private String img;
   private String titleElasticFieldName = "title";
+  private String tagsElasticFieldName = "tag";
   private String updatedDateElasticFieldName = "lastUpdatedDate";
 
   private Map<String, String> sortMapping = new HashMap<>();
@@ -280,6 +281,7 @@ public class ElasticSearchServiceConnector extends SearchServiceConnector {
   protected SearchResult buildHit(JSONObject jsonHit, SearchContext searchContext) {
     JSONObject hitSource = (JSONObject) jsonHit.get("_source");
     String title = getTitleFromJsonResult(hitSource);
+    String tag = getTagsFromJsonResult(hitSource);
     String url = getUrlFromJsonResult(hitSource, searchContext);
     Long lastUpdatedDate = getUpdatedDateFromResult(hitSource);
     if (lastUpdatedDate == null) lastUpdatedDate = new Date().getTime();
@@ -304,6 +306,7 @@ public class ElasticSearchServiceConnector extends SearchServiceConnector {
     return new SearchResult(
             url,
             title,
+            tag,
             excerpt.toString(),
             detail,
             img,
@@ -333,6 +336,8 @@ public class ElasticSearchServiceConnector extends SearchServiceConnector {
   protected String getUrlFromJsonResult(JSONObject hitSource, SearchContext context) {
     return (String) hitSource.get("url");
   }
+
+  protected String getTagsFromJsonResult(JSONObject hitSource) { return (String) hitSource.get(tagsElasticFieldName); }
 
   protected String getTitleFromJsonResult(JSONObject hitSource) {
     return (String) hitSource.get(titleElasticFieldName);
@@ -544,6 +549,7 @@ public class ElasticSearchServiceConnector extends SearchServiceConnector {
     List<String> fields = new ArrayList<>();
     fields.add("url");
     fields.add(getTitleElasticFieldName());
+    fields.add(getTagsElasticFieldName());
 
     List<String> sourceFields = new ArrayList<>();
     for (String sourceField: fields) {
@@ -567,6 +573,14 @@ public class ElasticSearchServiceConnector extends SearchServiceConnector {
 
   public void setImg(String img) {
     this.img = img;
+  }
+
+  public String getTagsElasticFieldName() {
+    return tagsElasticFieldName;
+  }
+
+  public void setTagsElasticFieldName(String tagsElasticFieldName) {
+    this.tagsElasticFieldName = tagsElasticFieldName;
   }
 
   public String getTitleElasticFieldName() {

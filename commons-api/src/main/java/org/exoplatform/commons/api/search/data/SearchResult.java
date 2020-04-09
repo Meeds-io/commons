@@ -2,21 +2,22 @@ package org.exoplatform.commons.api.search.data;
 
 /**
  * Search result returned by SearchService and all of its connectors, for rendering their search results on UI in a unified format.
- *   
- * @LevelAPI Experimental  
+ *
+ * @LevelAPI Experimental
  */
 public class SearchResult {
   private String url;  //url of this result
   private String previewUrl;  //preview url of this result
   private String title; //title to be displayed on UI
+  private String tags; //tag to be displayed on UI
   private String excerpt; //the excerpt to be displayed on UI
   private String detail; //details information
   private String imageUrl; //an image to be displayed on UI
   private long date; //created or modified date, for sorting on UI
   private long relevancy; //the result's relevancy, for sorting on UI
-  
+
   /**
-   * Get url of result 
+   * Get url of result
    * @return String
    * @LevelAPI Experimental
    */
@@ -30,6 +31,23 @@ public class SearchResult {
    */
   public void setUrl(String url) {
     this.url = url;
+  }
+
+  /**
+   * Get tags of result
+   * @return String
+   * @LevelAPI Experimental
+   */
+  public String getTags() {
+    return tags;
+  }
+  /**
+   * Set tags for result
+   * @param url
+   * @LevelAPI Experimental
+   */
+  public void setTags(String url) {
+    this.tags = tags;
   }
 
   /**
@@ -65,7 +83,7 @@ public class SearchResult {
   public void setTitle(String title) {
     this.title = title;
   }
-  
+
   /**
    * Get excerpt of result
    * @return String
@@ -82,7 +100,7 @@ public class SearchResult {
   public void setExcerpt(String excerpt) {
     this.excerpt = excerpt;
   }
-  
+
   /**
    * Get detail of result
    * @return String
@@ -99,7 +117,7 @@ public class SearchResult {
   public void setDetail(String detail) {
     this.detail = detail;
   }
-  
+
   /**
    * Get image url of avatar
    * @return String
@@ -148,7 +166,7 @@ public class SearchResult {
   public void setRelevancy(long relevancy) {
     this.relevancy = relevancy;
   }
-  
+
   /**
    * Constructor that helps to create search result by the unique way
    * @param url Url of this result
@@ -176,6 +194,7 @@ public class SearchResult {
    * @param url Url of this result
    * @param previewUrl Preview url of this result
    * @param title Title to be displayed on UI
+   * @param tags tags to be displayed on UI
    * @param excerpt The excerpt to be displayed on UI
    * @param detail Details information
    * @param imageUrl An image to be displayed on UI
@@ -183,9 +202,33 @@ public class SearchResult {
    * @param relevancy The result's relevancy, for sorting on UI
    * @LevelAPI Experimental
    */
-  public SearchResult(String url, String previewUrl, String title, String excerpt, String detail, String imageUrl, long date, long relevancy) {
-    this(url, title, excerpt, detail, imageUrl, date, relevancy);
+  public SearchResult(String url, String previewUrl, String title, String tags, String excerpt, String detail, String imageUrl, long date, long relevancy) {
+    this(url, title, tags, excerpt, detail, imageUrl, date, relevancy);
     this.previewUrl = previewUrl;
+  }
+
+
+  /**
+   * Constructor that helps to create search result by the unique way
+   * @param url Url of this result
+   * @param title Title to be displayed on UI
+   * @param tags tag to be displayed on UI
+   * @param excerpt The excerpt to be displayed on UI
+   * @param detail Details information
+   * @param imageUrl An image to be displayed on UI
+   * @param date Created or modified date, for sorting on UI
+   * @param relevancy The result's relevancy, for sorting on UI
+   * @LevelAPI Experimental
+   */
+  public SearchResult(String url, String title, String tags, String excerpt, String detail, String imageUrl, long date, long relevancy) {
+    this.url = url;
+    this.title = title;
+    this.tags = tags;
+    this.excerpt = excerpt;
+    this.detail = detail;
+    this.imageUrl = imageUrl;
+    this.date = date;
+    this.relevancy = relevancy;
   }
 
   @Override
