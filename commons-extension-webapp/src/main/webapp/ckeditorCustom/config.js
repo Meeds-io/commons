@@ -49,6 +49,9 @@ CKEDITOR.editorConfig = function( config ) {
 
     config.uploadUrl = eXo.env.server.context + '/upload?action=upload&uploadId=';
 
+    //Active spellCheker
+    config.disableNativeSpellChecker = false;
+
     // Set the most common block elements.
     config.format_tags = 'p;h1;h2;h3;pre';
 
