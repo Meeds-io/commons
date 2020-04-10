@@ -49,7 +49,7 @@ CKEDITOR.editorConfig = function( config ) {
 
     config.uploadUrl = eXo.env.server.context + '/upload?action=upload&uploadId=';
 
-    //Active spellCheker
+    // Enable the browser native spell checker
     config.disableNativeSpellChecker = false;
 
     // Set the most common block elements.
