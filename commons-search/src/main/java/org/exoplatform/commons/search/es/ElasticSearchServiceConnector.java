@@ -281,7 +281,6 @@ public class ElasticSearchServiceConnector extends SearchServiceConnector {
   protected SearchResult buildHit(JSONObject jsonHit, SearchContext searchContext) {
     JSONObject hitSource = (JSONObject) jsonHit.get("_source");
     String title = getTitleFromJsonResult(hitSource);
-    String tag = getTagsFromJsonResult(hitSource);
     String url = getUrlFromJsonResult(hitSource, searchContext);
     Long lastUpdatedDate = getUpdatedDateFromResult(hitSource);
     if (lastUpdatedDate == null) lastUpdatedDate = new Date().getTime();
@@ -306,7 +305,6 @@ public class ElasticSearchServiceConnector extends SearchServiceConnector {
     return new SearchResult(
             url,
             title,
-            tag,
             excerpt.toString(),
             detail,
             img,
