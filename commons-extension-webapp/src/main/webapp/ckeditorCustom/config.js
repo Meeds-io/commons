@@ -17,7 +17,8 @@ CKEDITOR.editorConfig = function( config ) {
 
     // %REMOVE_START%
     // The configuration options below are needed when running CKEditor from source files.
-    config.plugins = 'dialogui,dialog,about,a11yhelp,basicstyles,blockquote,clipboard,panel,floatpanel,menu,contextmenu,button,toolbar,enterkey,entities,popup,filebrowser,floatingspace,listblock,richcombo,format,horizontalrule,htmlwriter,wysiwygarea,image,indent,indentlist,fakeobjects,link,list,maximize,pastetext,pastefromword,removeformat,showborders,sourcearea,specialchar,menubutton,scayt,stylescombo,tab,table,tabletools,notification,notificationaggregator,filetools,undo,wsc,panelbutton,colorbutton,colordialog,autogrow,confighelper,uploadwidget,imageresize,confirmBeforeReload';
+    config.plugins = 'dialogui,dialog,about,a11yhelp,basicstyles,blockquote,panel,floatpanel,button,toolbar,enterkey,entities,popup,filebrowser,floatingspace,listblock,richcombo,format,horizontalrule,htmlwriter,wysiwygarea,indent,indentlist,fakeobjects,list,maximize,removeformat,showborders,sourcearea,specialchar,scayt,stylescombo,tab,table,notification,notificationaggregator,filetools,undo,wsc,panelbutton,colorbutton,colordialog,autogrow,confighelper,uploadwidget,imageresize,confirmBeforeReload,,autoembed,embedsemantic';
+
     CKEDITOR.plugins.addExternal('simpleLink','/commons-extension/eXoPlugins/simpleLink/','plugin.js');
     CKEDITOR.plugins.addExternal('simpleImage','/commons-extension/eXoPlugins/simpleImage/','plugin.js');
     CKEDITOR.plugins.addExternal('suggester','/commons-extension/eXoPlugins/suggester/','plugin.js');
@@ -25,6 +26,8 @@ CKEDITOR.editorConfig = function( config ) {
     CKEDITOR.plugins.addExternal('selectImage','/commons-extension/eXoPlugins/selectImage/','plugin.js');
     CKEDITOR.plugins.addExternal('uploadimage','/commons-extension/eXoPlugins/uploadimage/','plugin.js');
     CKEDITOR.plugins.addExternal('confirmBeforeReload','/commons-extension/eXoPlugins/confirmBeforeReload/','plugin.js');
+    CKEDITOR.plugins.addExternal('autoembed','/commons-extension/eXoPlugins/autoembed/','plugin.js');
+    CKEDITOR.plugins.addExternal('embedsemantic','/commons-extension/eXoPlugins/embedsemantic/','plugin.js');
 
     config.extraPlugins = 'simpleLink,selectImage,suggester,hideBottomToolbar';
     config.skin = 'moono-exo,/commons-extension/ckeditor/skins/moono-exo/';
@@ -45,6 +48,9 @@ CKEDITOR.editorConfig = function( config ) {
     config.removeButtons = 'Subscript,Superscript,Cut,Copy,Paste,PasteText,PasteFromWord,Undo,Redo,Scayt,Unlink,Anchor,Table,HorizontalRule,SpecialChar,Maximize,Source,Strike,Outdent,Indent,Format,BGColor,About';
 
     config.uploadUrl = eXo.env.server.context + '/upload?action=upload&uploadId=';
+
+    // Enable the browser native spell checker
+    config.disableNativeSpellChecker = false;
 
     // Set the most common block elements.
     config.format_tags = 'p;h1;h2;h3;pre';

@@ -1,10 +1,8 @@
-<%@ page import="org.exoplatform.account.setup.web.PingBackServlet" %>
 <%@ page import="java.util.ResourceBundle" %>
 <%@ page import="org.exoplatform.container.PortalContainer"%>
 <%@ page import="org.exoplatform.services.resources.ResourceBundleService"%>
 <%@ page import="org.exoplatform.portal.config.UserPortalConfigService" %>
 <%@ page import="org.exoplatform.portal.resource.SkinService"%>
-<%@ page import="org.exoplatform.account.setup.web.PingBackService" %>
 
 <%
     /**
@@ -54,8 +52,6 @@
   String skinName = userPortalConfigService.getDefaultPortalSkinName();
   SkinService skinService = portalContainer.getComponentInstanceOfType(SkinService.class);
   String cssPath = skinService.getSkin("portal/AccountSetup", skinName).getCSSPath();
-
-  PingBackService pingBackService = portalContainer.getComponentInstanceOfType(PingBackService.class);
 %>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="<%=lang%>" lang="<%=lang%>">
@@ -63,12 +59,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
     <link rel="shortcut icon" type="image/x-icon"  href="/portal/favicon.ico" />
+    <link id="brandingSkin" rel="stylesheet" type="text/css" href="/rest/v1/platform/branding/css">
     <link href="/commons-extension/css/welcome-screens/jquery.qtip.min.css" rel="stylesheet" type="text/css" />
     <link href="<%=cssPath%>" rel="stylesheet" type="text/css" />
 
     <script type="text/javascript" src="/eXoResources/javascript/jquery-3.2.1.js"></script>
     <script type="text/javascript" src="/commons-extension/javascript/ie-placeholder.js"></script>
-    <script type="text/javascript" src="/commons-extension/javascript/welcome-screens/welcomescreens.js"></script>
+    <script type="text/javascript" src="/commons-extension/javascript/welcome-screens/accountSetup.js"></script>
 
 </head>
 <div class="backLight"></div>
@@ -136,15 +133,4 @@
     </div>
 </div>
 </form>
-<% 	if(!pingBackService.isLandingPageDisplayed()){ %>
-<iframe src="<%=pingBackService.getPingBackUrl()%>" style="display:none;" id="pingBackUrlFrame" onload="setFormDisplayed()"></iframe>
-<iframe src="about:blank" style="display:none;" id="pingBackUrlActivation"></iframe>
-<script>
-    function setFormDisplayed() {
-        var pingBackUrlActivationElement = document.getElementById("pingBackUrlActivation");
-        pingBackUrlActivationElement.src="/commons-extension/PingBackServlet";
-    }
-</script>
-<% }
-%>
 </html>
