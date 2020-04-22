@@ -213,10 +213,17 @@ public class ElasticSearchServiceConnector extends SearchServiceConnector {
     esQuery.append("       \"post_tags\" : [\"</strong>\"],\n");
     esQuery.append("       \"fields\" : {\n");
     for (int i=0; i<this.searchFields.size(); i++) {
-      esQuery.append("         \""+searchFields.get(i)+"\" : {\n")
-              .append("          \"type\" : \"unified\",\n")
-              .append("          \"fragment_size\" : " + this.highlightFragmentSize + ",\n")
-              .append("          \"number_of_fragments\" : " + this.highlightFragmentNumber + "}");
+      if (!"attachment.content".equals(searchFields.get(i))) {
+        esQuery.append("         \"" + searchFields.get(i) + "\" : {\n")
+                .append("          \"type\" : \"unified\",\n")
+                .append("          \"fragment_size\" : " + this.highlightFragmentSize + ",\n")
+                .append("          \"number_of_fragments\" : " + this.highlightFragmentNumber + "}");
+      } else {
+        esQuery.append("         \"" + searchFields.get(i) + "\" : {\n")
+                .append("          \"type\" : \"fvh\",\n")
+                .append("          \"fragment_size\" : " + this.highlightFragmentSize + ",\n")
+                .append("          \"number_of_fragments\" : " + this.highlightFragmentNumber + "}");
+      }
       if (i<this.searchFields.size()-1) {
         esQuery.append(",");
       }
