@@ -1,3 +1,19 @@
+/*
+ * This file is part of the Meeds project (https://meeds.io/).
+ * Copyright (C) 2020 Meeds Association
+ * contact@meeds.io
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 3 of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ */
 (function(c,g){"function"==typeof t&&t.amd?t("sifter",g):"object"==typeof exports?module.exports=g():c.Sifter=g()})(this,function(){var c=function(c,h){this.items=c;this.settings=h||{diacritics:!0}};c.prototype.tokenize=function(c){if(c=((""+(c||"")).toLowerCase()+"").replace(/^\s+|\s+$|/g,""),!c||!c.length)return[];var h,
 e,j,A=[],l=c.split(/ +/);for(c=0,h=l.length;c<h;c++){if(e=(l[c]+"").replace(/([.?*+^$[\]\\(){}|-])/g,"\\$1"),this.settings.diacritics)for(j in o)o.hasOwnProperty(j)&&(e=e.replace(RegExp(j,"g"),o[j]));A.push({string:l[c],regex:RegExp(e,"i")})}return A};c.prototype.iterator=function(c,h){var e;e=r(c)?Array.prototype.forEach||function(c){for(var e=0,h=this.length;e<h;e++)c(this[e],e,this)}:function(c){for(var e in this)this.hasOwnProperty(e)&&c(this[e],e,this)};e.apply(c,[h])};c.prototype.getScoreFunction=
 function(c,h){var e,j,l,g;c=this.prepareSearch(c,h);j=c.tokens;e=c.options.fields;l=j.length;g=c.options.nesting;var q=function(c,e){var h,j;return c?(c=""+(c||""),j=c.search(e.regex),-1===j?0:(h=e.string.length/c.length,0===j&&(h+=0.5),h)):0},o=function(){var c=e.length;return c?1===c?function(c,h){return q(u(h,e[0],g),c)}:function(h,j){for(var l=0,w=0;l<c;l++)w+=q(u(j,e[l],g),h);return w/c}:function(){return 0}}();return l?1===l?function(c){return o(j[0],c)}:"and"===c.options.conjunction?function(c){for(var e,
