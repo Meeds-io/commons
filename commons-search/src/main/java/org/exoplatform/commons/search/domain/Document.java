@@ -181,7 +181,7 @@ public class Document {
     if (getTags() != null) {
       JSONArray tagsJSON = new JSONArray();
       tagsJSON.addAll(getTags());
-      obj.put("tag", tagsJSON);
+      obj.put("tags", tagsJSON);
     }
     if (getSites() != null) {
       JSONArray sitesJSON = new JSONArray();
