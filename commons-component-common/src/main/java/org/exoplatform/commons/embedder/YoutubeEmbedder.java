@@ -155,7 +155,7 @@ public class YoutubeEmbedder extends AbstractEmbedder {
     }
     String youTubeSRC = String.format(YOUTUBE_SRC, youtubeId);
     StringBuilder contentURL = new StringBuilder();
-    contentURL.append("<iframe id=\"player\" type=\"text/html\" width=\"330\" height=\"200\" frameborder=\"0\" allowfullscreen=\"true\"")
+    contentURL.append("<iframe id=\"player\" type=\"text/html\" width=\"450\" height=\"220\" frameborder=\"0\" allowfullscreen=\"true\"")
               .append(" src=\"").append(correctURIString(youTubeSRC,scheme,false)).append("\">").append("&nbsp;</iframe>");
     return contentURL.toString();
   }
