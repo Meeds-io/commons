@@ -58,7 +58,7 @@ abstract public class HTMLSanitizer {
 
   private static final Pattern                                                HTML_CLASS               = Pattern.compile("[a-zA-Z0-9\\s,\\-_]+");
 
-  private static final Pattern                                                ONSITE_URL               = Pattern.compile("(?:[\\p{L}\\p{N} \\\\\\.\\#@\\$%\\+&;\\-_~,\\?=/!]+|\\#(\\w)+)");
+  private static final Pattern                                                ONSITE_URL               = Pattern.compile("(?:[\\p{L}\\p{N} \\\\\\.\\#@\\$%\\+&;\\-_~,\\?=/!:]+|\\#(\\w)+)");
 
   private static final Pattern                                                OFFSITE_URL              = Pattern.compile("\\s*(?:(?:ht|f)tps?://|mailto:)[\\p{L}\\p{N}]"
                                                                                                            + "[\\p{L}\\p{N} \\p{Zs}\\.\\#@\\$%\\+&;:\\-_~,\\?=/!\\(\\)\\*]*+\\s*");
