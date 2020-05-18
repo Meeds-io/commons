@@ -3,6 +3,10 @@
 <configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.exoplatform.org/xml/ns/kernel_1_2.xsd http://www.exoplatform.org/xml/ns/kernel_1_2.xsd" xmlns="http://www.exoplatform.org/xml/ns/kernel_1_2.xsd">
 
   <component>
+    <type>org.exoplatform.commons.resource.ResourceBundleREST</type>
+  </component>
+
+  <component>
     <key>PropertyManagerConfigurator</key>
     <type>org.exoplatform.container.PropertyConfigurator</type>
     <init-params>
@@ -90,6 +94,7 @@
         <name>classpath.resources</name>
         <description>The resources that start with the following package name should be load from file system</description>
         <value>locale.portlet</value>
+        <value>locale.test</value>
       </values-param>
       <values-param>
         <name>init.resources</name>
