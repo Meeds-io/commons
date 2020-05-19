@@ -155,8 +155,6 @@ public class ElasticSearchServiceConnector extends SearchServiceConnector {
   }
 
   protected String buildFilteredQuery(String query, Collection<String> sites, List<ElasticSearchFilter> filters, int offset, int limit, String sort, String order) {
-    String escapedQuery = escapeReservedCharacters(query);
-
     StringBuilder esQuery = new StringBuilder();
     esQuery.append("{\n");
     esQuery.append("     \"from\" : " + offset + ",\n");
@@ -173,12 +171,15 @@ public class ElasticSearchServiceConnector extends SearchServiceConnector {
     esQuery.append("     \"_source\": [" + getSourceFields() + "],");
     esQuery.append("     \"query\": {\n");
     esQuery.append("        \"bool\" : {\n");
-    esQuery.append("            \"must\" : {\n");
-    esQuery.append("                \"query_string\" : {\n");
-    esQuery.append("                    \"fields\" : [" + getFields() + "],\n");
-    esQuery.append("                    \"query\" : \"" + escapedQuery + "\"\n");
-    esQuery.append("                }\n");
-    esQuery.append("            },\n");
+    if (query != null) {
+      String escapedQuery = escapeReservedCharacters(query);
+      esQuery.append("            \"must\" : {\n");
+      esQuery.append("                \"query_string\" : {\n");
+      esQuery.append("                    \"fields\" : [" + getFields() + "],\n");
+      esQuery.append("                    \"query\" : \"" + escapedQuery + "\"\n");
+      esQuery.append("                }\n");
+      esQuery.append("            },\n");
+    }
     esQuery.append("            \"filter\" : {\n");
     esQuery.append("              \"bool\" : {\n");
     esQuery.append("                \"must\" : [\n");
