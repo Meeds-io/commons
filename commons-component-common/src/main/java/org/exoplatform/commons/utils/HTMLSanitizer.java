@@ -318,8 +318,8 @@ abstract public class HTMLSanitizer {
                                                                                                                                         "legend",
                                                                                                                                         "ins",
                                                                                                                                         "exo-wiki-children-pages",
-																																		"exo-wiki-include-page")
-
+                                                                                                                                        "exo-wiki-include-page")
+                                                                                                                                .allowAttributes("page-name").onElements("exo-wiki-include-page")
                                                                                                                                  //Allows the named elements for xwiki input
                                                                                                                                 .allowElements("wikiimage","wikilink","wikimacro")
                                                                                                                                 .allowAttributes("wikiparam")
