@@ -16,13 +16,20 @@
 */
 package org.exoplatform.commons.search.index.impl;
 
+import java.io.InputStream;
+
 import org.apache.commons.lang.StringUtils;
 import org.json.simple.JSONObject;
 
 import org.exoplatform.commons.search.index.IndexingServiceConnector;
+import org.exoplatform.commons.utils.IOUtil;
 import org.exoplatform.commons.utils.PropertyManager;
+import org.exoplatform.container.PortalContainer;
+import org.exoplatform.container.configuration.ConfigurationManager;
 import org.exoplatform.container.xml.InitParams;
 import org.exoplatform.container.xml.PropertiesParam;
+import org.exoplatform.services.log.ExoLogger;
+import org.exoplatform.services.log.Log;
 
 /**
  * Created by The eXo Platform SAS
@@ -32,14 +39,19 @@ import org.exoplatform.container.xml.PropertiesParam;
  */
 public abstract class ElasticIndexingServiceConnector extends IndexingServiceConnector {
 
+  private static final Log     LOG = ExoLogger.getLogger(ElasticIndexingServiceConnector.class);
+
   private static final Integer REPLICAS_NUMBER_DEFAULT = 0;
   private static final String REPLICAS_NUMBER_PROPERTY_NAME = "exo.es.indexing.replica.number.default";
   private static final Integer SHARDS_NUMBER_DEFAULT = 5;
   private static final String SHARDS_PROPERTY_NAME = "exo.es.indexing.shard.number.default";
 
+  private static final String  MAPPING_FILE_PATH_PARAM       = "mapping.file.path";
+
   protected String indexAlias;
   protected String currentIndex;
   protected String previousIndex;
+  protected String mapping;
   protected boolean reindexOnUpgrade;
   protected Integer shards = SHARDS_NUMBER_DEFAULT;
   protected Integer replicas = REPLICAS_NUMBER_DEFAULT;
@@ -67,6 +79,18 @@ public abstract class ElasticIndexingServiceConnector extends IndexingServiceCon
     else if (StringUtils.isNotBlank(PropertyManager.getProperty(SHARDS_PROPERTY_NAME))) {
       this.shards = Integer.valueOf(PropertyManager.getProperty(SHARDS_PROPERTY_NAME));
     }
+
+    if (initParams.containsKey(MAPPING_FILE_PATH_PARAM)) {
+      String mappingFilePath = initParams.getValueParam(MAPPING_FILE_PATH_PARAM).getValue();
+      try {
+        PortalContainer container = PortalContainer.getInstance();
+        ConfigurationManager configurationManager = container.getComponentInstanceOfType(ConfigurationManager.class);
+        InputStream mappingFileIS = configurationManager.getInputStream(mappingFilePath);
+        this.mapping = IOUtil.getStreamContentAsString(mappingFileIS);
+      } catch (Exception e) {
+        LOG.error("Can't read elasticsearch index mapping from path {}", mappingFilePath, e);
+      }
+    }
   }
 
   /**
@@ -87,6 +111,9 @@ public abstract class ElasticIndexingServiceConnector extends IndexingServiceCon
    *
    */
   public String getMapping() {
+      if (StringUtils.isNotBlank(this.mapping)) {
+        return this.mapping;
+      }
 
       JSONObject notAnalyzedField = new JSONObject();
       notAnalyzedField.put("type", "text");
