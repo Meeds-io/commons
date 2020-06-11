@@ -113,6 +113,7 @@ public class ElasticOperationProcessorTest {
     when(elasticIndexingServiceConnector.getType()).thenReturn("post");
     when(elasticIndexingServiceConnector.getReplicas()).thenReturn(1);
     when(elasticIndexingServiceConnector.getShards()).thenReturn(5);
+    when(elasticIndexingServiceConnector.canReindex()).thenReturn(true);
   }
 
   private void initElasticContentRequestBuilder() {
@@ -555,6 +556,21 @@ public class ElasticOperationProcessorTest {
     orderClient.verify(indexingOperationDAO).createAll(captor.capture());
     assertThat(captor.getValue().get(0), is(new IndexingOperation("1", elasticIndexingServiceConnector.getType(), OperationType.CREATE)));
     assertThat(captor.getValue().get(1), is(new IndexingOperation("2", elasticIndexingServiceConnector.getType(), OperationType.CREATE)));
+  }
+  
+  @Test
+  public void process_ifReindexAll_requestNotSent() {
+    // Given
+    elasticIndexingOperationProcessor.setReindexBatchSize(10);
+    elasticIndexingOperationProcessor.getConnectors().put("post", elasticIndexingServiceConnector);
+    when(elasticIndexingServiceConnector.canReindex()).thenReturn(false);
+    IndexingOperation reindexAll = new IndexingOperation(null, "post", OperationType.REINDEX_ALL);
+    reindexAll.setId(1L);
+    when(indexingOperationDAO.findAllFirst(anyInt())).thenReturn(Collections.singletonList(reindexAll));
+    // When
+    elasticIndexingOperationProcessor.process();
+    // Then
+    verify(elasticIndexingServiceConnector, times(0)).getAllIds(anyInt(), anyInt());
   }
 
   @Test
