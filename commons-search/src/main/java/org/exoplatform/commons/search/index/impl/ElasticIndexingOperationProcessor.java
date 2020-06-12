@@ -730,7 +730,7 @@ public class ElasticIndexingOperationProcessor extends IndexingOperationProcesso
       String indexAlias = connector.getIndex();
 
       boolean needsUpgrade = false;
-      if (previousIndex != null) {
+      if (StringUtils.isNotBlank(previousIndex)) {
         // Need to check the upgrade status (incomplete/ not run == new index doesn't exists or indexAlias is not added to new index)
         needsUpgrade = elasticIndexingClient.sendIsIndexExistsRequest(previousIndex)
             && (!elasticIndexingClient.sendIsIndexExistsRequest(index)
