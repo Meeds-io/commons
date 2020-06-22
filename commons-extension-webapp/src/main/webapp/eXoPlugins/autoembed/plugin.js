@@ -44,7 +44,6 @@
 
 			editor.on( 'instanceReady', function(evt) {
 				autoEmbedLink( editor, currentId );
-
 			});
 		}
 	} );
@@ -57,8 +56,7 @@
 		}
 
 		var anchor = editor.editable().findOne( 'a[data-cke-autoembed="' + id + '"]' ) || editor.editable().findOne( 'a[id="editActivityLinkPreview"]' ),
-				lang = editor.lang.autoembed,
-				notification;
+				lang = editor.lang.autoembed;
 		// eXo customization - end
 		if ( !anchor || !anchor.data( 'cke-saved-href' ) ) {
 			return;
@@ -175,7 +173,6 @@
 
 			errorCallback: function() {
 				editor.widgets.destroy( instance, true );
-				editor.showNotification( lang.embeddingFailed, 'info' );
 			}
 		} );
 
