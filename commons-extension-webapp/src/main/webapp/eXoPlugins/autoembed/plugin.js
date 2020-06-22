@@ -184,7 +184,10 @@
 			//  remove the preview link anchor from ckeditor
 			if (editor.name.indexOf('editActivity') === 0) {
 				var anchor = editor.editable().findOne( 'a[id="editActivityLinkPreview"]' );
-				anchor.remove();
+				if (anchor) {
+					//get parent to remove the <p> tag added by ckeditor
+					anchor.getParent().remove();
+				}
 			}
 			// eXo customization - end
 			editor.widgets.finalizeCreation( temp );
