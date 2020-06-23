@@ -195,15 +195,24 @@ public class ElasticSearchServiceConnector extends SearchServiceConnector {
       queryParts = queryParts.stream().map(queryPart -> {
         queryPart = this.escapeReservedCharacters(queryPart);
         if (queryPart.length() > 5) {
-          queryPart = queryPart + "~1";
+          queryPart = queryPart + "~1"; // fuzzy search on big words
         }
         return queryPart;
       }).collect(Collectors.toList());
       String escapedQueryWithAndOperator = StringUtils.join(queryParts, " AND ");
+      String escapedQueryWithoutOperator = StringUtils.join(queryParts, " ");
       esQuery.append("            \"must\" : {\n");
       esQuery.append("                \"query_string\" : {\n");
       esQuery.append("                    \"fields\" : [" + getFields() + "],\n");
       esQuery.append("                    \"query\" : \"" + escapedQueryWithAndOperator + "\"\n");
+      esQuery.append("                }\n");
+      esQuery.append("            },\n");
+      esQuery.append("            \"should\" : {\n");
+      esQuery.append("                \"multi_match\" : {\n");
+      esQuery.append("                    \"type\" : \"phrase\",\n");
+      esQuery.append("                    \"fields\" : [" + getFields() + "],\n");
+      esQuery.append("                    \"boost\" : 5,\n");
+      esQuery.append("                    \"query\" : \"" + escapedQueryWithoutOperator + "\"\n");
       esQuery.append("                }\n");
       esQuery.append("            },\n");
     }
