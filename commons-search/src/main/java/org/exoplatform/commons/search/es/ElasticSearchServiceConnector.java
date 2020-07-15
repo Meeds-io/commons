@@ -194,9 +194,6 @@ public class ElasticSearchServiceConnector extends SearchServiceConnector {
       List<String> queryParts = Arrays.asList(query.split(" "));
       queryParts = queryParts.stream().map(queryPart -> {
         queryPart = this.escapeReservedCharacters(queryPart);
-        if (queryPart.length() > 5) {
-          queryPart = queryPart + "~1"; // fuzzy search on big words
-        }
         return queryPart;
       }).collect(Collectors.toList());
       String escapedQueryWithAndOperator = StringUtils.join(queryParts, " AND ");
