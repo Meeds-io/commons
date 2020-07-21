@@ -191,9 +191,9 @@ public class ElasticSearchServiceConnector extends SearchServiceConnector {
     esQuery.append("     \"query\": {\n");
     esQuery.append("        \"bool\" : {\n");
     if (StringUtils.isNotBlank(query)) {
-      List<String> queryParts = Arrays.asList(query.split(" "));
+      List<String> queryParts = Arrays.asList(query.split("[\\+\\-=\\&\\|><\\!\\(\\)\\{\\}\\[\\]\\^\"\\*\\?:\\/ @]+"));
       queryParts = queryParts.stream().map(queryPart -> {
-        queryPart = "\\\"" +  this.escapeReservedCharacters(queryPart) + "\\\"";
+        queryPart = this.escapeReservedCharacters(queryPart);
         if (queryPart.length() > 5) {
           queryPart = queryPart + "~1"; // fuzzy search on big words
         }
