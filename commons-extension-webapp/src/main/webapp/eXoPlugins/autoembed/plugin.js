@@ -155,7 +155,7 @@
 					//eXo customization - begin
 					//  remove the default resize button in the preview
 					if (editor.editable().findOne( 'iframe')){
-						editor.editable().findOne( 'span' ).remove();
+						editor.editable().findOne( 'span.cke_widget_drag_handler_container' ).remove();
 						editor.editable().findOne( 'img' ).remove();
 						var lastElement = editable.getLast();
 						lastElement.remove();
