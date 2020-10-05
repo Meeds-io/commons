@@ -108,7 +108,7 @@
                 <div class="content">
                     <div class="form-horizontal">
                         <div class="control-group">
-                            <label class="control-label"><%=res.getString("UIRegisterForm.label.username")%></label>
+                            <label class="control-label"><%=res.getString("UIRegisterForm.label.userName")%></label>
                             <div class="controls">
                                 <input class="username <%if(errorFields.contains("username")) out.print(errorClass);%>" name="username" type="text" value="<%=(user.getUserName() == null ? "" : user.getUserName())%>" />
                                 <span> *</span>
