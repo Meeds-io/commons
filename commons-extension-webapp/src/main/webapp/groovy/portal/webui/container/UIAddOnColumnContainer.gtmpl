@@ -20,7 +20,9 @@
   if(uiComponentWidth != null || uiComponentHeight != null) cssStyle = "style=\"";
   if(uiComponentHeight != null) cssStyle += "height: "+uiComponentHeight+";"
   if(cssStyle.length() > 0) cssStyle += "\"";
-  
+
+  String uiComponentClass = uicomponent.getCssClass() == null ? "" : uicomponent.getCssClass();
+
   /** Trim the prefix UIContainer- if any, this hardcoded part is needed to update nested container via Ajax */
   String componentId = uicomponent.getId();
   if(componentId.startsWith("UIContainer-")){
@@ -32,14 +34,14 @@
      def reqJS = rcontext.getJavascriptManager().require("SHARED/portal", "portal");
      reqJS.addScripts("portal.UIPortal.initMouseHover('" + uicomponent.id + "');");
 %>  
-<div class="UIContainer UIColumnContainer EdittingContainer ProtectedContainer"
+<div class="UIContainer UIColumnContainer EdittingContainer ProtectedContainer <%=uiComponentClass%>"
         id="${uicomponent.id}" ${cssStyle}>
 <%
   }
   else
   {   
 %>
-<div class="UIContainer UIColumnContainer <%=uicomponent.getName()%> <%=hasPermission?"": "ProtectedContainer"%>" 
+<div class="UIContainer UIColumnContainer <%=uiComponentClass%> <%=uicomponent.getName()%> <%=hasPermission?"": "ProtectedContainer"%>" 
         id="${uicomponent.id}" ${cssStyle}>
 <%
   }
@@ -53,19 +55,25 @@
       <%} else {%>
         <div class="VIEW-CONTAINER VIEW-BLOCK">
       <%} %> 
+          <div class="UIIntermediateContainer">
           <%if(hasPermission) {%>
-            <div class="UIIntermediateContainer">
-              <div class="UIRowContainer <%=(portalMode != UIPortalApplication.NORMAL_MODE && uicomponent.getChildren().size() == 0) ? "EmptyContainer" : ""%>">
+              <div id="${uicomponent.id}Children" class="UIRowContainer <%=(portalMode != UIPortalApplication.NORMAL_MODE && uicomponent.getChildren().size() == 0) ? "EmptyContainer" : ""%>">
                 <%
-                if(portalMode != UIPortalApplication.NORMAL_MODE){
-                   out.print("<div class='ProtectedContent'>"+_ctx.appRes("UIPortlet.label.AddOnColumnContainer")+"</div>");
-                } else {
+                if(portalMode != UIPortalApplication.NORMAL_MODE){ %>
+                  <div id="${uicomponent.id}Children" class="ProtectedContent">
+                    <%=_ctx.appRes("UIPortlet.label.AddOnColumnContainer")%>
+                  </div>
+                <%} else {
                   uicomponent.renderChildren();                 
                 }
                 %>
               </div>
-            </div>
-            <%} else out.print("<div class='ProtectedContent'>"+_ctx.appRes("UIPortlet.label.protectedContent")+"</div>");%>
+            <% } else { %>
+              <div id="${uicomponent.id}Children" class="ProtectedContent">
+                <%=_ctx.appRes("UIPortlet.label.protectedContent")%>
+              </div>
+            <% } %>
+          </div>
         </div>
         
         

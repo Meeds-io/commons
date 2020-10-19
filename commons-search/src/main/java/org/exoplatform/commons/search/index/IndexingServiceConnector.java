@@ -58,4 +58,8 @@ public abstract class IndexingServiceConnector extends BaseComponentPlugin imple
   public void setEnable(boolean enable) {
     this.enable = enable;
   }
+
+  public boolean canReindex() {
+    return true;
+  }
 }

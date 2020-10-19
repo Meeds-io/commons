@@ -499,17 +499,21 @@ public class ElasticIndexingOperationProcessor extends IndexingOperationProcesso
   @ExoTransactional
   private void reindexAllByEntityType(String entityType) {
     long startTime = System.currentTimeMillis();
+    IndexingServiceConnector connector = getConnectors().get(entityType);
+    if (!connector.canReindex()) {
+      LOG.debug("Reindexing is disabled for connector '{}'", entityType);
+      return;
+    }
+
     // 1- Delete all documents in ES (and purge the indexing queue)
     indexingOperationDAO.create(new IndexingOperation(null, entityType, OperationType.DELETE_ALL));
-    // 2- Get all the documents ID
-    IndexingServiceConnector connector = getConnectors().get(entityType);
-    // 3- Inject as a CUD operation
     int offset = 0;
     int numberIndexed;
     do {
       if(isInterrupted()) {
         return;
       }
+      // 2- Get all the documents ID
       List<String> ids = connector.getAllIds(offset, reindexBatchSize);
       if (ids == null) {
         numberIndexed = 0;
@@ -518,6 +522,7 @@ public class ElasticIndexingOperationProcessor extends IndexingOperationProcesso
         for (String id : ids) {
           operations.add(new IndexingOperation(id, entityType, OperationType.CREATE));
         }
+        // 3- Inject as a CUD operation
         indexingOperationDAO.createAll(operations);
         numberIndexed = ids.size();
         offset += reindexBatchSize;
@@ -725,7 +730,7 @@ public class ElasticIndexingOperationProcessor extends IndexingOperationProcesso
       String indexAlias = connector.getIndex();
 
       boolean needsUpgrade = false;
-      if (previousIndex != null) {
+      if (StringUtils.isNotBlank(previousIndex)) {
         // Need to check the upgrade status (incomplete/ not run == new index doesn't exists or indexAlias is not added to new index)
         needsUpgrade = elasticIndexingClient.sendIsIndexExistsRequest(previousIndex)
             && (!elasticIndexingClient.sendIsIndexExistsRequest(index)

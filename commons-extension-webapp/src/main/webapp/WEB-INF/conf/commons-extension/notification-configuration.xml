@@ -32,9 +32,13 @@
       </component-plugin>    
     </component-plugins>   
   </component>
-  
+
   <component>
-	<type>org.exoplatform.commons.api.notification.rest.WebNotificationRestService</type>
+    <type>org.exoplatform.commons.api.notification.rest.WebNotificationRestService</type>
+  </component>
+
+  <component>
+    <type>org.exoplatform.commons.api.notification.rest.NotificationSettingsRestService</type>
   </component>
    
   <component profiles="all">

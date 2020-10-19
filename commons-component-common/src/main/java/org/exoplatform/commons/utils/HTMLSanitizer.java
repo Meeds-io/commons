@@ -51,8 +51,6 @@ abstract public class HTMLSanitizer {
 
   private static final Pattern                                                NUMBER_OR_PERCENT        = Pattern.compile("[0-9]+%?");
 
-  private static final Pattern                                                PARAGRAPH                = Pattern.compile("(?:[\\p{L}\\p{N},'\\.\\s\\-_\\(\\)]|&[0-9]{2};)*");
-
   private static final Pattern                                                HTML_ID                  = Pattern.compile("[a-zA-Z0-9\\:\\-_\\.]+");
 
   // force non-empty with a '+' at the end instead of '*'
@@ -60,7 +58,7 @@ abstract public class HTMLSanitizer {
 
   private static final Pattern                                                HTML_CLASS               = Pattern.compile("[a-zA-Z0-9\\s,\\-_]+");
 
-  private static final Pattern                                                ONSITE_URL               = Pattern.compile("(?:[\\p{L}\\p{N} \\\\\\.\\#@\\$%\\+&;\\-_~,\\?=/!]+|\\#(\\w)+)");
+  private static final Pattern                                                ONSITE_URL               = Pattern.compile("(?:[\\p{L}\\p{N} \\\\\\.\\#@\\$%\\+&;\\-_~,\\?=/!:]+|\\#(\\w)+)");
 
   private static final Pattern                                                OFFSITE_URL              = Pattern.compile("\\s*(?:(?:ht|f)tps?://|mailto:)[\\p{L}\\p{N}]"
                                                                                                            + "[\\p{L}\\p{N} \\p{Zs}\\.\\#@\\$%\\+&;:\\-_~,\\?=/!\\(\\)\\*]*+\\s*");
@@ -151,7 +149,7 @@ abstract public class HTMLSanitizer {
                                                                                                                                 .matching(NAME)
                                                                                                                                 .onElements("img")
                                                                                                                                 .allowAttributes("alt")
-                                                                                                                                .matching(PARAGRAPH)
+                                                                                                                                .matching(HTML_TITLE)
                                                                                                                                 .onElements("img")
                                                                                                                                 .allowAttributes("border",
                                                                                                                                         "hspace",
@@ -188,7 +186,7 @@ abstract public class HTMLSanitizer {
                                                                                                                                 .onElements("td",
                                                                                                                                         "th")
                                                                                                                                 .allowAttributes("abbr")
-                                                                                                                                .matching(PARAGRAPH)
+                                                                                                                                .matching(HTML_TITLE)
                                                                                                                                 .onElements("td",
                                                                                                                                         "th")
                                                                                                                                 .allowAttributes("axis",
@@ -276,6 +274,7 @@ abstract public class HTMLSanitizer {
                                                                                                                                         "i",
                                                                                                                                         "b",
                                                                                                                                         "u",
+                                                                                                                                        "s",
                                                                                                                                         "strong",
                                                                                                                                         "em",
                                                                                                                                         "small",
@@ -294,8 +293,10 @@ abstract public class HTMLSanitizer {
                                                                                                                                         "hr",
                                                                                                                                         "br",
                                                                                                                                         "col",
+                                                                                                                                        "figure",
                                                                                                                                         "font",
                                                                                                                                         "map",
+                                                                                                                                        "mark",
                                                                                                                                         "span",
                                                                                                                                         "div",
                                                                                                                                         "img",
@@ -315,8 +316,10 @@ abstract public class HTMLSanitizer {
                                                                                                                                         "colgroup",
                                                                                                                                         "fieldset",
                                                                                                                                         "legend",
-                                                                                                                                        "ins")
-
+                                                                                                                                        "ins",
+                                                                                                                                        "exo-wiki-children-pages",
+                                                                                                                                        "exo-wiki-include-page")
+                                                                                                                                .allowAttributes("page-name").onElements("exo-wiki-include-page")
                                                                                                                                  //Allows the named elements for xwiki input
                                                                                                                                 .allowElements("wikiimage","wikilink","wikimacro")
                                                                                                                                 .allowAttributes("wikiparam")

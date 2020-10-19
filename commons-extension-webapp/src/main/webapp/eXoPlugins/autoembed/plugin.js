@@ -40,7 +40,11 @@
 				if ( embedCandidatePasted ) {
 					autoEmbedLink( editor, currentId );
 				}
-			} );
+			});
+
+			editor.on( 'instanceReady', function(evt) {
+				autoEmbedLink( editor, currentId );
+			});
 		}
 	} );
 
@@ -50,11 +54,10 @@
 		if (editor.editable().findOne( 'iframe')){
 			return null;
 		}
-		// eXo customization - end
-		var anchor = editor.editable().findOne( 'a[data-cke-autoembed="' + id + '"]' ),
-				lang = editor.lang.autoembed,
-				notification;
 
+		var anchor = editor.editable().findOne( 'a[data-cke-autoembed="' + id + '"]' ) || editor.editable().findOne( 'a[id="editActivityLinkPreview"]' ),
+				lang = editor.lang.autoembed;
+		// eXo customization - end
 		if ( !anchor || !anchor.data( 'cke-saved-href' ) ) {
 			return;
 		}
@@ -86,7 +89,10 @@
 			noNotifications: true,
 			callback: function() {
 				// DOM might be invalidated in the meantime, so find the anchor again.
-				var anchor = editor.editable().findOne( 'a[data-cke-autoembed="' + id + '"]' );
+				// eXo customization - begin
+				// get link preview anchor with id 'editActivityLinkPreview' in case of editing
+				var anchor = editor.editable().findOne( 'a[data-cke-autoembed="' + id + '"]' ) || editor.editable().findOne( 'a[id="editActivityLinkPreview"]' );
+				// eXo customization - end
 
 				// Anchor might be removed in the meantime.
 				if ( anchor ) {
@@ -103,9 +109,14 @@
 					editor.fire( 'lockSnapshot', { dontUpdate: true } );
 
 					// Bookmark current selection. (https://dev.ckeditor.com/ticket/13429)
-					var bookmark = selection.createBookmarks( false )[ 0 ],
-							startNode = bookmark.startNode,
-							endNode = bookmark.endNode || startNode;
+					// eXo customization - begin
+					// Ignore when init edit activity ck editor
+					if (editor.name.indexOf('editActivity') === -1) {
+						// eXo customization - end
+						var bookmark = selection.createBookmarks( false )[ 0 ],
+								startNode = bookmark.startNode,
+								endNode = bookmark.endNode || startNode;
+					}
 
 					// When url is pasted, IE8 sets the caret after <a> element instead of inside it.
 					// So, if user hasn't changed selection, bookmark is inserted right after <a>.
@@ -117,7 +128,7 @@
 						anchor.append( startNode );
 					}
 					//eXo customization - begin
-                    // add this line for add the preview in the end of content
+					// add this line for add the preview in the end of content
 					var last = editable.getLast();
 					insertRange.setEndAfter( last );
 					// add three lines break and add close preview button
@@ -127,19 +138,24 @@
 
 					// If both bookmarks are still in DOM, it means that selection was not inside
 					// an anchor that got substituted. We can safely recreate that selection. (https://dev.ckeditor.com/ticket/13429)
-					if ( editable.contains( startNode ) && editable.contains( endNode ) ) {
-						selection.selectBookmarks( [ bookmark ] );
-					} else {
-						// If one of bookmarks is not in DOM, clean up leftovers.
-						startNode.remove();
-						endNode.remove();
+					// eXo customization - begin
+					// Ignore when init edit activity ck editor
+					if (editor.name.indexOf('editActivity') === -1) {
+					// eXo customization - end
+						if ( editable.contains( startNode ) && editable.contains( endNode ) ) {
+							selection.selectBookmarks( [ bookmark ] );
+						} else {
+							// If one of bookmarks is not in DOM, clean up leftovers.
+							startNode.remove();
+							endNode.remove();
+						}
 					}
 
 					editor.fire( 'unlockSnapshot' );
 					//eXo customization - begin
 					//  remove the default resize button in the preview
 					if (editor.editable().findOne( 'iframe')){
-						editor.editable().findOne( 'span' ).remove();
+						editor.editable().findOne( 'span.cke_widget_drag_handler_container' ).remove();
 						editor.editable().findOne( 'img' ).remove();
 						var lastElement = editable.getLast();
 						lastElement.remove();
@@ -157,11 +173,20 @@
 
 			errorCallback: function() {
 				editor.widgets.destroy( instance, true );
-				editor.showNotification( lang.embeddingFailed, 'info' );
 			}
 		} );
 
 		function finalizeCreation() {
+			//eXo customization - begin
+			//  remove the preview link anchor from ckeditor
+			if (editor.name.indexOf('editActivity') === 0) {
+				var anchor = editor.editable().findOne( 'a[id="editActivityLinkPreview"]' );
+				if (anchor) {
+					//get parent to remove the <p> tag added by ckeditor
+					anchor.getParent().remove();
+				}
+			}
+			// eXo customization - end
 			editor.widgets.finalizeCreation( temp );
 		}
 	}

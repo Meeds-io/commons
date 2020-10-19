@@ -35,6 +35,7 @@ public class Document {
   private String url;
   private Date lastUpdatedDate;
   private Set<String> permissions;
+  private List<String> tags;
   private Map<String, String> fields;
   private String[] sites;
 
@@ -69,6 +70,17 @@ public class Document {
     this.url = url;
     this.lastUpdatedDate = lastUpdatedDate;
     this.permissions = permissions;
+    this.fields = fields;
+    this.sites = null;
+  }
+
+  public Document(String type, String id, String url, Date lastUpdatedDate, Set<String> permissions , List<String> tags, Map<String, String> fields) {
+    this.type = type;
+    this.id = id;
+    this.url = url;
+    this.lastUpdatedDate = lastUpdatedDate;
+    this.permissions = permissions;
+    this.tags = tags;
     this.fields = fields;
     this.sites = null;
   }
@@ -134,6 +146,14 @@ public class Document {
     this.permissions = permissions;
   }
 
+  public List<String> getTags() {
+    return tags;
+  }
+
+  public void setTags(List<String> tags) {
+    this.tags = tags;
+  }
+
   public Map<String, String> getFields() {
     return fields;
   }
@@ -157,6 +177,11 @@ public class Document {
       JSONArray permissionsJSON = new JSONArray();
       permissionsJSON.addAll(getPermissions());
       obj.put("permissions", permissionsJSON);
+    }
+    if (getTags() != null) {
+      JSONArray tagsJSON = new JSONArray();
+      tagsJSON.addAll(getTags());
+      obj.put("tags", tagsJSON);
     }
     if (getSites() != null) {
       JSONArray sitesJSON = new JSONArray();
