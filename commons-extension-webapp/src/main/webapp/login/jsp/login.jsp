@@ -174,9 +174,11 @@
                         });
                     });
                 </script>
+              <% if (System.getProperty("exo.ldap.type") == null) { %>
                 <div>
                     <a href="<%= contextPath + forgotPasswordPath %>" title="<%=res.getString("gatein.forgotPassword.loginLinkTitle")%>"><%=res.getString("gatein.forgotPassword.loginLinkTitle")%></a>
                 </div>
+              <% } %>
 				<div id="UIPortalLoginFormAction" class="loginButton">
 					<button class="button" tabindex="4"  onclick="login();"><%=res.getString("portal.login.Signin")%></button>
 				</div>
