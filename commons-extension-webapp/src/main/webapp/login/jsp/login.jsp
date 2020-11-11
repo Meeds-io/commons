@@ -33,6 +33,8 @@
 <%@ page import="org.exoplatform.web.login.recovery.PasswordRecoveryService" %>
 <%@ page import="org.exoplatform.web.controller.QualifiedName" %>
 <%@ page import="org.exoplatform.portal.config.UserPortalConfigService" %>
+<%@ page import="org.exoplatform.portal.branding.BrandingService"%>
+<%@ page import="java.util.*" %>
 <%@ page language="java" %>
 <%
   String contextPath = request.getContextPath() ;
@@ -54,6 +56,12 @@
 	cookie.setPath(request.getContextPath());
 	cookie.setMaxAge(0);
 	response.addCookie(cookie);
+
+  BrandingService brandingService = portalContainer.getComponentInstanceOfType(BrandingService.class);
+  String companyName = brandingService.getCompanyName();
+  byte[] logoData = brandingService.getLogo().getData();
+  byte[] encodedLogoData = Base64.getEncoder().encode(logoData);
+  String logo = "data:image/png;base64," + new String(encodedLogoData, "UTF-8");
 
   UserPortalConfigService userPortalConfigService = portalContainer.getComponentInstanceOfType(UserPortalConfigService.class);
   SkinService skinService = portalContainer.getComponentInstanceOfType(SkinService.class);
@@ -86,29 +94,6 @@
     <link href="<%=loginCssPath%>" rel="stylesheet" type="text/css"/>
     <script type="text/javascript" src="/eXoResources/javascript/jquery-3.2.1.js"></script>
     <script type="text/javascript" src="/commons-extension/javascript/switch-button.js"></script>
-    <script type="text/javascript">
-        $(document).ready(function() {
-            var contentLink = jQuery("#platformInfoPoweredBy");
-            var contentVersion = jQuery("#platformInfoVersion");
-            var htmlLink = contentLink.data("labelfooter") +" eXo Platform ";
-            var htmlVersion = "";
-            var requestJsonPlatformInfo = jQuery.ajax({ type: "GET", url: "/portal/rest/platform/info", async: false, dataType: 'json' });
-            if(requestJsonPlatformInfo.readyState == 4 && requestJsonPlatformInfo.status == 200){
-                //readyState 4: request finished and response is ready
-                //status 200: "OK"
-                var myresponseText = requestJsonPlatformInfo.responseText;
-                var jsonPlatformInfo = jQuery.parseJSON(myresponseText);
-                htmlVersion += "v";
-                htmlVersion += jsonPlatformInfo.platformVersion;
-                htmlVersion += " - build ";
-                htmlVersion += jsonPlatformInfo.platformBuildNumber;
-            }else{
-                htmlVersion += "4.0";
-            }
-            contentLink.text(htmlLink);
-            contentVersion.text(htmlVersion);
-        });
-    </script>
   </head>
   <body>
   	<div class="loginBGLight"><span></span></div>
@@ -118,6 +103,7 @@
 					<div class="userLoginIcon"><%=res.getString("portal.login.Connectlabel")%></div>
 				</div>
 	      <div class="loginContent">
+	       <p class="brandingComanyClass"> <%=companyName%> </p>
 				<div class="titleLogin">
 					<%/*Begin form*/%>
           <% if (error || errorData != null) {
@@ -148,39 +134,27 @@
                   <span class="iconPswrd"></span>
                   <input  tabindex="2"  type="password" id="password" name="password" placeholder="<%=res.getString("portal.login.Password")%>" onblur="this.placeholder = '<%=res.getString("portal.login.Password")%>'" onfocus="this.placeholder = ''">
                 </div>
-                <div class="spaceRole">
-					<input type="checkbox" tabindex="3" class="yesno" checked="checked" style="visibility: hidden;" id="rememberme" name="rememberme" value="true" data-yes="<%=res.getString("portal.login.Yes")%>" data-no="<%=res.getString("portal.login.No")%>"/>
-					<label class="rememberTxt" for="rememberme"><%=res.getString("portal.login.RememberOnComputer")%></label>
+
+                <div class="rememberContent">
+                    <label class="uiCheckbox">
+                      <input class="checkbox" type="checkbox" name="rememberme" id="rememberme" value="true" />
+                      <span><%=res.getString("portal.login.RememberOnComputer")%><span>
+                    </label>
 				</div>
                 <script type="text/javascript">
-                    $("div.spaceRole").click(function()
+                    $("div.rememberContent").click(function()
                     {
                         var input = $(this).find("#rememberme");
                         var remembermeOpt = input.attr("value") == "true" ? "false" : "true";
                         input.attr("value", remembermeOpt);
                     });
-                    var yeslabel;
-                    var nolabel;
-                    $("div.spaceRole").children('input:checkbox').each(function () {
-                        yeslabel = $(this).data("yes");
-                        nolabel = $(this).data("no");
-                        $(this).iphoneStyle({
-                                checkedLabel:yeslabel,
-                                uncheckedLabel:nolabel});
-
-                        $(this).change(function()
-                        {
-                            $(this).closest("div.spaceRole").trigger("click");
-                        });
-                    });
                 </script>
-                <div>
-                    <a href="<%= contextPath + forgotPasswordPath %>" title="<%=res.getString("gatein.forgotPassword.loginLinkTitle")%>"><%=res.getString("gatein.forgotPassword.loginLinkTitle")%></a>
-                </div>
 				<div id="UIPortalLoginFormAction" class="loginButton">
 					<button class="button" tabindex="4"  onclick="login();"><%=res.getString("portal.login.Signin")%></button>
 				</div>
-
+                <div class="forgotPasswordClass">
+                    <a href="<%= contextPath + forgotPasswordPath %>" title="<%=res.getString("gatein.forgotPassword.loginLinkTitle")%>"><%=res.getString("gatein.forgotPassword.loginLinkTitle")%></a>
+                </div>
                 <script type='text/javascript'>
 
 
@@ -218,11 +192,9 @@
         </div>
       </div>
     	</div>
-        <div id="loginFooter">
-            <a id="platformInfoPoweredBy" href="https://www.exoplatform.com/powered-by" target="_blank" data-labelfooter="<%=res.getString("portal.login.Footer")%>"></a>
-            <span id="platformInfoVersion"></span>
-        </div>
     </div>
-    
+    <div class="brandingImageContent">
+         <img src="<%=logo%>" class="brandingImage">
+    </div>
   </body>
 </html>
