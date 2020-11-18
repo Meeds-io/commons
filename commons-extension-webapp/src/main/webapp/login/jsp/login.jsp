@@ -59,9 +59,12 @@
 
   BrandingService brandingService = portalContainer.getComponentInstanceOfType(BrandingService.class);
   String companyName = brandingService.getCompanyName();
-  byte[] logoData = brandingService.getLogo().getData();
-  byte[] encodedLogoData = Base64.getEncoder().encode(logoData);
-  String logo = "data:image/png;base64," + new String(encodedLogoData, "UTF-8");
+  String logo = "";
+  if (brandingService.getLogo() != null) {
+    byte[] logoData = brandingService.getLogo().getData();
+    byte[] encodedLogoData = Base64.getEncoder().encode(logoData);
+    logo = "data:image/png;base64," + new String(encodedLogoData, "UTF-8");
+  }
 
   UserPortalConfigService userPortalConfigService = portalContainer.getComponentInstanceOfType(UserPortalConfigService.class);
   SkinService skinService = portalContainer.getComponentInstanceOfType(SkinService.class);
