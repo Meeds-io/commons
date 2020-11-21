@@ -131,11 +131,11 @@
 
                 <div class="userCredentials">
                   <span class="iconUser"></span>
-                  <input  tabindex="1" id="username" name="username" type="text" placeholder="<%=res.getString("portal.login.Username")%>" onblur="this.placeholder = '<%=res.getString("portal.login.Username.blur")%>'" onfocus="this.placeholder = ''">
+                  <input  tabindex="1" id="username" name="username" type="text" placeholder="<%=res.getString("portal.login.Username")%>">
                 </div>
                 <div class="userCredentials">
                   <span class="iconPswrd"></span>
-                  <input  tabindex="2"  type="password" id="password" name="password" placeholder="<%=res.getString("portal.login.Password")%>" onblur="this.placeholder = '<%=res.getString("portal.login.Password")%>'" onfocus="this.placeholder = ''">
+                  <input  tabindex="2"  type="password" id="password" name="password" placeholder="<%=res.getString("portal.login.Password")%>">
                 </div>
 
                 <div class="rememberContent">
