@@ -35,6 +35,7 @@
 <%@ page import="org.exoplatform.portal.config.UserPortalConfigService" %>
 <%@ page import="org.exoplatform.portal.branding.BrandingService"%>
 <%@ page import="java.util.*" %>
+<%@ page import="org.gatein.portal.controller.resource.ResourceRequestHandler" %>
 <%@ page language="java" %>
 <%
   String contextPath = request.getContextPath() ;
@@ -69,8 +70,8 @@
   UserPortalConfigService userPortalConfigService = portalContainer.getComponentInstanceOfType(UserPortalConfigService.class);
   SkinService skinService = portalContainer.getComponentInstanceOfType(SkinService.class);
   String skinName = userPortalConfigService.getDefaultPortalSkinName();
-  String loginCssPath = skinService.getSkin("portal/login", skinName).getCSSPath();
-
+  String loginCssPath = skinService.getSkin("portal/login", skinName).getCSSPath()+"?v="+ResourceRequestHandler.VERSION;
+  String brandingCss = "/rest/v1/platform/branding/css?v="+ResourceRequestHandler.VERSION;
   PasswordRecoveryService passRecoveryServ = portalContainer.getComponentInstanceOfType(PasswordRecoveryService.class);
   String forgotPasswordPath = passRecoveryServ.getPasswordRecoverURL(null, null);
 
@@ -92,7 +93,7 @@
     <title>Login</title>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>   
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <link id="brandingSkin" rel="stylesheet" type="text/css" href="/rest/v1/platform/branding/css">
+      <link id="brandingSkin" rel="stylesheet" type="text/css" href="<%=brandingCss%>">
       <link rel="shortcut icon" type="image/x-icon"  href="<%=contextPath%>/favicon.ico" />
     <link href="<%=loginCssPath%>" rel="stylesheet" type="text/css"/>
     <script type="text/javascript" src="/eXoResources/javascript/jquery-3.2.1.js"></script>
