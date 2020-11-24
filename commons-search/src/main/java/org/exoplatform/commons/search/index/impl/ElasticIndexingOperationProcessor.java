@@ -79,6 +79,8 @@ public class ElasticIndexingOperationProcessor extends IndexingOperationProcesso
 
   private boolean interrupted = false;
 
+  private boolean initialized = false;
+
   public ElasticIndexingOperationProcessor(IndexingOperationDAO indexingOperationDAO,
                                            ElasticIndexingClient elasticIndexingClient,
                                            ElasticContentRequestBuilder elasticContentRequestBuilder,
@@ -141,6 +143,10 @@ public class ElasticIndexingOperationProcessor extends IndexingOperationProcesso
    */
   @Override
   public synchronized void process() {
+    if(!this.initialized) {
+      LOG.debug("Skip ES queue processing until service is properly initialized");
+      return;
+    }
     this.interrupted = false;
     try {
       // Loop until the number of data retrieved from indexing queue is less than
@@ -705,13 +711,15 @@ public class ElasticIndexingOperationProcessor extends IndexingOperationProcesso
   @Override
   public void start() {
     try {
-      String esVersion = elasticIndexingClient.sendGetESVersion();
-      if (esVersion == null || !esVersion.startsWith(this.esVersion + ".")) {
-        LOG.error("Expected Version of ES version is " + this.esVersion + " but was " + esVersion
+      String version = elasticIndexingClient.sendGetESVersion();
+      if (version == null || !version.startsWith(this.esVersion + ".")) {
+        LOG.error("Expected Version of ES version is " + this.esVersion + " but was " + version
             + ". If this is a compatible version, you can configure 'exo.es.version.minor' to delete this error message.");
       }
       // ES index and type need to be created for all registered connectors
       initConnectors();
+
+      this.initialized = true;
     } catch (Exception e) {
       LOG.error("Error while initializing ES connectors", e);
     }
@@ -720,6 +728,10 @@ public class ElasticIndexingOperationProcessor extends IndexingOperationProcesso
   @Override
   public void stop() {
     executors.shutdownNow();
+  }
+
+  public void setInitialized(boolean initialized) {
+    this.initialized = initialized;
   }
 
   private void initConnectors() {
