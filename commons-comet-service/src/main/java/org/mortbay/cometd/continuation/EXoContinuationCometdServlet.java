@@ -68,8 +68,6 @@ public class EXoContinuationCometdServlet extends CometDServlet {
   
   private static final Log      LOG                = ExoLogger.getLogger(CometDServlet.class);
 
-  private OortConfigServlet     oConfig;
-
   private SetiServlet           setiConfig;
   
   private ExoContainer container;
@@ -86,7 +84,14 @@ public class EXoContinuationCometdServlet extends CometDServlet {
 
   protected static final String CLOUD_ID_SEPARATOR = PREFIX + "cloudIDSeparator";
   
-  public static String OORT_CONFIG_TYPE = PREFIX + "oort.configType";
+  public static String OORT_CONFIG_TYPE = "oort.configType";
+  public static String OORT_CONFIG_CLOUD = "oort.cloud";
+  public static String OORT_CONFIG_URL = "oort.cloud";
+
+  public static String EXO_OORT_CONFIG_TYPE = PREFIX + OORT_CONFIG_TYPE;
+  public static String EXO_OORT_CONFIG_CLOUD = PREFIX + OORT_CONFIG_CLOUD;
+  public static String EXO_OORT_CONFIG_URL = PREFIX + OORT_CONFIG_URL;
+
   public static String OORT_MULTICAST = "multicast";
   public static String OORT_STATIC = "static";
 
@@ -101,6 +106,8 @@ public class EXoContinuationCometdServlet extends CometDServlet {
                                 + "(:[0-9]{1,5})?" // port number :8080
                                 + "((/?)|(/[0-9a-zA-Z_!~*'().;?:@&=+$,%#-]+)+/?)$"); // uri    
   }
+
+  private ServletConfig servletConfig;
 
   public void init(ServletConfig config) throws ServletException {
     originConfig = config;
@@ -137,12 +144,25 @@ public class EXoContinuationCometdServlet extends CometDServlet {
       }
 
       String configType = getInitParameter(OORT_CONFIG_TYPE);
-      if (OORT_STATIC.equals(configType)) {
-        oConfig = new OortStaticConfig();
+      LOG.info("Cometd configured with type {}", configType);
+
+      if (clusterEnabled) {
+        if (OORT_MULTICAST.equals(configType)) {
+          OortConfigServlet oConfig = new OortMulticastConfig();
+          oConfig.init(servletConfig);
+        } else if (OORT_STATIC.equals(configType)) {
+          LOG.info("Cometd configured with cloud {}", getInitParameter(OORT_CONFIG_CLOUD));
+
+          OortConfigServlet oConfig = new OortStaticConfig();
+          oConfig.init(servletConfig);
+        } else {
+          LOG.warn("No valid parameter {} value was set ({}), cometd initialization will fail", EXO_OORT_CONFIG_TYPE, configType);
+        }
       } else {
-        oConfig = new OortMulticastConfig();
+        PropertyManager.setProperty(EXO_OORT_CONFIG_CLOUD, "");
+        OortConfigServlet oConfig = new OortStaticConfig();
+        oConfig.init(servletConfig);
       }
-      oConfig.init(servletConfig);
 
       setiConfig = new SetiServlet();
       setiConfig.init(servletConfig);
@@ -190,14 +210,18 @@ public class EXoContinuationCometdServlet extends CometDServlet {
   }
 
   @Override
+  public String getInitParameter(String name) {
+    return getServletConfig().getInitParameter(name);
+  }
+
+  @Override
   public ServletConfig getServletConfig() {
     EXoContinuationBayeux bayeux = getBayeux();
-    ServletConfig config = bayeux.getServletConfig();
-    if (config == null) {
-      config = new ServletConfigWrapper(originConfig);
-      bayeux.setServletConfig(config);
+    if (servletConfig == null) {
+      servletConfig = new ServletConfigWrapper(originConfig);
+      bayeux.setServletConfig(servletConfig);
     }
-    return config;
+    return servletConfig;
   }
 
   public void setContainer(ExoContainer container) {
@@ -305,9 +329,13 @@ public class EXoContinuationCometdServlet extends CometDServlet {
 
     @Override
     public String getInitParameter(String name) {
-      String value = PropertyManager.getProperty(PREFIX + name);
+      String propertyName = PREFIX + name;
+      String value = PropertyManager.getProperty(propertyName);
+
+      LOG.debug("Reading cometd property {} from JVM properties, value = {}", propertyName, value);
       if (value == null) {
         value = delegate.getInitParameter(name);
+        LOG.debug("Reading cometd property {} from Servlet init params, value = {}", propertyName, value);
       }
       return value;
     }
