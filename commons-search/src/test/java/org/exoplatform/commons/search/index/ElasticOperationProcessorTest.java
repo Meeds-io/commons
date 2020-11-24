@@ -106,6 +106,7 @@ public class ElasticOperationProcessorTest {
     elasticIndexingOperationProcessor = new ElasticIndexingOperationProcessor(indexingOperationDAO, elasticIndexingClient, elasticContentRequestBuilder, auditTrail, entityManagerService, null, initParams);
     initElasticServiceConnector();
     initElasticContentRequestBuilder();
+    elasticIndexingOperationProcessor.setInitialized(true);
   }
 
   private void initElasticServiceConnector() {
