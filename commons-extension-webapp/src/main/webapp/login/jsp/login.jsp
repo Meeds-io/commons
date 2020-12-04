@@ -78,6 +78,7 @@
   //
   String uri = (String)request.getAttribute("org.gatein.portal.login.initial_uri");
   boolean error = request.getAttribute("org.gatein.portal.login.error") != null;
+  boolean manyUsersWithSameEmailError = request.getAttribute("org.gatein.portal.manyUsersWithSameEmail.error") != null;
   String errorParam = (String)request.getParameter(org.exoplatform.web.login.LoginError.ERROR_PARAM);
   LoginError errorData = null;
   if (errorParam != null) {
@@ -110,7 +111,7 @@
 	       <p class="brandingComanyClass"> <%=companyName%> </p>
 				<div class="titleLogin">
 					<%/*Begin form*/%>
-          <% if (error || errorData != null) {
+          <% if (error || errorData != null ) {
               if (errorData != null) {
 						if (org.exoplatform.web.login.LoginError.DISABLED_USER_ERROR == errorData.getCode()) {
         	 %>
@@ -121,6 +122,11 @@
           <div class="signinFail"><i class="uiIconError"></i><%=res.getString("portal.login.SigninFail")%></div>          
           <%  }
              }%>
+			 
+		  <% if (manyUsersWithSameEmailError) {%>          
+			   <div class="signinFail"><i class="uiIconError"></i><%=res.getString("portal.login.ManyUsersWithSameEmail")%></div>          
+          <% } %>
+			 
 				</div>
         <div class="centerLoginContent">
           <form name="loginForm" action="<%= contextPath + "/login"%>" method="post" style="margin: 0px;">
