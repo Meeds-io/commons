@@ -76,6 +76,7 @@
   String forgotPasswordPath = passRecoveryServ.getPasswordRecoverURL(null, null);
 
   //
+  String email = request.getParameter("email") != null ? request.getParameter("email") : "";
   String uri = (String)request.getAttribute("org.gatein.portal.login.initial_uri");
   boolean error = request.getAttribute("org.gatein.portal.login.error") != null;
   boolean manyUsersWithSameEmailError = request.getAttribute("org.gatein.portal.manyUsersWithSameEmail.error") != null;
@@ -138,7 +139,7 @@
 
                 <div class="userCredentials">
                   <span class="iconUser"></span>
-                  <input  tabindex="1" id="username" name="username" type="text" placeholder="<%=res.getString("portal.login.Username")%>">
+                  <input  tabindex="1" id="username" name="username" type="text" value="<%=email%>" placeholder="<%=res.getString("portal.login.Username")%>">
                 </div>
                 <div class="userCredentials">
                   <span class="iconPswrd"></span>
@@ -152,12 +153,12 @@
                     </label>
 				</div>
                 <script type="text/javascript">
-                    $("div.rememberContent").click(function()
-                    {
-                        var input = $(this).find("#rememberme");
-                        var remembermeOpt = input.attr("value") == "true" ? "false" : "true";
-                        input.attr("value", remembermeOpt);
-                    });
+                  $("div.rememberContent").click(function()
+                  {
+                     var input = $(this).find("#rememberme");
+                     var remembermeOpt = input.attr("value") == "true" ? "false" : "true";
+                     input.attr("value", remembermeOpt);
+                  });
                 </script>
 				<div id="UIPortalLoginFormAction" class="loginButton">
 					<button class="button" tabindex="4"  onclick="login();"><%=res.getString("portal.login.Signin")%></button>
