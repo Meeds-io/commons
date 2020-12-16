@@ -76,7 +76,7 @@
   if(skin != null) {
     loginCssPath = skin.getCSSPath()+"?v="+ResourceRequestHandler.VERSION;
   } else {
-    loginCssPath = skinService.getSkin("portal/login", SkinService.DEFAULT_SKIN).getCSSPath()+"?v="+ResourceRequestHandler.VERSION;
+    loginCssPath = skinService.getSkin("portal/login", "Enterprise").getCSSPath()+"?v="+ResourceRequestHandler.VERSION;
   }
   String brandingCss = "/rest/v1/platform/branding/css?v="+ResourceRequestHandler.VERSION;
   PasswordRecoveryService passRecoveryServ = portalContainer.getComponentInstanceOfType(PasswordRecoveryService.class);

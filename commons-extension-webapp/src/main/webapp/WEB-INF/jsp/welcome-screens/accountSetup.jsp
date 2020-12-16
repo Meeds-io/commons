@@ -58,7 +58,7 @@
   if(skin != null) {
     cssPath = skin.getCSSPath()+"?v="+ResourceRequestHandler.VERSION;
   } else {
-    cssPath = skinService.getSkin("portal/AccountSetup", SkinService.DEFAULT_SKIN).getCSSPath()+"?v="+ResourceRequestHandler.VERSION;
+    cssPath = skinService.getSkin("portal/AccountSetup", "Enterprise").getCSSPath()+"?v="+ResourceRequestHandler.VERSION;
   }
 %>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
