@@ -17,14 +17,12 @@ import org.exoplatform.services.log.Log;
 public class DlpJob implements InterruptableJob {
   private static final Log LOGGER = ExoLogger.getExoLogger(DlpJob.class);
   
-  private static final String DLP_FEATURE = "dlp";
-
   private DlpOperationProcessor dlpOperationProcessor;
 
   @Override
   public void execute(JobExecutionContext context) throws JobExecutionException {
     ExoFeatureService featureService = CommonsUtils.getService(ExoFeatureService.class);
-    if (featureService.isActiveFeature(DLP_FEATURE)) {
+    if (featureService.isActiveFeature(DlpOperationProcessor.DLP_FEATURE)) {
       LOGGER.debug("Running dlp job");
       getDlpOperationProcessor().process();
     }
