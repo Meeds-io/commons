@@ -64,20 +64,20 @@ public class DlpOperationProcessorImpl extends DlpOperationProcessor implements 
       } while (processedOperations >= batchNumber);
     } finally {
       if (this.interrupted) {
-        LOGGER.info("Dlp queue processing interruption done");
+        LOGGER.debug("Dlp queue processing interruption done");
       }
     }
   }
 
   @Override
   public void interrupt() {
-    LOGGER.info("Dlp queue processing has been interrupted. Please wait until the service exists cleanly...");
+    LOGGER.debug("Dlp queue processing has been interrupted. Please wait until the service exists cleanly...");
     this.interrupted = true;
   }
 
   private boolean isInterrupted() {
     if (Thread.currentThread().isInterrupted()) {
-      LOGGER.info("Thread running dlp queue processing has been interrupted. Please wait until the service exists cleanly...");
+      LOGGER.debug("Thread running dlp queue processing has been interrupted. Please wait until the service exists cleanly...");
       this.interrupted = true;
     }
     return this.interrupted;
