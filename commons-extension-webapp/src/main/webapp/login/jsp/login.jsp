@@ -36,6 +36,7 @@
 <%@ page import="org.exoplatform.portal.branding.BrandingService"%>
 <%@ page import="java.util.*" %>
 <%@ page import="org.gatein.portal.controller.resource.ResourceRequestHandler" %>
+<%@ page import="org.exoplatform.portal.resource.SkinConfig" %>
 <%@ page language="java" %>
 <%
   String contextPath = request.getContextPath() ;
@@ -70,7 +71,13 @@
   UserPortalConfigService userPortalConfigService = portalContainer.getComponentInstanceOfType(UserPortalConfigService.class);
   SkinService skinService = portalContainer.getComponentInstanceOfType(SkinService.class);
   String skinName = userPortalConfigService.getDefaultPortalSkinName();
-  String loginCssPath = skinService.getSkin("portal/login", skinName).getCSSPath()+"?v="+ResourceRequestHandler.VERSION;
+  SkinConfig skin = skinService.getSkin("portal/login", skinName);
+  String loginCssPath = "";
+  if(skin != null) {
+    loginCssPath = skin.getCSSPath()+"?v="+ResourceRequestHandler.VERSION;
+  } else {
+    loginCssPath = skinService.getSkin("portal/login", "Enterprise").getCSSPath()+"?v="+ResourceRequestHandler.VERSION;
+  }
   String brandingCss = "/rest/v1/platform/branding/css?v="+ResourceRequestHandler.VERSION;
   PasswordRecoveryService passRecoveryServ = portalContainer.getComponentInstanceOfType(PasswordRecoveryService.class);
   String forgotPasswordPath = passRecoveryServ.getPasswordRecoverURL(null, null);
