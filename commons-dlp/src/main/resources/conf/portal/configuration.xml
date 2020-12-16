@@ -55,8 +55,8 @@
           <property name="groupName" value="Dlp"/>
           <property name="job" value="org.exoplatform.commons.dlp.job.DlpJob"/>
           <property name="repeatCount" value="0"/>
-          <property name="period" value="${exo.dlp.job.period:5000}"/><!-- default 5 seconds -->
-          <property name="startTime" value="+6000"/><!-- start after 1 minute delay -->
+          <property name="period" value="${exo.dlp.job.period:60000}"/><!-- default 1 minute -->
+          <property name="startTime" value="+60000"/><!-- start after 1 minute delay -->
           <property name="endTime" value=""/>
         </properties-param>
       </init-params>
