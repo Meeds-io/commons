@@ -3,6 +3,8 @@
 <%@ page import="org.exoplatform.services.resources.ResourceBundleService"%>
 <%@ page import="org.exoplatform.portal.config.UserPortalConfigService" %>
 <%@ page import="org.exoplatform.portal.resource.SkinService"%>
+<%@ page import="org.gatein.portal.controller.resource.ResourceRequestHandler" %>
+<%@ page import="org.exoplatform.portal.resource.SkinConfig" %>
 
 <%
     /**
@@ -51,7 +53,13 @@
   UserPortalConfigService userPortalConfigService = portalContainer.getComponentInstanceOfType(UserPortalConfigService.class);
   String skinName = userPortalConfigService.getDefaultPortalSkinName();
   SkinService skinService = portalContainer.getComponentInstanceOfType(SkinService.class);
-  String cssPath = skinService.getSkin("portal/AccountSetup", skinName).getCSSPath();
+  SkinConfig skin = skinService.getSkin("portal/AccountSetup", skinName);
+  String cssPath = "";
+  if(skin != null) {
+    cssPath = skin.getCSSPath()+"?v="+ResourceRequestHandler.VERSION;
+  } else {
+    cssPath = skinService.getSkin("portal/AccountSetup", "Enterprise").getCSSPath()+"?v="+ResourceRequestHandler.VERSION;
+  }
 %>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="<%=lang%>" lang="<%=lang%>">
