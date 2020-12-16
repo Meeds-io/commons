@@ -1,5 +1,7 @@
 package org.exoplatform.commons.dlp.queue.impl;
 
+import java.util.List;
+
 import org.apache.commons.lang.StringUtils;
 
 import org.exoplatform.commons.dlp.dao.DlpOperationDAO;
@@ -23,8 +25,11 @@ public class QueueDlpServiceImpl implements QueueDlpService {
     if (StringUtils.isBlank(id)) {
       throw new IllegalArgumentException("Entity id is null");
     }
-    dlpOperationDAO.create(getDlpOperation(connectorName, id));
-    LOGGER.info("Entity with id: " + id + " and connector: " + connectorName + " has been added to Dlp Queue"); 
+    List<DlpOperation> dlpOperations = dlpOperationDAO.findByEntityIdAndType(id, connectorName);
+    if (dlpOperations.size() == 0) {
+      dlpOperationDAO.create(getDlpOperation(connectorName, id));
+      LOGGER.info("Entity with id: {} and connector: {} has been added to Dlp Queue", id, connectorName);
+    }
   }
   
   private DlpOperation getDlpOperation (String connector, String entityId) {

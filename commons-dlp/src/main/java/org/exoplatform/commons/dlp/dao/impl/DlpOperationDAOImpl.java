@@ -17,14 +17,15 @@ public class DlpOperationDAOImpl extends GenericDAOJPAImpl<DlpOperation, Long> i
               .setMaxResults(maxResults)
               .getResultList();
   }
-
+  
   @Override
   @ExoTransactional
-  public void deleteAllDlpOperationsHavingIdLessThanOrEqual(long id) {
-    getEntityManager()
-        .createNamedQuery("DlpOperation.deleteAllDlpOperationsHavingIdLessThanOrEqual")
-        .setParameter("id", id)
-        .executeUpdate();
+  public List<DlpOperation> findByEntityIdAndType(String entityId, String entityType) {
+      return getEntityManager()
+              .createNamedQuery("DlpOperation.findByEntityIdAndType", DlpOperation.class)
+              .setParameter("entityId", entityId)
+              .setParameter("entityType", entityType)
+              .getResultList();
   }
 
 }

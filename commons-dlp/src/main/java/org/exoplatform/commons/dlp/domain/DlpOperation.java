@@ -21,8 +21,8 @@ import org.exoplatform.commons.api.persistence.ExoEntity;
 @ExoEntity
 @Table(name = "DLP_QUEUE")
 @NamedQueries({
-    @NamedQuery(name = "DlpOperation.deleteAllDlpOperationsHavingIdLessThanOrEqual",
-        query = "DELETE FROM DlpOperation q WHERE q.id <= :id"),
+    @NamedQuery(name = "DlpOperation.findByEntityIdAndType",
+        query = "SELECT q FROM DlpOperation q WHERE q.entityId = :entityId and q.entityType = :entityType"),
     @NamedQuery(name = "DlpOperation.findAllFirst",
         query = "SELECT q FROM DlpOperation q ORDER BY q.id")
 })

@@ -9,9 +9,9 @@
   <artifactId>commons-dlp</artifactId>
   <packaging>jar</packaging>
   <name>eXo PLF:: Commons - Commons Dlp</name>
-  <properties>
-    <exo.test.coverage.ratio>0.8</exo.test.coverage.ratio>
-  </properties>
+  <!--properties>
+    <exo.test.coverage.ratio>0.44</exo.test.coverage.ratio>
+  </properties-->
   <dependencies>
     <!-- PLF dependencies -->
     <dependency>
