@@ -14,6 +14,8 @@ public abstract class DlpServiceConnector extends BaseComponentPlugin {
   private String type; //type name
   private String displayName; //for use when rendering
   private boolean enable = true;
+  protected static final String DLP_FEATURE = "dlp";
+  protected static final String DLP_POSITIVE_DETECTION = "dlpPositiveDetection ";
   
   /**
    * Initializes a dlp service connector. The constructor is default that connectors must implement.

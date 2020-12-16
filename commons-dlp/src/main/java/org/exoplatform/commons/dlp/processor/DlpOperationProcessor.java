@@ -10,6 +10,8 @@ import org.exoplatform.services.log.Log;
 public abstract class DlpOperationProcessor {
 
   private static final Log LOGGER = ExoLogger.getExoLogger(DlpOperationProcessor.class);
+  
+  public static final String DLP_FEATURE = "dlp";
 
   private Map<String, DlpServiceConnector> connectors = new HashMap<String, DlpServiceConnector>();
 
