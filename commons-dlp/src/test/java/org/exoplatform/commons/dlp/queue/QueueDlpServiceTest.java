@@ -29,7 +29,7 @@ public class QueueDlpServiceTest {
   }
 
   @Test
-  public void init_ifInitOperation_initIndexingQueueCreated() {
+  public void testAddToQueue() {
     //Given
     DlpOperation dlpOperation = new DlpOperation("100", "file");
     //When
