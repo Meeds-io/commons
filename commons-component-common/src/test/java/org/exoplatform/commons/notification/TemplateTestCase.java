@@ -58,6 +58,19 @@ public class TemplateTestCase extends BaseTest {
                                .digestMore("$LAST3_USERS and $COUNT more have joined $PORTAL_NAME.");
   }
 
+  public void testNullParameterValue() throws Exception {
+    Element instantly = makeDigestMore().addNewLine(true);
+    ElementVisitor visitor = SimpleElementVistior.instance();
+    TemplateContext context = new TemplateContext();
+
+    context.put("$LAST3_USERS", "root,mary,demo,jame");
+    context.put("$COUNT", "4");
+    context.put("$PORTAL_NAME", null);
+    String got = instantly.accept(visitor.with(context)).out();
+
+    assertEquals("root,mary,demo,jame and 4 more have joined .<br/>", got);
+  }
+
   public void testInstantlyMail() throws Exception {
     Element instantly = makeDigestMore().addNewLine(true);
     ElementVisitor visitor = SimpleElementVistior.instance();
