@@ -51,11 +51,15 @@ public class SimpleTemplateTransformer implements TemplateTransformer {
     //
     for (String key : context.keySet()) {
       newKey = key.indexOf("$") == 0 ? key : "$" + key;
-      if (context.get(key).toString().startsWith("$UIShareDocuments")) {
-        String localized = context.get(key).toString().replace("$", "");
+      Object value = context.get(key);
+      if (value == null) {
+        value = "";
+      }
+      if (value.toString().startsWith("$UIShareDocuments")) {
+        String localized = value.toString().replace("$", "");
         got = got.replace(newKey, resourceBundle.getString(localized));
       } else {
-        got = got.replace(newKey, (String) context.get(key));
+        got = got.replace(newKey, (String) value);
       }
     }
     return got;
