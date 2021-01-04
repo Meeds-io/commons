@@ -37,6 +37,7 @@ public class Document {
   private Set<String> permissions;
   private List<String> tags;
   private Map<String, String> fields;
+  private Map<String, Collection<String>> listFields;
   private String[] sites;
 
   public Document() {
@@ -170,6 +171,10 @@ public class Document {
     this.sites = sites;
   }
 
+  public Map<String, Collection<String>> getListFields() {
+    return listFields;
+  }
+
   public String toJSON() {
     String json;
     JSONObject obj = new JSONObject();
@@ -195,8 +200,28 @@ public class Document {
         obj.put(fieldName, getFields().get(fieldName));
       }
     }
+    if (listFields != null) {
+      for (Map.Entry<String, Collection<String>> listFieldEntry : listFields.entrySet()) {
+        obj.put(listFieldEntry.getKey(), new org.json.JSONArray(listFieldEntry.getValue()));
+      }
+    }
     json = obj.toJSONString();
     return json;
+  }
+
+  public Document addListField(String key, Collection<String> values) {
+    if (StringUtils.isBlank(key)) {
+      throw new IllegalArgumentException("Key is null");
+    }
+    if (this.listFields == null) {
+      this.listFields = new HashMap<>();
+    }
+    this.listFields.put(key, values);
+    return this;
+  }
+
+  public void setListFields(Map<String, Collection<String>> listFields) {
+    this.listFields = listFields;
   }
 
   public Document addField(String key, String value) {
