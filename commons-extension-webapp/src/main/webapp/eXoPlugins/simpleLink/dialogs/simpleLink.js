@@ -38,6 +38,8 @@ CKEDITOR.dialog.add( 'simpleLinkDialog', function( editor ) {
                                 url = "http://" + url;
                             }
                             element.setAttribute("href", url);
+                            element.setAttribute("data-cke-saved-href", url);
+
                         },
                         onLoad : function () {
                             this.getInputElement().$.className = ''; 
