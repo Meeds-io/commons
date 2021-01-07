@@ -5,6 +5,6 @@ import org.exoplatform.commons.dlp.domain.DlpFileEntity;
 
 public interface DlpFileDAO extends GenericDAO<DlpFileEntity, Long> {
 
-    DlpFileEntity findByFileId(String fileId);
+    DlpFileEntity findFileByUUID(String uuid);
 
 }

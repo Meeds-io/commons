@@ -42,6 +42,6 @@ public class DlpFileServiceImpl implements DlpFileService {
 
     @Override
     public DlpFileEntity getDlpFileByUUID(String uuid) {
-        return dlpFileDAO.findByFileId(uuid);
+        return dlpFileDAO.findFileByUUID(uuid);
     }
 }

@@ -10,7 +10,7 @@ import javax.persistence.TypedQuery;
 public class DlpFileDAOImpl extends GenericDAOJPAImpl<DlpFileEntity, Long> implements DlpFileDAO {
 
     @Override
-    public DlpFileEntity findByFileId(String uuid) {
+    public DlpFileEntity findFileByUUID(String uuid) {
         TypedQuery<DlpFileEntity> query = getEntityManager()
                 .createNamedQuery("DlpFileEntity.getDlpFileByUUID", DlpFileEntity.class)
                 .setParameter("uuid", uuid);
