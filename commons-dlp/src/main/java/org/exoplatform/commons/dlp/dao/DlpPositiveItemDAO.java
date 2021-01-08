@@ -5,6 +5,6 @@ import org.exoplatform.commons.dlp.domain.DlpPositiveItemEntity;
 
 public interface DlpPositiveItemDAO extends GenericDAO<DlpPositiveItemEntity, Long> {
 
-    DlpPositiveItemEntity findItemByUUID(String uuid);
+    DlpPositiveItemEntity findDlpPositiveItemByReference(String itemReference);
 
 }

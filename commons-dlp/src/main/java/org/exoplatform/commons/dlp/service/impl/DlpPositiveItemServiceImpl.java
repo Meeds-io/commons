@@ -21,17 +21,17 @@ public class DlpPositiveItemServiceImpl implements DlpPositiveItemService {
 
 
     @Override
-    public List<DlpPositiveItemEntity> getDlpItems() {
+    public List<DlpPositiveItemEntity> getDlpPositivesItems() {
         return dlpPositiveItemDAO.findAll();
     }
 
     @Override
-    public void addDlpItem(DlpPositiveItemEntity dlpPositiveItemEntity) {
+    public void addDlpPositiveItem(DlpPositiveItemEntity dlpPositiveItemEntity) {
         dlpPositiveItemDAO.create(dlpPositiveItemEntity);
     }
 
     @Override
-    public void deleteDlpItem(Long itemId) {
+    public void deleteDlpPositiveItem(Long itemId) {
         DlpPositiveItemEntity dlpPositiveItemEntity = dlpPositiveItemDAO.find(itemId);
         if (dlpPositiveItemEntity != null) {
             dlpPositiveItemDAO.delete(dlpPositiveItemEntity);
@@ -41,7 +41,7 @@ public class DlpPositiveItemServiceImpl implements DlpPositiveItemService {
     }
 
     @Override
-    public DlpPositiveItemEntity getDlpItemByUUID(String uuid) {
-        return dlpPositiveItemDAO.findItemByUUID(uuid);
+    public DlpPositiveItemEntity getDlpPositiveItemByReference(String itemReference) {
+        return dlpPositiveItemDAO.findDlpPositiveItemByReference(itemReference);
     }
 }

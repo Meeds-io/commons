@@ -6,11 +6,11 @@ import java.util.List;
 
 public interface DlpPositiveItemService {
 
-    List<DlpPositiveItemEntity> getDlpItems();
+    List<DlpPositiveItemEntity> getDlpPositivesItems();
 
-    void addDlpItem(DlpPositiveItemEntity dlpPositiveItemEntity);
+    void addDlpPositiveItem(DlpPositiveItemEntity dlpPositiveItemEntity);
     
-    void deleteDlpItem(Long itemId);
+    void deleteDlpPositiveItem(Long itemId);
     
-    DlpPositiveItemEntity getDlpItemByUUID(String fileId);
+    DlpPositiveItemEntity getDlpPositiveItemByReference(String itemReference);
 }

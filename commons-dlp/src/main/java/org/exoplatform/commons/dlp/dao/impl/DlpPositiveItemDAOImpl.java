@@ -10,10 +10,10 @@ import javax.persistence.TypedQuery;
 public class DlpPositiveItemDAOImpl extends GenericDAOJPAImpl<DlpPositiveItemEntity, Long> implements DlpPositiveItemDAO {
 
     @Override
-    public DlpPositiveItemEntity findItemByUUID(String uuid) {
+    public DlpPositiveItemEntity findDlpPositiveItemByReference(String itemReference) {
         TypedQuery<DlpPositiveItemEntity> query = getEntityManager()
-                .createNamedQuery("DlpPositiveItemEntity.getDlpItemByUUID", DlpPositiveItemEntity.class)
-                .setParameter("uuid", uuid);
+                .createNamedQuery("DlpPositiveItemEntity.findDlpPositiveItemByReference", DlpPositiveItemEntity.class)
+                .setParameter("itemReference", itemReference);
 
         try {
             return query.getSingleResult();

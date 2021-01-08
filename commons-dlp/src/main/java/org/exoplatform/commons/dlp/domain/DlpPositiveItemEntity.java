@@ -13,47 +13,56 @@ import java.util.Calendar;
 @ExoEntity
 @Table(name = "DLP_POSITIVE_ITEMS")
 @NamedQueries({
-        @NamedQuery(name = "DlpPositiveItemEntity.getDlpItemByUUID",
-                query = "SELECT q FROM DlpPositiveItemEntity q WHERE q.uuid = :uuid")
+        @NamedQuery(name = "DlpPositiveItemEntity.findDlpPositiveItemByReference",
+                query = "SELECT q FROM DlpPositiveItemEntity q WHERE q.reference = :itemReference")
 })
 
 public class DlpPositiveItemEntity {
 
     @Id
-    @SequenceGenerator(name = "SEQ_ITEM_ID", sequenceName = "SEQ_ITEM_ID")
-    @GeneratedValue(strategy = GenerationType.AUTO, generator = "SEQ_ITEM_ID")
+    @SequenceGenerator(name = "SEQ_DLP_POSITIVE_ITEM_ID", sequenceName = "SEQ_DLP_POSITIVE_ITEM_ID")
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "SEQ_DLP_POSITIVE_ITEM_ID")
     @Column(name = "ITEM_ID")
     private String id;
 
-    @Column(name = "ITEM_UUID")
-    private String uuid;
+    @Column(name = "ITEM_REFERENCE")
+    private String reference;
     
+    @Column(name = "ITEM_TYPE")
+    private String type;
+
     @Column(name = "KEYWORDS")
-    private String Keywords;
+    private String keywords;
 
     @Column(name = "DETECTION_DATE")
     private Calendar detectionDate;
-
-    public void setId(String id) { this.id = id; }
-
+    
     public String getId() {
         return id;
     }
 
-    public String getUuid() {
-        return uuid;
+    public String getReference() {
+        return reference;
     }
 
-    public void setUuid(String uuid) {
-        this.uuid = uuid;
+    public void setReference(String reference) {
+        this.reference = reference;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
     }
 
     public String getKeywords() {
-        return Keywords;
+        return keywords;
     }
 
     public void setKeywords(String keywords) {
-        Keywords = keywords;
+        this.keywords = keywords;
     }
 
     public Calendar getDetectionDate() {
