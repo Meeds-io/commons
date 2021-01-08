@@ -41,13 +41,13 @@
   </component>
 
   <component>
-    <key>org.exoplatform.commons.dlp.service.DlpFileService</key>
-    <type>org.exoplatform.commons.dlp.service.impl.DlpFileServiceImpl</type>
+    <key>org.exoplatform.commons.dlp.service.DlpPositiveItemService</key>
+    <type>org.exoplatform.commons.dlp.service.impl.DlpPositiveItemServiceImpl</type>
   </component>
 
   <component>
-    <key>org.exoplatform.commons.dlp.dao.DlpFileDAO</key>
-    <type>org.exoplatform.commons.dlp.dao.impl.DlpFileDAOImpl</type>
+    <key>org.exoplatform.commons.dlp.dao.DlpPositiveItemDAO</key>
+    <type>org.exoplatform.commons.dlp.dao.impl.DlpPositiveItemDAOImpl</type>
   </component>
   
   <external-component-plugins>

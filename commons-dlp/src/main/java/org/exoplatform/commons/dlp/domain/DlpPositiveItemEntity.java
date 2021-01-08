@@ -6,26 +6,26 @@ import javax.persistence.*;
 import java.util.Calendar;
 
 /**
- * Entity for Dlp File. Created by The eXo Platform SAS Author :
+ * Entity for Dlp positive item. Created by The eXo Platform SAS Author :
  * eXoPlatform exo@exoplatform.com
  */
-@Entity(name = "DlpFileEntity")
+@Entity(name = "DlpPositiveItemEntity")
 @ExoEntity
-@Table(name = "DLP_FILES")
+@Table(name = "DLP_POSITIVE_ITEMS")
 @NamedQueries({
-        @NamedQuery(name = "DlpFileEntity.getDlpFileByUUID",
-                query = "SELECT q FROM DlpFileEntity q WHERE q.uuid = :uuid")
+        @NamedQuery(name = "DlpPositiveItemEntity.getDlpItemByUUID",
+                query = "SELECT q FROM DlpPositiveItemEntity q WHERE q.uuid = :uuid")
 })
 
-public class DlpFileEntity {
+public class DlpPositiveItemEntity {
 
     @Id
-    @SequenceGenerator(name = "SEQ_FILE_ID", sequenceName = "SEQ_FILE_ID")
-    @GeneratedValue(strategy = GenerationType.AUTO, generator = "SEQ_FILE_ID")
-    @Column(name = "FILE_ID")
+    @SequenceGenerator(name = "SEQ_ITEM_ID", sequenceName = "SEQ_ITEM_ID")
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "SEQ_ITEM_ID")
+    @Column(name = "ITEM_ID")
     private String id;
 
-    @Column(name = "FILE_UUID")
+    @Column(name = "ITEM_UUID")
     private String uuid;
     
     @Column(name = "KEYWORDS")
