@@ -39,6 +39,16 @@
     <key>org.exoplatform.commons.dlp.processor.DlpOperationProcessor</key>
     <type>org.exoplatform.commons.dlp.processor.impl.DlpOperationProcessorImpl</type>
   </component>
+
+  <component>
+    <key>org.exoplatform.commons.dlp.service.DlpPositiveItemService</key>
+    <type>org.exoplatform.commons.dlp.service.impl.DlpPositiveItemServiceImpl</type>
+  </component>
+
+  <component>
+    <key>org.exoplatform.commons.dlp.dao.DlpPositiveItemDAO</key>
+    <type>org.exoplatform.commons.dlp.dao.impl.DlpPositiveItemDAOImpl</type>
+  </component>
   
   <external-component-plugins>
     <target-component>org.exoplatform.services.scheduler.JobSchedulerService</target-component>
