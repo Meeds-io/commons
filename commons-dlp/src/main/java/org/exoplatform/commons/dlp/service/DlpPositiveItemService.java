@@ -1,12 +1,11 @@
 package org.exoplatform.commons.dlp.service;
 
 import org.exoplatform.commons.dlp.domain.DlpPositiveItemEntity;
-
-import java.util.List;
+import org.exoplatform.commons.dlp.dto.DlpPositiveItemList;
 
 public interface DlpPositiveItemService {
 
-    List<DlpPositiveItemEntity> getDlpPositivesItems();
+    DlpPositiveItemList getDlpPositivesItems(int offset, int limit) throws Exception;
 
     void addDlpPositiveItem(DlpPositiveItemEntity dlpPositiveItemEntity);
     
