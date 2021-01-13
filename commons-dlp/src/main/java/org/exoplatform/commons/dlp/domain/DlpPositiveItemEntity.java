@@ -14,7 +14,9 @@ import java.util.Calendar;
 @Table(name = "DLP_POSITIVE_ITEMS")
 @NamedQueries({
         @NamedQuery(name = "DlpPositiveItemEntity.findDlpPositiveItemByReference",
-                query = "SELECT q FROM DlpPositiveItemEntity q WHERE q.reference = :itemReference")
+                query = "SELECT q FROM DlpPositiveItemEntity q WHERE q.reference = :itemReference"),
+        @NamedQuery(name = "DlpPositiveItemEntity.getDlpPositiveItems", 
+                query = "SELECT q FROM DlpPositiveItemEntity q")
 })
 
 public class DlpPositiveItemEntity {

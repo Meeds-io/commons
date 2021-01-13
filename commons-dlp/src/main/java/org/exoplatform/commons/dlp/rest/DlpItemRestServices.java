@@ -5,7 +5,7 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.*;
 
 import org.exoplatform.common.http.HTTPStatus;
-import org.exoplatform.commons.dlp.dto.DlpPositiveItemList;
+import org.exoplatform.commons.dlp.dto.DlpPositiveItem;
 import org.exoplatform.commons.dlp.service.DlpPositiveItemService;
 import org.exoplatform.portal.config.UserACL;
 import org.exoplatform.services.log.ExoLogger;
@@ -13,6 +13,8 @@ import org.exoplatform.services.log.Log;
 import org.exoplatform.services.rest.resource.ResourceContainer;
 
 import io.swagger.annotations.*;
+
+import java.util.List;
 
 @Path("/dlp/items")
 @Api(value = "/dlp/items", description = "Manages Dlp positive items") // NOSONAR
@@ -49,8 +51,8 @@ public class DlpItemRestServices implements ResourceContainer {
         }
 
         try {
-            DlpPositiveItemList dlpPositiveItemList = dlpPositiveItemService.getDlpPositivesItems(offset, limit);
-            return Response.ok(dlpPositiveItemList).build();
+            List<DlpPositiveItem> dlpPositiveItems = dlpPositiveItemService.getDlpPositivesItems(offset, limit);
+            return Response.ok(dlpPositiveItems).build();
         } catch (Exception e) {
             LOG.error("Unknown error occurred while getting dlp positive items", e);
             return Response.serverError().build();

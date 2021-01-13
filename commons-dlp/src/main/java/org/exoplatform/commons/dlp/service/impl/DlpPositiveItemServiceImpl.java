@@ -3,44 +3,33 @@ package org.exoplatform.commons.dlp.service.impl;
 import org.exoplatform.commons.dlp.dao.DlpPositiveItemDAO;
 import org.exoplatform.commons.dlp.domain.DlpPositiveItemEntity;
 import org.exoplatform.commons.dlp.dto.DlpPositiveItem;
-import org.exoplatform.commons.dlp.dto.DlpPositiveItemList;
 import org.exoplatform.commons.dlp.service.DlpPositiveItemService;
-import org.exoplatform.commons.utils.CommonsUtils;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
-import org.exoplatform.social.core.identity.model.Identity;
-import org.exoplatform.social.core.identity.provider.OrganizationIdentityProvider;
-import org.exoplatform.social.core.manager.IdentityManager;
+import org.exoplatform.services.organization.OrganizationService;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class DlpPositiveItemServiceImpl implements DlpPositiveItemService {
 
     private final DlpPositiveItemDAO dlpPositiveItemDAO;
+    
+    private final OrganizationService organizationService;
 
     private static final Log LOG =
             ExoLogger.getLogger(DlpPositiveItemServiceImpl.class);
 
-    public DlpPositiveItemServiceImpl(DlpPositiveItemDAO dlpPositiveItemDAO) {
+    public DlpPositiveItemServiceImpl(DlpPositiveItemDAO dlpPositiveItemDAO, OrganizationService organizationService) {
         this.dlpPositiveItemDAO = dlpPositiveItemDAO;
+        this.organizationService = organizationService;
     }
 
 
     @Override
-    public DlpPositiveItemList getDlpPositivesItems(int offset, int limit) throws Exception {
-        DlpPositiveItemList dlpPositiveItemList = new DlpPositiveItemList();
-        List<DlpPositiveItemEntity> dlpPositiveItemEntities = dlpPositiveItemDAO.findAll();
-        if (limit <= 0) {
-            limit = dlpPositiveItemEntities.size();
-        }
-        dlpPositiveItemEntities = dlpPositiveItemEntities.stream().skip(offset).limit(limit).collect(Collectors.toList());
-        List<DlpPositiveItem> dlpPositiveItems = fillDlpPositiveItemFromEntities(dlpPositiveItemEntities);
-        dlpPositiveItemList.setDlpPositiveItems(dlpPositiveItems);
-        dlpPositiveItemList.setSize(dlpPositiveItemEntities.size());
-        dlpPositiveItemList.setLimit(limit);
-        return dlpPositiveItemList;
+    public List<DlpPositiveItem> getDlpPositivesItems(int offset, int limit) throws Exception {
+        List<DlpPositiveItemEntity> dlpPositiveItemEntities = dlpPositiveItemDAO.getDlpPositiveItems(offset, limit);
+        return fillDlpPositiveItemFromEntities(dlpPositiveItemEntities);
     }
 
     @Override
@@ -72,9 +61,7 @@ public class DlpPositiveItemServiceImpl implements DlpPositiveItemService {
             dlpPositiveItem.setType(dlpPositiveItemEntity.getType());
             dlpPositiveItem.setKeywords(dlpPositiveItemEntity.getKeywords());
             dlpPositiveItem.setAuthor(dlpPositiveItemEntity.getAuthor());
-            IdentityManager identityManager = CommonsUtils.getService(IdentityManager.class);
-            Identity userIdentity = identityManager.getOrCreateIdentity(OrganizationIdentityProvider.NAME, dlpPositiveItemEntity.getAuthor());
-            dlpPositiveItem.setAuthorFullName(userIdentity.getProfile().getFullName());
+            dlpPositiveItem.setAuthorFullName(organizationService.getUserHandler().findUserByName(dlpPositiveItemEntity.getAuthor()).getDisplayName());
             dlpPositiveItem.setTitle(dlpPositiveItemEntity.getTitle());
             dlpPositiveItem.setDetectionDate(dlpPositiveItemEntity.getDetectionDate().getTimeInMillis());
             dlpPositiveItems.add(dlpPositiveItem);
