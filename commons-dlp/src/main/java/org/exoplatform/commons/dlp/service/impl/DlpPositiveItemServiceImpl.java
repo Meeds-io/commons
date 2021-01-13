@@ -52,6 +52,11 @@ public class DlpPositiveItemServiceImpl implements DlpPositiveItemService {
         return dlpPositiveItemDAO.findDlpPositiveItemByReference(itemReference);
     }
 
+    @Override
+    public Long getDlpPositiveItemsCount() {
+        return dlpPositiveItemDAO.count();
+    }
+
 
     private List<DlpPositiveItem> fillDlpPositiveItemFromEntities(List<DlpPositiveItemEntity> dlpPositiveItemEntities) throws Exception {
         List<DlpPositiveItem> dlpPositiveItems = new ArrayList<>();

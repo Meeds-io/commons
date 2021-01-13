@@ -6,6 +6,7 @@ import javax.ws.rs.core.*;
 
 import org.exoplatform.common.http.HTTPStatus;
 import org.exoplatform.commons.dlp.dto.DlpPositiveItem;
+import org.exoplatform.commons.dlp.dto.DlpPositiveItemList;
 import org.exoplatform.commons.dlp.service.DlpPositiveItemService;
 import org.exoplatform.portal.config.UserACL;
 import org.exoplatform.services.log.ExoLogger;
@@ -52,7 +53,13 @@ public class DlpItemRestServices implements ResourceContainer {
 
         try {
             List<DlpPositiveItem> dlpPositiveItems = dlpPositiveItemService.getDlpPositivesItems(offset, limit);
-            return Response.ok(dlpPositiveItems).build();
+            Long size = dlpPositiveItemService.getDlpPositiveItemsCount();
+            DlpPositiveItemList dlpPositiveItemList = new DlpPositiveItemList();
+            dlpPositiveItemList.setDlpPositiveItems(dlpPositiveItems);
+            dlpPositiveItemList.setOffset(offset);
+            dlpPositiveItemList.setLimit(limit);
+            dlpPositiveItemList.setSize(size.intValue());
+            return Response.ok(dlpPositiveItemList).build();
         } catch (Exception e) {
             LOG.error("Unknown error occurred while getting dlp positive items", e);
             return Response.serverError().build();
