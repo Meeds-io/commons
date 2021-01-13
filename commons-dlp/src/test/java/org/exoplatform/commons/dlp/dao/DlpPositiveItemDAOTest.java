@@ -72,5 +72,25 @@ public class DlpPositiveItemDAOTest extends AbstractDAOTest {
         //Then
         assertNotNull(dlpPositiveItemDAO.findDlpPositiveItemByReference( "ref1"));
     }
+
+    @Test
+    public void testDeleteDlpPositiveItemByReference() {
+
+        //When
+        DlpPositiveItemEntity dlpPositiveItemEntity = new DlpPositiveItemEntity();
+        dlpPositiveItemEntity.setType("file");
+        dlpPositiveItemEntity.setTitle("file");
+        dlpPositiveItemEntity.setReference("ref1");
+        dlpPositiveItemDAO.create(dlpPositiveItemEntity);
+
+        //Then
+        assertEquals(1, dlpPositiveItemDAO.count().intValue());
+        
+        //when
+        dlpPositiveItemDAO.delete(dlpPositiveItemEntity);
+
+        //Then
+        assertEquals(0, dlpPositiveItemDAO.count().intValue());
+    }
 }
 
