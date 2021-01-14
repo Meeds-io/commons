@@ -234,7 +234,7 @@ public class ElasticSearchServiceConnector extends SearchServiceConnector {
     esQuery.append("                  {\n");
     esQuery.append("                   \"bool\" : {\n");
     esQuery.append("                     \"should\" : [\n");
-    esQuery.append("                       \"term\" : { \"_id\" : \""+id+"\" }\n");
+    esQuery.append("                       { \"term\" : { \"_id\" : \""+id+"\" } }\n");
     esQuery.append("                     ]\n");
     esQuery.append("                   }\n");
     esQuery.append("                  }\n");
