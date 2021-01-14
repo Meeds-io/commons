@@ -24,7 +24,9 @@ import org.exoplatform.commons.api.persistence.ExoEntity;
     @NamedQuery(name = "DlpOperation.findByEntityIdAndType",
         query = "SELECT q FROM DlpOperation q WHERE q.entityId = :entityId and q.entityType = :entityType"),
     @NamedQuery(name = "DlpOperation.findAllFirst",
-        query = "SELECT q FROM DlpOperation q ORDER BY q.id")
+        query = "SELECT q FROM DlpOperation q ORDER BY q.id"),
+    @NamedQuery(name = "DlpOperation.deleteByEntityId",
+      query = "DELETE FROM DlpOperation q WHERE q.entityId = :entityId")
 })
 public class DlpOperation implements Serializable {
 

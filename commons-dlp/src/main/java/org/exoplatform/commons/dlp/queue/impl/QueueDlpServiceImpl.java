@@ -27,6 +27,16 @@ public class QueueDlpServiceImpl implements QueueDlpService {
     LOGGER.debug("Entity with id: {} and connector: {} has been added to Dlp Queue", id, connectorName);
   }
   
+  @Override
+  public void removeAllItemFromQueue(String id) {
+    if (StringUtils.isBlank(id)) {
+      throw new IllegalArgumentException("Entity id is null");
+    }
+    dlpOperationDAO.deleteByEntityId(id);
+    LOGGER.debug("All entries for item id [} have been deleted from DLP queue", id);
+  
+  }
+  
   private DlpOperation getDlpOperation (String connector, String entityId) {
     DlpOperation dlpOperation = new DlpOperation();
     dlpOperation.setEntityType(connector);

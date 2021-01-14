@@ -8,5 +8,12 @@ public interface QueueDlpService {
    * @param id id of the entity
    */
   void addToQueue(String connectorName, String id);
-
+  
+  /**
+   * Remove from queue all dlp operation for the provided id
+   * @param id id of the entity
+   */
+  void removeAllItemFromQueue(String id);
+  
+  
 }

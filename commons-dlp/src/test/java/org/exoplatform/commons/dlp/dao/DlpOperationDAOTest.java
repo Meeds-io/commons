@@ -80,6 +80,26 @@ public class DlpOperationDAOTest extends AbstractDAOTest {
     assertEquals(dlpOperationDAO.findAllFirst(2).size(), 2);
   }
   
+  @Test
+  public void testDeleteByEntityId() {
+    
+    //Given
+    assertEquals(dlpOperationDAO.findAll().size(), 0);
+    assertEquals(dlpOperationDAO.findAllFirst(2).size(), 0);
+    
+    //When
+    createDlpOperations();
+    createDlpOperations();
+    
+    //Then
+    assertEquals(dlpOperationDAO.findAll().size(),6);
+    assertEquals(dlpOperationDAO.findByEntityIdAndType("22","file").size(), 2);
+    dlpOperationDAO.deleteByEntityId("22");
+    assertEquals(dlpOperationDAO.findByEntityIdAndType("22","file").size(), 0);
+    assertEquals(dlpOperationDAO.findAll().size(),4);
+  
+  }
+  
   private void createDlpOperations () {
     DlpOperation dlpOperation = new DlpOperation();
     dlpOperation.setEntityType("file");
@@ -94,5 +114,7 @@ public class DlpOperationDAOTest extends AbstractDAOTest {
     dlpOperation.setEntityId("100");
     dlpOperationDAO.create(dlpOperation);
   }
+  
+  
 }
 

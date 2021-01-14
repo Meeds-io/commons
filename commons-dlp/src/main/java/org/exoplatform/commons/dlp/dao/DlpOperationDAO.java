@@ -10,6 +10,10 @@ public interface DlpOperationDAO extends GenericDAO<DlpOperation, Long> {
   List<DlpOperation> findAllFirst(Integer maxResults);
   
   List<DlpOperation> findByEntityIdAndType(String entityId, String entityType);
-
+  
+  int deleteByEntityId(String entityId);
+  
+  
+  
 }
 

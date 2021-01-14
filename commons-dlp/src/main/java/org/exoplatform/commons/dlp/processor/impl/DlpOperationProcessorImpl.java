@@ -95,10 +95,6 @@ public class DlpOperationProcessorImpl extends DlpOperationProcessor implements 
     // <Operation, <Type, List<DlpOperation>>>
     for (DlpOperation dlpOperation : dlpOperations) {
       putDlpOperationInMemoryQueue(dlpOperation, dlpQueueSorted);
-      // Get the max ID of DlpOperation of the bulk
-      if (maxDlpOperationId < dlpOperation.getId()) {
-        maxDlpOperationId = dlpOperation.getId();
-      }
     }
 
     // Process dlp operation
