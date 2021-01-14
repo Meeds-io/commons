@@ -20,8 +20,8 @@ import java.util.Calendar;
 public class DlpPositiveItemEntity {
 
     @Id
-    @SequenceGenerator(name = "SEQ_DLP_POSITIVE_ITEM_ID", sequenceName = "SEQ_DLP_POSITIVE_ITEM_ID")
-    @GeneratedValue(strategy = GenerationType.AUTO, generator = "SEQ_DLP_POSITIVE_ITEM_ID")
+    @SequenceGenerator(name = "SEQ_DLP_POSITIVE_ITEMS_ID", sequenceName = "SEQ_DLP_POSITIVE_ITEMS_ID")
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "SEQ_DLP_POSITIVE_ITEMS_ID")
     @Column(name = "ITEM_ID")
     private String id;
 
