@@ -103,4 +103,16 @@ public abstract class SearchServiceConnector extends BaseComponentPlugin {
    * @LevelAPI Experimental 
    */
   public abstract Collection<SearchResult> search(SearchContext context, String query, Collection<String> sites, int offset, int limit, String sort, String order);
+  
+  /**
+   * Returns the status of the indexation for the id in parameter
+   * The connectors must implement this search method, with the parameters below.
+   * @param context The search context.
+   * @param id The id of the element
+   * @return true if the document is indexed
+   * @LevelAPI Experimental
+   */
+  public boolean isIndexed(SearchContext context, String id) {
+    throw new UnsupportedOperationException();
+  }
 }

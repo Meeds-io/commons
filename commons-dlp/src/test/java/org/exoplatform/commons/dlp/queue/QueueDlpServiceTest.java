@@ -37,4 +37,20 @@ public class QueueDlpServiceTest {
     //Then
     verify(dlpOperationDAO, times(1)).create(dlpOperation);
   }
+  
+  @Test
+  public void testRemoveFromQueue() {
+    //Given
+    DlpOperation dlpOperation = new DlpOperation("100", "file");
+    DlpOperation dlpOperation2 = new DlpOperation("101", "file");
+    DlpOperation dlpOperation3 = new DlpOperation("100", "file");
+    //When
+    queueDlpService.addToQueue("file", dlpOperation.getEntityId());
+    queueDlpService.addToQueue("file", dlpOperation2.getEntityId());
+    queueDlpService.addToQueue("file", dlpOperation3.getEntityId());
+    
+    queueDlpService.removeAllItemFromQueue("100");
+    //Then
+    verify(dlpOperationDAO, times(1)).deleteByEntityId("100");
+  }
 }

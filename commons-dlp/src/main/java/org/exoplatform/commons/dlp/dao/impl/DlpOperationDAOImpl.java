@@ -27,6 +27,14 @@ public class DlpOperationDAOImpl extends GenericDAOJPAImpl<DlpOperation, Long> i
               .setParameter("entityType", entityType)
               .getResultList();
   }
-
+  
+  @Override
+  @ExoTransactional
+  public int deleteByEntityId(String entityId) {
+    return getEntityManager().createNamedQuery("DlpOperation.deleteByEntityId")
+        .setParameter("entityId", entityId)
+        .executeUpdate();
+  }
+  
 }
 
