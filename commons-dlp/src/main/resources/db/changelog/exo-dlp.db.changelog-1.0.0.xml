@@ -62,7 +62,7 @@
   <changeSet author="exo-dlp" id="1.0.0-5">
     <addColumn tableName="DLP_POSITIVE_ITEMS">
       <column name="ITEM_AUTHOR" type="VARCHAR(50)"/>
-      <column name="ITEM_TITLE" type="VARCHAR(50)"/>
+      <column name="ITEM_TITLE" type="VARCHAR(250)"/>
     </addColumn>
   </changeSet>
   
