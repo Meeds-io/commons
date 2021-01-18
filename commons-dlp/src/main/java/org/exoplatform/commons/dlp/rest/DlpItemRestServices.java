@@ -46,10 +46,6 @@ public class DlpItemRestServices implements ResourceContainer {
     )
     public Response getDlpPositiveItems(@ApiParam(value = "Offset", required = false, defaultValue = "0") @QueryParam("offset") int offset,
                                         @ApiParam(value = "Limit", required = false, defaultValue = "20") @QueryParam("limit") int limit) {
-
-        if (!userACL.isSuperUser() && !userACL.isUserInGroup(userACL.getAdminGroups())) {
-            throw new WebApplicationException(Response.Status.UNAUTHORIZED);
-        }
         try {
             List<DlpPositiveItem> dlpPositiveItems = dlpPositiveItemService.getDlpPositivesItems(offset, limit);
             Long size = dlpPositiveItemService.getDlpPositiveItemsCount();
