@@ -14,15 +14,12 @@ import java.util.List;
 public class DlpPositiveItemServiceImpl implements DlpPositiveItemService {
 
     private final DlpPositiveItemDAO dlpPositiveItemDAO;
-    
-    private final OrganizationService organizationService;
 
     private static final Log LOG =
             ExoLogger.getLogger(DlpPositiveItemServiceImpl.class);
 
-    public DlpPositiveItemServiceImpl(DlpPositiveItemDAO dlpPositiveItemDAO, OrganizationService organizationService) {
+    public DlpPositiveItemServiceImpl(DlpPositiveItemDAO dlpPositiveItemDAO) {
         this.dlpPositiveItemDAO = dlpPositiveItemDAO;
-        this.organizationService = organizationService;
     }
 
 
@@ -74,7 +71,6 @@ public class DlpPositiveItemServiceImpl implements DlpPositiveItemService {
         dlpPositiveItem.setType(dlpPositiveItemEntity.getType());
         dlpPositiveItem.setKeywords(dlpPositiveItemEntity.getKeywords());
         dlpPositiveItem.setAuthor(dlpPositiveItemEntity.getAuthor());
-        dlpPositiveItem.setAuthorFullName(organizationService.getUserHandler().findUserByName(dlpPositiveItemEntity.getAuthor()).getDisplayName());
         dlpPositiveItem.setTitle(dlpPositiveItemEntity.getTitle());
         dlpPositiveItem.setDetectionDate(dlpPositiveItemEntity.getDetectionDate().getTimeInMillis());
         return dlpPositiveItem;

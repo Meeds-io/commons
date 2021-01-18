@@ -2,7 +2,6 @@ package org.exoplatform.commons.dlp.service;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.mockito.Mockito.*;
 
 import org.exoplatform.commons.dlp.dao.AbstractDAOTest;
 import org.exoplatform.commons.dlp.dao.DlpPositiveItemDAO;
@@ -10,14 +9,9 @@ import org.exoplatform.commons.dlp.domain.DlpPositiveItemEntity;
 import org.exoplatform.commons.dlp.dto.DlpPositiveItem;
 import org.exoplatform.commons.dlp.service.impl.DlpPositiveItemServiceImpl;
 import org.exoplatform.container.PortalContainer;
-import org.exoplatform.services.organization.OrganizationService;
-import org.exoplatform.services.organization.UserHandler;
-import org.exoplatform.services.organization.idm.UserImpl;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import java.util.Calendar;
@@ -30,25 +24,11 @@ public class DlpPositiveItemServiceTest extends AbstractDAOTest {
 
     private DlpPositiveItemDAO dlpPositiveItemDAO;
 
-    private OrganizationService organizationService;
-
-    private UserHandler userHandler;
-
-
     @Before
     public void setUp() throws Exception {
-        MockitoAnnotations.initMocks(this);
         PortalContainer container = PortalContainer.getInstance();
         dlpPositiveItemDAO = container.getComponentInstanceOfType(DlpPositiveItemDAO.class);
-        organizationService = mock(OrganizationService.class);
-        userHandler = mock(UserHandler.class);
-        dlpPositiveItemService = new DlpPositiveItemServiceImpl(dlpPositiveItemDAO, organizationService);
-        when(organizationService.getUserHandler()).thenReturn(userHandler);
-        UserImpl user = new UserImpl();
-        user.setUserName("root");
-        user.setFullName("root root");
-        Mockito.when(userHandler.findUserByName(Mockito.eq("root"))).thenReturn(user);
-
+        dlpPositiveItemService = new DlpPositiveItemServiceImpl(dlpPositiveItemDAO);
     }
 
     @Test
