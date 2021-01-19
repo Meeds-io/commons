@@ -9,6 +9,7 @@ import org.exoplatform.commons.dlp.domain.DlpPositiveItemEntity;
 import org.exoplatform.commons.dlp.dto.DlpPositiveItem;
 import org.exoplatform.commons.dlp.service.impl.DlpPositiveItemServiceImpl;
 import org.exoplatform.container.PortalContainer;
+import org.exoplatform.services.listener.ListenerService;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -22,13 +23,15 @@ public class DlpPositiveItemServiceTest extends AbstractDAOTest {
 
     private DlpPositiveItemServiceImpl dlpPositiveItemService;
 
+    private ListenerService listenerService;
+
     private DlpPositiveItemDAO dlpPositiveItemDAO;
 
     @Before
     public void setUp() throws Exception {
         PortalContainer container = PortalContainer.getInstance();
         dlpPositiveItemDAO = container.getComponentInstanceOfType(DlpPositiveItemDAO.class);
-        dlpPositiveItemService = new DlpPositiveItemServiceImpl(dlpPositiveItemDAO);
+        dlpPositiveItemService = new DlpPositiveItemServiceImpl(dlpPositiveItemDAO, listenerService);
     }
 
     @Test

@@ -4,6 +4,8 @@ import org.exoplatform.commons.dlp.dao.DlpPositiveItemDAO;
 import org.exoplatform.commons.dlp.domain.DlpPositiveItemEntity;
 import org.exoplatform.commons.dlp.dto.DlpPositiveItem;
 import org.exoplatform.commons.dlp.service.DlpPositiveItemService;
+import org.exoplatform.services.listener.Event;
+import org.exoplatform.services.listener.ListenerService;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 import org.exoplatform.services.organization.OrganizationService;
@@ -15,11 +17,14 @@ public class DlpPositiveItemServiceImpl implements DlpPositiveItemService {
 
     private final DlpPositiveItemDAO dlpPositiveItemDAO;
 
+    private ListenerService listenerService;
+
     private static final Log LOG =
             ExoLogger.getLogger(DlpPositiveItemServiceImpl.class);
 
-    public DlpPositiveItemServiceImpl(DlpPositiveItemDAO dlpPositiveItemDAO) {
+    public DlpPositiveItemServiceImpl(DlpPositiveItemDAO dlpPositiveItemDAO, ListenerService listenerService) {
         this.dlpPositiveItemDAO = dlpPositiveItemDAO;
+        this.listenerService = listenerService;
     }
 
 
@@ -38,7 +43,12 @@ public class DlpPositiveItemServiceImpl implements DlpPositiveItemService {
     public void deleteDlpPositiveItem(Long itemId) {
         DlpPositiveItemEntity dlpPositiveItemEntity = dlpPositiveItemDAO.find(itemId);
         if (dlpPositiveItemEntity != null) {
-            dlpPositiveItemDAO.delete(dlpPositiveItemEntity);
+          try {
+            listenerService.broadcast(new Event("dlp.listener.event.delete.document", null, dlpPositiveItemEntity.getReference()));
+          } catch (Exception e) {
+            LOG.error("Error when broadcasting delete file event", e);
+          }
+          dlpPositiveItemDAO.delete(dlpPositiveItemEntity);
         } else {
             LOG.warn("The DlpItem's {} not found.", itemId);
         }
