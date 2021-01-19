@@ -7,7 +7,6 @@ import javax.ws.rs.core.*;
 import org.exoplatform.common.http.HTTPStatus;
 import org.exoplatform.commons.dlp.dto.DlpPositiveItem;
 import org.exoplatform.commons.dlp.service.DlpPositiveItemService;
-import org.exoplatform.portal.config.UserACL;
 import org.exoplatform.portal.rest.CollectionEntity;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
@@ -25,12 +24,8 @@ public class DlpItemRestServices implements ResourceContainer {
 
     private DlpPositiveItemService dlpPositiveItemService;
 
-    private UserACL userACL;
-
-
-    public DlpItemRestServices(DlpPositiveItemService dlpPositiveItemService, UserACL userACL) {
+    public DlpItemRestServices(DlpPositiveItemService dlpPositiveItemService) {
         this.dlpPositiveItemService = dlpPositiveItemService;
-        this.userACL = userACL;
     }
 
 
