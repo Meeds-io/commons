@@ -43,12 +43,12 @@ public class DlpPositiveItemServiceImpl implements DlpPositiveItemService {
     public void deleteDlpPositiveItem(Long itemId) {
         DlpPositiveItemEntity dlpPositiveItemEntity = dlpPositiveItemDAO.find(itemId);
         if (dlpPositiveItemEntity != null) {
+            dlpPositiveItemDAO.delete(dlpPositiveItemEntity);
           try {
             listenerService.broadcast(new Event("dlp.listener.event.delete.document", null, dlpPositiveItemEntity.getReference()));
           } catch (Exception e) {
             LOG.error("Error when broadcasting delete file event", e);
           }
-          dlpPositiveItemDAO.delete(dlpPositiveItemEntity);
         } else {
             LOG.warn("The DlpItem's {} not found.", itemId);
         }

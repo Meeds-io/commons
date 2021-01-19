@@ -71,9 +71,6 @@ public class DlpItemRestServices implements ResourceContainer {
         @ApiResponse (code = 400, message = "Invalid query input") })
     public Response deleteDlpDocumentById(@ApiParam(value = "Document id", required = true) @PathParam("id") Long id) {
 
-        if (!userACL.isSuperUser() && !userACL.isUserInGroup(userACL.getAdminGroups())) {
-            throw new WebApplicationException(Response.Status.UNAUTHORIZED);
-        }
         dlpPositiveItemService.deleteDlpPositiveItem(id);
         return Response.ok().build();
     }
