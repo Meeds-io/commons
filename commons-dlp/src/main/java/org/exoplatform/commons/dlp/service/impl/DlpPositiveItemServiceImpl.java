@@ -2,10 +2,13 @@ package org.exoplatform.commons.dlp.service.impl;
 
 import org.exoplatform.commons.dlp.dao.DlpPositiveItemDAO;
 import org.exoplatform.commons.dlp.domain.DlpPositiveItemEntity;
+import org.exoplatform.commons.dlp.dto.DlpPositiveItem;
 import org.exoplatform.commons.dlp.service.DlpPositiveItemService;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
+import org.exoplatform.services.organization.OrganizationService;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class DlpPositiveItemServiceImpl implements DlpPositiveItemService {
@@ -21,8 +24,9 @@ public class DlpPositiveItemServiceImpl implements DlpPositiveItemService {
 
 
     @Override
-    public List<DlpPositiveItemEntity> getDlpPositivesItems() {
-        return dlpPositiveItemDAO.findAll();
+    public List<DlpPositiveItem> getDlpPositivesItems(int offset, int limit) throws Exception {
+        List<DlpPositiveItemEntity> dlpPositiveItemEntities = dlpPositiveItemDAO.getDlpPositiveItems(offset, limit);
+        return fillDlpPositiveItemsFromEntities(dlpPositiveItemEntities);
     }
 
     @Override
@@ -41,7 +45,34 @@ public class DlpPositiveItemServiceImpl implements DlpPositiveItemService {
     }
 
     @Override
-    public DlpPositiveItemEntity getDlpPositiveItemByReference(String itemReference) {
-        return dlpPositiveItemDAO.findDlpPositiveItemByReference(itemReference);
+    public DlpPositiveItem getDlpPositiveItemByReference(String itemReference) throws Exception {
+        DlpPositiveItemEntity dlpPositiveItemEntity = dlpPositiveItemDAO.findDlpPositiveItemByReference(itemReference);
+        return fillDlpPositiveItemFromEntity(dlpPositiveItemEntity);
+    }
+
+    @Override
+    public Long getDlpPositiveItemsCount() {
+        return dlpPositiveItemDAO.count();
+    }
+
+
+    private List<DlpPositiveItem> fillDlpPositiveItemsFromEntities(List<DlpPositiveItemEntity> dlpPositiveItemEntities) throws Exception {
+        List<DlpPositiveItem> dlpPositiveItems = new ArrayList<>();
+        for (DlpPositiveItemEntity dlpPositiveItemEntity : dlpPositiveItemEntities) {
+            DlpPositiveItem dlpPositiveItem = fillDlpPositiveItemFromEntity(dlpPositiveItemEntity);
+            dlpPositiveItems.add(dlpPositiveItem);
+        }
+        return dlpPositiveItems;
+    }
+
+    private DlpPositiveItem fillDlpPositiveItemFromEntity(DlpPositiveItemEntity dlpPositiveItemEntity) throws Exception {
+        DlpPositiveItem dlpPositiveItem = new DlpPositiveItem();
+        dlpPositiveItem.setId(dlpPositiveItemEntity.getId());
+        dlpPositiveItem.setType(dlpPositiveItemEntity.getType());
+        dlpPositiveItem.setKeywords(dlpPositiveItemEntity.getKeywords());
+        dlpPositiveItem.setAuthor(dlpPositiveItemEntity.getAuthor());
+        dlpPositiveItem.setTitle(dlpPositiveItemEntity.getTitle());
+        dlpPositiveItem.setDetectionDate(dlpPositiveItemEntity.getDetectionDate().getTimeInMillis());
+        return dlpPositiveItem;
     }
 }

@@ -6,6 +6,7 @@ import org.exoplatform.commons.persistence.impl.GenericDAOJPAImpl;
 
 import javax.persistence.NoResultException;
 import javax.persistence.TypedQuery;
+import java.util.List;
 
 public class DlpPositiveItemDAOImpl extends GenericDAOJPAImpl<DlpPositiveItemEntity, Long> implements DlpPositiveItemDAO {
 
@@ -20,5 +21,18 @@ public class DlpPositiveItemDAOImpl extends GenericDAOJPAImpl<DlpPositiveItemEnt
         } catch (NoResultException ex) {
             return null;
         }
+    }
+
+    public List<DlpPositiveItemEntity> getDlpPositiveItems(int offset, int limit) {
+        TypedQuery<DlpPositiveItemEntity> query = null;
+        query = getEntityManager().createNamedQuery("DlpPositiveItemEntity.getDlpPositiveItems",
+                DlpPositiveItemEntity.class);
+        if (offset > 0) {
+            query.setFirstResult(offset);
+        }
+        if (limit > 0) {
+            query.setMaxResults(limit);
+        }
+        return query.getResultList();
     }
 }
