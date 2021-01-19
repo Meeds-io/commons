@@ -72,6 +72,8 @@ public class DlpPositiveItemServiceImpl implements DlpPositiveItemService {
         dlpPositiveItem.setKeywords(dlpPositiveItemEntity.getKeywords());
         dlpPositiveItem.setAuthor(dlpPositiveItemEntity.getAuthor());
         dlpPositiveItem.setTitle(dlpPositiveItemEntity.getTitle());
+        dlpPositiveItem.setRefernece(dlpPositiveItemEntity.getReference());
+        dlpPositiveItem.setDownloadUrl(dlpPositiveItemEntity.getDownloadUrl());
         dlpPositiveItem.setDetectionDate(dlpPositiveItemEntity.getDetectionDate().getTimeInMillis());
         return dlpPositiveItem;
     }
