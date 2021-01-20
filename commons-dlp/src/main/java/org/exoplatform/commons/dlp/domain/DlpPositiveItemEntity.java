@@ -42,7 +42,7 @@ public class DlpPositiveItemEntity {
     @Column(name = "KEYWORDS")
     private String keywords;
 
-    @Column(name = "DOWNLOAD_URL")
+    @Column(name = "ITEM_DOWNLOAD_URL")
     private String downloadUrl;
 
     @Column(name = "DETECTION_DATE")

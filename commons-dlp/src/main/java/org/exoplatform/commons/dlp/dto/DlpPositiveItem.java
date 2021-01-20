@@ -12,7 +12,7 @@ public class DlpPositiveItem {
 
     private String keywords;
 
-    private String refernece;
+    private String reference;
 
     private String downloadUrl;
 
@@ -38,9 +38,9 @@ public class DlpPositiveItem {
         this.title = title;
     }
 
-    public String getRefernece() { return refernece; }
+    public String getReference() { return reference; }
 
-    public void setRefernece(String refernece) { this.refernece = refernece; }
+    public void setReference(String refernece) { this.reference = reference; }
 
     public String getDownloadUrl() { return downloadUrl; }
 
