@@ -72,4 +72,6 @@ public abstract class DlpServiceConnector extends BaseComponentPlugin {
   }
 
   public abstract boolean processItem(String entityId);
+
+  public abstract void removePositiveItemNode(String entityId);
 }
