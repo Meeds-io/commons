@@ -242,6 +242,17 @@ public class ElasticSearchServiceConnector extends SearchServiceConnector {
     esQuery.append("              }\n");
     esQuery.append("            }");
     esQuery.append("        }\n");
+    esQuery.append("     },\n");
+    esQuery.append("     \"highlight\" : {\n");
+    esQuery.append("       \"fields\" : {\n");
+    for (int i=0; i< getSearchFields().size(); i++) {
+      esQuery.append("         \""+getSearchFields().get(i)+"\" : {}");
+      if (i< getSearchFields().size()-1) {
+        esQuery.append(",");
+      }
+      esQuery.append("\n");
+    }
+    esQuery.append("       }\n");
     esQuery.append("     }\n");
     esQuery.append("}");
 
