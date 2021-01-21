@@ -9,6 +9,7 @@ import org.exoplatform.services.listener.Event;
 import org.exoplatform.services.listener.ListenerService;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
+import org.exoplatform.services.organization.OrganizationService;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,10 +21,13 @@ public class DlpPositiveItemServiceImpl implements DlpPositiveItemService {
 
   private final DlpPositiveItemDAO dlpPositiveItemDAO;
 
+  private OrganizationService organizationService;
+
   private ListenerService listenerService;
 
-  public DlpPositiveItemServiceImpl(DlpPositiveItemDAO dlpPositiveItemDAO, ListenerService listenerService) {
+  public DlpPositiveItemServiceImpl(DlpPositiveItemDAO dlpPositiveItemDAO, OrganizationService organizationService, ListenerService listenerService) {
     this.dlpPositiveItemDAO = dlpPositiveItemDAO;
+    this.organizationService = organizationService;
     this.listenerService = listenerService;
   }
 
@@ -88,6 +92,7 @@ public class DlpPositiveItemServiceImpl implements DlpPositiveItemService {
     dlpPositiveItem.setType(dlpPositiveItemEntity.getType());
     dlpPositiveItem.setKeywords(dlpPositiveItemEntity.getKeywords());
     dlpPositiveItem.setAuthor(dlpPositiveItemEntity.getAuthor());
+    dlpPositiveItem.setAuthorDisplayName(organizationService.getUserHandler().findUserByName(dlpPositiveItemEntity.getAuthor()).getDisplayName());
     dlpPositiveItem.setTitle(dlpPositiveItemEntity.getTitle());
     dlpPositiveItem.setDetectionDate(dlpPositiveItemEntity.getDetectionDate().getTimeInMillis());
     return dlpPositiveItem;
