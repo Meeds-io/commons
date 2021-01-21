@@ -12,6 +12,8 @@ public interface DlpPositiveItemService {
     
     void deleteDlpPositiveItem(Long itemId);
 
+    void restoreDlpPositiveItem(Long itemId);
+
     DlpPositiveItem getDlpPositiveItemByReference(String itemReference) throws Exception;
 
     Long getDlpPositiveItemsCount();

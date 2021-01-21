@@ -50,8 +50,18 @@
   </component>
 
   <component>
+    <key>org.exoplatform.commons.dlp.service.RestoredDlpItemService</key>
+    <type>org.exoplatform.commons.dlp.service.impl.RestoredDlpItemServiceImpl</type>
+  </component>
+
+  <component>
     <key>org.exoplatform.commons.dlp.dao.DlpPositiveItemDAO</key>
     <type>org.exoplatform.commons.dlp.dao.impl.DlpPositiveItemDAOImpl</type>
+  </component>
+
+  <component>
+    <key>org.exoplatform.commons.dlp.dao.RestoredDlpItemDAO</key>
+    <type>org.exoplatform.commons.dlp.dao.impl.RestoredDlpItemDAOImpl</type>
   </component>
   
   <external-component-plugins>
