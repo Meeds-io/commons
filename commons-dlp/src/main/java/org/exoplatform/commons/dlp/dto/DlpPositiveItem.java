@@ -8,6 +8,8 @@ public class DlpPositiveItem {
 
     private String author;
     
+    private String authorDisplayName;
+    
     private String type;
 
     private String keywords;
@@ -52,6 +54,14 @@ public class DlpPositiveItem {
 
     public void setAuthor(String author) {
         this.author = author;
+    }
+
+    public String getAuthorDisplayName() {
+        return authorDisplayName;
+    }
+
+    public void setAuthorDisplayName(String authorDisplayName) {
+        this.authorDisplayName = authorDisplayName;
     }
 
     public String getType() {

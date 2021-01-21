@@ -51,5 +51,23 @@ public class DlpItemRestServices implements ResourceContainer {
             return Response.serverError().build();
         }
     }
+
+    @DELETE
+    @Path("/item/{id}")
+    @RolesAllowed("administrators")
+
+    @ApiOperation(value = "Delete a document by id",
+        httpMethod = "DELETE",
+        response = Response.class,
+        notes = "This delete the document if the authenticated user is a super manager")
+    @ApiResponses(value = {
+        @ApiResponse (code = 200, message = "Request fulfilled"),
+        @ApiResponse (code = 500, message = "Internal server error"),
+        @ApiResponse (code = 400, message = "Invalid query input") })
+    public Response deleteDlpDocumentById(@ApiParam(value = "Document id", required = true) @PathParam("id") Long id) {
+
+        dlpPositiveItemService.deleteDlpPositiveItem(id);
+        return Response.ok().build();
+    }
 }
 
