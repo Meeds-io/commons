@@ -42,9 +42,12 @@ public class DlpPositiveItemEntity {
     @Column(name = "KEYWORDS")
     private String keywords;
 
+    @Column(name = "ITEM_IS_EXTERNAL")
+    private boolean isExternal;
+
     @Column(name = "DETECTION_DATE")
     private Calendar detectionDate;
-    
+
     public Long getId() {
         return id;
     }
@@ -55,6 +58,14 @@ public class DlpPositiveItemEntity {
 
     public void setReference(String reference) {
         this.reference = reference;
+    }
+
+    public boolean getIsExternal() {
+        return isExternal;
+    }
+
+    public void setIsExternal(boolean isExternal) {
+        this.isExternal = isExternal;
     }
 
     public String getTitle() {

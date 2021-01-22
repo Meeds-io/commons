@@ -14,6 +14,8 @@ public class DlpPositiveItem {
 
     private String keywords;
 
+    private boolean isExternal;
+
     private Long   detectionDate;
 
 
@@ -34,6 +36,14 @@ public class DlpPositiveItem {
 
     public void setTitle(String title) {
         this.title = title;
+    }
+
+    public boolean getIsExternal() {
+        return isExternal;
+    }
+
+    public void setIsExternal(boolean isExternal) {
+        this.isExternal = isExternal;
     }
 
     public String getAuthor() {
