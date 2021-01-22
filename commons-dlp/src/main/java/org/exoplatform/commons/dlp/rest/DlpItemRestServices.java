@@ -5,8 +5,11 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.*;
 
 import org.exoplatform.common.http.HTTPStatus;
+import org.exoplatform.commons.dlp.connector.DlpServiceConnector;
 import org.exoplatform.commons.dlp.dto.DlpPositiveItem;
+import org.exoplatform.commons.dlp.processor.DlpOperationProcessor;
 import org.exoplatform.commons.dlp.service.DlpPositiveItemService;
+import org.exoplatform.commons.utils.CommonsUtils;
 import org.exoplatform.portal.rest.CollectionEntity;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
@@ -48,6 +51,29 @@ public class DlpItemRestServices implements ResourceContainer {
             return Response.ok(collectionDlpPositiveItem).build();
         } catch (Exception e) {
             LOG.error("Unknown error occurred while getting dlp positive items", e);
+            return Response.serverError().build();
+        }
+    }
+
+    @GET
+    @Path("/itemUrl/{id}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("administrators")
+    @ApiOperation(value = "Retrieves the url of dlp positive items", httpMethod = "GET", response = Response.class, produces = "application/json",
+            notes = "Return file url of dlp positive items in json format")
+    @ApiResponses(
+            value = {@ApiResponse(code = HTTPStatus.OK, message = "Request fulfilled"),
+                    @ApiResponse(code = HTTPStatus.UNAUTHORIZED, message = "Unauthorized operation"),
+                    @ApiResponse(code = HTTPStatus.INTERNAL_ERROR, message = "Internal server error"),}
+    )
+    public Response getDlpPositiveItemUrl(@ApiParam(value = "Document id", required = true) @PathParam("id") String id) {
+        try {
+            DlpOperationProcessor dlpOperationProcessor = CommonsUtils.getService(DlpOperationProcessor.class);
+            DlpServiceConnector dlpServiceConnector = (DlpServiceConnector) dlpOperationProcessor.getConnectors().get("file");
+            String dlpPositiveItemUrl = dlpServiceConnector.getItemUrl(id);
+            return Response.ok().entity("{\"dlpPositiveItemUrl\":\"" + dlpPositiveItemUrl + "\"}").build();
+        } catch (Exception e) {
+            LOG.error("Unknown error occurred while getting dlp positive item url", e);
             return Response.serverError().build();
         }
     }

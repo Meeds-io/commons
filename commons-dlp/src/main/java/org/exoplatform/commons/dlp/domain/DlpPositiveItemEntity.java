@@ -42,9 +42,6 @@ public class DlpPositiveItemEntity {
     @Column(name = "KEYWORDS")
     private String keywords;
 
-    @Column(name = "ITEM_DOWNLOAD_URL")
-    private String downloadUrl;
-
     @Column(name = "DETECTION_DATE")
     private Calendar detectionDate;
     
@@ -66,14 +63,6 @@ public class DlpPositiveItemEntity {
 
     public void setTitle(String title) {
         this.title = title;
-    }
-
-    public String getDownloadUrl() {
-        return downloadUrl;
-    }
-
-    public void setDownloadUrl(String downloadUrl) {
-        this.downloadUrl = downloadUrl;
     }
 
     public String getAuthor() {

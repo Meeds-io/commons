@@ -65,11 +65,5 @@
       <column name="ITEM_TITLE" type="VARCHAR(250)"/>
     </addColumn>
   </changeSet>
-
-  <changeSet author="exo-dlp" id="1.0.0-6">
-    <addColumn tableName="DLP_POSITIVE_ITEMS">
-      <column name="ITEM_DOWNLOAD_URL" type="VARCHAR(250)"/>
-    </addColumn>
-  </changeSet>
   
 </databaseChangeLog>
