@@ -16,8 +16,6 @@
 
 
   <changeSet author="exo-dlp" id="1.0.0-1">
-    <validCheckSum>7:b157acec94f1e8405e7c1336e64f5d75</validCheckSum>
-    <validCheckSum>7:409e3990dbb962c0a47a475a574665ce</validCheckSum>
     <createTable tableName="DLP_QUEUE">
       <column name="OPERATION_ID" type="BIGINT" autoIncrement="${autoIncrement}" startWith="1">
         <constraints nullable="false" primaryKey="true" primaryKeyName="PK_DLP_QUEUE"/>
@@ -32,31 +30,11 @@
         <constraints nullable="false"/>
       </column>
     </createTable>
-  </changeSet>
-
-  <changeSet author="exo-dlp" id="1.0.0-2" dbms="oracle,postgresql">
-    <preConditions onFail="MARK_RAN">
-      <not>
-        <sequenceExists sequenceName="SEQ_DLP_QUEUE_ID"/>
-      </not>
-    </preConditions>
     <createSequence sequenceName="SEQ_DLP_QUEUE_ID" startValue="1"/>
   </changeSet>
 
-  <changeSet author="exo-dlp" id="1.0.0-3">
-    <createTable tableName="DLP_POSITIVE_ITEMS">
-      <column name="ITEM_ID" type="BIGINT" autoIncrement="${autoIncrement}" startWith="1">
-        <constraints nullable="false" primaryKey="true" primaryKeyName="PK_DLP_ITEMS"/>
-      </column>
-      <column name="ITEM_REFERENCE" type="VARCHAR(50)"/>
-      <column name="ITEM_TYPE" type="VARCHAR(50)"/>
-      <column name="KEYWORDS" type="VARCHAR(50)"/>
-      <column name="DETECTION_DATE" type="TIMESTAMP"/>
-    </createTable>
+  <changeSet author="exo-dlp" id="1.0.0-2" dbms="oracle,postgresql">
+    <createSequence sequenceName="SEQ_DLP_QUEUE_ID" startValue="1"/>
   </changeSet>
 
-  <changeSet author="exo-dlp" id="1.0.0-4" dbms="oracle,postgresql">
-    <createSequence sequenceName="SEQ_DLP_POSITIVE_ITEMS_ID" startValue="1"/>
-  </changeSet>
-  
 </databaseChangeLog>
