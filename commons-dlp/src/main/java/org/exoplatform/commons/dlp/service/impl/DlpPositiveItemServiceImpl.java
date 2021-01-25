@@ -1,6 +1,10 @@
 package org.exoplatform.commons.dlp.service.impl;
 
 import org.exoplatform.commons.dlp.connector.DlpServiceConnector;
+import org.exoplatform.commons.api.settings.SettingService;
+import org.exoplatform.commons.api.settings.SettingValue;
+import org.exoplatform.commons.api.settings.data.Context;
+import org.exoplatform.commons.api.settings.data.Scope;
 import org.exoplatform.commons.dlp.dao.DlpPositiveItemDAO;
 import org.exoplatform.commons.dlp.domain.DlpPositiveItemEntity;
 import org.exoplatform.commons.dlp.dto.DlpPositiveItem;
@@ -20,11 +24,17 @@ public class DlpPositiveItemServiceImpl implements DlpPositiveItemService {
   private static final Log LOG =
       ExoLogger.getLogger(DlpPositiveItemServiceImpl.class);
 
-  private final DlpPositiveItemDAO dlpPositiveItemDAO;
+    public static final String DLP_KEYWORDS = "exo.dlp.keywords";
+
+    public static final String EXO_DLP_KEYWORDS = "exo:dlpKeywords";
+
+    private final DlpPositiveItemDAO dlpPositiveItemDAO;
 
   private DlpOperationProcessor dlpOperationProcessor;
 
   private ListenerService listenerService;
+  
+  private SettingService settingService;
 
   private OrganizationService organizationService;
 
@@ -83,6 +93,12 @@ public class DlpPositiveItemServiceImpl implements DlpPositiveItemService {
     return dlpPositiveItemDAO.count();
   }
 
+  @Override
+  public String getDlpKeywords() {
+    SettingValue<?> settingValue = settingService.get(Context.GLOBAL, Scope.GLOBAL.id("DlpKeywords"), EXO_DLP_KEYWORDS);
+    return settingValue != null ? settingValue.getValue().toString() : System.getProperty(DLP_KEYWORDS);
+  }
+  
   private List<DlpPositiveItem> fillDlpPositiveItemsFromEntities(List<DlpPositiveItemEntity> dlpPositiveItemEntities) throws
                                                                                                                       Exception {
     List<DlpPositiveItem> dlpPositiveItems = new ArrayList<>();

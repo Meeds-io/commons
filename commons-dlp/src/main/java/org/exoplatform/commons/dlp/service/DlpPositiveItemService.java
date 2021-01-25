@@ -15,4 +15,6 @@ public interface DlpPositiveItemService {
     DlpPositiveItem getDlpPositiveItemByReference(String itemReference) throws Exception;
 
     Long getDlpPositiveItemsCount();
+    
+    String getDlpKeywords();
 }
