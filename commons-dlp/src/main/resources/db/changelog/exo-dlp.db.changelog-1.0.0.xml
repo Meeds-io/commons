@@ -42,5 +42,21 @@
     </preConditions>
     <createSequence sequenceName="SEQ_DLP_QUEUE_ID" startValue="1"/>
   </changeSet>
+
+  <changeSet author="exo-dlp" id="1.0.0-3">
+    <createTable tableName="DLP_POSITIVE_ITEMS">
+      <column name="ITEM_ID" type="BIGINT" autoIncrement="${autoIncrement}" startWith="1">
+        <constraints nullable="false" primaryKey="true" primaryKeyName="PK_DLP_ITEMS"/>
+      </column>
+      <column name="ITEM_REFERENCE" type="VARCHAR(50)"/>
+      <column name="ITEM_TYPE" type="VARCHAR(50)"/>
+      <column name="KEYWORDS" type="VARCHAR(50)"/>
+      <column name="DETECTION_DATE" type="TIMESTAMP"/>
+    </createTable>
+  </changeSet>
+
+  <changeSet author="exo-dlp" id="1.0.0-4" dbms="oracle,postgresql">
+    <createSequence sequenceName="SEQ_DLP_POSITIVE_ITEMS_ID" startValue="1"/>
+  </changeSet>
   
 </databaseChangeLog>
