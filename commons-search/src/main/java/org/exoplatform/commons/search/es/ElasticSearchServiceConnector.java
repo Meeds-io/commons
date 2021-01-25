@@ -143,7 +143,21 @@ public class ElasticSearchServiceConnector extends SearchServiceConnector {
     String jsonResponse = this.client.sendRequest(esQuery, this.index, this.type);
     return buildResult(jsonResponse, context);
   }
-
+  
+  @Override
+  public boolean isIndexed(SearchContext context, String id) {
+    StringBuilder esQuery = new StringBuilder();
+    esQuery.append("{\n");
+    esQuery.append("  \"query\": {\n");
+    esQuery.append("    \"term\" : { \"_id\" : \""+id+"\" }\n");
+    esQuery.append("  }\n");
+    esQuery.append("}");
+    String jsonResponse = this.client.sendRequest(esQuery.toString(), this.index, this.type);
+    Collection<SearchResult> results = buildResult(jsonResponse, context);
+    results.stream().forEach(searchResult -> LOG.info(searchResult));
+    return results.size()>0;
+  }
+  
   /**
    *
    * Search on ES with additional filter on the search query
@@ -168,11 +182,85 @@ public class ElasticSearchServiceConnector extends SearchServiceConnector {
     String jsonResponse = this.client.sendRequest(esQuery, this.index, this.type);
     return buildResult(jsonResponse, context);
   }
-
+  /**
+   *
+   * Search on ES for dlp
+   * Search keyword in query with an OR
+   * And search only for the entity in parameter
+   *
+   * @param query
+   * @param entityId
+   * @return a collection of SearchResult
+   */
+  public Collection<SearchResult> dlpSearch(SearchContext context, String query, String entityId) {
+    String esQuery = buildDlpQuery(query,entityId);
+    String jsonResponse = this.client.sendRequest(esQuery, this.index, this.type);
+    return buildResult(jsonResponse, context);
+  }
+  
+  
+  
   protected String buildQuery(String query, Collection<String> sites, int offset, int limit, String sort, String order) {
     return buildFilteredQuery(query, sites, null, offset, limit, sort, order);
   }
 
+  protected String buildDlpQuery(String query, String id) {
+    StringBuilder esQuery = new StringBuilder();
+    esQuery.append("{\n");
+    esQuery.append("     \"track_scores\": true,\n");
+    esQuery.append("     \"_source\": [" + getSourceFields() + "],");
+    esQuery.append("     \"query\": {\n");
+    esQuery.append("        \"bool\" : {\n");
+    if (StringUtils.isNotBlank(query)) {
+      List<String> queryParts = Arrays.asList(query.split("[\\+\\-=\\&\\|><\\!\\(\\)\\{\\}\\[\\]\\^\"\\*\\?:\\/ @]+"));
+      queryParts = queryParts.stream().map(queryPart -> {
+        queryPart = this.escapeReservedCharacters(queryPart);
+        if (queryPart.length() > 5) {
+          queryPart = queryPart + "~1"; // fuzzy search on big words
+        }
+        return queryPart;
+      }).collect(Collectors.toList());
+      String escapedQueryWithOROperator = StringUtils.join(queryParts, " OR ");
+      esQuery.append("            \"must\" : {\n");
+      esQuery.append("                \"query_string\" : {\n");
+      esQuery.append("                    \"fields\" : [" + getFields() + "],\n");
+      esQuery.append("                    \"query\" : \"" + escapedQueryWithOROperator + "\"\n");
+      esQuery.append("                }\n");
+      esQuery.append("            },\n");
+    }
+    esQuery.append("            \"filter\" : {\n");
+    esQuery.append("              \"bool\" : {\n");
+    esQuery.append("                \"must\" : [\n");
+    esQuery.append("                  {\n");
+    esQuery.append("                   \"bool\" : {\n");
+    esQuery.append("                     \"should\" : [\n");
+    esQuery.append("                       { \"term\" : { \"_id\" : \""+id+"\" } }\n");
+    esQuery.append("                     ]\n");
+    esQuery.append("                   }\n");
+    esQuery.append("                  }\n");
+    esQuery.append("                ]\n");
+    esQuery.append("              }\n");
+    esQuery.append("            }");
+    esQuery.append("        }\n");
+    esQuery.append("     },\n");
+    esQuery.append("     \"highlight\" : {\n");
+    esQuery.append("       \"fields\" : {\n");
+    for (int i = 0; i < searchFields.size(); i++) {
+      esQuery.append("         \"" + searchFields.get(i) + "\" : {}");
+      if (i < searchFields.size() - 1) {
+        esQuery.append(",");
+      }
+      esQuery.append("\n");
+    }
+    esQuery.append("       }\n");
+    esQuery.append("     }\n");
+    esQuery.append("}");
+
+    LOG.debug("Search Query request to ES : {} ", esQuery);
+
+    return esQuery.toString();
+  }
+  
   protected String buildFilteredQuery(String query, Collection<String> sites, List<ElasticSearchFilter> filters, int offset, int limit, String sort, String order) {
     StringBuilder esQuery = new StringBuilder();
     esQuery.append("{\n");
@@ -251,10 +339,10 @@ public class ElasticSearchServiceConnector extends SearchServiceConnector {
     esQuery.append("       \"fields\" : {\n");
     for (int i=0; i<this.searchFields.size(); i++) {
       esQuery.append("         \""+searchFields.get(i)+"\" : {\n")
-              .append("          \"type\" : \"unified\",\n")
-              .append("          \"fragment_size\" : " + this.highlightFragmentSize + ",\n")
-              .append("          \"no_match_size\" : 0,\n")
-              .append("          \"number_of_fragments\" : " + this.highlightFragmentNumber + "}");
+             .append("          \"type\" : \"unified\",\n")
+             .append("          \"fragment_size\" : " + this.highlightFragmentSize + ",\n")
+             .append("          \"no_match_size\" : 0,\n")
+             .append("          \"number_of_fragments\" : " + this.highlightFragmentNumber + "}");
       if (i<this.searchFields.size()-1) {
         esQuery.append(",");
       }
@@ -263,12 +351,12 @@ public class ElasticSearchServiceConnector extends SearchServiceConnector {
     esQuery.append("       }\n");
     esQuery.append("     }\n");
     esQuery.append("}");
-
+    
     LOG.debug("Search Query request to ES : {} ", esQuery);
-
+    
     return esQuery.toString();
   }
-
+  
   /**
    * Escaped reserved characters by ES when using query_string.
    * Only ~ is not escaped since it is used for fuzzy search parameter.
