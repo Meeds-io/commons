@@ -22,13 +22,16 @@ public class DlpPositiveItemServiceImpl implements DlpPositiveItemService {
 
   private final DlpPositiveItemDAO dlpPositiveItemDAO;
 
-  private OrganizationService organizationService;
+  private DlpOperationProcessor dlpOperationProcessor;
 
   private ListenerService listenerService;
 
-  private DlpOperationProcessor dlpOperationProcessor;
+  private OrganizationService organizationService;
 
-  public DlpPositiveItemServiceImpl(DlpPositiveItemDAO dlpPositiveItemDAO, OrganizationService organizationService, ListenerService listenerService, DlpOperationProcessor dlpOperationProcessor) {
+  public DlpPositiveItemServiceImpl(DlpPositiveItemDAO dlpPositiveItemDAO,
+                                    OrganizationService organizationService,
+                                    ListenerService listenerService,
+                                    DlpOperationProcessor dlpOperationProcessor) {
     this.dlpPositiveItemDAO = dlpPositiveItemDAO;
     this.organizationService = organizationService;
     this.listenerService = listenerService;
@@ -90,17 +93,19 @@ public class DlpPositiveItemServiceImpl implements DlpPositiveItemService {
     return dlpPositiveItems;
   }
 
-    private DlpPositiveItem fillDlpPositiveItemFromEntity(DlpPositiveItemEntity dlpPositiveItemEntity) throws Exception {
-        DlpPositiveItem dlpPositiveItem = new DlpPositiveItem();
-        dlpPositiveItem.setId(dlpPositiveItemEntity.getId());
-        dlpPositiveItem.setType(dlpPositiveItemEntity.getType());
-        dlpPositiveItem.setKeywords(dlpPositiveItemEntity.getKeywords());
-        dlpPositiveItem.setAuthor(dlpPositiveItemEntity.getAuthor());
-        dlpPositiveItem.setAuthorDisplayName(organizationService.getUserHandler().findUserByName(dlpPositiveItemEntity.getAuthor()).getDisplayName());
-        dlpPositiveItem.setTitle(dlpPositiveItemEntity.getTitle());
-        DlpServiceConnector dlpServiceConnector = (DlpServiceConnector) dlpOperationProcessor.getConnectors().get(dlpPositiveItemEntity.getType());
-        dlpPositiveItem.setItemUrl(dlpServiceConnector.getItemUrl(dlpPositiveItemEntity.getReference()));
-        dlpPositiveItem.setDetectionDate(dlpPositiveItemEntity.getDetectionDate().getTimeInMillis());
-        return dlpPositiveItem;
-    }
+  private DlpPositiveItem fillDlpPositiveItemFromEntity(DlpPositiveItemEntity dlpPositiveItemEntity) throws Exception {
+    DlpPositiveItem dlpPositiveItem = new DlpPositiveItem();
+    dlpPositiveItem.setId(dlpPositiveItemEntity.getId());
+    dlpPositiveItem.setType(dlpPositiveItemEntity.getType());
+    dlpPositiveItem.setKeywords(dlpPositiveItemEntity.getKeywords());
+    dlpPositiveItem.setAuthor(dlpPositiveItemEntity.getAuthor());
+    dlpPositiveItem.setAuthorDisplayName(organizationService.getUserHandler()
+                                                            .findUserByName(dlpPositiveItemEntity.getAuthor())
+                                                            .getDisplayName());
+    dlpPositiveItem.setTitle(dlpPositiveItemEntity.getTitle());
+    DlpServiceConnector dlpServiceConnector = (DlpServiceConnector) dlpOperationProcessor.getConnectors().get(dlpPositiveItemEntity.getType());
+    dlpPositiveItem.setItemUrl(dlpServiceConnector.getItemUrl(dlpPositiveItemEntity.getReference()));
+    dlpPositiveItem.setDetectionDate(dlpPositiveItemEntity.getDetectionDate().getTimeInMillis());
+    return dlpPositiveItem;
+  }
 }
