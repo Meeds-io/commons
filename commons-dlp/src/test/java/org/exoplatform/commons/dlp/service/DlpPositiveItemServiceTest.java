@@ -9,6 +9,7 @@ import org.exoplatform.commons.dlp.dao.AbstractDAOTest;
 import org.exoplatform.commons.dlp.dao.DlpPositiveItemDAO;
 import org.exoplatform.commons.dlp.domain.DlpPositiveItemEntity;
 import org.exoplatform.commons.dlp.dto.DlpPositiveItem;
+import org.exoplatform.commons.dlp.processor.DlpOperationProcessor;
 import org.exoplatform.commons.dlp.service.impl.DlpPositiveItemServiceImpl;
 import org.exoplatform.container.PortalContainer;
 import org.exoplatform.services.listener.ListenerService;
@@ -36,6 +37,8 @@ public class DlpPositiveItemServiceTest extends AbstractDAOTest {
 
     private OrganizationService organizationService;
 
+  private DlpOperationProcessor dlpOperationProcessor;
+
     private UserHandler userHandler;
 
 
@@ -51,7 +54,7 @@ public class DlpPositiveItemServiceTest extends AbstractDAOTest {
         Mockito.when(userHandler.findUserByName(Mockito.eq("root"))).thenReturn(user);
         PortalContainer container = PortalContainer.getInstance();
         dlpPositiveItemDAO = container.getComponentInstanceOfType(DlpPositiveItemDAO.class);
-        dlpPositiveItemService = new DlpPositiveItemServiceImpl(dlpPositiveItemDAO, organizationService, listenerService);
+        dlpPositiveItemService = new DlpPositiveItemServiceImpl(dlpPositiveItemDAO, organizationService, listenerService, dlpOperationProcessor);
     }
 
     @Test

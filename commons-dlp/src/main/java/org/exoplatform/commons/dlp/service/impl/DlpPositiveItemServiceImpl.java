@@ -1,5 +1,6 @@
 package org.exoplatform.commons.dlp.service.impl;
 
+import org.exoplatform.commons.dlp.connector.DlpServiceConnector;
 import org.exoplatform.commons.dlp.dao.DlpPositiveItemDAO;
 import org.exoplatform.commons.dlp.domain.DlpPositiveItemEntity;
 import org.exoplatform.commons.dlp.dto.DlpPositiveItem;
@@ -25,10 +26,13 @@ public class DlpPositiveItemServiceImpl implements DlpPositiveItemService {
 
   private ListenerService listenerService;
 
-  public DlpPositiveItemServiceImpl(DlpPositiveItemDAO dlpPositiveItemDAO, OrganizationService organizationService, ListenerService listenerService) {
+  private DlpOperationProcessor dlpOperationProcessor;
+
+  public DlpPositiveItemServiceImpl(DlpPositiveItemDAO dlpPositiveItemDAO, OrganizationService organizationService, ListenerService listenerService, DlpOperationProcessor dlpOperationProcessor) {
     this.dlpPositiveItemDAO = dlpPositiveItemDAO;
     this.organizationService = organizationService;
     this.listenerService = listenerService;
+    this.dlpOperationProcessor = dlpOperationProcessor;
   }
 
   @Override
@@ -92,8 +96,10 @@ public class DlpPositiveItemServiceImpl implements DlpPositiveItemService {
         dlpPositiveItem.setType(dlpPositiveItemEntity.getType());
         dlpPositiveItem.setKeywords(dlpPositiveItemEntity.getKeywords());
         dlpPositiveItem.setAuthor(dlpPositiveItemEntity.getAuthor());
+        dlpPositiveItem.setAuthorDisplayName(organizationService.getUserHandler().findUserByName(dlpPositiveItemEntity.getAuthor()).getDisplayName());
         dlpPositiveItem.setTitle(dlpPositiveItemEntity.getTitle());
-        dlpPositiveItem.setReference(dlpPositiveItemEntity.getReference());
+        DlpServiceConnector dlpServiceConnector = (DlpServiceConnector) dlpOperationProcessor.getConnectors().get(dlpPositiveItemEntity.getType());
+        dlpPositiveItem.setItemUrl(dlpServiceConnector.getItemUrl(dlpPositiveItemEntity.getReference()));
         dlpPositiveItem.setDetectionDate(dlpPositiveItemEntity.getDetectionDate().getTimeInMillis());
         return dlpPositiveItem;
     }

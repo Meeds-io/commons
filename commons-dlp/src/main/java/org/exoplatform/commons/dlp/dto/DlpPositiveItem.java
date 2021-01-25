@@ -16,6 +16,8 @@ public class DlpPositiveItem {
 
     private String reference;
 
+    private String   itemUrl;
+
     private Long   detectionDate;
 
     public DlpPositiveItem() {
@@ -47,6 +49,14 @@ public class DlpPositiveItem {
 
     public void setAuthor(String author) {
         this.author = author;
+    }
+
+    public String getItemUrl() {
+        return itemUrl;
+    }
+
+    public void setItemUrl(String itemUrl) {
+        this.itemUrl = itemUrl;
     }
 
     public String getAuthorDisplayName() {
