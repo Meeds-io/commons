@@ -105,6 +105,7 @@ public class DlpPositiveItemServiceImpl implements DlpPositiveItemService {
     dlpPositiveItem.setTitle(dlpPositiveItemEntity.getTitle());
     DlpServiceConnector dlpServiceConnector = (DlpServiceConnector) dlpOperationProcessor.getConnectors().get(dlpPositiveItemEntity.getType());
     dlpPositiveItem.setItemUrl(dlpServiceConnector.getItemUrl(dlpPositiveItemEntity.getReference()));
+    dlpPositiveItem.setIsExternal(dlpServiceConnector.checkExternal(dlpPositiveItemEntity.getAuthor()));
     dlpPositiveItem.setDetectionDate(dlpPositiveItemEntity.getDetectionDate().getTimeInMillis());
     return dlpPositiveItem;
   }
