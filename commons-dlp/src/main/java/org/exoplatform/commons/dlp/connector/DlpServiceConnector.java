@@ -76,4 +76,6 @@ public abstract class DlpServiceConnector extends BaseComponentPlugin {
   public abstract void removePositiveItem(String itemReference);
 
   public abstract String getItemUrl(String itemReference);
+
+  public abstract boolean checkExternal(String userId);
 }
