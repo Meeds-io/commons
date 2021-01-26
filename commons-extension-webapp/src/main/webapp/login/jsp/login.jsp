@@ -37,6 +37,7 @@
 <%@ page import="java.util.*" %>
 <%@ page import="org.gatein.portal.controller.resource.ResourceRequestHandler" %>
 <%@ page import="org.exoplatform.portal.resource.SkinConfig" %>
+<%@ page import="org.apache.commons.lang.StringEscapeUtils" %>
 <%@ page language="java" %>
 <%
   String contextPath = request.getContextPath() ;
@@ -146,8 +147,7 @@
 
                 <div class="userCredentials">
                   <span class="iconUser"></span>
-                  <input  tabindex="1" id="username" name="username" type="text" value="<%=email%>" placeholder="<%=res.getString("portal.login.Username")%>">
-                </div>
+                  <input  tabindex="1" id="username" name="username" type="text" value="<%=StringEscapeUtils.escapeHtml(email)%>" placeholder="<%=res.getString("portal.login.Username")%>">                </div>
                 <div class="userCredentials">
                   <span class="iconPswrd"></span>
                   <input  tabindex="2"  type="password" id="password" name="password" placeholder="<%=res.getString("portal.login.Password")%>">
