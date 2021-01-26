@@ -44,7 +44,7 @@ public class DlpPositiveItemEntity {
 
     @Column(name = "DETECTION_DATE")
     private Calendar detectionDate;
-
+    
     public Long getId() {
         return id;
     }

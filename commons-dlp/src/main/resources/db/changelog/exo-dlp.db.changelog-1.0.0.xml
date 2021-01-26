@@ -65,5 +65,5 @@
       <column name="ITEM_TITLE" type="VARCHAR(250)"/>
     </addColumn>
   </changeSet>
-
+  
 </databaseChangeLog>
