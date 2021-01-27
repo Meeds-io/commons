@@ -18,6 +18,7 @@
  */
 package org.exoplatform.commons.info;
 
+import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
 
@@ -61,6 +62,7 @@ public class PlatformInformationRESTService implements ResourceContainer {
    */
   @GET
   @Path("/info")
+  @RolesAllowed("administrators")
   @Produces(MediaType.APPLICATION_JSON)
   public Response getPlatformInformation(@Context SecurityContext sc) {
     CacheControl cacheControl = new CacheControl();
