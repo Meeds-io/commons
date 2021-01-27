@@ -37,7 +37,18 @@ public interface WebNotificationService {
    * @since PLF 4.2
    */
   void save(NotificationInfo notification);
-
+  
+  /**
+   * Get the notificationInfo for the provided id
+   *
+   *
+   * @param notificationId the notification id
+   * @LevelAPI Platform
+   * @since PLF 6.2
+   */
+  NotificationInfo getNotificationInfo(String notificationId);
+  
+  
   /**
    * Marks the notification to be read by the userId
    * @param notificationId the Notification Id

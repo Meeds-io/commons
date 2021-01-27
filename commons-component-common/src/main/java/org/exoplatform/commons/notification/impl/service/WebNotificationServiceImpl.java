@@ -49,7 +49,12 @@ public class WebNotificationServiceImpl implements WebNotificationService {
   public void save(NotificationInfo notification) {
     storage.save(notification);
   }
-
+  
+  @Override
+  public NotificationInfo getNotificationInfo(String notificationId) {
+    return storage.get(notificationId);
+  }
+  
   @Override
   public void markRead(String notificationId) {
     storage.markRead(notificationId);
