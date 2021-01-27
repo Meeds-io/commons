@@ -21,14 +21,13 @@ import java.util.List;
 
 public class DlpPositiveItemServiceImpl implements DlpPositiveItemService {
 
-  private static final Log LOG =
-      ExoLogger.getLogger(DlpPositiveItemServiceImpl.class);
+  private static final Log LOG = ExoLogger.getLogger(DlpPositiveItemServiceImpl.class);
 
-    public static final String DLP_KEYWORDS = "exo.dlp.keywords";
+  public static final String DLP_KEYWORDS = "exo.dlp.keywords";
 
-    public static final String EXO_DLP_KEYWORDS = "exo:dlpKeywords";
+  public static final String EXO_DLP_KEYWORDS = "exo:dlpKeywords";
 
-    private final DlpPositiveItemDAO dlpPositiveItemDAO;
+  private final DlpPositiveItemDAO dlpPositiveItemDAO;
 
   private DlpOperationProcessor dlpOperationProcessor;
 
@@ -41,11 +40,13 @@ public class DlpPositiveItemServiceImpl implements DlpPositiveItemService {
   public DlpPositiveItemServiceImpl(DlpPositiveItemDAO dlpPositiveItemDAO,
                                     OrganizationService organizationService,
                                     ListenerService listenerService,
-                                    DlpOperationProcessor dlpOperationProcessor) {
+                                    DlpOperationProcessor dlpOperationProcessor,
+                                    SettingService settingService) {
     this.dlpPositiveItemDAO = dlpPositiveItemDAO;
     this.organizationService = organizationService;
     this.listenerService = listenerService;
     this.dlpOperationProcessor = dlpOperationProcessor;
+    this.settingService = settingService;
   }
 
   @Override

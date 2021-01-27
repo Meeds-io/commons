@@ -1,5 +1,6 @@
 package org.exoplatform.commons.dlp.service;
 
+import org.exoplatform.commons.api.settings.SettingService;
 import org.exoplatform.commons.dlp.connector.DlpServiceConnector;
 import org.exoplatform.commons.dlp.dao.AbstractDAOTest;
 import org.exoplatform.commons.dlp.dao.DlpOperationDAO;
@@ -53,6 +54,8 @@ public class DlpPositiveItemServiceTest extends AbstractDAOTest {
   private ListenerService listenerService;
 
   private OrganizationService organizationService;
+  
+  private SettingService settingService;
 
   private UserHandler userHandler;
 
@@ -77,7 +80,7 @@ public class DlpPositiveItemServiceTest extends AbstractDAOTest {
     initDlpServiceConnector();
     dlpOperationProcessor = new DlpOperationProcessorImpl(dlpOperationDAO);
     dlpPositiveItemService =
-        new DlpPositiveItemServiceImpl(dlpPositiveItemDAO, organizationService, listenerService, dlpOperationProcessor);
+            new DlpPositiveItemServiceImpl(dlpPositiveItemDAO, organizationService, listenerService, dlpOperationProcessor, settingService);
   }
 
   private void initDlpServiceConnector() {
