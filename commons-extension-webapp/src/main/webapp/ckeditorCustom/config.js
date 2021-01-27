@@ -1,6 +1,9 @@
 /**
- * @license Copyright (c) 2003-2015, CKSource - Frederico Knabben. All rights reserved.
- * For licensing, see LICENSE.md or http://ckeditor.com/license
+ * This is ckeditor custom configuration used by exo platform modules when
+ * initializing a new instance of the editor.
+ *
+ * @license Copyright (c) 2003-2020, CKSource - Frederico Knabben. All rights reserved.
+ * For licensing, see https://ckeditor.com/legal/ckeditor-oss-license
  */
 
 // force env when using the eXo Android app (the eXo Android app uses a custom user agent which
