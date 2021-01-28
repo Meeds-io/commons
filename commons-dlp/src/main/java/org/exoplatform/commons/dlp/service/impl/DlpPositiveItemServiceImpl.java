@@ -95,17 +95,19 @@ public class DlpPositiveItemServiceImpl implements DlpPositiveItemService {
 
   private DlpPositiveItem fillDlpPositiveItemFromEntity(DlpPositiveItemEntity dlpPositiveItemEntity) throws Exception {
     DlpPositiveItem dlpPositiveItem = new DlpPositiveItem();
+    DlpServiceConnector dlpServiceConnector = (DlpServiceConnector) dlpOperationProcessor.getConnectors().get(dlpPositiveItemEntity.getType());
     dlpPositiveItem.setId(dlpPositiveItemEntity.getId());
     dlpPositiveItem.setType(dlpPositiveItemEntity.getType());
     dlpPositiveItem.setKeywords(dlpPositiveItemEntity.getKeywords());
-    dlpPositiveItem.setAuthor(dlpPositiveItemEntity.getAuthor());
-    dlpPositiveItem.setAuthorDisplayName(organizationService.getUserHandler()
-                                                            .findUserByName(dlpPositiveItemEntity.getAuthor())
-                                                            .getDisplayName());
+    if(dlpPositiveItemEntity.getAuthor() != null && !dlpPositiveItemEntity.getAuthor().isEmpty()) {
+      dlpPositiveItem.setAuthor(dlpPositiveItemEntity.getAuthor());
+      dlpPositiveItem.setAuthorDisplayName(organizationService.getUserHandler()
+                                                              .findUserByName(dlpPositiveItemEntity.getAuthor())
+                                                              .getDisplayName());
+      dlpPositiveItem.setIsExternal(dlpServiceConnector.checkExternal(dlpPositiveItemEntity.getAuthor()));
+    }
     dlpPositiveItem.setTitle(dlpPositiveItemEntity.getTitle());
-    DlpServiceConnector dlpServiceConnector = (DlpServiceConnector) dlpOperationProcessor.getConnectors().get(dlpPositiveItemEntity.getType());
     dlpPositiveItem.setItemUrl(dlpServiceConnector.getItemUrl(dlpPositiveItemEntity.getReference()));
-    dlpPositiveItem.setIsExternal(dlpServiceConnector.checkExternal(dlpPositiveItemEntity.getAuthor()));
     dlpPositiveItem.setDetectionDate(dlpPositiveItemEntity.getDetectionDate().getTimeInMillis());
     return dlpPositiveItem;
   }
