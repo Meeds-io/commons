@@ -1,7 +1,6 @@
 package org.exoplatform.commons.dlp.service.impl;
 
 import org.exoplatform.commons.dlp.connector.DlpServiceConnector;
-import org.exoplatform.commons.api.settings.SettingService;
 import org.exoplatform.commons.dlp.dao.DlpPositiveItemDAO;
 import org.exoplatform.commons.dlp.domain.DlpPositiveItemEntity;
 import org.exoplatform.commons.dlp.dto.DlpPositiveItem;
@@ -18,28 +17,25 @@ import java.util.List;
 
 public class DlpPositiveItemServiceImpl implements DlpPositiveItemService {
 
-  private static final Log LOG = ExoLogger.getLogger(DlpPositiveItemServiceImpl.class);
+  private static final Log LOG =
+      ExoLogger.getLogger(DlpPositiveItemServiceImpl.class);
 
   private final DlpPositiveItemDAO dlpPositiveItemDAO;
 
   private DlpOperationProcessor dlpOperationProcessor;
 
   private ListenerService listenerService;
-  
-  private SettingService settingService;
 
   private OrganizationService organizationService;
 
   public DlpPositiveItemServiceImpl(DlpPositiveItemDAO dlpPositiveItemDAO,
                                     OrganizationService organizationService,
                                     ListenerService listenerService,
-                                    DlpOperationProcessor dlpOperationProcessor,
-                                    SettingService settingService) {
+                                    DlpOperationProcessor dlpOperationProcessor) {
     this.dlpPositiveItemDAO = dlpPositiveItemDAO;
     this.organizationService = organizationService;
     this.listenerService = listenerService;
     this.dlpOperationProcessor = dlpOperationProcessor;
-    this.settingService = settingService;
   }
 
   @Override
@@ -86,7 +82,7 @@ public class DlpPositiveItemServiceImpl implements DlpPositiveItemService {
   public Long getDlpPositiveItemsCount() {
     return dlpPositiveItemDAO.count();
   }
-  
+
   private List<DlpPositiveItem> fillDlpPositiveItemsFromEntities(List<DlpPositiveItemEntity> dlpPositiveItemEntities) throws
                                                                                                                       Exception {
     List<DlpPositiveItem> dlpPositiveItems = new ArrayList<>();
