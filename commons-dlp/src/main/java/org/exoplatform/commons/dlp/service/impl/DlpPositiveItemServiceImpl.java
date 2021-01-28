@@ -11,6 +11,7 @@ import org.exoplatform.services.listener.ListenerService;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 import org.exoplatform.services.organization.OrganizationService;
+import org.exoplatform.services.organization.User;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -99,11 +100,11 @@ public class DlpPositiveItemServiceImpl implements DlpPositiveItemService {
     dlpPositiveItem.setId(dlpPositiveItemEntity.getId());
     dlpPositiveItem.setType(dlpPositiveItemEntity.getType());
     dlpPositiveItem.setKeywords(dlpPositiveItemEntity.getKeywords());
-    if(dlpPositiveItemEntity.getAuthor() != null && !dlpPositiveItemEntity.getAuthor().isEmpty()) {
-      dlpPositiveItem.setAuthor(dlpPositiveItemEntity.getAuthor());
-      dlpPositiveItem.setAuthorDisplayName(organizationService.getUserHandler()
-                                                              .findUserByName(dlpPositiveItemEntity.getAuthor())
-                                                              .getDisplayName());
+    dlpPositiveItem.setAuthor(dlpPositiveItemEntity.getAuthor());
+    User user = organizationService.getUserHandler()
+                                     .findUserByName(dlpPositiveItemEntity.getAuthor());
+    if (user!=null) {
+      dlpPositiveItem.setAuthorDisplayName(user.getDisplayName());
       dlpPositiveItem.setIsExternal(dlpServiceConnector.checkExternal(dlpPositiveItemEntity.getAuthor()));
     }
     dlpPositiveItem.setTitle(dlpPositiveItemEntity.getTitle());
