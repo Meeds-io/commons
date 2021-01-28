@@ -2,11 +2,6 @@ package org.exoplatform.commons.dlp.connector;
 
 import org.apache.commons.lang.StringUtils;
 
-import org.exoplatform.commons.api.settings.SettingService;
-import org.exoplatform.commons.api.settings.SettingValue;
-import org.exoplatform.commons.api.settings.data.Context;
-import org.exoplatform.commons.api.settings.data.Scope;
-import org.exoplatform.commons.utils.CommonsUtils;
 import org.exoplatform.container.component.BaseComponentPlugin;
 import org.exoplatform.container.xml.InitParams;
 import org.exoplatform.container.xml.PropertiesParam;
@@ -75,16 +70,7 @@ public abstract class DlpServiceConnector extends BaseComponentPlugin {
   public void setEnable(boolean enable) {
     this.enable = enable;
   }
-  
-  /**
-   * @return the Keywords from setting service
-   */
-  public String getKeywords() {
-    SettingService settingService = CommonsUtils.getService(SettingService.class);
-    SettingValue<?> settingValue = settingService.get(Context.GLOBAL, Scope.GLOBAL.id("DlpKeywords"), "exo:dlpKeywords");
-    return settingValue != null ? settingValue.getValue().toString() : null;
-  }
-  
+
   public abstract boolean processItem(String entityId);
 
   public abstract void removePositiveItem(String itemReference);
