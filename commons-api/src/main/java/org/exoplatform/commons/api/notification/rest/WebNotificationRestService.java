@@ -17,6 +17,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import org.exoplatform.commons.api.notification.model.NotificationInfo;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -96,7 +97,14 @@ public class WebNotificationRestService implements ResourceContainer {
         if (notificationId == null) {
           return Response.status(Response.Status.BAD_REQUEST).build();
         } else {
-          webNftService.markRead(notificationId);
+          NotificationInfo notification = webNftService.getNotificationInfo(notificationId);
+          if (currentUser.equals(notification.getTo())) {
+            webNftService.markRead(notificationId);
+          } else {
+            LOG.warn("User {} is not allowed to mark notification {} as read", currentUser, notificationId);
+            return Response.status(Response.Status.UNAUTHORIZED).build();
+  
+          }
         }
       }
 
@@ -104,7 +112,14 @@ public class WebNotificationRestService implements ResourceContainer {
         if (notificationId == null) {
           return Response.status(Response.Status.BAD_REQUEST).build();
         } else {
-          webNftService.hidePopover(notificationId);
+          NotificationInfo notification = webNftService.getNotificationInfo(notificationId);
+          if (currentUser.equals(notification.getTo())) {
+            webNftService.hidePopover(notificationId);
+          } else {
+            LOG.warn("User {} is not allowed to hide notification {}", currentUser, notificationId);
+            return Response.status(Response.Status.UNAUTHORIZED).build();
+  
+          }
         }
       }
 
