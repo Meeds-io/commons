@@ -16,7 +16,7 @@
 
 
   <changeSet author="exo-dlp" id="1.0.0-1">
-    <validCheckSum>7:b157acec94f1e8405e7c1336e64f5d75</validCheckSum>
+    <validCheckSum>7:b54b6e49ddca16ea0da164e636e5b8a2</validCheckSum>
     <validCheckSum>7:409e3990dbb962c0a47a475a574665ce</validCheckSum>
     <createTable tableName="DLP_QUEUE">
       <column name="OPERATION_ID" type="BIGINT" autoIncrement="${autoIncrement}" startWith="1">
