@@ -6,6 +6,7 @@ import javax.ws.rs.core.*;
 
 import org.exoplatform.common.http.HTTPStatus;
 import org.exoplatform.commons.dlp.dto.DlpPositiveItem;
+import org.exoplatform.commons.dlp.processor.DlpOperationProcessor;
 import org.exoplatform.commons.dlp.service.DlpPositiveItemService;
 import org.exoplatform.portal.rest.CollectionEntity;
 import org.exoplatform.services.log.ExoLogger;
@@ -23,9 +24,12 @@ public class DlpItemRestServices implements ResourceContainer {
     private static final Log LOG = ExoLogger.getLogger(DlpItemRestServices.class);
 
     private DlpPositiveItemService dlpPositiveItemService;
+    
+    private DlpOperationProcessor dlpOperationProcessor;
 
-    public DlpItemRestServices(DlpPositiveItemService dlpPositiveItemService) {
+    public DlpItemRestServices(DlpPositiveItemService dlpPositiveItemService, DlpOperationProcessor dlpOperationProcessor) {
         this.dlpPositiveItemService = dlpPositiveItemService;
+        this.dlpOperationProcessor = dlpOperationProcessor;
     }
 
 
@@ -68,6 +72,26 @@ public class DlpItemRestServices implements ResourceContainer {
 
         dlpPositiveItemService.deleteDlpPositiveItem(id);
         return Response.ok().build();
+    }
+
+    @GET
+    @Path("/keywords")
+    @RolesAllowed("administrators")
+    @ApiOperation(value = "Retrieves the list of dlp keywords", httpMethod = "GET", response = Response.class, produces = "application/json",
+            notes = "Return list of dlp keywords in json format")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Request fulfilled"),
+            @ApiResponse(code = 500, message = "Internal server error"),
+            @ApiResponse(code = 400, message = "Invalid query input")})
+    public Response getDlpKeywords() {
+
+        try {
+            String keywords = dlpOperationProcessor.getKeywords();
+            return Response.ok(keywords).build();
+        } catch (Exception e) {
+            LOG.error("Unknown error occurred while getting dlp keywords", e);
+            return Response.serverError().build();
+        }
     }
 }
 

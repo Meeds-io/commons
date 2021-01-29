@@ -47,6 +47,11 @@ public abstract class DlpOperationProcessor {
   public Map<String, DlpServiceConnector> getConnectors() {
     return connectors;
   }
+  
+  /**
+   * @return the Dlp Keywords
+   */
+  public abstract String getKeywords();
 
   /**
    * Add all documents in the dlp queue
