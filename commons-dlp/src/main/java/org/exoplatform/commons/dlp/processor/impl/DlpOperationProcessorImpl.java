@@ -8,6 +8,11 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import org.exoplatform.commons.api.settings.SettingService;
+import org.exoplatform.commons.api.settings.SettingValue;
+import org.exoplatform.commons.api.settings.data.Context;
+import org.exoplatform.commons.api.settings.data.Scope;
+import org.exoplatform.commons.utils.CommonsUtils;
 import org.picocontainer.Startable;
 
 import org.exoplatform.commons.dlp.connector.DlpServiceConnector;
@@ -22,6 +27,8 @@ public class DlpOperationProcessorImpl extends DlpOperationProcessor implements 
   private static final Log      LOGGER               = ExoLogger.getExoLogger(DlpOperationProcessorImpl.class);
 
   private static final Integer  BATCH_NUMBER_DEFAULT = 1000;
+
+  private static final String DLP_KEYWORDS = "exo.dlp.keywords";
 
   // Service
   private final DlpOperationDAO dlpOperationDAO;
@@ -46,6 +53,13 @@ public class DlpOperationProcessorImpl extends DlpOperationProcessor implements 
   @Override
   public void stop() {
     executors.shutdownNow();
+  }
+
+  @Override
+  public String getKeywords() {
+    SettingService settingService = CommonsUtils.getService(SettingService.class);
+    SettingValue<?> settingValue = settingService.get(Context.GLOBAL, Scope.APPLICATION.id("DlpKeywords"), "exo:dlpKeywords");
+    return settingValue != null ? settingValue.getValue().toString() : System.getProperty(DLP_KEYWORDS);
   }
 
   @Override
