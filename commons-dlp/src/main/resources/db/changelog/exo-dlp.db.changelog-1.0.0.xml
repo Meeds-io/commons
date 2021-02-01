@@ -66,4 +66,15 @@
     </addColumn>
   </changeSet>
   
+  <changeSet author="exo-dlp" id="1.0.0-6">
+    <modifyDataType columnName="KEYWORDS"
+                    newDataType="NVARCHAR(500)"
+                    tableName="DLP_POSITIVE_ITEMS"/>
+    <rollback>
+      <!-- This rollback is need because in unit test we will revert all changes after each test case-->
+      <modifyDataType columnName="KEYWORDS"
+                      newDataType="NVARCHAR(50)"
+                      tableName="DLP_POSITIVE_ITEMS"/>
+    </rollback>
+  </changeSet>
 </databaseChangeLog>

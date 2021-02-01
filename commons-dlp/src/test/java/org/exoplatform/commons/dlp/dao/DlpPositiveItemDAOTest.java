@@ -92,5 +92,31 @@ public class DlpPositiveItemDAOTest extends AbstractDAOTest {
         //Then
         assertEquals(0, dlpPositiveItemDAO.count().intValue());
     }
+    
+    
+    @Test
+    public void testDlpPositiveItemsCreationWithLongKeyword() {
+
+        //Given
+        List<DlpPositiveItemEntity> dlpPositiveItemEntities = dlpPositiveItemDAO.getDlpPositiveItems(0, 20);
+        assertEquals(dlpPositiveItemEntities.size(), 0);
+
+        //When
+        DlpPositiveItemEntity dlpPositiveItemEntity = new DlpPositiveItemEntity();
+        dlpPositiveItemEntity.setType("file");
+        dlpPositiveItemEntity.setTitle("file");
+        dlpPositiveItemEntity.setKeywords("keyword1, "
+                                              + "keyword2, "
+                                              + "keyword3, "
+                                              + "keyword4, "
+                                              + "keyword5, "
+                                              + "keyword6");
+        dlpPositiveItemDAO.create(dlpPositiveItemEntity);
+
+
+        //Then
+        dlpPositiveItemEntities = dlpPositiveItemDAO.getDlpPositiveItems(0, 20);
+        assertEquals(dlpPositiveItemEntities.size(), 1);
+    }
 }
 

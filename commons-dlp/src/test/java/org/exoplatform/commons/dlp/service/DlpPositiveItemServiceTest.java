@@ -49,7 +49,8 @@ public class DlpPositiveItemServiceTest extends AbstractDAOTest {
 
   @Mock
   private DlpServiceConnector dlpServiceConnector2;
-
+  
+  @Mock
   private ListenerService listenerService;
 
   private OrganizationService organizationService;
@@ -66,6 +67,7 @@ public class DlpPositiveItemServiceTest extends AbstractDAOTest {
     MockitoAnnotations.initMocks(this);
     organizationService = mock(OrganizationService.class);
     dlpServiceConnector = mock(DlpServiceConnector.class);
+    listenerService = mock(ListenerService.class);
     userHandler = mock(UserHandler.class);
     when(organizationService.getUserHandler()).thenReturn(userHandler);
     UserImpl user = new UserImpl();
