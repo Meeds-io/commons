@@ -45,6 +45,8 @@ public class PlatformInformationRESTService implements ResourceContainer {
 
   public static final java.lang.String ENTERPRISE_EDITION = "enterprise";
 
+  public static final java.lang.String MIN_MOBILE_SUPPORTED_VERSION = "4.3.0+";
+
   private ProductInformations          platformInformations;
 
   private UserACL                      userACL;
@@ -57,14 +59,12 @@ public class PlatformInformationRESTService implements ResourceContainer {
   /**
    * This method return a JSON Object with the platform required informations.
    * 
-   * @param sc securty context of REST Service xecution
    * @return REST response
    */
   @GET
   @Path("/info")
-  @RolesAllowed("administrators")
   @Produces(MediaType.APPLICATION_JSON)
-  public Response getPlatformInformation(@Context SecurityContext sc) {
+  public Response getPlatformInformation() {
     CacheControl cacheControl = new CacheControl();
     cacheControl.setNoCache(true);
     cacheControl.setNoStore(true);
@@ -72,20 +72,25 @@ public class PlatformInformationRESTService implements ResourceContainer {
       String plfProfile = ExoContainer.getProfiles().toString().trim();
       String runningProfile = plfProfile.substring(1, plfProfile.length() - 1);
       JsonPlatformInfo jsonPlatformInfo = new JsonPlatformInfo();
-      jsonPlatformInfo.setPlatformVersion(platformInformations.getVersion());
-      jsonPlatformInfo.setPlatformBuildNumber(platformInformations.getBuildNumber());
-      jsonPlatformInfo.setPlatformRevision(platformInformations.getRevision());
-      jsonPlatformInfo.setIsMobileCompliant(isMobileCompliant().toString());
-      jsonPlatformInfo.setRunningProfile(runningProfile);
-      jsonPlatformInfo.setPlatformEdition(getPlatformEdition());
-      if ((platformInformations.getEdition() != null) && (!platformInformations.getEdition().equals(""))) {
-        jsonPlatformInfo.setDuration(platformInformations.getDuration());
-        jsonPlatformInfo.setDateOfKeyGeneration(platformInformations.getDateOfLicence());
-        jsonPlatformInfo.setNbUsers(platformInformations.getNumberOfUsers());
-        if (userACL.isUserInGroup(userACL.getAdminGroups())) {
+      if (userACL.isUserInGroup(userACL.getAdminGroups())) {
+        jsonPlatformInfo.setPlatformVersion(platformInformations.getVersion());
+        jsonPlatformInfo.setPlatformBuildNumber(platformInformations.getBuildNumber());
+        jsonPlatformInfo.setPlatformRevision(platformInformations.getRevision());
+        jsonPlatformInfo.setIsMobileCompliant(isMobileCompliant().toString());
+        jsonPlatformInfo.setRunningProfile(runningProfile);
+        jsonPlatformInfo.setPlatformEdition(getPlatformEdition());
+        if ((platformInformations.getEdition() != null) && (!platformInformations.getEdition().equals(""))) {
+          jsonPlatformInfo.setDuration(platformInformations.getDuration());
+          jsonPlatformInfo.setDateOfKeyGeneration(platformInformations.getDateOfLicence());
+          jsonPlatformInfo.setNbUsers(platformInformations.getNumberOfUsers());
           jsonPlatformInfo.setProductCode(platformInformations.getProductCode());
           jsonPlatformInfo.setUnlockKey(platformInformations.getProductKey());
         }
+      } else {
+        // Add a compliant version to mobile application
+        // without exposing real version of platform
+        // to anonymous or connected users
+        jsonPlatformInfo.setPlatformVersion(MIN_MOBILE_SUPPORTED_VERSION);
       }
       if (LOG.isDebugEnabled()) {
         LOG.debug("Getting Platform Informations: eXo Platform (v" + platformInformations.getVersion() + " - build "
