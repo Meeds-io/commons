@@ -40,11 +40,8 @@ public class DlpPositiveItemServiceImpl implements DlpPositiveItemService {
   }
 
   public DlpPositiveItem getDlpPositiveItemById(Long itemId) throws Exception {
-    DlpPositiveItemEntity eventEntity = dlpPositiveItemDAO.find(itemId);
-    if (eventEntity == null) {
-      return null;
-    }
-    return fillDlpPositiveItemFromEntity(eventEntity);
+    DlpPositiveItemEntity itemEntity = dlpPositiveItemDAO.find(itemId);
+    return itemEntity != null ? fillDlpPositiveItemFromEntity(itemEntity) : null;
   }
   
   @Override
