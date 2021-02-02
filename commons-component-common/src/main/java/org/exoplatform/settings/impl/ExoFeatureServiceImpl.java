@@ -170,7 +170,7 @@ public class ExoFeatureServiceImpl implements ExoFeatureService {
       }
       try {
         Collection<Membership> memberships = organizationService.getMembershipHandler()
-                                                                .findMembershipsByUserAndGroup(username, group);
+                                                                .findMembershipsByUserAndGroup(username, permissionExpression);
         return memberships != null && memberships.size() > 0;
       } catch (Exception e) {
         throw new IllegalStateException("Error getting memberships of user " + username, e);
