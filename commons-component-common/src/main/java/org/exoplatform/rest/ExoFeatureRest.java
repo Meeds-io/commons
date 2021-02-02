@@ -33,11 +33,11 @@ public class ExoFeatureRest implements ResourceContainer {
 
   @Path("{featureName}")
   @GET
-  @Produces(MediaType.APPLICATION_JSON)
+  @Produces(MediaType.TEXT_PLAIN)
   @RolesAllowed("users")
   @ApiOperation(
-          value = "Check if a feature is activated for a user.", httpMethod = "GET", response = Response.class,
-          produces = "application/json"
+          value = "Check if a feature is enabled for a user.",
+          httpMethod = "GET", response = Response.class, produces = "text/plain"
   )
   @ApiResponses(
           value = { @ApiResponse(code = HTTPStatus.OK, message = "Request fulfilled"),
@@ -55,7 +55,7 @@ public class ExoFeatureRest implements ResourceContainer {
     try {
       String username = ConversationState.getCurrent().getIdentity().getUserId();
       boolean isFeatureActive = featureService.isFeatureActiveForUser(featureName, username);
-      return Response.ok(isFeatureActive).build();
+      return Response.ok().entity(isFeatureActive).type(MediaType.TEXT_PLAIN).build();
     } catch (Exception e) {
       LOG.warn("Error retrieving feature status with name '{}'", featureName, e);
       return Response.serverError().entity(e.getMessage()).build();

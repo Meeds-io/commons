@@ -16,8 +16,11 @@
  */
 package org.exoplatform.settings.impl;
 
+import org.apache.commons.lang.StringUtils;
 import org.exoplatform.commons.api.settings.ExoFeatureService;
+import org.exoplatform.commons.api.settings.FeaturePlugin;
 import org.exoplatform.commons.testing.BaseCommonsTestCase;
+import org.exoplatform.commons.utils.CommonsUtils;
 import org.exoplatform.services.security.Identity;
 import org.exoplatform.services.security.IdentityRegistry;
 import org.exoplatform.services.security.MembershipEntry;
@@ -28,7 +31,7 @@ public class FeatureServiceTest extends BaseCommonsTestCase {
 
   private ExoFeatureService featureService;
 
-  private IdentityRegistry identityRegistry;
+  private IdentityRegistry  identityRegistry;
 
   @Override
   public void setUp() throws Exception {
@@ -36,7 +39,7 @@ public class FeatureServiceTest extends BaseCommonsTestCase {
     featureService = getService(ExoFeatureService.class);
     identityRegistry = getService(IdentityRegistry.class);
   }
-  
+
   public void testShouldFeatureBeActiveWhenSettingIsTrue() {
     // Given
     featureService.saveActiveFeature("feature1", true);
@@ -126,6 +129,44 @@ public class FeatureServiceTest extends BaseCommonsTestCase {
   }
 
   public void testActiveFeatureForUser() throws Exception {
+    assertTrue("Feature should be enabled if no flag is stored in DB", featureService.isActiveFeature("wallet"));
+    assertFalse("Feature should be disabled for a user if no plugin is added with this feature",
+                featureService.isFeatureActiveForUser("wallet", "toto"));
+
+    featureService.saveActiveFeature("wallet", false);
+    assertFalse("Feature should be disabled after disabling it", featureService.isActiveFeature("wallet"));
+    assertFalse("Feature should be disabled for all users after disabling it",
+                featureService.isFeatureActiveForUser("wallet", "toto"));
+
+    featureService.saveActiveFeature("wallet", true);
+    assertTrue("Feature should be enabled if it's changed on DB", featureService.isActiveFeature("wallet"));
+    assertFalse("Feature should be disabled for user even it's globally enabled",
+                featureService.isFeatureActiveForUser("wallet", "toto"));
+
+    featureService.addFeaturePlugin(new FeaturePlugin() {
+      @Override
+      public String getName() {
+        return "wallet";
+      }
+
+      @Override
+      public boolean isFeatureActiveForUser(String featureName, String username) {
+        return StringUtils.equals("toto", username);
+      }
+    });
+
+    assertTrue("Feature should be globally enabled even after adding a plugin", featureService.isActiveFeature("wallet"));
+    assertTrue("Feature should be enabled for user 'toto' only switch plugin code",
+               featureService.isFeatureActiveForUser("wallet", "toto"));
+    assertTrue("Feature should be enabled for user 'toto' only switch plugin code",
+               CommonsUtils.isFeatureActive("wallet", "toto"));
+    assertFalse("Feature should be enabled only for user 'toto' switch plugin code",
+                featureService.isFeatureActiveForUser("wallet", "titi"));
+    assertFalse("Feature should be enabled only for user 'toto' switch plugin code",
+                CommonsUtils.isFeatureActive("wallet", "titi"));
+  }
+
+  public void testActiveFeatureForAuthorizedUser() throws Exception {
     // Given
     System.setProperty("exo.feature.feature1.permissions", "*:/platform/developers");
     Set<MembershipEntry> memberships = new HashSet<MembershipEntry>();
@@ -152,14 +193,6 @@ public class FeatureServiceTest extends BaseCommonsTestCase {
 
     // Then
     assertFalse(test2);
-  }
-
-  public void testIsActiveFeature() throws Exception {
-    assertTrue("Feature should be enabled if no flag is stored in DB", featureService.isActiveFeature("wallet"));
-    featureService.saveActiveFeature("wallet", false);
-    assertFalse("Feature should be disabled after disabling it", featureService.isActiveFeature("wallet"));
-    featureService.saveActiveFeature("wallet", true);
-    assertTrue("Feature should be enabled if it's changed on DB", featureService.isActiveFeature("wallet"));
   }
 
 }
