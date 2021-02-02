@@ -65,5 +65,19 @@
       <column name="ITEM_TITLE" type="VARCHAR(250)"/>
     </addColumn>
   </changeSet>
+
+  <changeSet author="exo-dlp" id="1.0.0-6">
+    <createTable tableName="RESTORED_DLP_ITEMS">
+      <column name="RESTORED_ITEM_ID" type="BIGINT" autoIncrement="${autoIncrement}" startWith="1">
+        <constraints nullable="false" primaryKey="true" primaryKeyName="PK_RESTORED_DLP_ITEMS"/>
+      </column>
+      <column name="RESTORED_ITEM_REFERENCE" type="VARCHAR(50)"/>
+      <column name="RESTORED_DETECTION_DATE" type="TIMESTAMP"/>
+    </createTable>
+  </changeSet>
+
+  <changeSet author="exo-dlp" id="1.0.0-7" dbms="oracle,postgresql">
+    <createSequence sequenceName="SEQ_RESTORED_DLP_ITEMS_ID" startValue="1"/>
+  </changeSet>
   
 </databaseChangeLog>

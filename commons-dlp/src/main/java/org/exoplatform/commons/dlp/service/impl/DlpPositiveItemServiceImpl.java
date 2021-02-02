@@ -57,7 +57,7 @@ public class DlpPositiveItemServiceImpl implements DlpPositiveItemService {
       long startTime = System.currentTimeMillis();
       dlpPositiveItemDAO.delete(dlpPositiveItemEntity);
       try {
-        listenerService.broadcast(new Event("dlp.listener.event.delete.document", null, dlpPositiveItemEntity.getReference()));
+        listenerService.broadcast(new Event("dlp.listener.event.delete.item", null, dlpPositiveItemEntity.getReference()));
       } catch (Exception e) {
         LOG.error("Error when broadcasting delete file event", e);
       }
@@ -92,6 +92,21 @@ public class DlpPositiveItemServiceImpl implements DlpPositiveItemService {
       dlpPositiveItems.add(dlpPositiveItem);
     }
     return dlpPositiveItems;
+  }
+
+  @Override
+  public void restoreDlpPositiveItem(Long itemId) {
+    try {
+      DlpPositiveItemEntity dlpPositiveItemEntity = dlpPositiveItemDAO.find(itemId);
+      if (dlpPositiveItemEntity != null) {
+        dlpPositiveItemDAO.delete(dlpPositiveItemEntity);
+        listenerService.broadcast(new Event("dlp.listener.event.restore.item", null, dlpPositiveItemEntity.getReference()));
+      } else {
+        LOG.warn("The DlpItem's {} not found.", itemId);
+      }
+    } catch (Exception e) {
+      LOG.error("Error when broadcasting restore file event", e);
+    }
   }
 
   private DlpPositiveItem fillDlpPositiveItemFromEntity(DlpPositiveItemEntity dlpPositiveItemEntity) throws Exception {
