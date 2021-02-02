@@ -20,6 +20,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang.StringUtils;
+
 import org.exoplatform.commons.api.settings.*;
 import org.exoplatform.commons.api.settings.data.Context;
 import org.exoplatform.commons.api.settings.data.Scope;
@@ -27,23 +28,20 @@ import org.exoplatform.management.annotations.*;
 import org.exoplatform.management.jmx.annotations.NameTemplate;
 import org.exoplatform.management.jmx.annotations.Property;
 import org.exoplatform.management.rest.annotations.RESTEndpoint;
-import org.exoplatform.services.log.ExoLogger;
-import org.exoplatform.services.log.Log;
-import org.exoplatform.services.organization.Group;
 import org.exoplatform.services.organization.Membership;
 import org.exoplatform.services.organization.OrganizationService;
 import org.exoplatform.services.security.IdentityRegistry;
 
 @Managed
 @ManagedDescription("eXo Feature Service")
-@NameTemplate({
-    @Property(key = "service", value = "feature"),
-    @Property(key = "view", value = "ExoFeatureService")
-})
+@NameTemplate(
+  {
+      @Property(key = "service", value = "feature"),
+      @Property(key = "view", value = "ExoFeatureService")
+  }
+)
 @RESTEndpoint(path = "featureservice")
 public class ExoFeatureServiceImpl implements ExoFeatureService {
-
-  private static final Log           LOG                = ExoLogger.getLogger(ExoFeatureServiceImpl.class);
 
   private static final String        NAME_SPACES        = "exo:";
 
@@ -72,14 +70,14 @@ public class ExoFeatureServiceImpl implements ExoFeatureService {
   public boolean isActiveFeature(@ManagedDescription("Feature name") @ManagedName("featureName") String featureName) {
     Boolean active;
     SettingValue<?> sValue = settingService.get(Context.GLOBAL, Scope.GLOBAL.id(null), (NAME_SPACES + featureName));
-    if(sValue != null) {
+    if (sValue != null) {
       active = Boolean.valueOf(sValue.getValue().toString());
     } else {
       active = getFeaturePropertyValue(featureName);
     }
-    return active == null ? true : active;
+    return active == null || active.booleanValue();
   }
-  
+
   @Override
   public void saveActiveFeature(String featureName, boolean isActive) {
     settingService.set(Context.GLOBAL, Scope.GLOBAL.id(null), (NAME_SPACES + featureName), SettingValue.create(isActive));
@@ -89,7 +87,7 @@ public class ExoFeatureServiceImpl implements ExoFeatureService {
   @ManagedDescription("Activate/Deactivate feature")
   @Impact(ImpactType.WRITE)
   public void changeFeatureActivation(@ManagedDescription("Feature name") @ManagedName("featureName") String featureName,
-                                @ManagedDescription("Is active") @ManagedName("isActive") String isActive) {
+                                      @ManagedDescription("Is active") @ManagedName("isActive") String isActive) {
     boolean isActiveBool = Boolean.parseBoolean(isActive);
     saveActiveFeature(featureName, isActiveBool);
   }
@@ -98,6 +96,7 @@ public class ExoFeatureServiceImpl implements ExoFeatureService {
   public void addFeaturePlugin(FeaturePlugin featurePlugin) {
     plugins.put(featurePlugin.getName(), featurePlugin);
   }
+
   @Override
   public boolean isFeatureActiveForUser(@ManagedDescription("Feature name") @ManagedName("featureName") String featureName,
                                         @ManagedDescription("Username") @ManagedName("userName") String username) {
@@ -163,7 +162,6 @@ public class ExoFeatureServiceImpl implements ExoFeatureService {
       }
 
     } else if (permissionExpression.contains("/")) {
-      String group = permissionExpression;
       org.exoplatform.services.security.Identity identity = identityRegistry.getIdentity(username);
       if (identity != null) {
         return identity.isMemberOf(permissionExpression);
@@ -171,7 +169,7 @@ public class ExoFeatureServiceImpl implements ExoFeatureService {
       try {
         Collection<Membership> memberships = organizationService.getMembershipHandler()
                                                                 .findMembershipsByUserAndGroup(username, permissionExpression);
-        return memberships != null && memberships.size() > 0;
+        return memberships != null && !memberships.isEmpty();
       } catch (Exception e) {
         throw new IllegalStateException("Error getting memberships of user " + username, e);
       }

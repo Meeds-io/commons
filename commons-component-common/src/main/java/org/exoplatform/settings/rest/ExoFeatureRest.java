@@ -1,7 +1,12 @@
 package org.exoplatform.settings.rest;
 
-import io.swagger.annotations.*;
+import javax.annotation.security.RolesAllowed;
+import javax.ws.rs.*;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+
 import org.apache.commons.lang.StringUtils;
+
 import org.exoplatform.common.http.HTTPStatus;
 import org.exoplatform.commons.api.settings.ExoFeatureService;
 import org.exoplatform.services.log.ExoLogger;
@@ -9,22 +14,16 @@ import org.exoplatform.services.log.Log;
 import org.exoplatform.services.rest.resource.ResourceContainer;
 import org.exoplatform.services.security.ConversationState;
 
-import javax.annotation.security.RolesAllowed;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
+import io.swagger.annotations.*;
 
 @Path("/v1/features")
-@Api(value = "/v1/features", description = "Manages product experimental features")
+@Api(value = "/v1/features", description = "Manages product experimental features") // NOSONAR
 public class ExoFeatureRest implements ResourceContainer {
 
   private static final Log  LOG = ExoLogger.getLogger(ExoFeatureRest.class);
 
   private ExoFeatureService featureService;
-  
+
   public ExoFeatureRest(ExoFeatureService featureService) {
     this.featureService = featureService;
   }
@@ -34,19 +33,19 @@ public class ExoFeatureRest implements ResourceContainer {
   @Produces(MediaType.TEXT_PLAIN)
   @RolesAllowed("users")
   @ApiOperation(
-          value = "Check if a feature is enabled for a user.",
-          httpMethod = "GET", response = Response.class, produces = "text/plain"
+      value = "Check if a feature is enabled for a user.",
+      httpMethod = "GET", response = Response.class, produces = "text/plain"
   )
   @ApiResponses(
-          value = { @ApiResponse(code = HTTPStatus.OK, message = "Request fulfilled"),
-                  @ApiResponse(code = HTTPStatus.BAD_REQUEST, message = "Invalid query input"),
-                  @ApiResponse(code = HTTPStatus.UNAUTHORIZED, message = "Unauthorized operation"),
-                  @ApiResponse(code = HTTPStatus.INTERNAL_ERROR, message = "Internal server error"), }
+      value = { @ApiResponse(code = HTTPStatus.OK, message = "Request fulfilled"),
+          @ApiResponse(code = HTTPStatus.BAD_REQUEST, message = "Invalid query input"),
+          @ApiResponse(code = HTTPStatus.UNAUTHORIZED, message = "Unauthorized operation"),
+          @ApiResponse(code = HTTPStatus.INTERNAL_ERROR, message = "Internal server error"), }
   )
   public Response isFeatureActiveForUser(
-                                        @ApiParam(value = "Feature name identifier", required = true) @PathParam(
-                                                "featureName"
-                                        ) String featureName) {
+                                         @ApiParam(value = "Feature name identifier", required = true) @PathParam(
+                                           "featureName"
+                                         ) String featureName) {
     if (StringUtils.isBlank(featureName)) {
       return Response.status(Response.Status.BAD_REQUEST).entity("Feature name must not be null or blank").build();
     }
