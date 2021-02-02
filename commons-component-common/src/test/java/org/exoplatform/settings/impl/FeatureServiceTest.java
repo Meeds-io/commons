@@ -16,23 +16,30 @@
  */
 package org.exoplatform.settings.impl;
 
-import org.apache.commons.lang3.StringUtils;
-
+import org.apache.commons.lang.StringUtils;
 import org.exoplatform.commons.api.settings.ExoFeatureService;
 import org.exoplatform.commons.api.settings.FeaturePlugin;
 import org.exoplatform.commons.testing.BaseCommonsTestCase;
 import org.exoplatform.commons.utils.CommonsUtils;
+import org.exoplatform.services.security.Identity;
+import org.exoplatform.services.security.IdentityRegistry;
+import org.exoplatform.services.security.MembershipEntry;
+import java.util.HashSet;
+import java.util.Set;
 
 public class FeatureServiceTest extends BaseCommonsTestCase {
 
   private ExoFeatureService featureService;
 
+  private IdentityRegistry  identityRegistry;
+
   @Override
   public void setUp() throws Exception {
     super.setUp();
     featureService = getService(ExoFeatureService.class);
+    identityRegistry = getService(IdentityRegistry.class);
   }
-  
+
   public void testShouldFeatureBeActiveWhenSettingIsTrue() {
     // Given
     featureService.saveActiveFeature("feature1", true);
@@ -157,6 +164,35 @@ public class FeatureServiceTest extends BaseCommonsTestCase {
                 featureService.isFeatureActiveForUser("wallet", "titi"));
     assertFalse("Feature should be enabled only for user 'toto' switch plugin code",
                 CommonsUtils.isFeatureActive("wallet", "titi"));
+  }
+
+  public void testActiveFeatureForAuthorizedUser() throws Exception {
+    // Given
+    System.setProperty("exo.feature.feature1.permissions", "*:/platform/developers");
+    Set<MembershipEntry> memberships = new HashSet<MembershipEntry>();
+    memberships.add(new MembershipEntry("/platform/developers", "manager"));
+    Identity identity = new Identity("usera", memberships);
+    identityRegistry.register(identity);
+
+    // When
+    featureService.saveActiveFeature("feature1", true);
+    boolean test1 = featureService.isFeatureActiveForUser("feature1", identity.getUserId());
+
+    // Then
+    assertTrue(test1);
+
+    // Given
+    Set<MembershipEntry> memberships1 = new HashSet<MembershipEntry>();
+    memberships1.add(new MembershipEntry("/platform/designers", "member"));
+    Identity identity1 = new Identity("userb", memberships1);
+    identityRegistry.register(identity1);
+
+    // When
+    featureService.saveActiveFeature("feature1", true);
+    boolean test2 = featureService.isFeatureActiveForUser("feature1", identity1.getUserId());
+
+    // Then
+    assertFalse(test2);
   }
 
 }
