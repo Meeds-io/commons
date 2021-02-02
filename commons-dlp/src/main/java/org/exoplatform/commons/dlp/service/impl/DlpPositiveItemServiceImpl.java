@@ -39,6 +39,14 @@ public class DlpPositiveItemServiceImpl implements DlpPositiveItemService {
     this.dlpOperationProcessor = dlpOperationProcessor;
   }
 
+  public DlpPositiveItem getDlpPositiveItemById(Long itemId) throws Exception {
+    DlpPositiveItemEntity eventEntity = dlpPositiveItemDAO.find(itemId);
+    if (eventEntity == null) {
+      return null;
+    }
+    return fillDlpPositiveItemFromEntity(eventEntity);
+  }
+  
   @Override
   public List<DlpPositiveItem> getDlpPositivesItems(int offset, int limit) throws Exception {
     List<DlpPositiveItemEntity> dlpPositiveItemEntities = dlpPositiveItemDAO.getDlpPositiveItems(offset, limit);
@@ -48,6 +56,11 @@ public class DlpPositiveItemServiceImpl implements DlpPositiveItemService {
   @Override
   public void addDlpPositiveItem(DlpPositiveItemEntity dlpPositiveItemEntity) {
     dlpPositiveItemDAO.create(dlpPositiveItemEntity);
+    try {
+      listenerService.broadcast(new Event("dlp.listener.event.detect.item", null, dlpPositiveItemEntity.getId()));
+    } catch (Exception e) {
+      LOG.error("Error when broadcasting dlp detect positive item", e);
+    }
   }
 
   @Override

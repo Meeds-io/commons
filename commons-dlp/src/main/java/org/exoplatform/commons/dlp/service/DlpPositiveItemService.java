@@ -6,6 +6,8 @@ import java.util.List;
 
 public interface DlpPositiveItemService {
 
+    DlpPositiveItem getDlpPositiveItemById(Long itemId) throws Exception;
+
     List<DlpPositiveItem> getDlpPositivesItems(int offset, int limit) throws Exception;
 
     void addDlpPositiveItem(DlpPositiveItemEntity dlpPositiveItemEntity);
