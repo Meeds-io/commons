@@ -16,21 +16,25 @@
  */
 package org.exoplatform.settings.impl;
 
-import org.apache.commons.lang3.StringUtils;
-
 import org.exoplatform.commons.api.settings.ExoFeatureService;
-import org.exoplatform.commons.api.settings.FeaturePlugin;
 import org.exoplatform.commons.testing.BaseCommonsTestCase;
-import org.exoplatform.commons.utils.CommonsUtils;
+import org.exoplatform.services.security.Identity;
+import org.exoplatform.services.security.IdentityRegistry;
+import org.exoplatform.services.security.MembershipEntry;
+import java.util.HashSet;
+import java.util.Set;
 
 public class FeatureServiceTest extends BaseCommonsTestCase {
 
   private ExoFeatureService featureService;
 
+  private IdentityRegistry identityRegistry;
+
   @Override
   public void setUp() throws Exception {
     super.setUp();
     featureService = getService(ExoFeatureService.class);
+    identityRegistry = getService(IdentityRegistry.class);
   }
   
   public void testShouldFeatureBeActiveWhenSettingIsTrue() {
@@ -122,41 +126,40 @@ public class FeatureServiceTest extends BaseCommonsTestCase {
   }
 
   public void testActiveFeatureForUser() throws Exception {
-    assertTrue("Feature should be enabled if no flag is stored in DB", featureService.isActiveFeature("wallet"));
-    assertFalse("Feature should be disabled for a user if no plugin is added with this feature",
-                featureService.isFeatureActiveForUser("wallet", "toto"));
+    // Given
+    System.setProperty("exo.feature.feature1.permissions", "*:/platform/developers");
+    Set<MembershipEntry> memberships = new HashSet<MembershipEntry>();
+    memberships.add(new MembershipEntry("/platform/developers", "manager"));
+    Identity identity = new Identity("usera", memberships);
+    identityRegistry.register(identity);
 
+    // When
+    featureService.saveActiveFeature("feature1", true);
+    boolean test1 = featureService.isFeatureActiveForUser("feature1", identity.getUserId());
+
+    // Then
+    assertTrue(test1);
+
+    // Given
+    Set<MembershipEntry> memberships1 = new HashSet<MembershipEntry>();
+    memberships1.add(new MembershipEntry("/platform/designers", "member"));
+    Identity identity1 = new Identity("userb", memberships1);
+    identityRegistry.register(identity1);
+
+    // When
+    featureService.saveActiveFeature("feature1", true);
+    boolean test2 = featureService.isFeatureActiveForUser("feature1", identity1.getUserId());
+
+    // Then
+    assertFalse(test2);
+  }
+
+  public void testIsActiveFeature() throws Exception {
+    assertTrue("Feature should be enabled if no flag is stored in DB", featureService.isActiveFeature("wallet"));
     featureService.saveActiveFeature("wallet", false);
     assertFalse("Feature should be disabled after disabling it", featureService.isActiveFeature("wallet"));
-    assertFalse("Feature should be disabled for all users after disabling it",
-                featureService.isFeatureActiveForUser("wallet", "toto"));
-
     featureService.saveActiveFeature("wallet", true);
     assertTrue("Feature should be enabled if it's changed on DB", featureService.isActiveFeature("wallet"));
-    assertFalse("Feature should be disabled for user even it's globally enabled",
-                featureService.isFeatureActiveForUser("wallet", "toto"));
-
-    featureService.addFeaturePlugin(new FeaturePlugin() {
-      @Override
-      public String getName() {
-        return "wallet";
-      }
-
-      @Override
-      public boolean isFeatureActiveForUser(String featureName, String username) {
-        return StringUtils.equals("toto", username);
-      }
-    });
-
-    assertTrue("Feature should be globally enabled even after adding a plugin", featureService.isActiveFeature("wallet"));
-    assertTrue("Feature should be enabled for user 'toto' only switch plugin code",
-               featureService.isFeatureActiveForUser("wallet", "toto"));
-    assertTrue("Feature should be enabled for user 'toto' only switch plugin code",
-               CommonsUtils.isFeatureActive("wallet", "toto"));
-    assertFalse("Feature should be enabled only for user 'toto' switch plugin code",
-                featureService.isFeatureActiveForUser("wallet", "titi"));
-    assertFalse("Feature should be enabled only for user 'toto' switch plugin code",
-                CommonsUtils.isFeatureActive("wallet", "titi"));
   }
 
 }

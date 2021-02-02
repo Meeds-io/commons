@@ -16,9 +16,10 @@
  */
 package org.exoplatform.settings.impl;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
+import org.apache.commons.lang.StringUtils;
 import org.exoplatform.commons.api.settings.*;
 import org.exoplatform.commons.api.settings.data.Context;
 import org.exoplatform.commons.api.settings.data.Scope;
@@ -26,6 +27,12 @@ import org.exoplatform.management.annotations.*;
 import org.exoplatform.management.jmx.annotations.NameTemplate;
 import org.exoplatform.management.jmx.annotations.Property;
 import org.exoplatform.management.rest.annotations.RESTEndpoint;
+import org.exoplatform.services.log.ExoLogger;
+import org.exoplatform.services.log.Log;
+import org.exoplatform.services.organization.Group;
+import org.exoplatform.services.organization.Membership;
+import org.exoplatform.services.organization.OrganizationService;
+import org.exoplatform.services.security.IdentityRegistry;
 
 @Managed
 @ManagedDescription("eXo Feature Service")
@@ -35,17 +42,27 @@ import org.exoplatform.management.rest.annotations.RESTEndpoint;
 })
 @RESTEndpoint(path = "featureservice")
 public class ExoFeatureServiceImpl implements ExoFeatureService {
-  
-  private static final String NAME_SPACES = "exo:";
 
-  private SettingService      settingService;
+  private static final Log           LOG                = ExoLogger.getLogger(ExoFeatureServiceImpl.class);
 
-  private Map<String, Boolean> featuresProperties = new HashMap<>();
+  private static final String        NAME_SPACES        = "exo:";
 
-  private Map<String, FeaturePlugin> plugins     = new HashMap<>();
+  private SettingService             settingService;
 
-  public ExoFeatureServiceImpl(SettingService      settingService) {
+  private OrganizationService        organizationService;
+
+  private IdentityRegistry           identityRegistry;
+
+  private Map<String, Boolean>       featuresProperties = new HashMap<>();
+
+  private Map<String, FeaturePlugin> plugins            = new HashMap<>();
+
+  public ExoFeatureServiceImpl(SettingService settingService,
+                               IdentityRegistry identityRegistry,
+                               OrganizationService organizationService) {
     this.settingService = settingService;
+    this.organizationService = organizationService;
+    this.identityRegistry = identityRegistry;
   }
 
   @Managed
@@ -62,19 +79,7 @@ public class ExoFeatureServiceImpl implements ExoFeatureService {
     }
     return active == null ? true : active;
   }
-
-  private Boolean getFeaturePropertyValue(String featureName) {
-    String propertyName = "exo.feature." + featureName + ".enabled";
-    if(featuresProperties.containsKey(propertyName)) {
-      return featuresProperties.get(propertyName);
-    } else {
-      String propertyValue = System.getProperty(propertyName);
-      Boolean active = propertyValue != null ? Boolean.valueOf(propertyValue) : null;
-      featuresProperties.put(propertyName, active);
-      return active;
-    }
-  }
-
+  
   @Override
   public void saveActiveFeature(String featureName, boolean isActive) {
     settingService.set(Context.GLOBAL, Scope.GLOBAL.id(null), (NAME_SPACES + featureName), SettingValue.create(isActive));
@@ -93,14 +98,95 @@ public class ExoFeatureServiceImpl implements ExoFeatureService {
   public void addFeaturePlugin(FeaturePlugin featurePlugin) {
     plugins.put(featurePlugin.getName(), featurePlugin);
   }
-
+  
   @Override
-  public boolean isFeatureActiveForUser(String featureName, String username) {
+  public boolean isFeatureActiveForUser(@ManagedDescription("Feature name") @ManagedName("featureName") String featureName,
+                                        @ManagedDescription("Username") @ManagedName("userName") String username) {
     if (!isActiveFeature(featureName)) {
       return false;
     }
     FeaturePlugin featurePlugin = plugins.get(featureName);
-    return featurePlugin != null && featurePlugin.isFeatureActiveForUser(featureName, username);
+    if (featurePlugin != null) {
+      return featurePlugin.isFeatureActiveForUser(featureName, username);
+    } else {
+      List<String> permissions = getFeaturePermissionPropertyValues(featureName);
+      return permissions.stream().anyMatch(permission -> isUserMemberOf(username, permission));
+    }
+  }
+
+  private Boolean getFeaturePropertyValue(String featureName) {
+    String propertyName = "exo.feature." + featureName + ".enabled";
+    if (featuresProperties.containsKey(propertyName)) {
+      return featuresProperties.get(propertyName);
+    } else {
+      String propertyValue = System.getProperty(propertyName);
+      Boolean active = propertyValue != null ? Boolean.valueOf(propertyValue) : null;
+      featuresProperties.put(propertyName, active);
+      return active;
+    }
+  }
+
+  private List<String> getFeaturePermissionPropertyValues(String featureName) {
+    String propertyName = "exo.feature." + featureName + ".permissions";
+    String propertyValue = System.getProperty(propertyName);
+    if (StringUtils.isNotBlank(propertyValue)) {
+      return Arrays.stream(StringUtils.split(propertyValue, ",")).map(String::trim).collect(Collectors.toList());
+    }
+    return Collections.emptyList();
+  }
+
+  private final boolean isUserMemberOf(String username, String permissionExpression) {
+    if (StringUtils.isBlank(username)) {
+      return false;
+    }
+    if (StringUtils.isBlank(permissionExpression)) {
+      return false;
+    }
+
+    permissionExpression = permissionExpression.replace("*:", "");
+    if (permissionExpression.contains(":")) {
+      String[] permissionParts = permissionExpression.split(":");
+      String membershipType = permissionParts[0];
+      String group = permissionParts[1];
+
+      org.exoplatform.services.security.Identity identity = identityRegistry.getIdentity(username);
+      if (identity != null) {
+        return identity.isMemberOf(group, membershipType);
+      } else {
+        try {
+          Collection<Membership> memberships = organizationService.getMembershipHandler()
+                                                                  .findMembershipsByUserAndGroup(username, group);
+          return memberships != null
+              && memberships.stream().anyMatch(membership -> StringUtils.equals(membership.getMembershipType(), membershipType));
+        } catch (Exception e) {
+          throw new IllegalStateException("Error getting memberships of user " + username, e);
+        }
+      }
+
+    } else if (permissionExpression.contains("/")) {
+      org.exoplatform.services.security.Identity identity = identityRegistry.getIdentity(username);
+      if (identity != null) {
+        return identity.isMemberOf(permissionExpression);
+      }
+
+      Collection<Group> groupsOfUser;
+      try {
+        groupsOfUser = organizationService.getGroupHandler().findGroupsOfUser(username);
+      } catch (Exception e) {
+        throw new IllegalStateException("Error getting groups of user " + username, e);
+      }
+      if (groupsOfUser == null || groupsOfUser.isEmpty()) {
+        return false;
+      }
+      for (Group group : groupsOfUser) {
+        if (permissionExpression.equals(group.getId())) {
+          return true;
+        }
+      }
+      return false;
+    } else {
+      return StringUtils.equals(username, permissionExpression);
+    }
   }
 
 }
