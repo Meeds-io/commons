@@ -93,5 +93,26 @@ public class DlpItemRestServices implements ResourceContainer {
             return Response.serverError().build();
         }
     }
+  
+    @PUT
+    @Path("item/restore/{id}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("administrators")
+    @ApiOperation(value = "Restore the dlp positive items", httpMethod = "PUT", response = Response.class, produces = "application/json",
+        notes = "Return the restored positive item")
+    @ApiResponses(
+        value = {@ApiResponse(code = HTTPStatus.OK, message = "Request fulfilled"),
+            @ApiResponse(code = HTTPStatus.UNAUTHORIZED, message = "Unauthorized operation"),
+            @ApiResponse(code = HTTPStatus.INTERNAL_ERROR, message = "Internal server error"),}
+    )
+    public Response restoreDlpPositiveItems(@ApiParam(value = "Document id", required = true) @PathParam("id") Long id) {
+        try {
+            dlpPositiveItemService.restoreDlpPositiveItem(id);
+            return Response.ok().build();
+        } catch (Exception e) {
+            LOG.error("Unknown error occurred while restoring dlp positive items", e);
+            return Response.serverError().build();
+        }
+    }       
 }
 
