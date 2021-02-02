@@ -11,6 +11,7 @@ import org.exoplatform.services.listener.ListenerService;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 import org.exoplatform.services.organization.OrganizationService;
+import org.exoplatform.services.organization.User;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -110,17 +111,19 @@ public class DlpPositiveItemServiceImpl implements DlpPositiveItemService {
 
   private DlpPositiveItem fillDlpPositiveItemFromEntity(DlpPositiveItemEntity dlpPositiveItemEntity) throws Exception {
     DlpPositiveItem dlpPositiveItem = new DlpPositiveItem();
+    DlpServiceConnector dlpServiceConnector = (DlpServiceConnector) dlpOperationProcessor.getConnectors().get(dlpPositiveItemEntity.getType());
     dlpPositiveItem.setId(dlpPositiveItemEntity.getId());
     dlpPositiveItem.setType(dlpPositiveItemEntity.getType());
     dlpPositiveItem.setKeywords(dlpPositiveItemEntity.getKeywords());
     dlpPositiveItem.setAuthor(dlpPositiveItemEntity.getAuthor());
-    dlpPositiveItem.setAuthorDisplayName(organizationService.getUserHandler()
-                                                            .findUserByName(dlpPositiveItemEntity.getAuthor())
-                                                            .getDisplayName());
+    User user = organizationService.getUserHandler()
+                                     .findUserByName(dlpPositiveItemEntity.getAuthor());
+    if (user!=null) {
+      dlpPositiveItem.setAuthorDisplayName(user.getDisplayName());
+      dlpPositiveItem.setIsExternal(dlpServiceConnector.checkExternal(dlpPositiveItemEntity.getAuthor()));
+    }
     dlpPositiveItem.setTitle(dlpPositiveItemEntity.getTitle());
-    DlpServiceConnector dlpServiceConnector = (DlpServiceConnector) dlpOperationProcessor.getConnectors().get(dlpPositiveItemEntity.getType());
     dlpPositiveItem.setItemUrl(dlpServiceConnector.getItemUrl(dlpPositiveItemEntity.getReference()));
-    dlpPositiveItem.setIsExternal(dlpServiceConnector.checkExternal(dlpPositiveItemEntity.getAuthor()));
     dlpPositiveItem.setDetectionDate(dlpPositiveItemEntity.getDetectionDate().getTimeInMillis());
     return dlpPositiveItem;
   }

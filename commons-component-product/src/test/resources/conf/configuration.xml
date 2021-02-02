@@ -36,6 +36,17 @@
     </init-params>
   </component>
 
+  <component>
+    <type>org.exoplatform.services.naming.InitialContextInitializer</type>
+    <init-params>
+      <properties-param>
+        <name>default-properties</name>
+        <description>Default initial context properties</description>
+        <property name="java.naming.factory.initial" value="org.exoplatform.services.naming.SimpleContextFactory" />
+      </properties-param>
+    </init-params>
+  </component>
+  
   <!-- Bind datasource -->
   <external-component-plugins>
     <target-component>org.exoplatform.services.naming.InitialContextInitializer</target-component>
@@ -60,7 +71,7 @@
           <name>ref-addresses</name>
           <description>ref-addresses</description>
           <property name="driverClassName" value="org.hsqldb.jdbcDriver" />
-          <property name="url" value="jdbc:hsqldb:mem:db1" />
+          <property name="url" value="jdbc:hsqldb:mem:db100" />
           <property name="username" value="sa" />
           <property name="password" value="" />
         </properties-param>
@@ -68,4 +79,5 @@
     </component-plugin>
   </external-component-plugins>
 
+  <remove-configuration>org.exoplatform.commons.persistence.impl.LiquibaseDataInitializer</remove-configuration>
 </configuration>

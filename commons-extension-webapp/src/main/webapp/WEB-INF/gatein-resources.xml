@@ -478,5 +478,55 @@
       <module>jquery</module>
     </depends>
   </module>
+  <module>
+    <name>autoLinker</name>
+    <script>
+      <minify>false</minify>
+      <adapter>
+        (function() {
+          <include>/javascript/autolinker.min.js</include>
+          return Autolinker;
+        })();
+      </adapter>
+    </script>
+    <depends>
+      <module>vue</module>
+    </depends>
+  </module>
+  <module>
+    <name>autoLinkerVue</name>
+    <script>
+      <minify>false</minify>
+      <adapter>
+        (function() {
+          <include>/javascript/autolinker.min.js</include>
+          Vue.directive('autolinker',(el, binding) => el.innerHTML = Autolinker.link(binding.value, {sanitizeHtml: true}));
+        })();
+      </adapter>
+    </script>
+    <depends>
+      <module>vue</module>
+    </depends>
+    <depends>
+      <module>autoLinker</module>
+    </depends>
+  </module>
+  <module>
+    <name>purifyVue</name>
+    <script>
+      <minify>false</minify>
+      <adapter>
+        (function() {
+          <include>/javascript/purify.min.js</include>
+          Vue.directive('sanitized-html',(el, binding) => el.innerHTML = DOMPurify.sanitize(Autolinker.link(binding.value, {newWindow: true}), {USE_PROFILES: {html: true}}));
+        })();
+      </adapter>
+    </script>
+    <depends>
+      <module>autoLinker</module>
+    </depends>
+    <depends>
+      <module>vue</module>
+    </depends>
+  </module>
 </gatein-resources>
-
