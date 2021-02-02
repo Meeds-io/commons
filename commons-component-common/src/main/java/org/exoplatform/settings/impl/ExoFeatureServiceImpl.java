@@ -126,7 +126,7 @@ public class ExoFeatureServiceImpl implements ExoFeatureService {
   }
 
   private List<String> getFeaturePermissionPropertyValues(String featureName) {
-    String propertyName = "exo.feature.agenda." + featureName + ".permissions";
+    String propertyName = "exo.feature." + featureName + ".permissions";
     String propertyValue = System.getProperty(propertyName);
     if (StringUtils.isNotBlank(propertyValue)) {
       return Arrays.stream(StringUtils.split(propertyValue, ",")).map(String::trim).collect(Collectors.toList());
