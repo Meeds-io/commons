@@ -98,7 +98,6 @@ public class ExoFeatureServiceImpl implements ExoFeatureService {
   public void addFeaturePlugin(FeaturePlugin featurePlugin) {
     plugins.put(featurePlugin.getName(), featurePlugin);
   }
-  
   @Override
   public boolean isFeatureActiveForUser(@ManagedDescription("Feature name") @ManagedName("featureName") String featureName,
                                         @ManagedDescription("Username") @ManagedName("userName") String username) {
