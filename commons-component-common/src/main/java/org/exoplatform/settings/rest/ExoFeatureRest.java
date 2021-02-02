@@ -18,7 +18,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 @Path("/v1/features")
-@Api(value = "/v1/features", description = "Manages exo feature associated to users")
+@Api(value = "/v1/features", description = "Manages product experimental features")
 public class ExoFeatureRest implements ResourceContainer {
 
   private static final Log  LOG = ExoLogger.getLogger(ExoFeatureRest.class);
