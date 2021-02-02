@@ -127,7 +127,7 @@ public class ExoFeatureServiceImpl implements ExoFeatureService {
   }
 
   private List<String> getFeaturePermissionPropertyValues(String featureName) {
-    String propertyName = "exo.feature." + featureName + ".permissions";
+    String propertyName = "exo.feature.agenda." + featureName + ".permissions";
     String propertyValue = System.getProperty(propertyName);
     if (StringUtils.isNotBlank(propertyValue)) {
       return Arrays.stream(StringUtils.split(propertyValue, ",")).map(String::trim).collect(Collectors.toList());
@@ -164,26 +164,19 @@ public class ExoFeatureServiceImpl implements ExoFeatureService {
       }
 
     } else if (permissionExpression.contains("/")) {
+      String group = permissionExpression;
       org.exoplatform.services.security.Identity identity = identityRegistry.getIdentity(username);
       if (identity != null) {
         return identity.isMemberOf(permissionExpression);
       }
-
-      Collection<Group> groupsOfUser;
       try {
-        groupsOfUser = organizationService.getGroupHandler().findGroupsOfUser(username);
+        Collection<Membership> memberships = organizationService.getMembershipHandler()
+                                                                .findMembershipsByUserAndGroup(username, group);
+        return memberships != null && memberships.size() > 0;
       } catch (Exception e) {
-        throw new IllegalStateException("Error getting groups of user " + username, e);
+        throw new IllegalStateException("Error getting memberships of user " + username, e);
       }
-      if (groupsOfUser == null || groupsOfUser.isEmpty()) {
-        return false;
-      }
-      for (Group group : groupsOfUser) {
-        if (permissionExpression.equals(group.getId())) {
-          return true;
-        }
-      }
-      return false;
+
     } else {
       return StringUtils.equals(username, permissionExpression);
     }

@@ -1,4 +1,4 @@
-package org.exoplatform.rest;
+package org.exoplatform.settings.rest;
 
 import io.swagger.annotations.*;
 import org.apache.commons.lang.StringUtils;
@@ -21,11 +21,9 @@ import javax.ws.rs.core.Response;
 @Api(value = "/v1/features", description = "Manages exo feature associated to users")
 public class ExoFeatureRest implements ResourceContainer {
 
-  private static final String FEATURE_APP_URI = "feature";
+  private static final Log  LOG = ExoLogger.getLogger(ExoFeatureRest.class);
 
-  private static final Log    LOG             = ExoLogger.getLogger(ExoFeatureRest.class);
-
-  private ExoFeatureService   featureService;
+  private ExoFeatureService featureService;
   
   public ExoFeatureRest(ExoFeatureService featureService) {
     this.featureService = featureService;
