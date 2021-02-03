@@ -1,6 +1,9 @@
 /**
- * @license Copyright (c) 2003-2015, CKSource - Frederico Knabben. All rights reserved.
- * For licensing, see LICENSE.md or http://ckeditor.com/license
+ * This is ckeditor custom configuration used by exo platform modules when
+ * initializing a new instance of the editor.
+ *
+ * @license Copyright (c) 2003-2020, CKSource - Frederico Knabben. All rights reserved.
+ * For licensing, see https://ckeditor.com/legal/ckeditor-oss-license
  */
 
 // force env when using the eXo Android app (the eXo Android app uses a custom user agent which
@@ -17,7 +20,7 @@ CKEDITOR.editorConfig = function( config ) {
 
     // %REMOVE_START%
     // The configuration options below are needed when running CKEditor from source files.
-    config.plugins = 'dialogui,dialog,about,a11yhelp,basicstyles,blockquote,panel,floatpanel,button,toolbar,enterkey,entities,popup,filebrowser,floatingspace,listblock,richcombo,format,horizontalrule,htmlwriter,wysiwygarea,indent,indentlist,fakeobjects,list,maximize,removeformat,showborders,sourcearea,specialchar,scayt,stylescombo,tab,table,notification,notificationaggregator,filetools,undo,wsc,panelbutton,colorbutton,colordialog,autogrow,confighelper,uploadwidget,imageresize,confirmBeforeReload,,autoembed,embedsemantic';
+    config.plugins = 'dialogui,dialog,about,a11yhelp,basicstyles,blockquote,panel,floatpanel,button,toolbar,enterkey,entities,popup,filebrowser,floatingspace,listblock,richcombo,format,horizontalrule,htmlwriter,wysiwygarea,indent,indentlist,fakeobjects,list,maximize,removeformat,showborders,sourcearea,specialchar,scayt,stylescombo,tab,table,notification,notificationaggregator,filetools,undo,wsc,autogrow,confighelper,uploadwidget,imageresize,confirmBeforeReload,,autoembed,embedsemantic';
 
     CKEDITOR.plugins.addExternal('simpleLink','/commons-extension/eXoPlugins/simpleLink/','plugin.js');
     CKEDITOR.plugins.addExternal('simpleImage','/commons-extension/eXoPlugins/simpleImage/','plugin.js');
