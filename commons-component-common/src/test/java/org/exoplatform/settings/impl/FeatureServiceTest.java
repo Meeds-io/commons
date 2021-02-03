@@ -130,8 +130,8 @@ public class FeatureServiceTest extends BaseCommonsTestCase {
 
   public void testActiveFeatureForUser() throws Exception {
     assertTrue("Feature should be enabled if no flag is stored in DB", featureService.isActiveFeature("wallet"));
-    assertFalse("Feature should be disabled for a user if no plugin is added with this feature",
-                featureService.isFeatureActiveForUser("wallet", "toto"));
+    assertTrue("Feature should be enabled for a user if no plugin is added with this feature",
+               featureService.isFeatureActiveForUser("wallet", "toto"));
 
     featureService.saveActiveFeature("wallet", false);
     assertFalse("Feature should be disabled after disabling it", featureService.isActiveFeature("wallet"));
@@ -140,8 +140,8 @@ public class FeatureServiceTest extends BaseCommonsTestCase {
 
     featureService.saveActiveFeature("wallet", true);
     assertTrue("Feature should be enabled if it's changed on DB", featureService.isActiveFeature("wallet"));
-    assertFalse("Feature should be disabled for user even it's globally enabled",
-                featureService.isFeatureActiveForUser("wallet", "toto"));
+    assertTrue("Feature should be enabled for user after enabling it",
+               featureService.isFeatureActiveForUser("wallet", "toto"));
 
     featureService.addFeaturePlugin(new FeaturePlugin() {
       @Override
@@ -176,12 +176,22 @@ public class FeatureServiceTest extends BaseCommonsTestCase {
 
     // When
     featureService.saveActiveFeature("feature1", true);
-    boolean test1 = featureService.isFeatureActiveForUser("feature1", identity.getUserId());
+    boolean isActiveFeature = featureService.isFeatureActiveForUser("feature1", identity.getUserId());
 
     // Then
-    assertTrue(test1);
+    assertTrue(isActiveFeature);
 
     // Given
+    System.setProperty("exo.feature.feature1.permissions", "");
+
+    // When
+    isActiveFeature = featureService.isFeatureActiveForUser("feature1", identity.getUserId());
+
+    // Then
+    assertTrue(isActiveFeature);
+
+    // Given
+    System.setProperty("exo.feature.feature1.permissions", "*:/platform/developers");
     Set<MembershipEntry> memberships1 = new HashSet<MembershipEntry>();
     memberships1.add(new MembershipEntry("/platform/designers", "member"));
     Identity identity1 = new Identity("userb", memberships1);

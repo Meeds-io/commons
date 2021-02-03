@@ -108,7 +108,7 @@ public class ExoFeatureServiceImpl implements ExoFeatureService {
       return featurePlugin.isFeatureActiveForUser(featureName, username);
     } else {
       List<String> permissions = getFeaturePermissionPropertyValues(featureName);
-      return permissions.stream().anyMatch(permission -> isUserMemberOf(username, permission));
+      return permissions.isEmpty() || permissions.stream().anyMatch(permission -> isUserMemberOf(username, permission));
     }
   }
 
