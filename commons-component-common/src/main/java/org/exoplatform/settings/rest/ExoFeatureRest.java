@@ -52,7 +52,7 @@ public class ExoFeatureRest implements ResourceContainer {
     try {
       String username = ConversationState.getCurrent().getIdentity().getUserId();
       boolean isFeatureActive = featureService.isFeatureActiveForUser(featureName, username);
-      return Response.ok().entity(isFeatureActive).type(MediaType.TEXT_PLAIN).build();
+      return Response.ok().entity(String.valueOf(isFeatureActive)).type(MediaType.TEXT_PLAIN).build();
     } catch (Exception e) {
       LOG.warn("Error retrieving feature status with name '{}'", featureName, e);
       return Response.serverError().entity(e.getMessage()).build();
