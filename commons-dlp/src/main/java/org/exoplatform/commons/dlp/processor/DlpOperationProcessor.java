@@ -1,9 +1,11 @@
 package org.exoplatform.commons.dlp.processor;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.exoplatform.commons.dlp.connector.DlpServiceConnector;
+import org.exoplatform.commons.dlp.dto.DlpPermissionItem;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 
@@ -57,6 +59,21 @@ public abstract class DlpOperationProcessor {
    * Set the Dlp Keywords
    */
   public abstract void setKeywords(String keywords);
+
+  /**
+   * @return the Dlp Permissions
+   */
+  public abstract List<DlpPermissionItem> getPermissions();
+
+  /**
+   * Save the Dlp Permissions
+   */
+  public abstract void savePermissions(String permissions);
+
+  /**
+   * @return the old Dlp Permissions
+   */
+  public abstract String getOldPermissions();
 
   /**
    * Add all documents in the dlp queue

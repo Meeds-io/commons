@@ -81,4 +81,5 @@ public abstract class DlpServiceConnector extends BaseComponentPlugin {
 
   public abstract void restorePositiveItem(String itemReference);
 
+  public abstract void addDriveAndFolderSecurityPermissions(String groupId) throws Exception;
 }
