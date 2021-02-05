@@ -110,7 +110,7 @@ public class DlpPositiveItemServiceImpl implements DlpPositiveItemService {
       DlpPositiveItemEntity dlpPositiveItemEntity = dlpPositiveItemDAO.find(itemId);
       if (dlpPositiveItemEntity != null) {
         dlpPositiveItemDAO.delete(dlpPositiveItemEntity);
-        listenerService.broadcast(new Event("dlp.listener.event.restore.item", null, dlpPositiveItemEntity.getReference()));
+        listenerService.broadcast(new Event("dlp.listener.event.restore.item", null, dlpPositiveItemEntity));
       } else {
         LOG.warn("The DlpItem's {} not found.", itemId);
       }
