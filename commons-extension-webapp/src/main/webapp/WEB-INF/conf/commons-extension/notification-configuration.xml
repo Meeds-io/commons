@@ -359,6 +359,22 @@
             </field>
           </object>
         </object-param>
+
+        <object-param>
+          <name>group.quarantine</name>
+          <description>The information of group quarantine</description>
+          <object type="org.exoplatform.commons.api.notification.plugin.config.GroupConfig">
+            <field name="id">
+              <string>quarantine</string>
+            </field>
+            <field name="resourceBundleKey">
+              <string>UINotification.label.group.quarantine</string>
+            </field>
+            <field name="order">
+              <string>6</string>
+            </field>
+          </object>
+        </object-param>
        
         <object-param>
           <name>group.other</name>
