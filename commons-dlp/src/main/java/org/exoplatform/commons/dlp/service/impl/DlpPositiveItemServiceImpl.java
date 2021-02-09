@@ -130,10 +130,10 @@ public class DlpPositiveItemServiceImpl implements DlpPositiveItemService {
                                      .findUserByName(dlpPositiveItemEntity.getAuthor());
     if (user!=null) {
       dlpPositiveItem.setAuthorDisplayName(user.getDisplayName());
-      dlpPositiveItem.setIsExternal(dlpServiceConnector.checkExternal(dlpPositiveItemEntity.getAuthor()));
+      dlpPositiveItem.setIsExternal(dlpServiceConnector != null && dlpServiceConnector.checkExternal(dlpPositiveItemEntity.getAuthor()));
     }
     dlpPositiveItem.setTitle(dlpPositiveItemEntity.getTitle());
-    dlpPositiveItem.setItemUrl(dlpServiceConnector.getItemUrl(dlpPositiveItemEntity.getReference()));
+    dlpPositiveItem.setItemUrl(dlpServiceConnector != null ? dlpServiceConnector.getItemUrl(dlpPositiveItemEntity.getReference()) : "");
     dlpPositiveItem.setDetectionDate(dlpPositiveItemEntity.getDetectionDate().getTimeInMillis());
     return dlpPositiveItem;
   }
