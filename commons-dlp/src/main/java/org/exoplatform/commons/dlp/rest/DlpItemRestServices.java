@@ -105,8 +105,7 @@ public class DlpItemRestServices implements ResourceContainer {
             notes = "set the dlp keywords")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Request fulfilled"),
-            @ApiResponse(code = 500, message = "Internal server error"),
-            @ApiResponse(code = 400, message = "Invalid query input")})
+            @ApiResponse(code = 500, message = "Internal server error")})
     public Response setDlpKeywords(@ApiParam(value = "keywords", required = true) String keywords) {
         try {
             dlpOperationProcessor.setKeywords(keywords);
