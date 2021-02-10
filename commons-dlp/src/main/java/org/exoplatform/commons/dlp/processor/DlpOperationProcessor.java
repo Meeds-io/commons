@@ -54,6 +54,11 @@ public abstract class DlpOperationProcessor {
   public abstract String getKeywords();
 
   /**
+   * Set the Dlp Keywords
+   */
+  public abstract void setKeywords(String keywords);
+
+  /**
    * Add all documents in the dlp queue
    * @LevelAPI Experimental
    */

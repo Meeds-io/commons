@@ -28,7 +28,13 @@ public class DlpOperationProcessorImpl extends DlpOperationProcessor implements 
 
   private static final Integer  BATCH_NUMBER_DEFAULT = 1000;
 
-  private static final String DLP_KEYWORDS = "exo.dlp.keywords";
+  private static final String   DLP_KEYWORDS = "exo.dlp.keywords";
+
+  private static final Context  DLP_CONTEXT = Context.GLOBAL.id("DlpKeywords");
+
+  private static final Scope    DLP_SCOPE = Scope.APPLICATION.id("DlpKeywords");
+
+  private static final String   EXO_DLP_KEYWORDS = "exo:dlpKeywords";
 
   // Service
   private final DlpOperationDAO dlpOperationDAO;
@@ -58,8 +64,14 @@ public class DlpOperationProcessorImpl extends DlpOperationProcessor implements 
   @Override
   public String getKeywords() {
     SettingService settingService = CommonsUtils.getService(SettingService.class);
-    SettingValue<?> settingValue = settingService.get(Context.GLOBAL, Scope.APPLICATION.id("DlpKeywords"), "exo:dlpKeywords");
+    SettingValue<?> settingValue = settingService.get(DLP_CONTEXT, DLP_SCOPE, EXO_DLP_KEYWORDS);
     return settingValue != null ? settingValue.getValue().toString() : System.getProperty(DLP_KEYWORDS);
+  }
+
+  @Override
+  public void setKeywords(String keywords) {
+    SettingService settingService = CommonsUtils.getService(SettingService.class);
+    settingService.set(DLP_CONTEXT, DLP_SCOPE, EXO_DLP_KEYWORDS, SettingValue.create(keywords));
   }
 
   @Override
