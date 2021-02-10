@@ -5,6 +5,10 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.*;
 
 import org.exoplatform.common.http.HTTPStatus;
+import org.exoplatform.commons.api.settings.SettingService;
+import org.exoplatform.commons.api.settings.SettingValue;
+import org.exoplatform.commons.api.settings.data.Scope;
+import org.exoplatform.commons.api.settings.data.Context;
 import org.exoplatform.commons.dlp.dto.DlpPositiveItem;
 import org.exoplatform.commons.dlp.processor.DlpOperationProcessor;
 import org.exoplatform.commons.dlp.service.DlpPositiveItemService;
@@ -90,6 +94,25 @@ public class DlpItemRestServices implements ResourceContainer {
             return Response.ok(keywords).build();
         } catch (Exception e) {
             LOG.error("Unknown error occurred while getting dlp keywords", e);
+            return Response.serverError().build();
+        }
+    }
+
+    @POST
+    @Path("/keywords")
+    @RolesAllowed("administrators")
+    @ApiOperation(value = "set dlp keywords", httpMethod = "POST", response = Response.class, produces = "application/json",
+            notes = "set the dlp keywords")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Request fulfilled"),
+            @ApiResponse(code = 500, message = "Internal server error"),
+            @ApiResponse(code = 400, message = "Invalid query input")})
+    public Response setDlpKeywords(@ApiParam(value = "keywords", required = true) String keywords) {
+        try {
+            dlpOperationProcessor.setKeywords(keywords);
+            return Response.ok().entity("{\"result\":\"" + keywords + "\"}").build();
+        } catch (Exception e) {
+            LOG.error("Unknown error occurred while setting dlp keywords", e);
             return Response.serverError().build();
         }
     }
