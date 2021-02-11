@@ -99,15 +99,11 @@ public class DlpPermissionsServiceImpl implements DlpPermissionsService {
     List<String> permissionsList = Arrays.asList(oldPermissions.split(","));
     for (String permission : permissionsList){
       NavigationContext nav = navigationService.loadNavigation(SiteKey.group(permission));
-      if (nav == null) {
-        navigationService.saveNavigation(new NavigationContext(new SiteKey(SiteType.GROUP, permission), new NavigationState(1)));
-        nav = navigationService.loadNavigation(SiteKey.group(permission));
-        NodeContext rootContext = navigationService.loadNode(NodeModel.SELF_MODEL, nav, Scope.ALL, null);
-        navigationService.saveNode(rootContext, null);
+      if (nav != null) {
+        navigationService.destroyNavigation(nav);
+        String pageKey = PortalConfig.GROUP_TYPE + "::" + permission +"::dlp-quarantine";
+        pageService.destroyPage(PageKey.parse(pageKey));
       }
-      navigationService.destroyNavigation(nav);
-      String pageKey = PortalConfig.GROUP_TYPE + "::" + permission +"::dlp-quarantine";
-      pageService.destroyPage(PageKey.parse(pageKey));
     }
   }
 }
