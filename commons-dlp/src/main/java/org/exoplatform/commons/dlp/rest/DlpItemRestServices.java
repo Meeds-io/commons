@@ -44,6 +44,7 @@ public class DlpItemRestServices implements ResourceContainer {
         this.dlpPositiveItemService = dlpPositiveItemService;
         this.dlpOperationProcessor = dlpOperationProcessor;
         this.userACL = userACL;
+         this.dlpPermissionsService = dlpPermissionsService;
     }
 
 
