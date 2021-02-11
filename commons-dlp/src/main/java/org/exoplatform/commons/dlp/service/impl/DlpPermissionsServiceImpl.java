@@ -5,7 +5,6 @@ import org.exoplatform.portal.config.DataStorage;
 import org.exoplatform.portal.config.model.*;
 import org.exoplatform.portal.mop.SiteKey;
 import org.exoplatform.portal.mop.SiteType;
-import org.exoplatform.portal.mop.jdbc.service.JDBCModelStorageImpl;
 import org.exoplatform.portal.mop.navigation.*;
 import org.exoplatform.portal.mop.page.PageContext;
 import org.exoplatform.portal.mop.page.PageKey;
@@ -21,6 +20,8 @@ import java.util.List;
 public class DlpPermissionsServiceImpl implements DlpPermissionsService {
 
   private static final String DLP_QUARANTINE = "dlp-quarantine";
+
+  private static final String ADMINISTRATOR_GROUP = "/platform/administrators";
 
   private static final Log LOG = ExoLogger.getLogger(DlpPermissionsServiceImpl.class);
 
@@ -46,8 +47,8 @@ public class DlpPermissionsServiceImpl implements DlpPermissionsService {
       Page dlpPage = new Page();
       dlpPage.setOwnerType(PortalConfig.GROUP_TYPE);
       dlpPage.setOwnerId(permission);
-      dlpPage.setName("dlp-quarantine");
-      String administratorsDlpQuarantinePageKey = PortalConfig.GROUP_TYPE + "::" + "/platform/administrators::dlp-quarantine";
+      dlpPage.setName(DLP_QUARANTINE);
+      String administratorsDlpQuarantinePageKey = PortalConfig.GROUP_TYPE + "::" + ADMINISTRATOR_GROUP + "::" + DLP_QUARANTINE;
       PageContext administratorsDlpQuarantinePageContext = pageService.loadPage(PageKey.parse(administratorsDlpQuarantinePageKey));
       PageState administratorsDlpQuarantinePageState = administratorsDlpQuarantinePageContext.getState();
       List<String> accessPermissions = new ArrayList<>();
@@ -98,10 +99,11 @@ public class DlpPermissionsServiceImpl implements DlpPermissionsService {
     //Load quarantine page and Application portlet
     List<String> permissionsList = Arrays.asList(oldPermissions.split(","));
     for (String permission : permissionsList){
+      if(permission.equals(ADMINISTRATOR_GROUP)) continue;
       NavigationContext nav = navigationService.loadNavigation(SiteKey.group(permission));
       if (nav != null) {
         navigationService.destroyNavigation(nav);
-        String pageKey = PortalConfig.GROUP_TYPE + "::" + permission +"::dlp-quarantine";
+        String pageKey = PortalConfig.GROUP_TYPE + "::" + permission +"::" + DLP_QUARANTINE;
         pageService.destroyPage(PageKey.parse(pageKey));
       }
     }

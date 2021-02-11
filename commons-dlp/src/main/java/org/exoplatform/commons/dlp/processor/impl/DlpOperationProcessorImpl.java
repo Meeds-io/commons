@@ -84,8 +84,8 @@ public class DlpOperationProcessorImpl extends DlpOperationProcessor implements 
     SettingService settingService = CommonsUtils.getService(SettingService.class);
     OrganizationService organizationService = CommonsUtils.getService(OrganizationService.class);
     SettingValue<?> settingValue = settingService.get(Context.GLOBAL, Scope.APPLICATION.id("DlpPermissions"), "exo:dlpPermissions");
-    List<DlpPermissionItem> dlpPermissionItems = new LinkedList<DlpPermissionItem>();
-    if (settingValue != null) {
+    List<DlpPermissionItem> dlpPermissionItems = new LinkedList<>();
+    if (settingValue != null && !settingValue.getValue().toString().isEmpty()) {
       List<String> permissionsList = Arrays.asList(settingValue.getValue().toString().split(","));
       for (String permission : permissionsList) {
         DlpPermissionItem dlpPermissionItem = new DlpPermissionItem();
