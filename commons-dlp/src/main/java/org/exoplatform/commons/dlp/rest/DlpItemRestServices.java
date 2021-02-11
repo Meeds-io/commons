@@ -33,16 +33,12 @@ public class DlpItemRestServices implements ResourceContainer {
     
     private DlpOperationProcessor dlpOperationProcessor;
     
-    private UserACL userACL;
-    
     public static final String TYPE = "file";
 
     public DlpItemRestServices(DlpPositiveItemService dlpPositiveItemService, 
-                               DlpOperationProcessor dlpOperationProcessor, 
-                               UserACL userACL) {
+                               DlpOperationProcessor dlpOperationProcessor) {
         this.dlpPositiveItemService = dlpPositiveItemService;
         this.dlpOperationProcessor = dlpOperationProcessor;
-        this.userACL = userACL;
     }
 
 
@@ -186,6 +182,7 @@ public class DlpItemRestServices implements ResourceContainer {
     )
     public Response checkIsMemberOfAdministratorGroup() {
       try {
+        UserACL userACL = CommonsUtils.getService(UserACL.class);
         boolean isAdmin = userACL.isSuperUser() || userACL.isUserInGroup(userACL.getAdminGroups());
         return Response.ok().entity("{\"isAdmin\":\"" + isAdmin + "\"}").build();
       } catch (Exception e) {
