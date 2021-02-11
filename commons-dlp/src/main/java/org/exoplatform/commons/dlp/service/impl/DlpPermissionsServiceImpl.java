@@ -84,12 +84,10 @@ public class DlpPermissionsServiceImpl implements DlpPermissionsService {
       NodeContext node = navigationService.loadNode(NodeModel.SELF_MODEL, nav, Scope.ALL, null);
       NavigationState navigationState = new NavigationState(nav.getState().getPriority() + 1);
       NavigationContext navigationContext = new NavigationContext(SiteKey.group(permission), navigationState);
-      if (node.get(DLP_QUARANTINE) == null) {
-        NodeContext node1 = node.add(node.getIndex(), DLP_QUARANTINE);
-        node1.setState(node1.getState().builder().pageRef(dlpPage.getPageKey()).build());
-        navigationService.saveNavigation(navigationContext);
-        navigationService.saveNode(node1, null);
-      }
+      NodeContext dlpNodeContext = node.getNode(DLP_QUARANTINE) != null ? node.get(DLP_QUARANTINE) : node.add(node.getIndex(), DLP_QUARANTINE) ;
+      dlpNodeContext.setState(dlpNodeContext.getState().builder().pageRef(dlpPage.getPageKey()).build());
+      navigationService.saveNavigation(navigationContext);
+      navigationService.saveNode(dlpNodeContext, null);
     }
   }
 
@@ -100,7 +98,14 @@ public class DlpPermissionsServiceImpl implements DlpPermissionsService {
     for (String permission : permissionsList){
       NavigationContext nav = navigationService.loadNavigation(SiteKey.group(permission));
       if (nav != null) {
-        navigationService.destroyNavigation(nav);
+        NodeContext node = navigationService.loadNode(NodeModel.SELF_MODEL, nav, Scope.ALL, null);
+        if(node.get(DLP_QUARANTINE) != null){
+          if(node.getNodeSize() == 1) {
+            navigationService.destroyNavigation(nav);
+          } else {
+            node.removeNode(DLP_QUARANTINE);
+          }
+        }
         String pageKey = PortalConfig.GROUP_TYPE + "::" + permission +"::dlp-quarantine";
         pageService.destroyPage(PageKey.parse(pageKey));
       }
