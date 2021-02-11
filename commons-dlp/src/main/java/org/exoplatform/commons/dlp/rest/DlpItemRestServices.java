@@ -5,12 +5,14 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.*;
 
 import org.exoplatform.common.http.HTTPStatus;
+import org.exoplatform.commons.api.settings.SettingService;
 import org.exoplatform.commons.dlp.connector.DlpServiceConnector;
 import org.exoplatform.commons.dlp.dto.DlpPermissionItem;
 import org.exoplatform.commons.dlp.dto.DlpPositiveItem;
 import org.exoplatform.commons.dlp.processor.DlpOperationProcessor;
 import org.exoplatform.commons.dlp.service.DlpPermissionsService;
 import org.exoplatform.commons.dlp.service.DlpPositiveItemService;
+import org.exoplatform.commons.utils.CommonsUtils;
 import org.exoplatform.portal.config.UserACL;
 import org.exoplatform.portal.rest.CollectionEntity;
 import org.exoplatform.services.log.ExoLogger;
@@ -31,20 +33,16 @@ public class DlpItemRestServices implements ResourceContainer {
     
     private DlpOperationProcessor dlpOperationProcessor;
     
-    private DlpPermissionsService dlpPermissionsService;
-
     private UserACL userACL;
     
     public static final String TYPE = "file";
 
     public DlpItemRestServices(DlpPositiveItemService dlpPositiveItemService, 
                                DlpOperationProcessor dlpOperationProcessor, 
-                               DlpPermissionsService dlpPermissionsService,
                                UserACL userACL) {
         this.dlpPositiveItemService = dlpPositiveItemService;
         this.dlpOperationProcessor = dlpOperationProcessor;
         this.userACL = userACL;
-         this.dlpPermissionsService = dlpPermissionsService;
     }
 
 
@@ -164,6 +162,7 @@ public class DlpItemRestServices implements ResourceContainer {
         DlpServiceConnector dlpServiceConnector = (DlpServiceConnector) dlpOperationProcessor.getConnectors().get(TYPE);
         String oldPermissions = dlpOperationProcessor.getOldPermissions();
         dlpOperationProcessor.savePermissions(permissions);
+        DlpPermissionsService dlpPermissionsService = CommonsUtils.getService(DlpPermissionsService.class);
         dlpPermissionsService.removeDlpPermissionsPagesAndNavigations(oldPermissions);
         dlpServiceConnector.addDriveAndFolderSecurityPermissions(permissions);
         dlpPermissionsService.addDlpPermissionsPagesAndNavigations(permissions);
