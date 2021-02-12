@@ -4,5 +4,5 @@ public interface DlpPermissionsService {
 
   void addDlpPermissionsPagesAndNavigations(String permissions) throws Exception;
 
-  void removeDlpPermissionsPagesAndNavigations(String oldPermissions) throws Exception;
+  void removeDlpPermissionsPagesAndNavigations(String oldPermissions);
 }
