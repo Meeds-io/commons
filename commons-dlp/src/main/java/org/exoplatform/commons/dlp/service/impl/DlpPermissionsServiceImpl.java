@@ -5,7 +5,6 @@ import org.exoplatform.portal.config.DataStorage;
 import org.exoplatform.portal.config.model.*;
 import org.exoplatform.portal.mop.SiteKey;
 import org.exoplatform.portal.mop.SiteType;
-import org.exoplatform.portal.mop.jdbc.service.JDBCModelStorageImpl;
 import org.exoplatform.portal.mop.navigation.*;
 import org.exoplatform.portal.mop.page.PageContext;
 import org.exoplatform.portal.mop.page.PageKey;
@@ -46,8 +45,8 @@ public class DlpPermissionsServiceImpl implements DlpPermissionsService {
       Page dlpPage = new Page();
       dlpPage.setOwnerType(PortalConfig.GROUP_TYPE);
       dlpPage.setOwnerId(permission);
-      dlpPage.setName("dlp-quarantine");
-      String administratorsDlpQuarantinePageKey = PortalConfig.GROUP_TYPE + "::" + "/platform/administrators::dlp-quarantine";
+      dlpPage.setName(DLP_QUARANTINE);
+      String administratorsDlpQuarantinePageKey = PortalConfig.GROUP_TYPE + "::" + "/platform/administrators::" + DLP_QUARANTINE;
       PageContext administratorsDlpQuarantinePageContext = pageService.loadPage(PageKey.parse(administratorsDlpQuarantinePageKey));
       PageState administratorsDlpQuarantinePageState = administratorsDlpQuarantinePageContext.getState();
       List<String> accessPermissions = new ArrayList<>();
@@ -84,25 +83,29 @@ public class DlpPermissionsServiceImpl implements DlpPermissionsService {
       NodeContext node = navigationService.loadNode(NodeModel.SELF_MODEL, nav, Scope.ALL, null);
       NavigationState navigationState = new NavigationState(nav.getState().getPriority() + 1);
       NavigationContext navigationContext = new NavigationContext(SiteKey.group(permission), navigationState);
-      if (node.get(DLP_QUARANTINE) == null) {
-        NodeContext node1 = node.add(node.getIndex(), DLP_QUARANTINE);
-        node1.setState(node1.getState().builder().pageRef(dlpPage.getPageKey()).build());
-        navigationService.saveNavigation(navigationContext);
-        navigationService.saveNode(node1, null);
-      }
+      NodeContext dlpNodeContext = node.getNode(DLP_QUARANTINE) != null ? node.get(DLP_QUARANTINE) : node.add(node.getIndex(), DLP_QUARANTINE) ;
+      dlpNodeContext.setState(dlpNodeContext.getState().builder().pageRef(dlpPage.getPageKey()).build());
+      navigationService.saveNavigation(navigationContext);
+      navigationService.saveNode(dlpNodeContext, null);
     }
   }
 
   @Override
-  public void removeDlpPermissionsPagesAndNavigations(String oldPermissions) throws Exception {
-    //Load quarantine page and Application portlet
+  public void removeDlpPermissionsPagesAndNavigations(String oldPermissions) {
     List<String> permissionsList = Arrays.asList(oldPermissions.split(","));
     for (String permission : permissionsList){
       NavigationContext nav = navigationService.loadNavigation(SiteKey.group(permission));
       if (nav != null) {
-        navigationService.destroyNavigation(nav);
-        String pageKey = PortalConfig.GROUP_TYPE + "::" + permission +"::dlp-quarantine";
-        pageService.destroyPage(PageKey.parse(pageKey));
+        NodeContext dlpPermissionNodeContext = navigationService.loadNode(NodeModel.SELF_MODEL, nav, Scope.ALL, null);
+        if(dlpPermissionNodeContext.get(DLP_QUARANTINE) != null){
+          if(dlpPermissionNodeContext.getNodeSize() == 1) {
+            navigationService.destroyNavigation(nav);
+          } else {
+            dlpPermissionNodeContext.removeNode(DLP_QUARANTINE);
+          }
+          String dlpPageKey = PortalConfig.GROUP_TYPE + "::" + permission + "::" + DLP_QUARANTINE;
+          pageService.destroyPage(PageKey.parse(dlpPageKey));
+        }
       }
     }
   }
