@@ -31,6 +31,7 @@ import org.exoplatform.commons.api.notification.service.WebNotificationService;
 import org.exoplatform.commons.api.notification.service.storage.WebNotificationStorage;
 import org.exoplatform.commons.notification.channel.WebChannel;
 import org.exoplatform.commons.notification.impl.NotificationContextImpl;
+import org.exoplatform.commons.notification.net.WebNotificationSender;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 
@@ -111,6 +112,7 @@ public class WebNotificationServiceImpl implements WebNotificationService {
   @Override
   public void resetNumberOnBadge(String userId) {
     storage.resetNumberOnBadge(userId);
+    WebNotificationSender.sendJsonMessage(userId, new MessageInfo().setNumberOnBadge(0));
   }
 
   @Override
