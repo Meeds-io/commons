@@ -29,6 +29,11 @@
   }
 
   function fetchLangFile(url, lang) {
+    if (url && url.indexOf('?') >= 0) {
+      url = `${url}&v=${eXo.env.client.assetsVersion}`
+    } else {
+      url = `${url}?v=${eXo.env.client.assetsVersion}`
+    }
     return fetch(url, { credentials: 'include' })
       .then(function (resp) {
         return resp.json();
