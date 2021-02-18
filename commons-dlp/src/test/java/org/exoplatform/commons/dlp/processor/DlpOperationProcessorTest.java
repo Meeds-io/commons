@@ -86,6 +86,20 @@ public class DlpOperationProcessorTest {
     //Then
     verify(dlpOperationDAO, times(3)).delete(any());
   }
+
+  @Test
+  public void testGetKeywords() {
+    //Given
+    dlpOperationProcessor.start();
+    dlpOperationProcessor.addConnector(dlpFileServiceConnector);
+    dlpOperationProcessor.setKeywords("fruit,legume,tomate");
+
+    //When
+    String keywords = dlpOperationProcessor.getKeywords();
+
+    //Then
+    assertEquals(keywords, "fruit,legume,tomate");
+  }
   
   private List<DlpOperation> getDlpOperations() {
     List<DlpOperation> dlpOperations = new ArrayList<DlpOperation>();
