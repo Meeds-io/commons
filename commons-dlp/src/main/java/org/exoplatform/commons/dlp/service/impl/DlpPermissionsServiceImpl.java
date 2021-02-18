@@ -44,6 +44,7 @@ public class DlpPermissionsServiceImpl implements DlpPermissionsService {
     //Load quarantine page and Application portlet
     List<String> permissionsList = Arrays.asList(permissions.split(","));
     for (String permission : permissionsList) {
+      if(permission.equals(ADMINISTRATOR_GROUP)) continue;
       Page dlpPage = new Page();
       dlpPage.setOwnerType(PortalConfig.GROUP_TYPE);
       dlpPage.setOwnerId(permission);
