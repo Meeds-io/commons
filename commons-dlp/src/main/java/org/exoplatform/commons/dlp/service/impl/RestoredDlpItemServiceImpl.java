@@ -7,6 +7,8 @@ import org.exoplatform.commons.dlp.service.RestoredDlpItemService;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 
+import java.util.Calendar;
+
 public class RestoredDlpItemServiceImpl implements RestoredDlpItemService {
 
   private static final Log LOG = ExoLogger.getLogger(RestoredDlpItemServiceImpl.class);
@@ -19,7 +21,13 @@ public class RestoredDlpItemServiceImpl implements RestoredDlpItemService {
 
   @Override
   public void addRestoredDlpItem(RestoredDlpItemEntity restoredDlpItemEntity) {
-    restoredDlpItemDAO.create(restoredDlpItemEntity);
+    RestoredDlpItemEntity existedEntity = restoredDlpItemDAO.findRestoredDlpItemByReference(restoredDlpItemEntity.getReference());
+    if (existedEntity != null) {
+      existedEntity.setDetectionDate(Calendar.getInstance());
+      restoredDlpItemDAO.update(existedEntity);
+    } else {
+      restoredDlpItemDAO.create(restoredDlpItemEntity);
+    }
   }
 
   @Override
