@@ -32,6 +32,8 @@ public class DlpPermissionsServiceImpl implements DlpPermissionsService {
 
   private static final String DLP_QUARANTINE = "dlp-quarantine";
 
+  private static final String ADMINISTRATOR_GROUP = "/platform/administrators";
+
   private static final Log LOG = ExoLogger.getLogger(DlpPermissionsServiceImpl.class);
 
   private DataStorage dataStorage;
@@ -53,12 +55,12 @@ public class DlpPermissionsServiceImpl implements DlpPermissionsService {
     //Load quarantine page and Application portlet
     List<String> permissionsList = Arrays.asList(permissions.split(","));
     for (String permission : permissionsList) {
-      if(permission.equals("/platform/administrators")) continue;
+      if(permission.equals(ADMINISTRATOR_GROUP)) continue;
       Page dlpPage = new Page();
       dlpPage.setOwnerType(PortalConfig.GROUP_TYPE);
       dlpPage.setOwnerId(permission);
       dlpPage.setName(DLP_QUARANTINE);
-      String administratorsDlpQuarantinePageKey = PortalConfig.GROUP_TYPE + "::" + "/platform/administrators::" + DLP_QUARANTINE;
+      String administratorsDlpQuarantinePageKey = PortalConfig.GROUP_TYPE + "::" + ADMINISTRATOR_GROUP + "::" + DLP_QUARANTINE;
       PageContext administratorsDlpQuarantinePageContext = pageService.loadPage(PageKey.parse(administratorsDlpQuarantinePageKey));
       PageState administratorsDlpQuarantinePageState = administratorsDlpQuarantinePageContext.getState();
       List<String> accessPermissions = new ArrayList<>();
@@ -106,7 +108,7 @@ public class DlpPermissionsServiceImpl implements DlpPermissionsService {
   public void removeDlpPermissionsPagesAndNavigations(String oldPermissions) {
     List<String> permissionsList = Arrays.asList(oldPermissions.split(","));
     for (String permission : permissionsList){
-      if(permission.equals("/platform/administrators")) continue;
+      if(permission.equals(ADMINISTRATOR_GROUP)) continue;
       NavigationContext nav = navigationService.loadNavigation(SiteKey.group(permission));
       if (nav != null) {
         NodeContext dlpPermissionNodeContext = navigationService.loadNode(NodeModel.SELF_MODEL, nav, Scope.ALL, null);
