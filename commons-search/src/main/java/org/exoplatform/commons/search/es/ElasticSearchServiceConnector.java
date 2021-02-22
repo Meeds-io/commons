@@ -205,6 +205,17 @@ public class ElasticSearchServiceConnector extends SearchServiceConnector {
   }
 
   protected String buildDlpQuery(String query, String id) {
+    List<String> composedKeywords = new ArrayList<>();
+    List<String> keywords = Arrays.asList(query.split(","));
+    keywords = keywords.stream().filter(key -> {
+      if (key.contains(" ")) {
+        composedKeywords.add(key);
+        return false;
+      } else {
+        return true;
+      }
+    }).collect(Collectors.toList());
+    query = String.join(" ", keywords);
     StringBuilder esQuery = new StringBuilder();
     esQuery.append("{\n");
     esQuery.append("     \"track_scores\": true,\n");
@@ -221,12 +232,24 @@ public class ElasticSearchServiceConnector extends SearchServiceConnector {
         return queryPart;
       }).collect(Collectors.toList());
       String escapedQueryWithOROperator = StringUtils.join(queryParts, " OR ");
-      esQuery.append("            \"must\" : {\n");
+      esQuery.append("            \"should\" : {\n");
       esQuery.append("                \"query_string\" : {\n");
       esQuery.append("                    \"fields\" : [" + getFields() + "],\n");
       esQuery.append("                    \"query\" : \"" + escapedQueryWithOROperator + "\"\n");
       esQuery.append("                }\n");
       esQuery.append("            },\n");
+      if (composedKeywords.size() > 0) {
+        for (String composedKeyword: composedKeywords) {
+          esQuery.append("            \"should\" : {\n");
+          esQuery.append("                \"multi_match\" : {\n");
+          esQuery.append("                    \"type\" : \"phrase\",\n");
+          esQuery.append("                    \"fields\" : [" + getFields() + "],\n");
+          esQuery.append("                    \"boost\" : 5,\n");
+          esQuery.append("                    \"query\" : \"" + composedKeyword + "\"\n");
+          esQuery.append("                }\n");
+          esQuery.append("            },\n");
+        }
+      }
     }
     esQuery.append("            \"filter\" : {\n");
     esQuery.append("              \"bool\" : {\n");
