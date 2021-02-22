@@ -244,7 +244,6 @@ public class ElasticSearchServiceConnector extends SearchServiceConnector {
           esQuery.append("                \"multi_match\" : {\n");
           esQuery.append("                    \"type\" : \"phrase\",\n");
           esQuery.append("                    \"fields\" : [" + getFields() + "],\n");
-          esQuery.append("                    \"boost\" : 5,\n");
           esQuery.append("                    \"query\" : \"" + composedKeyword + "\"\n");
           esQuery.append("                }\n");
           esQuery.append("            },\n");
