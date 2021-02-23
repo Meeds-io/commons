@@ -223,7 +223,7 @@ public class ElasticSearchServiceConnector extends SearchServiceConnector {
     esQuery.append("     \"query\": {\n");
     esQuery.append("        \"bool\" : {\n");
     if (StringUtils.isNotBlank(query)) {
-      List<String> queryParts = Arrays.asList(query.split("[\\+\\-=\\&\\|><\\!\\(\\)\\{\\}\\[\\]\\^\"\\*\\?:\\/ @]+"));
+      List<String> queryParts = Arrays.asList(query.split("[\\+\\-=\\&\\|><\\!\\(\\)\\{\\}\\[\\]\\^\"\\*\\?:\\/ @$]+"));
       queryParts = queryParts.stream().map(queryPart -> {
         queryPart = this.escapeReservedCharacters(queryPart);
         if (queryPart.length() > 5) {
@@ -232,22 +232,22 @@ public class ElasticSearchServiceConnector extends SearchServiceConnector {
         return queryPart;
       }).collect(Collectors.toList());
       String escapedQueryWithOROperator = StringUtils.join(queryParts, " OR ");
-      esQuery.append("            \"should\" : {\n");
+      esQuery.append("            \"must\" : {\n");
       esQuery.append("                \"query_string\" : {\n");
       esQuery.append("                    \"fields\" : [" + getFields() + "],\n");
       esQuery.append("                    \"query\" : \"" + escapedQueryWithOROperator + "\"\n");
       esQuery.append("                }\n");
       esQuery.append("            },\n");
-      if (composedKeywords.size() > 0) {
-        for (String composedKeyword: composedKeywords) {
-          esQuery.append("            \"should\" : {\n");
-          esQuery.append("                \"multi_match\" : {\n");
-          esQuery.append("                    \"type\" : \"phrase\",\n");
-          esQuery.append("                    \"fields\" : [" + getFields() + "],\n");
-          esQuery.append("                    \"query\" : \"" + composedKeyword + "\"\n");
-          esQuery.append("                }\n");
-          esQuery.append("            },\n");
-        }
+    }
+    if (composedKeywords.size() > 0) {
+      for (String composedKeyword: composedKeywords) {
+        esQuery.append("            \"should\" : {\n");
+        esQuery.append("                \"multi_match\" : {\n");
+        esQuery.append("                    \"type\" : \"phrase\",\n");
+        esQuery.append("                    \"fields\" : [" + getFields() + "],\n");
+        esQuery.append("                    \"query\" : \"" + composedKeyword + "\"\n");
+        esQuery.append("                }\n");
+        esQuery.append("            },\n");
       }
     }
     esQuery.append("            \"filter\" : {\n");
