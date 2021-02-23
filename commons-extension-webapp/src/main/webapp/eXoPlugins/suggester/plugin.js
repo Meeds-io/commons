@@ -53,6 +53,9 @@ require(['SHARED/jquery', 'SHARED/suggester'],function($) {
       editor.on('mode', function(e) {
         initSuggester(this, config);
       });
+      editor.on('dataReady', function(e) {
+        initSuggester(this, config);
+      });
       editor.on('instanceReady', function() {
         //initSuggester(editor, config);
       });
