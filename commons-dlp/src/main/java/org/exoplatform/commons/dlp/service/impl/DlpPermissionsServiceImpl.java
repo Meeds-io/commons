@@ -6,7 +6,6 @@ import org.exoplatform.commons.api.settings.SettingValue;
 import org.exoplatform.commons.dlp.service.DlpPermissionsService;
 import org.exoplatform.commons.utils.CommonsUtils;
 import org.exoplatform.portal.config.DataStorage;
-import org.exoplatform.portal.config.UserACL;
 import org.exoplatform.portal.config.model.*;
 import org.exoplatform.portal.mop.SiteKey;
 import org.exoplatform.portal.mop.SiteType;
@@ -19,10 +18,8 @@ import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 import org.exoplatform.services.organization.Membership;
 import org.exoplatform.services.organization.OrganizationService;
-import org.exoplatform.services.security.ConversationState;
 import org.exoplatform.services.security.IdentityRegistry;
 
-import javax.xml.ws.handler.MessageContext;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -130,17 +127,25 @@ public class DlpPermissionsServiceImpl implements DlpPermissionsService {
     IdentityRegistry identityRegistry = CommonsUtils.getService(IdentityRegistry.class);
     OrganizationService organizationService = CommonsUtils.getService(OrganizationService.class);
     SettingService settingService = CommonsUtils.getService(SettingService.class);
-    UserACL userACL = CommonsUtils.getService(UserACL.class);
     if (StringUtils.isBlank(username)) {
       return new String();
     }
-    if(userACL.isSuperUser() || userACL.isUserInGroup(userACL.getAdminGroups())){
-      return "/g/:platform:administrators/" + DLP_QUARANTINE;
+    Collection<Membership> memberships;
+    try {
+      memberships = organizationService.getMembershipHandler()
+                                       .findMembershipsByUserAndGroup(username, ADMINISTRATOR_GROUP);
+      if (memberships != null && !memberships.isEmpty()) {
+        return "/g/" + ADMINISTRATOR_GROUP.replaceAll("/", ":") + "/" + DLP_QUARANTINE;
+      }
+    } catch (Exception e) {
+      throw new IllegalStateException("Error getting memberships of user " + username, e);
     }
     SettingValue<?> settingValue = settingService.get(org.exoplatform.commons.api.settings.data.Context.GLOBAL,
-                           org.exoplatform.commons.api.settings.data.Scope.APPLICATION.id("DlpPermissions"),
-                           "exo:dlpPermissions");
+                                                      org.exoplatform.commons.api.settings.data.Scope.APPLICATION.id(
+                                                          "DlpPermissions"),
+                                                      "exo:dlpPermissions");
     if (settingValue == null || settingValue.getValue().toString().isEmpty()) return new String();
+
     List<String> permissionsList = Arrays.asList(settingValue.getValue().toString().split(","));
     for (String permissionExpression : permissionsList) {
       org.exoplatform.services.security.Identity identity = identityRegistry.getIdentity(username);
@@ -148,8 +153,8 @@ public class DlpPermissionsServiceImpl implements DlpPermissionsService {
         return "/g/" + permissionExpression.replaceAll("/", ":") + "/" + DLP_QUARANTINE;
       }
       try {
-        Collection<Membership> memberships = organizationService.getMembershipHandler()
-                                                                .findMembershipsByUserAndGroup(username, permissionExpression);
+        memberships = organizationService.getMembershipHandler()
+                                         .findMembershipsByUserAndGroup(username, permissionExpression);
         if (memberships != null && !memberships.isEmpty()) {
           return "/g/" + permissionExpression.replaceAll("/", ":") + "/" + DLP_QUARANTINE;
         }
