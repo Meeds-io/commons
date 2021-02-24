@@ -53,6 +53,7 @@ public class RestoredDlpItemServiceImpl implements RestoredDlpItemService {
     RestoredDlpItem restoredDlpItem = new RestoredDlpItem();
     restoredDlpItem.setId(restoredDlpItemEntity.getId());
     restoredDlpItem.setReference(restoredDlpItemEntity.getReference());
+    restoredDlpItem.setRestoredUrl(restoredDlpItemEntity.getRestoredUrl());
     restoredDlpItem.setDetectionDate(restoredDlpItemEntity.getDetectionDate().getTimeInMillis());
     return restoredDlpItem;
   }

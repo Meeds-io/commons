@@ -28,6 +28,9 @@ public class RestoredDlpItemEntity {
     @Column(name = "RESTORED_ITEM_REFERENCE")
     private String reference;
 
+    @Column(name = "RESTORED_ITEM_URL")
+    private String restoredUrl;
+
     @Column(name = "RESTORED_DETECTION_DATE")
     private Calendar detectionDate;
     
@@ -50,4 +53,8 @@ public class RestoredDlpItemEntity {
     public void setDetectionDate(Calendar detectionDate) {
         this.detectionDate = detectionDate;
     }
+
+    public String getRestoredUrl() { return restoredUrl; }
+
+    public void setRestoredUrl(String restoredUrl) { this.restoredUrl = restoredUrl; }
 }

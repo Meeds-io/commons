@@ -91,4 +91,10 @@
                       tableName="DLP_POSITIVE_ITEMS"/>
     </rollback>
   </changeSet>
+
+  <changeSet author="exo-dlp" id="1.0.0-9">
+    <addColumn tableName="RESTORED_DLP_ITEMS">
+      <column name="RESTORED_ITEM_URL" type="VARCHAR(250)"/>
+    </addColumn>
+  </changeSet>
 </databaseChangeLog>

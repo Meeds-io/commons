@@ -8,6 +8,8 @@ public class RestoredDlpItem {
 
   private String reference;
 
+  private String restoredUrl;
+
   public RestoredDlpItem() {
   }
 
@@ -34,4 +36,8 @@ public class RestoredDlpItem {
   public void setReference(String reference) {
     this.reference = reference;
   }
+
+  public String getRestoredUrl() { return restoredUrl; }
+
+  public void setRestoredUrl(String restoredUrl) { this.restoredUrl = restoredUrl; }
 }
