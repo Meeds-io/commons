@@ -205,6 +205,17 @@ public class ElasticSearchServiceConnector extends SearchServiceConnector {
   }
 
   protected String buildDlpQuery(String query, String id) {
+    List<String> composedKeywords = new ArrayList<>();
+    List<String> keywords = Arrays.asList(query.split(","));
+    keywords = keywords.stream().filter(key -> {
+      if (key.contains(" ")) {
+        composedKeywords.add(key);
+        return false;
+      } else {
+        return true;
+      }
+    }).collect(Collectors.toList());
+    query = String.join(" ", keywords);
     StringBuilder esQuery = new StringBuilder();
     esQuery.append("{\n");
     esQuery.append("     \"track_scores\": true,\n");
@@ -212,7 +223,7 @@ public class ElasticSearchServiceConnector extends SearchServiceConnector {
     esQuery.append("     \"query\": {\n");
     esQuery.append("        \"bool\" : {\n");
     if (StringUtils.isNotBlank(query)) {
-      List<String> queryParts = Arrays.asList(query.split("[\\+\\-=\\&\\|><\\!\\(\\)\\{\\}\\[\\]\\^\"\\*\\?:\\/ @]+"));
+      List<String> queryParts = Arrays.asList(query.split("[\\+\\-=\\&\\|><\\!\\(\\)\\{\\}\\[\\]\\^\"\\*\\?:\\/ @$]+"));
       queryParts = queryParts.stream().map(queryPart -> {
         queryPart = this.escapeReservedCharacters(queryPart);
         if (queryPart.length() > 5) {
@@ -227,6 +238,17 @@ public class ElasticSearchServiceConnector extends SearchServiceConnector {
       esQuery.append("                    \"query\" : \"" + escapedQueryWithOROperator + "\"\n");
       esQuery.append("                }\n");
       esQuery.append("            },\n");
+    }
+    if (composedKeywords.size() > 0) {
+      for (String composedKeyword: composedKeywords) {
+        esQuery.append("            \"should\" : {\n");
+        esQuery.append("                \"multi_match\" : {\n");
+        esQuery.append("                    \"type\" : \"phrase\",\n");
+        esQuery.append("                    \"fields\" : [" + getFields() + "],\n");
+        esQuery.append("                    \"query\" : \"" + composedKeyword + "\"\n");
+        esQuery.append("                }\n");
+        esQuery.append("            },\n");
+      }
     }
     esQuery.append("            \"filter\" : {\n");
     esQuery.append("              \"bool\" : {\n");
