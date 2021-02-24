@@ -5,4 +5,6 @@ public interface DlpPermissionsService {
   void addDlpPermissionsPagesAndNavigations(String permissions) throws Exception;
 
   void removeDlpPermissionsPagesAndNavigations(String oldPermissions);
+
+  String getDlpQuarantinePageUrl(String username);
 }
