@@ -282,8 +282,16 @@
 
   $.fn.suggester = function(settings) {
     var _args = arguments;
-    var app, $this;
-    if (!(app = ($this = $(this)).data("suggester"))) {
+    var $this = $(this);
+    var app = $this.data("suggester");
+    const resetExistingEditor = app && (typeof settings === 'object');
+    if (resetExistingEditor) {
+      // The editor is already initialized,
+      // thus we ignore new initialization
+      return;
+    }
+
+    if (!app) {
       $this.data('suggester', (app = new App(this)));
     }
     var $input = $this, $editable;
