@@ -46,7 +46,9 @@ require(['SHARED/jquery', 'SHARED/suggester'],function($) {
     init : function( editor ) {
       var config = editor.config.suggester;
       if (config == undefined) config = {};
-      config = $.extend(true, {}, defaultOptions, config);
+      config = $.extend(true, {
+        avoidReset: true,
+      }, defaultOptions, config);
       
       editor.addContentsCss( $('#ckeditor-suggester').attr('href') );
 
@@ -54,10 +56,12 @@ require(['SHARED/jquery', 'SHARED/suggester'],function($) {
         initSuggester(this, config);
       });
       editor.on('dataReady', function(e) {
-        initSuggester(this, config);
+        if (editor.instanceReady) {
+          initSuggester(this, config);
+        }
       });
       editor.on('instanceReady', function() {
-        //initSuggester(editor, config);
+        initSuggester(editor, config);
       });
       editor.on('getData', function(evt) {
         var data = evt.data;

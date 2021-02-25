@@ -285,7 +285,7 @@
     var $this = $(this);
     var app = $this.data("suggester");
     const resetExistingEditor = app && (typeof settings === 'object');
-    if (resetExistingEditor) {
+    if (resetExistingEditor && settings.avoidReset) {
       // The editor is already initialized,
       // thus we ignore new initialization
       return;
