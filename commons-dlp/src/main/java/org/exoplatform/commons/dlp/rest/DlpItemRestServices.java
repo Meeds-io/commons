@@ -5,15 +5,9 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.*;
 
 import org.exoplatform.common.http.HTTPStatus;
-import org.exoplatform.commons.api.settings.SettingService;
-import org.exoplatform.commons.dlp.connector.DlpServiceConnector;
-import org.exoplatform.commons.dlp.dto.DlpPermissionItem;
 import org.exoplatform.commons.dlp.dto.DlpPositiveItem;
 import org.exoplatform.commons.dlp.processor.DlpOperationProcessor;
-import org.exoplatform.commons.dlp.service.DlpPermissionsService;
 import org.exoplatform.commons.dlp.service.DlpPositiveItemService;
-import org.exoplatform.commons.utils.CommonsUtils;
-import org.exoplatform.portal.config.UserACL;
 import org.exoplatform.portal.rest.CollectionEntity;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
@@ -33,8 +27,6 @@ public class DlpItemRestServices implements ResourceContainer {
     
     private DlpOperationProcessor dlpOperationProcessor;
     
-    public static final String TYPE = "file";
-
     public DlpItemRestServices(DlpPositiveItemService dlpPositiveItemService, 
                                DlpOperationProcessor dlpOperationProcessor) {
         this.dlpPositiveItemService = dlpPositiveItemService;
@@ -140,77 +132,5 @@ public class DlpItemRestServices implements ResourceContainer {
             LOG.error("Unknown error occurred while restoring dlp positive items", e);
             return Response.serverError().build();
         }
-    }
-    
-    @POST
-    @Path("/save/permissions")
-    @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed("users")
-    @ApiOperation(value = "Save the dlp group permissions", httpMethod = "POST", response = Response.class, produces = "application/json",
-        notes = "Return the saved permissions")
-    @ApiResponses(
-        value = { @ApiResponse(code = HTTPStatus.OK, message = "Request fulfilled"),
-            @ApiResponse(code = HTTPStatus.UNAUTHORIZED, message = "Unauthorized operation"),
-            @ApiResponse(code = HTTPStatus.INTERNAL_ERROR, message = "Internal server error"), }
-    )
-    public Response saveDlpPermissions(@ApiParam(value = "The new permissions", required = true) String permissions) {
-      try {
-        DlpServiceConnector dlpServiceConnector = (DlpServiceConnector) dlpOperationProcessor.getConnectors().get(TYPE);
-        String oldPermissions = dlpOperationProcessor.getOldPermissions();
-        dlpOperationProcessor.savePermissions(permissions);
-        DlpPermissionsService dlpPermissionsService = CommonsUtils.getService(DlpPermissionsService.class);
-        dlpPermissionsService.removeDlpPermissionsPagesAndNavigations(oldPermissions);
-        dlpServiceConnector.addDriveAndFolderSecurityPermissions(permissions);
-        dlpPermissionsService.addDlpPermissionsPagesAndNavigations(permissions);
-        return Response.ok().build();
-      } catch (Exception e) {
-        LOG.error("Unknown error occurred while saving dlp permissions", e);
-        return Response.serverError().build();
-      }
-    }
-    
-    @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    @Path("/permissions/isAdministrator")
-    @RolesAllowed("users")
-    @ApiOperation(value = "Check if Current user is member of administrator group", httpMethod = "GET", response = Response.class, produces = "application/json",
-        notes = "Check if Current user is member of administrator group in json format")
-    @ApiResponses(
-        value = { @ApiResponse(code = HTTPStatus.OK, message = "Request fulfilled"),
-            @ApiResponse(code = HTTPStatus.UNAUTHORIZED, message = "Unauthorized operation"),
-            @ApiResponse(code = HTTPStatus.INTERNAL_ERROR, message = "Internal server error"), }
-    )
-    public Response checkIsMemberOfAdministratorGroup() {
-      try {
-        UserACL userACL = CommonsUtils.getService(UserACL.class);
-        boolean isAdmin = userACL.isSuperUser() || userACL.isUserInGroup(userACL.getAdminGroups());
-        return Response.ok().entity("{\"isAdmin\":\"" + isAdmin + "\"}").build();
-      } catch (Exception e) {
-        LOG.error("Unknown error occurred while checking is admin member ", e);
-        return Response.serverError().build();
-      }
-    }
-    
-    @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    @Path("/permissions")
-    @RolesAllowed("users")
-    @ApiOperation(value = "Retrieves the list of dlp permissions", httpMethod = "GET", response = Response.class, produces = "application/json",
-        notes = "Return list of dlp permissions in json format")
-    @ApiResponses(
-        value = { @ApiResponse(code = HTTPStatus.OK, message = "Request fulfilled"),
-            @ApiResponse(code = HTTPStatus.UNAUTHORIZED, message = "Unauthorized operation"),
-            @ApiResponse(code = HTTPStatus.INTERNAL_ERROR, message = "Internal server error"), }
-    )
-    public Response getDlpPermissions(@ApiParam(value = "Offset", required = false, defaultValue = "0") @QueryParam("offset") int offset,
-                                      @ApiParam(value = "Limit", required = false, defaultValue = "20") @QueryParam("limit") int limit) {
-      try {
-        List<DlpPermissionItem> dlpPermissionItemList = dlpOperationProcessor.getPermissions();
-        CollectionEntity<DlpPermissionItem> collectionDlpPermissions = new CollectionEntity<>(dlpPermissionItemList, offset, limit, dlpPermissionItemList.size());
-        return Response.ok(collectionDlpPermissions).build();
-      } catch (Exception e) {
-        LOG.error("Unknown error occurred while getting list of dlp permissions", e);
-        return Response.serverError().build();
-      }
     }
 }

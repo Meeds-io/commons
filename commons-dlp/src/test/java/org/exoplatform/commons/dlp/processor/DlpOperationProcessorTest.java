@@ -5,10 +5,8 @@ import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.*;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
-import org.exoplatform.commons.dlp.dto.DlpPermissionItem;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -89,43 +87,6 @@ public class DlpOperationProcessorTest {
     verify(dlpOperationDAO, times(3)).delete(any());
   }
 
-  @Test
-  public void testGetDlpPermissions() {
-    //Given
-    dlpOperationProcessor.start();
-    dlpOperationProcessor.addConnector(dlpFileServiceConnector);
-    dlpOperationProcessor.savePermissions("platform/Administrator,platform/Externals");
-
-    //When
-    List<DlpPermissionItem>  permissionsList = dlpOperationProcessor.getPermissions();
-
-    //Then
-    assertEquals(permissionsList.size(), 2);
-  }
-
-  @Test
-  public void testGetOldDlpPermissions() {
-    //Given
-    dlpOperationProcessor.start();
-    dlpOperationProcessor.addConnector(dlpFileServiceConnector);
-
-    //When
-    String oldPermissions = dlpOperationProcessor.getOldPermissions();
-    dlpOperationProcessor.savePermissions("/Platform/Users,/Platform/Guests");
-    List<DlpPermissionItem> permissionsList = dlpOperationProcessor.getPermissions();
-
-    //Then
-    assertEquals(oldPermissions,"");
-    assertEquals(permissionsList.size(), 2);
-
-    //when
-    oldPermissions = dlpOperationProcessor.getOldPermissions();
-    dlpOperationProcessor.savePermissions("/platform/Administrator1,/platform/externals1");
-
-    //Then
-    assertEquals(oldPermissions, "/Platform/Users,/Platform/Guests");
-  }
-  
   private List<DlpOperation> getDlpOperations() {
     List<DlpOperation> dlpOperations = new ArrayList<DlpOperation>();
     DlpOperation dlpOperation = new DlpOperation();

@@ -55,11 +55,6 @@
   </component>
 
   <component>
-    <key>org.exoplatform.commons.dlp.service.DlpPermissionsService</key>
-    <type>org.exoplatform.commons.dlp.service.impl.DlpPermissionsServiceImpl</type>
-  </component>
-
-  <component>
     <key>org.exoplatform.commons.dlp.dao.DlpPositiveItemDAO</key>
     <type>org.exoplatform.commons.dlp.dao.impl.DlpPositiveItemDAOImpl</type>
   </component>

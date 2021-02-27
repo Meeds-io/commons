@@ -1,10 +1,8 @@
 package org.exoplatform.commons.dlp.processor.impl;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -21,11 +19,9 @@ import org.picocontainer.Startable;
 import org.exoplatform.commons.dlp.connector.DlpServiceConnector;
 import org.exoplatform.commons.dlp.dao.DlpOperationDAO;
 import org.exoplatform.commons.dlp.domain.DlpOperation;
-import org.exoplatform.commons.dlp.dto.DlpPermissionItem;
 import org.exoplatform.commons.dlp.processor.DlpOperationProcessor;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
-import org.exoplatform.services.organization.OrganizationService;
 
 public class DlpOperationProcessorImpl extends DlpOperationProcessor implements Startable {
 
@@ -80,41 +76,6 @@ public class DlpOperationProcessorImpl extends DlpOperationProcessor implements 
   }
   
   @Override
-  public List<DlpPermissionItem> getPermissions() {
-    SettingService settingService = CommonsUtils.getService(SettingService.class);
-    OrganizationService organizationService = CommonsUtils.getService(OrganizationService.class);
-    SettingValue<?> settingValue = settingService.get(Context.GLOBAL, Scope.APPLICATION.id("DlpPermissions"), "exo:dlpPermissions");
-    List<DlpPermissionItem> dlpPermissionItems = new LinkedList<>();
-    if (settingValue != null && !settingValue.getValue().toString().isEmpty()) {
-      List<String> permissionsList = Arrays.asList(settingValue.getValue().toString().split(","));
-      for (String permission : permissionsList) {
-        DlpPermissionItem dlpPermissionItem = new DlpPermissionItem();
-        try {
-          dlpPermissionItem.setId(permission);
-          dlpPermissionItem.setGroupName(organizationService.getGroupHandler().findGroupById(permission).getGroupName());
-        } catch (Exception e) {
-          LOGGER.error("Error when getting group");
-        }
-        dlpPermissionItems.add(dlpPermissionItem);
-      }
-    }
-    return dlpPermissionItems;
-  }
-
-  @Override
-  public void savePermissions(String permissions) {
-    SettingService settingService = CommonsUtils.getService(SettingService.class);
-    settingService.set(Context.GLOBAL, Scope.APPLICATION.id("DlpPermissions"), "exo:dlpPermissions", SettingValue.create(permissions));
-  }
-
-  @Override
-  public String getOldPermissions() {
-    SettingService settingService = CommonsUtils.getService(SettingService.class);
-    SettingValue<?> settingValue = settingService.get(Context.GLOBAL, Scope.APPLICATION.id("DlpPermissions"), "exo:dlpPermissions");
-    return settingValue != null ? settingValue.getValue().toString() : new String();
-  }
-
-  @Override
   public synchronized void process() {
     if (!this.initialized) {
       LOGGER.debug("Skip Dlp queue processing until service is properly initialized");
@@ -152,7 +113,6 @@ public class DlpOperationProcessorImpl extends DlpOperationProcessor implements 
   private int processBulk() {
 
     Map<String, List<DlpOperation>> dlpQueueSorted = new HashMap<>();
-    long maxDlpOperationId = 0;
 
     // Get BATCH_NUMBER (default = 1000) first dlp operations
     List<DlpOperation> dlpOperations = dlpOperationDAO.findAllFirst(batchNumber);
