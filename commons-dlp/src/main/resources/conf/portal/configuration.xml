@@ -28,6 +28,10 @@
   <component>
     <type>org.exoplatform.commons.dlp.rest.DlpItemRestServices</type>
   </component>
+
+  <component>
+    <type>org.exoplatform.commons.dlp.rest.DlpRestServices</type>
+  </component>
   
   <component>
     <key>org.exoplatform.commons.dlp.queue.QueueDlpService</key>
