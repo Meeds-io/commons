@@ -220,8 +220,9 @@ public class MessageInfo {
    * Sets the badge number of the user
    * @param numberOnBadge
    */
-  public void setNumberOnBadge(int numberOnBadge) {
+  public MessageInfo setNumberOnBadge(int numberOnBadge) {
     this.numberOnBadge = numberOnBadge;
+    return this;
   }
 
   @Override
