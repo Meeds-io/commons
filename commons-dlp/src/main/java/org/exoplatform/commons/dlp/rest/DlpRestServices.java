@@ -6,7 +6,6 @@ import org.exoplatform.commons.utils.CommonsUtils;
 import org.exoplatform.portal.config.UserACL;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
-import org.exoplatform.services.organization.OrganizationService;
 import org.exoplatform.services.rest.resource.ResourceContainer;
 
 import io.swagger.annotations.*;
@@ -26,15 +25,6 @@ public class DlpRestServices implements ResourceContainer {
   public static final String DLP_FEATURE = "dlp";
 
   private static final Log LOG = ExoLogger.getLogger(DlpRestServices.class);
-
-  private ExoFeatureService featureService;
-
-  private OrganizationService organizationService;
-
-  public DlpRestServices(ExoFeatureService featureService, OrganizationService organizationService) {
-   this.featureService = featureService;
-   this.organizationService = organizationService;
-  }
 
   @Path("/changeFeatureActivation/{isActive}")
   @PUT
@@ -57,6 +47,7 @@ public class DlpRestServices implements ResourceContainer {
       if (!isDlpAdmin()) {
         return Response.status(Response.Status.UNAUTHORIZED).build();
       }
+      ExoFeatureService featureService = CommonsUtils.getService(ExoFeatureService.class);
       boolean isActiveBool = Boolean.parseBoolean(isActive);
       featureService.saveActiveFeature(DLP_FEATURE, isActiveBool);
       return Response.ok().type(MediaType.TEXT_PLAIN).build();
