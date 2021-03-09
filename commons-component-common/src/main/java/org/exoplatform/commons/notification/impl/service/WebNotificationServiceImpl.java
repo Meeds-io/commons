@@ -64,29 +64,39 @@ public class WebNotificationServiceImpl implements WebNotificationService {
   @Override
   public List<String> get(WebNotificationFilter filter, int offset, int limit) {
     List<String> result = new ArrayList<String>();
-    List<NotificationInfo> gotList = getNotificationInfos(filter, offset, limit);
+    List<NotificationInfo> gotList = getNotificationInfos(filter, offset, 20);
     NotificationContext ctx = NotificationContextImpl.cloneInstance();
     ctx.append(POPUP_OVER, filter.isOnPopover());
     AbstractChannel channel = ctx.getChannelManager().getChannel(ChannelKey.key(WebChannel.ID));
-    //
-    for (NotificationInfo notification : gotList) {
-      AbstractTemplateBuilder builder = channel.getTemplateBuilder(notification.getKey());
-      MessageInfo msg = null;
-      try {
-        msg = builder.buildMessage(ctx.setNotificationInfo(notification));
-      } catch (Exception e) {
-        LOG.error("Error while building message for notification with id = " + notification.getId(), e);
+    while (true) {
+      for (NotificationInfo notification : gotList) {
+        AbstractTemplateBuilder builder = channel.getTemplateBuilder(notification.getKey());
+        MessageInfo msg = null;
+        try {
+          msg = builder.buildMessage(ctx.setNotificationInfo(notification));
+        } catch (Exception e) {
+          LOG.error("Error while building message for notification with id = " + notification.getId(), e);
+        }
+        if (msg != null && msg.getBody() != null && !msg.getBody().isEmpty()) {
+          result.add(msg.getBody());
+        }
+        // if have any exception when template transformation
+        // ignore to display the notification
+        if (ctx.isFailed()) {
+          LOG.warn(ctx.getException().getMessage(), ctx.getException());
+        }
+        if (result.size() == limit){
+          return result;
+        }
       }
-      if (msg != null && msg.getBody() != null && !msg.getBody().isEmpty()) {
-        result.add(msg.getBody());
+      if (result.size() < limit) {
+        offset += 20;
+        gotList = getNotificationInfos(filter, offset, 20);
       }
-      // if have any exception when template transformation
-      // ignore to display the notification
-      if (ctx.isFailed()) {
-        LOG.warn(ctx.getException().getMessage(), ctx.getException());
+      if(gotList.isEmpty()){
+        return result;
       }
     }
-    return result;
   }
 
   @Override
