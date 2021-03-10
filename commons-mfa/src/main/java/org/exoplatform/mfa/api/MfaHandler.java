@@ -43,16 +43,6 @@ public class MfaHandler extends WebRequestHandler {
   
   }
   
-  protected boolean dispatch(String path, ServletContext context, HttpServletRequest req, HttpServletResponse res)  throws ServletException, IOException {
-    RequestDispatcher dispatcher = context.getRequestDispatcher(path);
-    if (dispatcher != null) {
-      dispatcher.forward(req, res);
-      return true;
-    } else {
-      return false;
-    }
-  }
-  
   @Override
   protected boolean getRequiresLifeCycle() {
     return false;
