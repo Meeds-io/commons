@@ -22,6 +22,7 @@
     <module>commons-extension-webapp</module>
     <module>commons-gifbackport</module>
     <module>commons-juzu</module>
+    <module>commons-mfa</module>
     <module>commons-testing</module>
     <module>commons-webui-component</module>
     <module>commons-webui-ext</module>
@@ -205,6 +206,11 @@
       <dependency>
         <groupId>org.exoplatform.commons</groupId>
         <artifactId>commons-dlp</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.exoplatform.commons</groupId>
+        <artifactId>commons-mfa</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
