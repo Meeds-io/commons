@@ -5,9 +5,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.apache.commons.lang.StringUtils;
-import org.exoplatform.commons.api.settings.SettingService;
-import org.exoplatform.commons.utils.CommonsUtils;
 import org.exoplatform.container.xml.InitParams;
 import org.exoplatform.container.xml.ValueParam;
 
@@ -20,7 +17,7 @@ public class MfaService {
   
   private List<String> protectedNavigations;
   
-  public MfaService(InitParams initParams, SettingService settingService) {
+  public MfaService(InitParams initParams) {
     mfaConnectors=new HashMap<>();
     ValueParam activeConnectorParam = initParams.getValueParam("activeConnector");
     MfaConnector defaultMfaConnector=new MfaConnector("defaultConnector");

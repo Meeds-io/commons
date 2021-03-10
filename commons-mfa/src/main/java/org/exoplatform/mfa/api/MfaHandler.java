@@ -29,7 +29,6 @@ public class MfaHandler extends WebRequestHandler {
   public boolean execute(ControllerContext context) throws Exception {
     HttpServletRequest req = context.getRequest();
     HttpServletResponse res = context.getResponse();
-    PortalContainer container = PortalContainer.getCurrentInstance(req.getServletContext());
     MfaService mfaService = getService(MfaService.class);
   
     String token = req.getParameter("token");

@@ -30,8 +30,6 @@ public class MfaFilter implements Filter {
     MfaService mfaService = container.getComponentInstanceOfType(MfaService.class);
   
     String requestUri = httpServletRequest.getRequestURI();
-  
-    
     if (mfaService.isProtectedUri(requestUri)) {
       if (session.getAttribute("mfaValidated")==null) {
         LOG.info("Mfa Filter must redirect on page to fill token");
