@@ -232,7 +232,7 @@ public class ElasticSearchServiceConnector extends SearchServiceConnector {
         return queryPart;
       }).collect(Collectors.toList());
       String escapedQueryWithOROperator = StringUtils.join(queryParts, " OR ");
-      esQuery.append("            \"must\" : {\n");
+      esQuery.append("            \"should\" : {\n");
       esQuery.append("                \"query_string\" : {\n");
       esQuery.append("                    \"fields\" : [" + getFields() + "],\n");
       esQuery.append("                    \"query\" : \"" + escapedQueryWithOROperator + "\"\n");
