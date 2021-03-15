@@ -368,7 +368,7 @@
               <string>quarantine</string>
             </field>
             <field name="resourceBundleKey">
-              <string>UINotification.label.group.quarantine</string>
+              <string>UINotification.label.group.Quarantine</string>
             </field>
             <field name="order">
               <string>6</string>
