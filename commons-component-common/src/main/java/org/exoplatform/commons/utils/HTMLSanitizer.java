@@ -43,7 +43,7 @@ abstract public class HTMLSanitizer {
   // Some common regular expression definitions.
 
   // The 16 colors defined by the HTML Spec (also used by the CSS Spec)
-  private static final Pattern                                                COLOR_NAME               = Pattern.compile("(?:aqua|black|blue|fuchsia|gray|grey|green|lime|maroon|navy|olive|purple"
+  private static final Pattern                                                COLOR_NAME                = Pattern.compile("(?:aqua|black|blue|fuchsia|gray|grey|green|lime|maroon|navy|olive|purple"
                                                                                                            + "|red|silver|teal|white|yellow)");
 
   // HTML/CSS Spec allows 3 or 6 digit hex to specify color
@@ -86,6 +86,11 @@ abstract public class HTMLSanitizer {
   private static final Collection<String>                                     CUSTOM_ALLOWED_STYLES    =
                                                                                                     (Collection<String>) CollectionUtils.union(CssSchema.DEFAULT.allowedProperties(),
                                                                                                                                                Arrays.asList(new String[]{"float", "display", "clear"}));
+  private static final Pattern                                                SRC_ON_IFRAME               = Pattern.compile("^(https?\\:\\/\\/)?(www\\.youtube\\.com|youtu\\.?be|player.vimeo\\.com|dai\\.?ly|www\\.dailymotion\\.com)\\/.+$");
+
+
+  private static final Pattern                                                ALLOW_FULL_SCREEN_ON_IFRAME               = Pattern.compile("fullscreen");
+
 
   /** A policy definition that matches the minimal HTML that eXo allows. */
   public static final Function<HtmlStreamEventReceiver, HtmlSanitizer.Policy> POLICY_DEFINITION        = new HtmlPolicyBuilder()
@@ -318,12 +323,22 @@ abstract public class HTMLSanitizer {
                                                                                                                                         "legend",
                                                                                                                                         "ins",
                                                                                                                                         "exo-wiki-children-pages",
-                                                                                                                                        "exo-wiki-include-page")
+                                                                                                                                        "exo-wiki-include-page",
+                                                                                                                                        "iframe")
                                                                                                                                 .allowAttributes("page-name").onElements("exo-wiki-include-page")
                                                                                                                                  //Allows the named elements for xwiki input
                                                                                                                                 .allowElements("wikiimage","wikilink","wikimacro")
                                                                                                                                 .allowAttributes("wikiparam")
                                                                                                                                 .globally()
+
+                                                                                                                                .allowAttributes("src")
+                                                                                                                                .matching(SRC_ON_IFRAME)
+                                                                                                                                .onElements("iframe")
+                                                                                                                                .allowAttributes("allow")
+                                                                                                                                .matching(ALLOW_FULL_SCREEN_ON_IFRAME)
+                                                                                                                                .onElements("iframe")
+                                                                                                                                .allowAttributes("frameborder")
+                                                                                                                                .onElements("iframe")
                                                                                                                                 .toFactory();
 
   /**
