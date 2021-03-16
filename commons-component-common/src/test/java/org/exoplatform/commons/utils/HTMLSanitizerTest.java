@@ -67,4 +67,35 @@ public class HTMLSanitizerTest {
     String sanitized = HTMLSanitizer.sanitize(input);
     assertEquals(input, sanitized);
   }
+
+  @Test
+  public void testDailymotionURLAllowedInIFrame() throws Exception {
+    String input = "<iframe allow=\"fullscreen\" frameborder=\"0\" src=\"https://www.dailymotion.com/video/x7zyezo?playlist=x6pibu\"></iframe>";
+    String sanitized = HTMLSanitizer.sanitize(input);
+    sanitized=sanitized.replaceAll("&#61;","=");
+    assertEquals(input, sanitized);
+  }
+
+  @Test
+  public void testYouTubeURLAllowedInIFrame() throws Exception {
+    String input = "<iframe allow=\"fullscreen\" frameborder=\"0\" src=\"https://www.youtube.com/embed/RLY9uVbuk3Q?autohide=1&amp;controls=1&amp;showinfo=0\"></iframe>";
+    String sanitized = HTMLSanitizer.sanitize(input);
+    sanitized=sanitized.replaceAll("&#61;","=");
+    assertEquals(input, sanitized);
+  }
+
+  @Test
+  public void testVimeoURLAllowedInIFrame() throws Exception {
+    String input = "<iframe allow=\"fullscreen\" frameborder=\"0\" src=\"https://player.vimeo.com/video/243244233\"></iframe>";
+    String sanitized = HTMLSanitizer.sanitize(input);
+    sanitized=sanitized.replaceAll("&#61;","=");
+    assertEquals(input, sanitized);
+  }
+
+  @Test
+  public void testNotAllowedURLInIFrame() throws Exception {
+    String input = "<iframe allow=\"fullscreen\" frameborder=\"0\" src=\"https://www.udemy.com/course/java-the-complete-java-developer-course/\"></iframe>";
+    String sanitized = HTMLSanitizer.sanitize(input);
+    assertEquals("<iframe allow=\"fullscreen\" frameborder=\"0\"></iframe>", sanitized);
+  }
 }
