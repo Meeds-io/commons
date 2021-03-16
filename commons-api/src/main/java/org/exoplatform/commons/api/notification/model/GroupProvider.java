@@ -23,7 +23,7 @@ import java.util.List;
 
 public class GroupProvider {
   public static final List<String> defaultGroupIds = Arrays.asList("general", "connections", 
-                                                                     "spaces", "activity_stream", "documents", "other");
+                                                                     "spaces", "activity_stream", "documents", "quarantine", "other");
 
   private String             groupId;
 
