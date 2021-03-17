@@ -8,5 +8,10 @@
     <key>org.exoplatform.mfa.api.MfaService</key>
     <type>org.exoplatform.mfa.api.MfaService</type>
   </component>
+  
+  <component>
+    <key>org.exoplatform.mfa.api.otp.OtpService</key>
+    <type>org.exoplatform.mfa.api.otp.OtpService</type>
+  </component>
 
 </configuration>

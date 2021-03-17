@@ -1,19 +1,19 @@
-package org.exoplatform.mfa.impl;
+package org.exoplatform.mfa.impl.otp;
 
 import org.exoplatform.container.xml.InitParams;
-import org.exoplatform.mfa.api.MfaConnector;
+import org.exoplatform.mfa.api.otp.OtpConnector;
 
-public class ActivIdMfaConnector extends MfaConnector {
+public class ActivIdOtpConnector extends OtpConnector {
   
   private String name;
   
   
-  public ActivIdMfaConnector() {
+  public ActivIdOtpConnector() {
   }
-  public ActivIdMfaConnector(InitParams initParams) {
+  public ActivIdOtpConnector(InitParams initParams) {
   }
   
-  public ActivIdMfaConnector(String name) {
+  public ActivIdOtpConnector(String name) {
     super(name);
   }
   

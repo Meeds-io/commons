@@ -2,7 +2,6 @@ package org.exoplatform.mfa.api;
 
 import org.exoplatform.container.xml.ValueParam;
 import org.exoplatform.container.xml.InitParams;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -32,14 +31,5 @@ public class MfaServiceTest {
     assertFalse(mfaService.isProtectedUri("/portal/g/:platform:web-contributors/page1"));
     assertFalse(mfaService.isProtectedUri("/portal/dw"));
   }
-  
-  @Test
-  public void testValidateToken() {
-    assertTrue(mfaService.validateToken("john","123456"));
-    assertTrue(mfaService.validateToken("mary","123456"));
-    assertFalse(mfaService.validateToken("john","654321"));
-    assertFalse(mfaService.validateToken("mary","654321"));
-  }
-  
   
 }
