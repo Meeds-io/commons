@@ -15,12 +15,47 @@
         </init-params>
     </component>
     
+    <component>
+        <key>org.exoplatform.mfa.api.otp.OtpService</key>
+        <type>org.exoplatform.mfa.api.otp.OtpService</type>
+        <init-params>
+        </init-params>
+    </component>
+    
+    <component>
+        <key>org.exoplatform.mfa.rest.otp.OtpRestService</key>
+        <type>org.exoplatform.mfa.rest.otp.OtpRestService</type>
+    </component>
+    
+    <component>
+        <key>org.exoplatform.mfa.api.fido.FidoService</key>
+        <type>org.exoplatform.mfa.api.fido.FidoService</type>
+        <init-params>
+            <value-param>
+                <name>activeConnector</name>
+                <value>GluuFido2Connector</value>
+            </value-param>
+        </init-params>
+    </component>
+    
+    <component>
+        <key>org.exoplatform.mfa.rest.fido.FidoRestService</key>
+        <type>org.exoplatform.mfa.rest.fido.FidoRestService</type>
+    </component>
+    
     <external-component-plugins>
-        <target-component>org.exoplatform.web.WebAppController</target-component>
+        <target-component>org.exoplatform.mfa.api.fido.FidoService</target-component>
         <component-plugin>
-            <name>MfaHandler</name>
-            <set-method>register</set-method>
-            <type>org.exoplatform.mfa.api.MfaHandler</type>
+            <name>GluuFido2Connector</name>
+            <set-method>addConnector</set-method>
+            <type>org.exoplatform.mfa.impl.fido.GluuFido2Connector</type>
+            <description>FidoConnector</description>
+            <init-params>
+                <value-param>
+                    <name>serverUrl</name>
+                    <value>${exo.mfa.fido.serverUrl:}</value>
+                </value-param>
+            </init-params>
         </component-plugin>
     </external-component-plugins>
 <!--    <external-component-plugins>-->
