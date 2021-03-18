@@ -155,17 +155,16 @@
 
                 <div class="rememberContent">
                     <label class="uiCheckbox">
-                      <input class="checkbox" type="checkbox" name="rememberme" id="rememberme" value="true" />
+                      <input class="checkbox" type="checkbox" name="rememberme" id="rememberme" value="true" checked="true" />
                       <span><%=res.getString("portal.login.RememberOnComputer")%><span>
                     </label>
 				</div>
                 <script type="text/javascript">
                   $("div.rememberContent").click(function()
                   {
-                     var input = $(this).find("#rememberme");
-                     var remembermeOpt = input.attr("value") == "true" ? "false" : "true";
-                     input.attr("value", remembermeOpt);
+                    $("#rememberme").val($("#rememberme").prop("checked"));
                   });
+
                 </script>
 				<div id="UIPortalLoginFormAction" class="loginButton">
 					<button class="button" tabindex="4"  onclick="login();"><%=res.getString("portal.login.Signin")%></button>
