@@ -179,12 +179,17 @@ public class TimeConvertUtils {
       res = bundleService.getResourceBundle("locale.commons.Commons", locale);
     }
     // still null
+    String keyString = key.substring(key.lastIndexOf(".") + 1).toLowerCase();
     if (res == null) {
       LOG.warn("Can not resource bundle by key: " + key);
-      return key.substring(key.lastIndexOf(".") + 1).toLowerCase();
+      return keyString;
     }
-
-    return res.getString(key);
+    try {
+      return res.getString(key);
+    } catch (java.util.MissingResourceException missingResourceException) {
+      LOG.warn("Can't find resource for key {}, language {}", key, locale.toString());
+      return keyString;
+    }
   }
   
   private static String getMessage(String message, String[] args) {
