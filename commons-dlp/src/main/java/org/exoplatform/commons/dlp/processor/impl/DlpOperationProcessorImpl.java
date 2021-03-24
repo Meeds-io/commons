@@ -88,6 +88,7 @@ public class DlpOperationProcessorImpl extends DlpOperationProcessor implements 
       int processedOperations;
       do {
         processedOperations = processBulk();
+        LOGGER.info("Dlp Operation Processor proceed {} queue elements",processedOperations);
       } while (processedOperations >= batchNumber);
     } finally {
       if (this.interrupted) {
