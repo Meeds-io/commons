@@ -33,6 +33,8 @@ public class GluuFido2Connector extends FidoConnector {
   
   private String serverUrl;
   
+  private static final String GLUU_SERVICE = "gluu-service";
+  
   public GluuFido2Connector(InitParams initParams) {
     if (initParams.getValueParam(SERVER_URL)!=null) {
       serverUrl = initParams.getValueParam(SERVER_URL).getValue();
@@ -77,7 +79,7 @@ public class GluuFido2Connector extends FidoConnector {
     if (LOG.isDebugEnabled()) {
       LOG.debug("Fido Registration Step 1 request : " + data.toString());
     }
-    URL url = null;
+    URL url;
     try {
       url = new URL(serviceUrl);
       HttpURLConnection connection= (HttpURLConnection) url.openConnection();
@@ -86,40 +88,53 @@ public class GluuFido2Connector extends FidoConnector {
       connection.setRequestProperty("Content-Length", String.valueOf(data.toString().getBytes(StandardCharsets.UTF_8)));
       connection.setDoOutput(true);
       connection.setDoInput(true);
-  
       OutputStream outputStream = connection.getOutputStream();
       outputStream.write(data.toString().getBytes(StandardCharsets.UTF_8));
-      
-      // read the response
-      InputStream in = new BufferedInputStream(connection.getInputStream());
-      String response = IOUtils.toString(in, "UTF-8");
-      JSONObject jsonResponse = new JSONObject(response);
+      connection.connect();
   
-      //in excluded credential, t id is base64url encode
-      //but to be able to transform it ot byte array in js, we need it in base64
-      JSONArray excludedCredentials = jsonResponse.getJSONArray("excludeCredentials");
-      for (int i=0;i<excludedCredentials.length();i++) {
-        JSONObject excludedCredential=(JSONObject) excludedCredentials.get(i);
-        String idBase64UrlEncoded = excludedCredential.getString("id");
-        byte[] idBytes = Base64.getUrlDecoder().decode(idBase64UrlEncoded);
-        String idBase64Encode = Base64.getEncoder().encodeToString(idBytes);
-        excludedCredential.put("id",idBase64Encode);
+      int responseCode = connection.getResponseCode();
+      if (responseCode==HttpURLConnection.HTTP_OK) {
+  
+        // read the response
+        InputStream in = new BufferedInputStream(connection.getInputStream());
+        String response = IOUtils.toString(in, "UTF-8");
+  
+        JSONObject jsonResponse = new JSONObject(response);
+        //in excluded credential, t id is base64url encode
+        //but to be able to transform it ot byte array in js, we need it in base64
+        JSONArray excludedCredentials = jsonResponse.getJSONArray("excludeCredentials");
+        for (int i = 0; i < excludedCredentials.length(); i++) {
+          JSONObject excludedCredential = (JSONObject) excludedCredentials.get(i);
+          String idBase64UrlEncoded = excludedCredential.getString("id");
+          byte[] idBytes = Base64.getUrlDecoder().decode(idBase64UrlEncoded);
+          String idBase64Encode = Base64.getEncoder().encodeToString(idBytes);
+          excludedCredential.put("id", idBase64Encode);
+        }
+  
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Fido Registration Step 1 response : " + jsonResponse);
+        }
+        LOG.info("remote_service={} operation={} parameters=\"user:{}\" status=ok " + "duration_ms={}",
+          GLUU_SERVICE,
+                 "fido-registration-step-1",
+                 userId,
+                 System.currentTimeMillis() - startTime);
+        return jsonResponse;
+      } else {
+        LOG.error("remote_service={} operation={} parameters=\"user:{}\" status=ko duration_ms={} error_msg=\"Error sending start "
+                      + "registration request status : {}\"",
+                  GLUU_SERVICE,
+                  "fido-registration-step-1",
+                  userId,
+                  System.currentTimeMillis() - startTime,
+                  responseCode);
+        return null;
       }
-      
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Fido Registration Step 1 response : " + jsonResponse);
-      }
-      LOG.info("service={} operation={} parameters=\"user:{}\" status=ok " + "duration_ms={}",
-               FidoService.FEATURE_NAME,
-               "fidoRegistrationStep1",
-               userId,
-               System.currentTimeMillis() - startTime);
-      return jsonResponse;
     } catch (Exception e) {
       e.printStackTrace();
-      LOG.error("service={} operation={} parameters=\"user:{}\" status=ko " + "duration_ms={}",
-                FidoService.FEATURE_NAME,
-                "fidoRegistrationStep1",
+      LOG.error("remote_service={} operation={} parameters=\"user:{}\" status=ko " + "duration_ms={}",
+                GLUU_SERVICE,
+                "fido-registration-step-1",
                 userId,
                 System.currentTimeMillis() - startTime,e);
       return null;
@@ -180,22 +195,36 @@ public class GluuFido2Connector extends FidoConnector {
       OutputStream outputStream = connection.getOutputStream();
       outputStream.write(dataToSend.toString().getBytes(StandardCharsets.UTF_8));
     
-      // read the response
-      InputStream in = new BufferedInputStream(connection.getInputStream());
-      String response = IOUtils.toString(in, "UTF-8");
-      JSONObject jsonResponse = new JSONObject(response);
-      LOG.info("FIDORegistrationStep2 Response : {}",jsonResponse);
-      LOG.info("service={} operation={} parameters=\"user:{}\" status=ok " + "duration_ms={}",
-               FidoService.FEATURE_NAME,
-               "fidoRegistrationStep2",
-               userId,
-               System.currentTimeMillis() - startTime);
-      return jsonResponse;
+      connection.connect();
+      int responseCode=connection.getResponseCode();
+      if (responseCode==HttpURLConnection.HTTP_OK) {
+  
+        // read the response
+        InputStream in = new BufferedInputStream(connection.getInputStream());
+        String response = IOUtils.toString(in, "UTF-8");
+        JSONObject jsonResponse = new JSONObject(response);
+        LOG.info("FIDORegistrationStep2 Response : {}", jsonResponse);
+        LOG.info("remote_service={} operation={} parameters=\"user:{}\" status=ok " + "duration_ms={}",
+                 GLUU_SERVICE,
+                 "fido-registration-step-2",
+                 userId,
+                 System.currentTimeMillis() - startTime);
+        return jsonResponse;
+      } else {
+        LOG.error("remote_service={} operation={} parameters=\"user:{}\" status=ko duration_ms={} error_msg=\"Error sending "
+                      + "finish registration request status : {}\"",
+                  GLUU_SERVICE,
+                  "fido-registration-step-2",
+                  userId,
+                  System.currentTimeMillis() - startTime,
+                  responseCode);
+        return null;
+      }
     } catch (Exception e) {
       e.printStackTrace();
-      LOG.error("service={} operation={} parameters=\"user:{}\" status=ko " + "duration_ms={}",
-                FidoService.FEATURE_NAME,
-                "fidoRegistrationStep2",
+      LOG.error("remote_service={} operation={} parameters=\"user:{}\" status=ko " + "duration_ms={}",
+                GLUU_SERVICE,
+                "fido-registration-step-2",
                 userId,
                 System.currentTimeMillis() - startTime,e);
       return null;
@@ -250,35 +279,48 @@ public class GluuFido2Connector extends FidoConnector {
       OutputStream outputStream = connection.getOutputStream();
       outputStream.write(data.toString().getBytes(StandardCharsets.UTF_8));
       
-      // read the response
-      InputStream in = new BufferedInputStream(connection.getInputStream());
-      String response = IOUtils.toString(in, "UTF-8");
-      JSONObject jsonResponse = new JSONObject(response);
-      
-      //in allowed credential, t id is base64url encode
-      //but to be able to transform it ot byte array in js, we need it in base64
-      JSONArray allowedCredentials = jsonResponse.getJSONArray("allowCredentials");
-      for (int i=0;i<allowedCredentials.length();i++) {
-        JSONObject allowedCredential=(JSONObject) allowedCredentials.get(i);
-        String idBase64UrlEncoded = allowedCredential.getString("id");
-        byte[] idBytes = Base64.getUrlDecoder().decode(idBase64UrlEncoded);
-        String idBase64Encode = Base64.getEncoder().encodeToString(idBytes);
-        allowedCredential.put("id",idBase64Encode);
+      connection.connect();
+      int responseCode = connection.getResponseCode();
+      if (responseCode==HttpURLConnection.HTTP_OK) {
+        // read the response
+        InputStream in = new BufferedInputStream(connection.getInputStream());
+        String response = IOUtils.toString(in, "UTF-8");
+        JSONObject jsonResponse = new JSONObject(response);
+  
+        //in allowed credential, t id is base64url encode
+        //but to be able to transform it ot byte array in js, we need it in base64
+        JSONArray allowedCredentials = jsonResponse.getJSONArray("allowCredentials");
+        for (int i = 0; i < allowedCredentials.length(); i++) {
+          JSONObject allowedCredential = (JSONObject) allowedCredentials.get(i);
+          String idBase64UrlEncoded = allowedCredential.getString("id");
+          byte[] idBytes = Base64.getUrlDecoder().decode(idBase64UrlEncoded);
+          String idBase64Encode = Base64.getEncoder().encodeToString(idBytes);
+          allowedCredential.put("id", idBase64Encode);
+        }
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Fido Authentication Step 1 response : " + jsonResponse);
+        }
+        LOG.info("remote_service={} operation={} parameters=\"user:{}\" status=ok " + "duration_ms={}",
+                 GLUU_SERVICE,
+                 "fido-authentication-step-1",
+                 userId,
+                 System.currentTimeMillis() - startTime);
+        return jsonResponse;
+      } else {
+        LOG.error("remote_service={} operation={} parameters=\"user:{}\" status=ko duration_ms={} error_msg=\"Error sending "
+                      + "start authentication request status : {}\"",
+                  GLUU_SERVICE,
+                  "fido-authentication-step-1",
+                  userId,
+                  System.currentTimeMillis() - startTime,
+                  responseCode);
+        return null;
       }
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Fido Authentication Step 1 response : " + jsonResponse);
-      }
-      LOG.info("service={} operation={} parameters=\"user:{}\" status=ok " + "duration_ms={}",
-               FidoService.FEATURE_NAME,
-               "fidoAuthenticationStep1",
-               userId,
-               System.currentTimeMillis() - startTime);
-      return jsonResponse;
     } catch (Exception e) {
       e.printStackTrace();
-      LOG.error("service={} operation={} parameters=\"user:{}\" status=ko " + "duration_ms={}",
-                FidoService.FEATURE_NAME,
-                "fidoAuthenticationStep1",
+      LOG.error("remote_service={} operation={} parameters=\"user:{}\" status=ko " + "duration_ms={}",
+                GLUU_SERVICE,
+                "fido-authentication-step-1",
                 userId,
                 System.currentTimeMillis() - startTime,e);
       return null;
@@ -345,17 +387,32 @@ public class GluuFido2Connector extends FidoConnector {
       OutputStream outputStream = connection.getOutputStream();
       outputStream.write(dataToSend.toString().getBytes(StandardCharsets.UTF_8));
       
-      // read the response
-      InputStream in = new BufferedInputStream(connection.getInputStream());
-      String response = IOUtils.toString(in, "UTF-8");
-      JSONObject jsonResponse = new JSONObject(response);
-      LOG.info("FIDOAuthenticationStep2 Response : {}",jsonResponse);
-      LOG.info("service={} operation={} parameters=\"user:{}\" status=ok " + "duration_ms={}",
-               FidoService.FEATURE_NAME,
-               "fidoAuthenticationStep2",
-               userId,
-               System.currentTimeMillis() - startTime);
-      return jsonResponse;
+      connection.connect();
+      int responseCode=connection.getResponseCode();
+      if (responseCode==HttpURLConnection.HTTP_OK) {
+        // read the response
+        InputStream in = new BufferedInputStream(connection.getInputStream());
+        String response = IOUtils.toString(in, "UTF-8");
+        JSONObject jsonResponse = new JSONObject(response);
+        LOG.info("FIDOAuthenticationStep2 Response : {}",jsonResponse);
+        LOG.info("remote_service={} operation={} parameters=\"user:{}\" status=ok " + "duration_ms={}",
+                 GLUU_SERVICE,
+                 "fido-authentication-step-2",
+                 userId,
+                 System.currentTimeMillis() - startTime);
+        return jsonResponse;
+      } else {
+        LOG.error("remote_service={} operation={} parameters=\"user:{}\" status=ko duration_ms={} error_msg=\"Error sending "
+                      + "start authentication request status : {}\"",
+                  GLUU_SERVICE,
+                  "fido-authentication-step-2",
+                  userId,
+                  System.currentTimeMillis() - startTime,
+                  responseCode);
+        return null;
+      }
+    
+      
     } catch (IOException e) {
       //temporary error
       //currently, the signature verification is KO. So the request return error 400
@@ -363,13 +420,14 @@ public class GluuFido2Connector extends FidoConnector {
       return new JSONObject();
     } catch (Exception e) {
       e.printStackTrace();
-      LOG.error("service={} operation={} parameters=\"user:{}\" status=ko " + "duration_ms={}",
-                FidoService.FEATURE_NAME,
-                "fidoAuthenticationStep2",
+      LOG.error("remote_service={} operation={} parameters=\"user:{}\" status=ko " + "duration_ms={}",
+                GLUU_SERVICE,
+                "fido-authentication-step-2",
                 userId,
                 System.currentTimeMillis() - startTime,e);
       return null;
     }
+  
   }
   
 }

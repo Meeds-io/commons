@@ -14,7 +14,7 @@ public class FidoService {
   private HashMap<String, FidoConnector> fidoConnectors;
   private String activeConnector;
   
-  public static String FEATURE_NAME="fidoService";
+  public static String FEATURE_NAME="fido-service";
   
   private static final Log LOG = ExoLogger.getLogger(FidoService.class);
   
