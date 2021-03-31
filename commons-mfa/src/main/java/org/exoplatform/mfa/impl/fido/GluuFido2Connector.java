@@ -403,7 +403,7 @@ public class GluuFido2Connector extends FidoConnector {
         return jsonResponse;
       } else {
         LOG.error("remote_service={} operation={} parameters=\"user:{}\" status=ko duration_ms={} error_msg=\"Error sending "
-                      + "start authentication request status : {}\"",
+                      + "finish authentication request status : {}\"",
                   GLUU_SERVICE,
                   "fido-authentication-step-2",
                   userId,
