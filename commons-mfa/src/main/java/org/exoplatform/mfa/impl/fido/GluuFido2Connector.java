@@ -114,10 +114,12 @@ public class GluuFido2Connector extends FidoConnector {
         if (LOG.isDebugEnabled()) {
           LOG.debug("Fido Registration Step 1 response : " + jsonResponse);
         }
-        LOG.info("remote_service={} operation={} parameters=\"user:{}\" status=ok " + "duration_ms={}",
+        LOG.info("remote_service={} operation={} parameters=\"user:{},request:{},response:{}\" status=ok " + "duration_ms={}",
           GLUU_SERVICE,
                  "fido-registration-step-1",
                  userId,
+                 data.toString(),
+                 jsonResponse.toString(),
                  System.currentTimeMillis() - startTime);
         return jsonResponse;
       } else {
@@ -204,10 +206,12 @@ public class GluuFido2Connector extends FidoConnector {
         String response = IOUtils.toString(in, "UTF-8");
         JSONObject jsonResponse = new JSONObject(response);
         LOG.info("FIDORegistrationStep2 Response : {}", jsonResponse);
-        LOG.info("remote_service={} operation={} parameters=\"user:{}\" status=ok " + "duration_ms={}",
+        LOG.info("remote_service={} operation={} parameters=\"user:{},request:{},response:{}\" status=ok " + "duration_ms={}",
                  GLUU_SERVICE,
                  "fido-registration-step-2",
                  userId,
+                 data.toString(),
+                 jsonResponse.toString(),
                  System.currentTimeMillis() - startTime);
         return jsonResponse;
       } else {
@@ -300,10 +304,12 @@ public class GluuFido2Connector extends FidoConnector {
         if (LOG.isDebugEnabled()) {
           LOG.debug("Fido Authentication Step 1 response : " + jsonResponse);
         }
-        LOG.info("remote_service={} operation={} parameters=\"user:{}\" status=ok " + "duration_ms={}",
+        LOG.info("remote_service={} operation={} parameters=\"user:{},request:{},response:{}\" status=ok " + "duration_ms={}",
                  GLUU_SERVICE,
                  "fido-authentication-step-1",
                  userId,
+                 data.toString(),
+                 jsonResponse.toString(),
                  System.currentTimeMillis() - startTime);
         return jsonResponse;
       } else {
@@ -395,10 +401,12 @@ public class GluuFido2Connector extends FidoConnector {
         String response = IOUtils.toString(in, "UTF-8");
         JSONObject jsonResponse = new JSONObject(response);
         LOG.info("FIDOAuthenticationStep2 Response : {}",jsonResponse);
-        LOG.info("remote_service={} operation={} parameters=\"user:{}\" status=ok " + "duration_ms={}",
+        LOG.info("remote_service={} operation={} parameters=\"user:{},request:{},response:{}\" status=ok " + "duration_ms={}",
                  GLUU_SERVICE,
                  "fido-authentication-step-2",
                  userId,
+                 data.toString(),
+                 jsonResponse.toString(),
                  System.currentTimeMillis() - startTime);
         return jsonResponse;
       } else {
