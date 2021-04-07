@@ -85,11 +85,13 @@ public class DlpOperationProcessorImpl extends DlpOperationProcessor implements 
     try {
       // Loop until the number of data retrieved from dlp queue is less than
       // BATCH_NUMBER (default = 1000)
+      int totalProcessed=0;
       int processedOperations;
       do {
         processedOperations = processBulk();
-        LOGGER.info("Dlp Operation Processor proceed {} queue elements",processedOperations);
+        totalProcessed+=processedOperations;
       } while (processedOperations >= batchNumber);
+      LOGGER.info("Dlp Operation Processor proceed {} queue elements by batches of {}",totalProcessed, BATCH_NUMBER_DEFAULT);
     } finally {
       if (this.interrupted) {
         LOGGER.debug("Dlp queue processing interruption done");
