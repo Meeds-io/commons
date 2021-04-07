@@ -110,16 +110,28 @@ public class GluuFido2Connector extends FidoConnector {
           String idBase64Encode = Base64.getEncoder().encodeToString(idBytes);
           excludedCredential.put("id", idBase64Encode);
         }
+        
+        //challenge and user.id are also base64url encode, and we need it as b64encoded
+        String challengeBase64UrlEncoded = jsonResponse.getString("challenge");
+        byte[] challengeBytes = Base64.getUrlDecoder().decode(challengeBase64UrlEncoded);
+        String challengeBase64Encode = Base64.getEncoder().encodeToString(challengeBytes);
+        jsonResponse.put("challenge", challengeBase64Encode);
+  
+        JSONObject userJson = jsonResponse.getJSONObject("user");
+        String userIdBase64UrlEncoded = userJson.getString("id");
+        byte[] userIdBytes = Base64.getUrlDecoder().decode(userIdBase64UrlEncoded);
+        String userIdBase64Encode = Base64.getEncoder().encodeToString(userIdBytes);
+        userJson.put("id", userIdBase64Encode);
   
         if (LOG.isDebugEnabled()) {
           LOG.debug("Fido Registration Step 1 response : " + jsonResponse);
         }
         LOG.info("remote_service={} operation={} parameters=\"user:{},request:{},response:{}\" status=ok " + "duration_ms={}",
-          GLUU_SERVICE,
+                 GLUU_SERVICE,
                  "fido-registration-step-1",
                  userId,
                  data.toString(),
-                 jsonResponse.toString(),
+                 response,
                  System.currentTimeMillis() - startTime);
         return jsonResponse;
       } else {
@@ -158,15 +170,8 @@ public class GluuFido2Connector extends FidoConnector {
   
   
       JSONObject response = new JSONObject();
-      //clientDataJson.challenge is base64encoded
-      //we need to decode it before sending to Gluu
-      //in addition, gluu need clientDataJson base64Encoded
-      JSONObject clientDataJson = new JSONObject(data.getJSONObject("response").getString("clientDataJSON"));
-      String challenge = clientDataJson.getString("challenge");
-      byte[] decodedChallengeBytes = Base64.getDecoder().decode(challenge);
-      String decodedChallenge = new String(decodedChallengeBytes);
-      clientDataJson.put("challenge",decodedChallenge);
-      String encodedClientData = Base64.getUrlEncoder().encodeToString(clientDataJson.toString().getBytes());
+      //gluu need clientDataJson base64Encoded
+      String encodedClientData = Base64.getUrlEncoder().encodeToString(data.getJSONObject("response").getString("clientDataJSON").getBytes());
       response.put("clientDataJSON",encodedClientData);
       byte[] decodedAttestationObject=
           Base64.getDecoder().decode(data.getJSONObject("response").getString("attestationObject").getBytes());
@@ -210,8 +215,8 @@ public class GluuFido2Connector extends FidoConnector {
                  GLUU_SERVICE,
                  "fido-registration-step-2",
                  userId,
-                 data.toString(),
-                 jsonResponse.toString(),
+                 dataToSend.toString(),
+                 response,
                  System.currentTimeMillis() - startTime);
         return jsonResponse;
       } else {
@@ -301,6 +306,13 @@ public class GluuFido2Connector extends FidoConnector {
           String idBase64Encode = Base64.getEncoder().encodeToString(idBytes);
           allowedCredential.put("id", idBase64Encode);
         }
+  
+        //challenge are base64url encode, and we need it as b64encoded
+        String challengeBase64UrlEncoded = jsonResponse.getString("challenge");
+        byte[] challengeBytes = Base64.getUrlDecoder().decode(challengeBase64UrlEncoded);
+        String challengeBase64Encode = Base64.getEncoder().encodeToString(challengeBytes);
+        jsonResponse.put("challenge", challengeBase64Encode);
+        
         if (LOG.isDebugEnabled()) {
           LOG.debug("Fido Authentication Step 1 response : " + jsonResponse);
         }
@@ -309,7 +321,7 @@ public class GluuFido2Connector extends FidoConnector {
                  "fido-authentication-step-1",
                  userId,
                  data.toString(),
-                 jsonResponse.toString(),
+                 response,
                  System.currentTimeMillis() - startTime);
         return jsonResponse;
       } else {
@@ -347,17 +359,11 @@ public class GluuFido2Connector extends FidoConnector {
       dataToSend.put("rawId",data.getString("rawId"));
       
       JSONObject response = new JSONObject();
-      //clientDataJson.challenge is base64encoded
-      //we need to decode it before sending to Gluu
-      //in addition, gluu need clientDataJson base64Encoded
-      JSONObject clientDataJson = new JSONObject(new String(Base64.getDecoder().decode(data.getJSONObject("response").getString("clientDataJSON"))));
-      String challenge = clientDataJson.getString("challenge");
-      byte[] decodedChallengeBytes = Base64.getDecoder().decode(challenge);
-      String decodedChallenge = new String(decodedChallengeBytes);
-      clientDataJson.put("challenge",decodedChallenge);
-      String encodedClientData = Base64.getUrlEncoder().encodeToString(clientDataJson.toString().getBytes());
+
+      //Gluu need clientDataJson base64UrlEncoded
+      String encodedClientData = Base64.getUrlEncoder().encodeToString(data.getJSONObject("response").getString("clientDataJSON").getBytes());
       response.put("clientDataJSON",encodedClientData);
-      
+  
       byte[] decodedAttestationObject=
           Base64.getDecoder().decode(data.getJSONObject("response").getString("authenticatorData").getBytes());
       String encodedAttestationObject = Base64.getUrlEncoder().encodeToString(decodedAttestationObject);
@@ -405,8 +411,8 @@ public class GluuFido2Connector extends FidoConnector {
                  GLUU_SERVICE,
                  "fido-authentication-step-2",
                  userId,
-                 data.toString(),
-                 jsonResponse.toString(),
+                 dataToSend.toString(),
+                 response,
                  System.currentTimeMillis() - startTime);
         return jsonResponse;
       } else {
@@ -421,11 +427,6 @@ public class GluuFido2Connector extends FidoConnector {
       }
     
       
-    } catch (IOException e) {
-      //temporary error
-      //currently, the signature verification is KO. So the request return error 400
-      //but to validate the complete workflow, we now return as it is ok
-      return new JSONObject();
     } catch (Exception e) {
       e.printStackTrace();
       LOG.error("remote_service={} operation={} parameters=\"user:{}\" status=ko " + "duration_ms={}",
