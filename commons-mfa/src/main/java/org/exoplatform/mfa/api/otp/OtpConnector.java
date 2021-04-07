@@ -1,16 +1,16 @@
-package org.exoplatform.mfa.api;
+package org.exoplatform.mfa.api.otp;
 
 import org.exoplatform.container.component.ComponentPlugin;
 
-public class MfaConnector implements ComponentPlugin {
+public class OtpConnector implements ComponentPlugin {
   
   String name;
   
-  public MfaConnector() {
+  public OtpConnector() {
     
   }
   
-  public MfaConnector(String name) {
+  public OtpConnector(String name) {
     this.name=name;
   }
   
@@ -29,7 +29,7 @@ public class MfaConnector implements ComponentPlugin {
   
   @Override
   public void setName(String s) {
-  
+    this.name=s;
   }
   
   @Override
