@@ -4,7 +4,6 @@ import org.apache.commons.io.IOUtils;
 import org.exoplatform.commons.utils.CommonsUtils;
 import org.exoplatform.container.xml.InitParams;
 import org.exoplatform.mfa.api.fido.FidoConnector;
-import org.exoplatform.mfa.api.fido.FidoService;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 import org.exoplatform.services.organization.OrganizationService;
@@ -57,6 +56,7 @@ public class GluuFido2Connector extends FidoConnector {
     }
     if (user==null) {
       LOG.warn("User {} not exists",userId);
+      return null;
     }
     //TODO : get url by fetching
     // /.well-known/fido2-configuration
@@ -105,23 +105,14 @@ public class GluuFido2Connector extends FidoConnector {
         JSONArray excludedCredentials = jsonResponse.getJSONArray("excludeCredentials");
         for (int i = 0; i < excludedCredentials.length(); i++) {
           JSONObject excludedCredential = (JSONObject) excludedCredentials.get(i);
-          String idBase64UrlEncoded = excludedCredential.getString("id");
-          byte[] idBytes = Base64.getUrlDecoder().decode(idBase64UrlEncoded);
-          String idBase64Encode = Base64.getEncoder().encodeToString(idBytes);
-          excludedCredential.put("id", idBase64Encode);
+          excludedCredential.put("id", transformB64UrlToB64(excludedCredential.getString("id")));
         }
         
         //challenge and user.id are also base64url encode, and we need it as b64encoded
-        String challengeBase64UrlEncoded = jsonResponse.getString("challenge");
-        byte[] challengeBytes = Base64.getUrlDecoder().decode(challengeBase64UrlEncoded);
-        String challengeBase64Encode = Base64.getEncoder().encodeToString(challengeBytes);
-        jsonResponse.put("challenge", challengeBase64Encode);
+        jsonResponse.put("challenge", transformB64UrlToB64(jsonResponse.getString("challenge")));
   
         JSONObject userJson = jsonResponse.getJSONObject("user");
-        String userIdBase64UrlEncoded = userJson.getString("id");
-        byte[] userIdBytes = Base64.getUrlDecoder().decode(userIdBase64UrlEncoded);
-        String userIdBase64Encode = Base64.getEncoder().encodeToString(userIdBytes);
-        userJson.put("id", userIdBase64Encode);
+        userJson.put("id", transformB64UrlToB64(userJson.getString("id")));
   
         if (LOG.isDebugEnabled()) {
           LOG.debug("Fido Registration Step 1 response : " + jsonResponse);
@@ -173,10 +164,7 @@ public class GluuFido2Connector extends FidoConnector {
       //gluu need clientDataJson base64Encoded
       String encodedClientData = Base64.getUrlEncoder().encodeToString(data.getJSONObject("response").getString("clientDataJSON").getBytes());
       response.put("clientDataJSON",encodedClientData);
-      byte[] decodedAttestationObject=
-          Base64.getDecoder().decode(data.getJSONObject("response").getString("attestationObject").getBytes());
-      String encodedAttestationObject = Base64.getUrlEncoder().encodeToString(decodedAttestationObject);
-      response.put("attestationObject",encodedAttestationObject);
+      response.put("attestationObject",transformB64ToB64Url(data.getJSONObject("response").getString("attestationObject")));
   
       dataToSend.put("response",response);
     } catch (JSONException e) {
@@ -301,17 +289,11 @@ public class GluuFido2Connector extends FidoConnector {
         JSONArray allowedCredentials = jsonResponse.getJSONArray("allowCredentials");
         for (int i = 0; i < allowedCredentials.length(); i++) {
           JSONObject allowedCredential = (JSONObject) allowedCredentials.get(i);
-          String idBase64UrlEncoded = allowedCredential.getString("id");
-          byte[] idBytes = Base64.getUrlDecoder().decode(idBase64UrlEncoded);
-          String idBase64Encode = Base64.getEncoder().encodeToString(idBytes);
-          allowedCredential.put("id", idBase64Encode);
+          allowedCredential.put("id", transformB64UrlToB64(allowedCredential.getString("id")));
         }
   
         //challenge are base64url encode, and we need it as b64encoded
-        String challengeBase64UrlEncoded = jsonResponse.getString("challenge");
-        byte[] challengeBytes = Base64.getUrlDecoder().decode(challengeBase64UrlEncoded);
-        String challengeBase64Encode = Base64.getEncoder().encodeToString(challengeBytes);
-        jsonResponse.put("challenge", challengeBase64Encode);
+        jsonResponse.put("challenge", transformB64UrlToB64(jsonResponse.getString("challenge")));
         
         if (LOG.isDebugEnabled()) {
           LOG.debug("Fido Authentication Step 1 response : " + jsonResponse);
@@ -364,16 +346,9 @@ public class GluuFido2Connector extends FidoConnector {
       String encodedClientData = Base64.getUrlEncoder().encodeToString(data.getJSONObject("response").getString("clientDataJSON").getBytes());
       response.put("clientDataJSON",encodedClientData);
   
-      byte[] decodedAttestationObject=
-          Base64.getDecoder().decode(data.getJSONObject("response").getString("authenticatorData").getBytes());
-      String encodedAttestationObject = Base64.getUrlEncoder().encodeToString(decodedAttestationObject);
-      response.put("authenticatorData",encodedAttestationObject);
-  
-  
-      byte[] decodedSignature=
-          Base64.getDecoder().decode(data.getJSONObject("response").getString("signature").getBytes());
-      String encodedSignature = Base64.getUrlEncoder().encodeToString(decodedSignature);
-      response.put("signature",encodedSignature);
+      response.put("authenticatorData",transformB64ToB64Url(data.getJSONObject("response").getString("authenticatorData")));
+      
+      response.put("signature",transformB64ToB64Url(data.getJSONObject("response").getString("signature")));
       
       dataToSend.put("response",response);
     } catch (JSONException e) {
@@ -437,6 +412,16 @@ public class GluuFido2Connector extends FidoConnector {
       return null;
     }
   
+  }
+  
+  private String transformB64UrlToB64(String input) {
+    byte[] bytesString = Base64.getUrlDecoder().decode(input);
+    return Base64.getEncoder().encodeToString(bytesString);
+  }
+  
+  private String transformB64ToB64Url(String input) {
+    byte[] bytesString = Base64.getDecoder().decode(input.getBytes());
+    return Base64.getUrlEncoder().encodeToString(bytesString);
   }
   
 }
