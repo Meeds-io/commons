@@ -201,9 +201,6 @@ public class GluuFidoConnectorTest {
     response.put("authenticatorData","J8K+BWPVHhSnfdznSUhaIVEuADn2ui3Xvhph4rt6pJgBAAAABA==");
     data.put("response",response);
     
-    //{"response":,"signature":"","authenticatorData":""},"rawId":"","id":"m6epTDX_-9mhsyJg0-sbf_EPYkxXl09aIhUbvTo2ShM","type":"public-key"}
-    
-    
     PowerMockito.mockStatic(IOUtils.class);
     String responseFromServer = "{\"authenticatedCredentials\":{\"type\":\"public-key\","
         + "\"id\":\"m6epTDX_-9mhsyJg0-sbf_EPYkxXl09aIhUbvTo2ShM\"},\"status\":\"ok\",\"errorMessage\":\"\"}";
@@ -218,9 +215,6 @@ public class GluuFidoConnectorTest {
         +
         "\":\"eyJ0eXBlIjoid2ViYXV0aG4uZ2V0IiwiY2hhbGxlbmdlIjoiaDQxMDFvbk9fd3Y3ejNuWHE0QUNnZi1nVHl5OTA2enRhajRXNjJWNUFxOCIsIm9yaWdpbiI6Imh0dHBzOi8vZXhvLmdsdXUub3JnIiwiY3Jvc3NPcmlnaW4iOmZhbHNlfQ==\",\"signature\":\"MEUCIQCoD5xsTwXPZQqT9xhZn-lIEfIq5s1u946R-bhVhIBuygIgHS30cLiYFFFjMw_931Ddmc_eQxBgy4E-53iWTbgXS7c=\",\"authenticatorData\":\"J8K-BWPVHhSnfdznSUhaIVEuADn2ui3Xvhph4rt6pJgBAAAABA==\"},\"rawId\":\"m6epTDX/+9mhsyJg0+sbf/EPYkxXl09aIhUbvTo2ShM=\",\"id\":\"m6epTDX_-9mhsyJg0-sbf_EPYkxXl09aIhUbvTo2ShM\",\"type\":\"public-key\"}";
     assertEquals("Check data before sending", dataToSend, new String(argument.getValue()));
-    
-    
-    //{"authenticatedCredentials":{"id":"m6epTDX_-9mhsyJg0-sbf_EPYkxXl09aIhUbvTo2ShM","type":"public-key"},"errorMessage":"","status":"ok"}
     
     assertEquals("Check type after receiving response","public-key",
                  result.getJSONObject("authenticatedCredentials").getString("type"));
