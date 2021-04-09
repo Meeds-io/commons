@@ -170,11 +170,6 @@ public class GluuFidoConnectorTest {
     String message = "{\"documentDomain\":\""+rpHost+"\",\"username\":\""+userId+"\"}";
     assertEquals("Check data before sending", message, new String(argument.getValue()));
   
-    //{"userVerification":"preferred","errorMessage":"","challenge":"KUBHWg1TEfjgepso5/CmPqRH2vaqiNwN7DjPeRZL0mE=",
-    // "rpId":"exo.gluu.org",
-    // "allowCredentials":[{"transports":["usb","ble","nfc"],"id":"qkHelobkQx8pej9aiZtxJB4zENDfM+WDN53Dk0iooe0=","type":"public-key"}],"timeout":90,"status":"ok"}
-  
-  
     assertEquals("preferred",
                  result.getString("userVerification"));
     assertEquals("",
