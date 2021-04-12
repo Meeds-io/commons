@@ -85,13 +85,17 @@ public class DlpOperationProcessorImpl extends DlpOperationProcessor implements 
     try {
       // Loop until the number of data retrieved from dlp queue is less than
       // BATCH_NUMBER (default = 1000)
-      int totalProcessed=0;
+      int totalProcessed = 0;
       int processedOperations;
       do {
+        LOGGER.debug("Process Bulk DLP operation (size : {})", batchNumber);
         processedOperations = processBulk();
-        totalProcessed+=processedOperations;
+        totalProcessed += processedOperations;
+        LOGGER.debug("{} DLP Operation processed, total processed : {}", processedOperations, totalProcessed);
       } while (processedOperations >= batchNumber);
-      LOGGER.info("Dlp Operation Processor proceed {} queue elements by batches of {}",totalProcessed, BATCH_NUMBER_DEFAULT);
+      LOGGER.info("Dlp Operation Processor proceed {} queue elements by batches of {}", totalProcessed, BATCH_NUMBER_DEFAULT);
+    } catch (Exception e) {
+      LOGGER.error("Error when processing bulk",e);
     } finally {
       if (this.interrupted) {
         LOGGER.debug("Dlp queue processing interruption done");
@@ -119,6 +123,7 @@ public class DlpOperationProcessorImpl extends DlpOperationProcessor implements 
 
     // Get BATCH_NUMBER (default = 1000) first dlp operations
     List<DlpOperation> dlpOperations = dlpOperationDAO.findAllFirst(batchNumber);
+    LOGGER.debug("{} DLP operations found",dlpOperations.size());
 
     // Get all Dlp operations and order them per type in map:
     // <Operation, <Type, List<DlpOperation>>>
