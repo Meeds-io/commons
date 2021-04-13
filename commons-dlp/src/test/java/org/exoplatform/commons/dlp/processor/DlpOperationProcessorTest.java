@@ -6,11 +6,17 @@ import static org.mockito.Mockito.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
+
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
+import org.powermock.api.mockito.PowerMockito;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.runners.MockitoJUnitRunner;
@@ -76,7 +82,8 @@ public class DlpOperationProcessorTest {
     dlpOperationProcessor.start();
     dlpOperationProcessor.addConnector(dlpFileServiceConnector);
     dlpOperationProcessor.addConnector(dlpActivityServiceConnector);
-    when(dlpOperationDAO.findAllFirst(anyInt())).thenReturn(getDlpOperations());
+    when(dlpOperationDAO.findAllFirstWithOffset(anyInt(),anyInt())).thenReturn(getDlpOperations());
+    when(dlpOperationDAO.count()).thenReturn(Long.valueOf(getDlpOperations().size())).thenReturn(0L);
     when(dlpFileServiceConnector.processItem(anyString())).thenReturn(true);
     when(dlpActivityServiceConnector.processItem(anyString())).thenReturn(true);
     
@@ -105,6 +112,45 @@ public class DlpOperationProcessorTest {
     dlpOperation.setEntityId("100");
     dlpOperations.add(dlpOperation);
     return dlpOperations;
+  }
+  
+  private List<DlpOperation> getDlpOperations(int size) {
+  
+    List<DlpOperation> dlpOperations = new ArrayList<DlpOperation>();
+    for (int i=1; i<=size;i++) {
+      DlpOperation dlpOperation = new DlpOperation();
+      dlpOperation.setId(new Long(i));
+      dlpOperation.setEntityType("file");
+      dlpOperation.setEntityId(""+i);
+      dlpOperations.add(dlpOperation);
+    }
+    return dlpOperations;
+  }
+  
+  @Test
+  public void testProcessWhenmoreItemsThanBatchStayInQueue() throws Exception{
+    //This test verify that all items in queue a read,
+    //even if the bactchNumber first items are waiting in queue (not indexed for example)
+    
+    //Given
+    dlpOperationProcessor.start();
+    dlpOperationProcessor.addConnector(dlpFileServiceConnector);
+    dlpOperationProcessor.setBatchNumber(15);
+    List<DlpOperation> dlpOperations = getDlpOperations(dlpOperationProcessor.getBatchNumber()+10);
+    when(dlpOperationDAO.findAllFirstWithOffset(anyInt(),anyInt()))
+        .thenAnswer(invocation -> {
+          int offset=invocation.getArgumentAt(0, Integer.class);
+          int limit=invocation.getArgumentAt(1, Integer.class);
+          return dlpOperations.stream().skip(offset).limit(limit).collect(Collectors.toList());
+        });
+    when(dlpOperationDAO.count()).thenReturn(Long.valueOf(dlpOperations.size()));
+    when(dlpFileServiceConnector.processItem(anyString())).thenReturn(false);
+  
+    //When
+    dlpOperationProcessor.process();
+    
+    //Then
+    verify(dlpOperationDAO, times(3)).count();
   }
   
 }

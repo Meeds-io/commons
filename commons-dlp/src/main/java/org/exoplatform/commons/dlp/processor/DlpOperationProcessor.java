@@ -69,4 +69,5 @@ public abstract class DlpOperationProcessor {
    * Interrupt the dlp queue process
    */
   public abstract void interrupt();
+  
 }

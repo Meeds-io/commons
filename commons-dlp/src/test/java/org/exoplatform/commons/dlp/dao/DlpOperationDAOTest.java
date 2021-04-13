@@ -70,14 +70,18 @@ public class DlpOperationDAOTest extends AbstractDAOTest {
 
     //Given
     assertEquals(dlpOperationDAO.findAll().size(), 0);
-    assertEquals(dlpOperationDAO.findAllFirst(2).size(), 0);
+    assertEquals(dlpOperationDAO.findAllFirstWithOffset(0,2).size(), 0);
 
     //When
     createDlpOperations();
 
     //Then
     assertEquals(dlpOperationDAO.findAll().size(), 3);
-    assertEquals(dlpOperationDAO.findAllFirst(2).size(), 2);
+    assertEquals(dlpOperationDAO.findAllFirstWithOffset(0,2).size(), 2);
+    assertEquals(dlpOperationDAO.findAllFirstWithOffset(0,2).get(1).getEntityId(), "22");
+    assertEquals(dlpOperationDAO.findAllFirstWithOffset(1,2).get(0).getEntityId(), "22");
+    assertEquals(dlpOperationDAO.findAllFirstWithOffset(1,2).get(1).getEntityId(), "100");
+    
   }
   
   @Test
@@ -85,7 +89,7 @@ public class DlpOperationDAOTest extends AbstractDAOTest {
     
     //Given
     assertEquals(dlpOperationDAO.findAll().size(), 0);
-    assertEquals(dlpOperationDAO.findAllFirst(2).size(), 0);
+    assertEquals(dlpOperationDAO.findAllFirstWithOffset(0,2).size(), 0);
     
     //When
     createDlpOperations();

@@ -11,10 +11,11 @@ public class DlpOperationDAOImpl extends GenericDAOJPAImpl<DlpOperation, Long> i
 
   @Override
   @ExoTransactional
-  public List<DlpOperation> findAllFirst(Integer maxResults) {
+  public List<DlpOperation> findAllFirstWithOffset(int offset, int limit) {
       return getEntityManager()
-              .createNamedQuery("DlpOperation.findAllFirst", DlpOperation.class)
-              .setMaxResults(maxResults)
+              .createNamedQuery("DlpOperation.findAllFirstWithOffset", DlpOperation.class)
+              .setFirstResult(offset)
+              .setMaxResults(limit)
               .getResultList();
   }
   
