@@ -312,6 +312,20 @@
             <module>jquery</module>
         </depends>
     </module>
+    <module>
+      <name>jQueryRss</name>
+      <script>
+        <adapter>
+          (function() {
+          <include>/javascript/jquery.rss.min.js</include>
+          })();
+        </adapter>
+      </script>
+      <depends>
+        <module>jquery</module>
+        <as>$</as>
+      </depends>
+    </module>
 	<module>
 		<name>es6promise</name>
 		<script>
