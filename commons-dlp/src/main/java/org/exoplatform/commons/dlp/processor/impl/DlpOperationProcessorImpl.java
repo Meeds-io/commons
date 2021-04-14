@@ -39,8 +39,9 @@ public class DlpOperationProcessorImpl extends DlpOperationProcessor implements 
 
   // Service
   private final DlpOperationDAO dlpOperationDAO;
-
-  private Integer               batchNumber          = BATCH_NUMBER_DEFAULT;
+  
+  
+  private Integer batchNumber = BATCH_NUMBER_DEFAULT;
 
   private ExecutorService       executors            = Executors.newCachedThreadPool();
 
@@ -86,16 +87,21 @@ public class DlpOperationProcessorImpl extends DlpOperationProcessor implements 
       // Loop until the number of data retrieved from dlp queue is less than
       // BATCH_NUMBER (default = 1000)
       int totalProcessed = 0;
-      int processedOperations;
-      do {
-        LOGGER.debug("Process Bulk DLP operation (size : {})", batchNumber);
-        processedOperations = processBulk();
-        totalProcessed += processedOperations;
-        LOGGER.debug("{} DLP Operation processed, total processed : {}", processedOperations, totalProcessed);
-      } while (processedOperations >= batchNumber);
-      LOGGER.info("Dlp Operation Processor proceed {} queue elements by batches of {}", totalProcessed, BATCH_NUMBER_DEFAULT);
+      int offset = 0;
+      long total = dlpOperationDAO.count();
+      while (offset < total) {
+        LOGGER.debug("Process Bulk DLP operation (offset : {}, total {})", offset, total);
+        int stayingQueue = processBulk(offset);
+        int processedOperations = batchNumber - stayingQueue;
+        total = dlpOperationDAO.count();
+        offset += stayingQueue;
+        totalProcessed = totalProcessed + processedOperations;
+        LOGGER.debug("DLP Operation processed : {} elements removed from queue, {} staying in queue, {} total elements in queue"
+            + " after operation", processedOperations, stayingQueue, total);
+      }
+      LOGGER.info("Dlp Operation Processor proceed {} queue elements, {} elements staying in queue", totalProcessed, offset);
     } catch (Exception e) {
-      LOGGER.error("Error when processing bulk",e);
+      LOGGER.error("Error when processing bulk", e);
     } finally {
       if (this.interrupted) {
         LOGGER.debug("Dlp queue processing interruption done");
@@ -108,7 +114,15 @@ public class DlpOperationProcessorImpl extends DlpOperationProcessor implements 
     LOGGER.debug("Dlp queue processing has been interrupted. Please wait until the service exists cleanly...");
     this.interrupted = true;
   }
-
+  
+  public Integer getBatchNumber() {
+    return batchNumber;
+  }
+  
+  public void setBatchNumber(Integer batchNumber) {
+    this.batchNumber = batchNumber;
+  }
+  
   private boolean isInterrupted() {
     if (Thread.currentThread().isInterrupted()) {
       LOGGER.debug("Thread running dlp queue processing has been interrupted. Please wait until the service exists cleanly...");
@@ -117,12 +131,12 @@ public class DlpOperationProcessorImpl extends DlpOperationProcessor implements 
     return this.interrupted;
   }
 
-  private int processBulk() {
+  private int processBulk(int offset) {
 
     Map<String, List<DlpOperation>> dlpQueueSorted = new HashMap<>();
 
     // Get BATCH_NUMBER (default = 1000) first dlp operations
-    List<DlpOperation> dlpOperations = dlpOperationDAO.findAllFirst(batchNumber);
+    List<DlpOperation> dlpOperations = dlpOperationDAO.findAllFirstWithOffset(offset,batchNumber);
     LOGGER.debug("{} DLP operations found",dlpOperations.size());
 
     // Get all Dlp operations and order them per type in map:
@@ -130,26 +144,31 @@ public class DlpOperationProcessorImpl extends DlpOperationProcessor implements 
     for (DlpOperation dlpOperation : dlpOperations) {
       putDlpOperationInMemoryQueue(dlpOperation, dlpQueueSorted);
     }
+    
+    int nbElementsStayingInQueue = dlpOperations.size();
 
     // Process dlp operation
     for (String entityType : dlpQueueSorted.keySet()) {
-      DlpServiceConnector connector = (DlpServiceConnector) getConnectors().get(entityType);
+      DlpServiceConnector connector = getConnectors().get(entityType);
       List<DlpOperation> dlpOperationsList = dlpQueueSorted.get(entityType);
       if (dlpOperationsList == null || dlpOperationsList.isEmpty()) {
         continue;
       }
+      LOGGER.debug("Will proceed to DLP operation list for type {}, size {}", entityType, dlpOperationsList.size());
       Iterator<DlpOperation> dlpOperationsIterator = dlpOperationsList.iterator();
       while (dlpOperationsIterator.hasNext()) {
         if (isInterrupted()) {
           throw new RuntimeException("Dlp queue processing interrupted");
         }
         DlpOperation dlpOperation = dlpOperationsIterator.next();
+        LOGGER.debug("Call processItem for dlpOperation {}", dlpOperation.toString());
         if (connector.processItem(dlpOperation.getEntityId())) {
           dlpOperationDAO.delete(dlpOperation);
+          nbElementsStayingInQueue--;
         }
       }
     }
-    return dlpOperations.size();
+    return nbElementsStayingInQueue;
   }
 
   /**

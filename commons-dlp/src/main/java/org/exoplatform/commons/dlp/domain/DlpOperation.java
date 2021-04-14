@@ -23,7 +23,7 @@ import org.exoplatform.commons.api.persistence.ExoEntity;
 @NamedQueries({
     @NamedQuery(name = "DlpOperation.findByEntityIdAndType",
         query = "SELECT q FROM DlpOperation q WHERE q.entityId = :entityId and q.entityType = :entityType"),
-    @NamedQuery(name = "DlpOperation.findAllFirst",
+    @NamedQuery(name = "DlpOperation.findAllFirstWithOffset",
         query = "SELECT q FROM DlpOperation q ORDER BY q.id"),
     @NamedQuery(name = "DlpOperation.deleteByEntityId",
       query = "DELETE FROM DlpOperation q WHERE q.entityId = :entityId")
@@ -100,6 +100,16 @@ public class DlpOperation implements Serializable {
     result = 31 * result + (entityType != null ? entityType.hashCode() : 0);
     result = 31 * result + (entityId != null ? entityId.hashCode() : 0);
     return result;
+  }
+  
+  @Override
+  public String toString() {
+    return "DlpOperation{" +
+        "id=" + id +
+        ", entityType='" + entityType + '\'' +
+        ", entityId='" + entityId + '\'' +
+        ", timestamp=" + timestamp +
+        '}';
   }
 }
 
