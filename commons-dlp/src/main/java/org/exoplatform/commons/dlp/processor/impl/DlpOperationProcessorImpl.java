@@ -89,20 +89,19 @@ public class DlpOperationProcessorImpl extends DlpOperationProcessor implements 
       int totalProcessed = 0;
       int offset = 0;
       long total = dlpOperationDAO.count();
-      while (offset<total) {
+      while (offset < total) {
         LOGGER.debug("Process Bulk DLP operation (offset : {}, total {})", offset, total);
-        int stayingQueue=processBulk(offset);
-        int processedOperations=batchNumber-stayingQueue;
-        total=dlpOperationDAO.count();
-        offset+=stayingQueue;
-        totalProcessed=totalProcessed+processedOperations;
+        int stayingQueue = processBulk(offset);
+        int processedOperations = batchNumber - stayingQueue;
+        total = dlpOperationDAO.count();
+        offset += stayingQueue;
+        totalProcessed = totalProcessed + processedOperations;
         LOGGER.debug("DLP Operation processed : {} elements removed from queue, {} staying in queue, {} total elements in queue"
-                         + " after operation", processedOperations, stayingQueue, total);
+            + " after operation", processedOperations, stayingQueue, total);
       }
-      LOGGER.info("Dlp Operation Processor proceed {} queue elements, {} elements staying in queue", totalProcessed,
-                  offset);
+      LOGGER.info("Dlp Operation Processor proceed {} queue elements, {} elements staying in queue", totalProcessed, offset);
     } catch (Exception e) {
-      LOGGER.error("Error when processing bulk",e);
+      LOGGER.error("Error when processing bulk", e);
     } finally {
       if (this.interrupted) {
         LOGGER.debug("Dlp queue processing interruption done");
