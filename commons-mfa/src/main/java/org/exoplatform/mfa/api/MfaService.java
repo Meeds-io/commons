@@ -37,14 +37,12 @@ public class MfaService {
     
   }
 
-  public boolean canAccess() {
+  public boolean canAccess(String requestUri) {
     UserACL userACL = CommonsUtils.getService(UserACL.class);
     if (System.getProperty("exo.mfa.protectedGroupNavigations") != null) {
       String[] protectedGroup = System.getProperty("exo.mfa.protectedGroupNavigations").split(",") ;
-      for (String group : protectedGroup) {
-        if (userACL.isUserInGroup(group)) return true;
-      }
-
+      String currentGroup = requestUri.split("g/:")[1].split("/")[0].replace(":", "/");
+      if ( Arrays.toString(protectedGroup).contains(currentGroup) && userACL.isUserInGroup("/" + currentGroup) ) return true;
     }
     return false;
   }
