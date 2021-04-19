@@ -28,18 +28,18 @@ public class MfaFilter implements Filter {
     HttpSession session = httpServletRequest.getSession();
     ExoContainer container = PortalContainer.getInstance();
     MfaService mfaService = container.getComponentInstanceOfType(MfaService.class);
-  
+
     String requestUri = httpServletRequest.getRequestURI();
     if (mfaService.isProtectedUri(requestUri)) {
-      if (session.getAttribute("mfaValidated")==null || !(boolean)session.getAttribute("mfaValidated")) {
-        LOG.info("Mfa Filter must redirect on page to fill token");
-        httpServletResponse.sendRedirect("/portal/dw/mfa-access?initialUri="+requestUri);
-        return;
+      if ((session.getAttribute("mfaValidated")==null || !(boolean)session.getAttribute("mfaValidated")) && mfaService.canAccess(requestUri)) {
+          LOG.info("Mfa Filter must redirect on page to fill token");
+          httpServletResponse.sendRedirect("/portal/dw/mfa-access?initialUri=" + requestUri);
+          return;
+        }
       }
-    }
-  
+
     chain.doFilter(request, response);
-  
-  
+
+
   }
 }

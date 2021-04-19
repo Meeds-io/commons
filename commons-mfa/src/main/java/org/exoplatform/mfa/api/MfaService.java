@@ -5,9 +5,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.exoplatform.commons.utils.CommonsUtils;
 import org.exoplatform.container.xml.InitParams;
 import org.exoplatform.container.xml.ValueParam;
 import org.exoplatform.mfa.api.otp.OtpConnector;
+import org.exoplatform.portal.config.UserACL;
 
 public class MfaService {
 
@@ -33,5 +35,15 @@ public class MfaService {
                                .filter(s -> requestUri.contains(s))
                                .count() > 0;
     
+  }
+
+  public boolean canAccess(String requestUri) {
+    UserACL userACL = CommonsUtils.getService(UserACL.class);
+    if (System.getProperty("exo.mfa.protectedGroupNavigations") != null) {
+      String[] protectedGroup = System.getProperty("exo.mfa.protectedGroupNavigations").split(",") ;
+      String currentGroup = requestUri.split("g/:")[1].split("/")[0].replace(":", "/");
+      if ( Arrays.toString(protectedGroup).contains(currentGroup) && userACL.isUserInGroup("/" + currentGroup) ) return true;
+    }
+    return false;
   }
 }
