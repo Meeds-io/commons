@@ -93,6 +93,9 @@ public class DlpOperationProcessorImpl extends DlpOperationProcessor implements 
         LOGGER.debug("Process Bulk DLP operation (offset : {}, total {})", offset, total);
         int stayingQueue = processBulk(offset);
         int processedOperations = batchNumber - stayingQueue;
+        if (total<batchNumber) {
+          processedOperations= (int) (total-stayingQueue);
+        }
         total = dlpOperationDAO.count();
         offset += stayingQueue;
         totalProcessed = totalProcessed + processedOperations;
