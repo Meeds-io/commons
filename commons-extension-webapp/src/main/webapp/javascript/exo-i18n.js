@@ -6,6 +6,10 @@
     messages: {}
   });
 
+  if (!Vue.i18NFetchedURLs) {
+    Vue.i18NFetchedURLs = [];
+  }
+
   /**
    * Load translated strings from the given URLs and for the given language
    * @param {string} lang - Language to load strings for
@@ -23,7 +27,10 @@
 
     let promises = [];
     urls.forEach(url => {
-      promises.push(fetchLangFile(url, lang));
+      const promise = fetchLangFile(url, lang);
+      if (promise) {
+        promises.push(promise);
+      }
     });
     return Promise.all(promises).then(() => i18n);
   }
@@ -34,15 +41,23 @@
     } else {
       url = `${url}?v=${eXo.env.client.assetsVersion}`
     }
-    return fetch(url, { credentials: 'include' })
-      .then(function (resp) {
-        return resp.json();
-      })
-      .then(function (msgs) {
-        i18n.mergeLocaleMessage(lang, msgs);
-        i18n.locale = lang;
-        return i18n;
-      });
+
+    if (Vue.i18NFetchedURLs.indexOf(url) >= 0) {
+      return null;
+    } else {
+      return fetch(url, { credentials: 'include' })
+        .then(function (resp) {
+          return resp && resp.ok && resp.json();
+        })
+        .then(function (msgs) {
+          if (msgs) {
+            Vue.i18NFetchedURLs.push(url);
+            i18n.mergeLocaleMessage(lang, msgs);
+            i18n.locale = lang;
+          }
+          return i18n;
+        });
+    }
   }
 
   return { 'loadLanguageAsync': loadLanguageAsync };
