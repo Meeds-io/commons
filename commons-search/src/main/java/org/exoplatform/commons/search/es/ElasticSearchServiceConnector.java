@@ -16,11 +16,21 @@
 */
 package org.exoplatform.commons.search.es;
 
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+
 import org.apache.commons.lang.StringUtils;
-import org.exoplatform.commons.search.es.client.ElasticSearchingClient;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
+
 import org.exoplatform.commons.api.search.SearchServiceConnector;
 import org.exoplatform.commons.api.search.data.SearchContext;
 import org.exoplatform.commons.api.search.data.SearchResult;
+import org.exoplatform.commons.search.es.client.ElasticSearchingClient;
 import org.exoplatform.container.xml.InitParams;
 import org.exoplatform.container.xml.PropertiesParam;
 import org.exoplatform.services.log.ExoLogger;
@@ -28,15 +38,6 @@ import org.exoplatform.services.log.Log;
 import org.exoplatform.services.security.ConversationState;
 import org.exoplatform.services.security.IdentityConstants;
 import org.exoplatform.services.security.MembershipEntry;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
-
-import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 /**
  * Created by The eXo Platform SAS
@@ -53,6 +54,10 @@ public class ElasticSearchServiceConnector extends SearchServiceConnector {
   public static final int HIGHLIGHT_FRAGMENT_NUMBER_DEFAULT_VALUE = 3;
 
   private final ElasticSearchingClient client;
+
+  public static final String           GROUP                                   = "group";
+  
+  public static final String           WIKI_TYPE                                   = "wikiType";
 
   //ES connector information
   //Index is optional: if null, search on all the cluster
@@ -222,7 +227,12 @@ public class ElasticSearchServiceConnector extends SearchServiceConnector {
     esQuery.append("                  {\n");
     esQuery.append("                   \"bool\" : {\n");
     esQuery.append("                     \"should\" : [\n");
-    esQuery.append("                      " + getPermissionFilter() + "\n");
+    if (filters != null && filters.size() > 1 && WIKI_TYPE.equals(filters.get(0).getField()) && GROUP.equals(filters.get(0).getValue())
+        && StringUtils.isNotBlank(filters.get(1).getValue())) {
+      esQuery.append("                      " + getPermissionFilterWiki(filters.get(1).getValue()) + "\n");
+    } else {
+      esQuery.append("                      " + getPermissionFilter() + "\n");
+    }
     esQuery.append("                      ]\n");
     esQuery.append("                    }\n");
     esQuery.append("                  }\n");
@@ -539,6 +549,42 @@ public class ElasticSearchServiceConnector extends SearchServiceConnector {
           "  }\n" +
           "}\n";
     }
+  }
+
+  protected String getPermissionFilterWiki(String permission) {
+    StringBuilder permissionSB = new StringBuilder();
+    Set<String> membershipSet = getUserMemberships();
+    if ((membershipSet != null) && (membershipSet.size()>0)) {
+      String memberships = StringUtils.join(membershipSet.toArray(new String[membershipSet.size()]), "|");
+      permissionSB.append("{\n")
+              .append("  \"term\" : { \"permissions\" : \"")
+              .append(permission)
+              .append("\" }\n")
+              .append("},\n")
+              .append("{\n")
+              .append("  \"term\" : { \"permissions\" : \"")
+              .append(IdentityConstants.ANY)
+              .append("\" }\n")
+              .append("},\n")
+              .append("{\n")
+              .append("  \"regexp\" : { \"permissions\" : \"")
+              .append(memberships)
+              .append("\" }\n")
+              .append("}");
+    }
+    else {
+      permissionSB.append("{\n")
+              .append("  \"term\" : { \"permissions\" : \"")
+              .append(getCurrentUser())
+              .append("\" }\n")
+              .append("},\n")
+              .append("{\n")
+              .append("  \"term\" : { \"permissions\" : \"")
+              .append(IdentityConstants.ANY)
+              .append("\" }\n")
+              .append("}");
+    }
+    return permissionSB.toString();
   }
 
   private String getCurrentUser() {
