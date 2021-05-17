@@ -24,6 +24,7 @@ import java.util.GregorianCalendar;
 import java.util.List;
 
 import org.exoplatform.commons.notification.BaseNotificationTestCase;
+import org.exoplatform.commons.testing.BaseCommonsTestCase;
 import org.exoplatform.component.test.ConfigurationUnit;
 import org.exoplatform.component.test.ConfiguredBy;
 import org.exoplatform.component.test.ContainerScope;
@@ -37,7 +38,7 @@ import org.exoplatform.services.security.MembershipEntry;
  *          exo@exoplatform.com
  * Apr 22, 2014  
  */
-public class UserStateServiceTest extends BaseNotificationTestCase {
+public class UserStateServiceTest extends BaseCommonsTestCase {
   private String SUPER_USER = "root";
 
   private UserStateService userStateService;
