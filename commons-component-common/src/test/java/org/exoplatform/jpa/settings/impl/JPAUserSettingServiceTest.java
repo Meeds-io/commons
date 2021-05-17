@@ -32,6 +32,7 @@ public class JPAUserSettingServiceTest extends BaseTest {
         e.printStackTrace();
       }
     }
+    super.tearDown();
   }
 
   public void test_1_GetDefautSetting() throws Exception {
