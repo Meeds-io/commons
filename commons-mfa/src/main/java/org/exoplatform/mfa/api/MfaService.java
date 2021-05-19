@@ -5,6 +5,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.exoplatform.commons.api.settings.SettingService;
+import org.exoplatform.commons.api.settings.SettingValue;
+import org.exoplatform.commons.api.settings.data.Context;
+import org.exoplatform.commons.api.settings.data.Scope;
 import org.exoplatform.commons.utils.CommonsUtils;
 import org.exoplatform.container.xml.InitParams;
 import org.exoplatform.container.xml.ValueParam;
@@ -12,8 +16,11 @@ import org.exoplatform.mfa.api.otp.OtpConnector;
 import org.exoplatform.portal.config.UserACL;
 
 public class MfaService {
-
-//  private static final String FEATURE_NAME = "mfa";
+  private static final String DEFAULT_MFA_SYSTEM = "fido2";
+  
+  private String mfaSystem;
+  
+  //  private static final String FEATURE_NAME = "mfa";
   
   
   
@@ -26,6 +33,13 @@ public class MfaService {
                                  .filter(s -> !s.isEmpty())
                                  .map(s -> "/portal/g/"+s.replace("/",":"))
                                  .collect(Collectors.toList());
+    
+    ValueParam mfaSystemParam = initParams.getValueParam("mfaSystem");
+    if (mfaSystemParam!=null) {
+      mfaSystem=mfaSystemParam.getValue();
+    } else {
+      mfaSystem=DEFAULT_MFA_SYSTEM;
+    }
   }
   
   
@@ -45,5 +59,9 @@ public class MfaService {
       if ( Arrays.toString(protectedGroup).contains(currentGroup) && userACL.isUserInGroup("/" + currentGroup) ) return true;
     }
     return false;
+  }
+  
+  public String getMfaSystem() {
+    return mfaSystem;
   }
 }
