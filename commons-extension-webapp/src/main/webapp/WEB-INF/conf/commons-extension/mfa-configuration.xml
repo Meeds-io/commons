@@ -12,6 +12,10 @@
                 <name>protectedGroupNavigations</name>
                 <value>${exo.mfa.protectedGroupNavigations:}</value>
             </value-param>
+            <value-param>
+                <name>mfaSystem</name>
+                <value>${exo.mfa.system:fido2}</value>
+            </value-param>
         </init-params>
     </component>
     
@@ -22,6 +26,10 @@
         </init-params>
     </component>
     
+    <component>
+        <key>org.exoplatform.mfa.rest.mfa.MfaRestService</key>
+        <type>org.exoplatform.mfa.rest.mfa.MfaRestService</type>
+    </component>
     <component>
         <key>org.exoplatform.mfa.rest.otp.OtpRestService</key>
         <type>org.exoplatform.mfa.rest.otp.OtpRestService</type>
