@@ -23,34 +23,25 @@ import org.json.JSONObject;
 @Path("/mfa")
 @Api(value = "/mfa", description = "Manages MFA features")
 public class MfaRestService implements ResourceContainer {
-  
-  
-  
+
   @Path("/settings")
   @GET
   @Produces(MediaType.APPLICATION_JSON)
   @RolesAllowed("users")
-  @ApiOperation(
-      value = "Get Activated MFA System",
-      httpMethod = "GET", response = Response.class, produces = MediaType.APPLICATION_JSON
-  )
-  @ApiResponses(
-      value = { @ApiResponse(code = HTTPStatus.OK, message = "Request fulfilled"),
-          @ApiResponse(code = HTTPStatus.BAD_REQUEST, message = "Invalid query input"),
-          @ApiResponse(code = HTTPStatus.UNAUTHORIZED, message = "Unauthorized operation"),
-          @ApiResponse(code = HTTPStatus.INTERNAL_ERROR, message = "Internal server error"), }
-  )
+  @ApiOperation(value = "Get Activated MFA System", httpMethod = "GET", response = Response.class, produces = MediaType.APPLICATION_JSON)
+  @ApiResponses(value = { @ApiResponse(code = HTTPStatus.OK, message = "Request fulfilled"),
+      @ApiResponse(code = HTTPStatus.UNAUTHORIZED, message = "Unauthorized operation"),
+      @ApiResponse(code = HTTPStatus.INTERNAL_ERROR, message = "Internal server error"), })
   public Response getMfaSystem() {
     MfaService mfaService = CommonsUtils.getService(MfaService.class);
     JSONObject result = new JSONObject();
     try {
-      result.put("mfaSystem",mfaService.getMfaSystem());
+      result.put("mfaSystem", mfaService.getMfaSystem());
       return Response.ok().entity(result.toString()).build();
     } catch (JSONException e) {
       return Response.serverError().build();
-      
+
     }
-  
-  
+
   }
 }

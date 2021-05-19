@@ -17,50 +17,43 @@ import org.exoplatform.portal.config.UserACL;
 
 public class MfaService {
   private static final String DEFAULT_MFA_SYSTEM = "fido2";
-  
-  private String mfaSystem;
-  
-  //  private static final String FEATURE_NAME = "mfa";
-  
-  
-  
-  private List<String> protectedNavigations;
-  
+
+  private String              mfaSystem;
+
+  private List<String>        protectedNavigations;
+
   public MfaService(InitParams initParams) {
-    
+
     ValueParam protectedGroupNavigations = initParams.getValueParam("protectedGroupNavigations");
     protectedNavigations = Arrays.stream(protectedGroupNavigations.getValue().split(","))
                                  .filter(s -> !s.isEmpty())
-                                 .map(s -> "/portal/g/"+s.replace("/",":"))
+                                 .map(s -> "/portal/g/" + s.replace("/", ":"))
                                  .collect(Collectors.toList());
-    
+
     ValueParam mfaSystemParam = initParams.getValueParam("mfaSystem");
-    if (mfaSystemParam!=null) {
-      mfaSystem=mfaSystemParam.getValue();
+    if (mfaSystemParam != null) {
+      mfaSystem = mfaSystemParam.getValue();
     } else {
-      mfaSystem=DEFAULT_MFA_SYSTEM;
+      mfaSystem = DEFAULT_MFA_SYSTEM;
     }
   }
-  
-  
-  
+
   public boolean isProtectedUri(String requestUri) {
-    return protectedNavigations.stream()
-                               .filter(s -> requestUri.contains(s))
-                               .count() > 0;
-    
+    return protectedNavigations.stream().filter(s -> requestUri.contains(s)).count() > 0;
+
   }
 
   public boolean canAccess(String requestUri) {
     UserACL userACL = CommonsUtils.getService(UserACL.class);
     if (System.getProperty("exo.mfa.protectedGroupNavigations") != null) {
-      String[] protectedGroup = System.getProperty("exo.mfa.protectedGroupNavigations").split(",") ;
+      String[] protectedGroup = System.getProperty("exo.mfa.protectedGroupNavigations").split(",");
       String currentGroup = requestUri.split("g/:")[1].split("/")[0].replace(":", "/");
-      if ( Arrays.toString(protectedGroup).contains(currentGroup) && userACL.isUserInGroup("/" + currentGroup) ) return true;
+      if (Arrays.toString(protectedGroup).contains(currentGroup) && userACL.isUserInGroup("/" + currentGroup))
+        return true;
     }
     return false;
   }
-  
+
   public String getMfaSystem() {
     return mfaSystem;
   }
