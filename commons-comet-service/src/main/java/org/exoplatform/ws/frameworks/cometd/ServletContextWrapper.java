@@ -326,5 +326,10 @@ public class ServletContextWrapper implements ServletContext {
   @Override
   public void setSessionTrackingModes(Set<SessionTrackingMode> arg0) {
     delegate.setSessionTrackingModes(arg0);    
+  }
+
+  @Override
+  public String getVirtualServerName() {
+    return delegate.getVirtualServerName();
   } 
 }

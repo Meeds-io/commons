@@ -272,4 +272,9 @@ public class MockServletContext implements ServletContext {
     return null;
   }
 
+  @Override
+  public String getVirtualServerName() {
+    return null;
+  }
+
 }

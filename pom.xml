@@ -27,45 +27,21 @@
     <module>commons-webui-component</module>
     <module>commons-webui-ext</module>
     <module>commons-search</module>
-	<module>commons-dlp</module>
+    <module>commons-dlp</module>
   </modules>
   <scm>
-    <connection>scm:git:git://github.com/exoplatform/commons.git</connection>
-    <developerConnection>scm:git:git@github.com:exoplatform/commons.git</developerConnection>
+    <connection>scm:git:git://github.com/meeds-io/commons.git</connection>
+    <developerConnection>scm:git:git@github.com:meeds-io/commons.git</developerConnection>
+    <url>https://github.com/meeds-io/commons</url>
     <tag>HEAD</tag>
-    <url>http://fisheye.exoplatform.org/browse/projects/commons</url>
   </scm>
   <properties>
     <!-- **************************************** -->
-    <!-- Jira Settings                            -->
+    <!-- Project Dependencies                     -->
     <!-- **************************************** -->
-    <jira.project.key>COMMONS</jira.project.key>
-    <!-- **************************************** -->
-    <!-- Jenkins Settings                         -->
-    <!-- **************************************** -->
-    <jenkins.job.name>commons-master-ci</jenkins.job.name>
-    <!-- **************************************** -->
-    <!-- Build Settings                           -->
-    <!-- **************************************** -->
-    <skipTests>false</skipTests>
-    <skipUTests>${skipTests}</skipUTests>
-    <skipITests>${skipTests}</skipITests>
-    <!-- **************************************** -->
-    <!-- Dependencies versions                    -->
-    <!-- **************************************** -->
-    <!-- GateIn Project Dependencies -->
     <org.exoplatform.gatein.portal.version>6.2.x-SNAPSHOT</org.exoplatform.gatein.portal.version>
-    <!-- Platform Project Dependencies -->
-    <org.apache.log4j.version>2.7</org.apache.log4j.version>
-    <commons-logging.version>1.1.3</commons-logging.version>
-    <org.joda.time.version>2.8.2</org.joda.time.version>
   </properties>
   <dependencyManagement>
-    <!-- ### NEVER CHANGE THIS ORDER OF DEPMGT ### -->
-    <!-- * From top level to bottom projects -->
-    <!-- * maven-depmgt-pom must be the first -->
-    <!-- * Your own modules -->
-    <!-- * And projects below you -->
     <dependencies>
       <!-- Import versions from platform-ui project -->
       <dependency>
@@ -243,49 +219,7 @@
             <packagingExcludes>WEB-INF/lib/*.jar</packagingExcludes>
           </configuration>
         </plugin>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-surefire-plugin</artifactId>
-          <configuration>
-            <skipTests>${skipUTests}</skipTests>
-          </configuration>
-        </plugin>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-failsafe-plugin</artifactId>
-          <configuration>
-            <skipTests>${skipITests}</skipTests>
-          </configuration>
-        </plugin>
       </plugins>
     </pluginManagement>
   </build>
-  <profiles>
-    <profile>
-      <id>project-repositories</id>
-      <activation>
-        <property>
-          <name>!skip-project-repositories</name>
-        </property>
-      </activation>
-      <repositories>
-        <repository>
-          <snapshots>
-            <enabled>true</enabled>
-          </snapshots>
-          <id>repository.exoplatform.org</id>
-          <url>https://repository.exoplatform.org/public</url>
-        </repository>
-      </repositories>
-      <pluginRepositories>
-        <pluginRepository>
-          <snapshots>
-            <enabled>true</enabled>
-          </snapshots>
-          <id>repository.exoplatform.org</id>
-          <url>https://repository.exoplatform.org/public</url>
-        </pluginRepository>
-      </pluginRepositories>
-    </profile>
-  </profiles>
 </project>
