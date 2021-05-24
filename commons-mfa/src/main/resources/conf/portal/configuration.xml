@@ -16,6 +16,10 @@
                 <name>mfaSystem</name>
                 <value>${exo.mfa.system:fido2}</value>
             </value-param>
+            <value-param>
+                <name>protectedGroups</name>
+                <value>${exo.mfa.protectedGroups:}</value>
+            </value-param>
         </init-params>
     </component>
     
