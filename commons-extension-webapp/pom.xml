@@ -13,15 +13,6 @@
     <!-- Use version required by Juzu Less plugin -->
     <org.antlr.runtime.version>3.4</org.antlr.runtime.version>
   </properties>
-  <dependencyManagement>
-    <dependencies>
-      <dependency>
-        <groupId>org.antlr</groupId>
-        <artifactId>antlr-runtime</artifactId>
-        <version>${org.antlr.runtime.version}</version>
-      </dependency>
-    </dependencies>
-  </dependencyManagement>
 
   <dependencies>
     <!-- Current project dependencies -->
@@ -139,6 +130,13 @@
             </goals>
           </execution>
         </executions>
+        <dependencies>
+          <dependency>
+            <groupId>org.antlr</groupId>
+            <artifactId>antlr-runtime</artifactId>
+            <version>${org.antlr.runtime.version}</version>
+          </dependency>
+        </dependencies>
       </plugin>
     </plugins>
   </build>
