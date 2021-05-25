@@ -102,88 +102,93 @@ public class NotificationSettingsRestService implements ResourceContainer {
       userLocale = Locale.ENGLISH;
     }
 
-    String[] sharedResourceBundles = resourceBundleService.getSharedResourceBundleNames();
-    String[] resourceBundles = ArrayUtils.add(sharedResourceBundles, 0, MAIN_RESOURCE_BUNDLE_NAME);
-    ResourceBundle resourceBundle = resourceBundleService.getResourceBundle(resourceBundles,
-                                                                            userLocale);
-    Context context = new Context(resourceBundle, userLocale);
+    try {
+      String[] sharedResourceBundles = resourceBundleService.getSharedResourceBundleNames();
+      String[] resourceBundles = ArrayUtils.add(sharedResourceBundles, 0, MAIN_RESOURCE_BUNDLE_NAME);
+      ResourceBundle resourceBundle = resourceBundleService.getResourceBundle(resourceBundles,
+                                                                              userLocale);
+      Context context = new Context(resourceBundle, userLocale);
 
-    //
-    UserSetting setting = userSettingService.get(username);
+      //
+      UserSetting setting = userSettingService.get(username);
 
-    List<String> channels = getChannels();
-    Map<String, Boolean> channelStatus = computeChannelStatuses(setting, channels);
-    List<GroupProvider> groups = pluginSettingService.getGroupPlugins();
-    Map<String, String> groupsLabels = groups.stream()
-                                             .collect(Collectors.toMap(GroupProvider::getGroupId,
-                                                                       group -> context.pluginRes(group.getResourceBundleKey(),
-                                                                                                  group.getGroupId())));
-    Map<String, String> pluginLabels = groups.stream()
-                                             .flatMap(group -> group.getPluginInfos().stream())
-                                             .collect(Collectors.toMap(PluginInfo::getType,
-                                                                       plugin -> context.pluginRes("UINotification.title."
-                                                                           + plugin.getType(), plugin.getType())));
-    Map<String, String> channelLabels = channels.stream()
-                                                .collect(Collectors.toMap(Function.identity(),
-                                                                          channel -> {
-                                                                            String channelKey = context.getChannelKey(channel);
-                                                                            String key = "UINotification.label.channel-"
-                                                                                + channelKey;
-                                                                            if (resourceBundle != null
-                                                                                && resourceBundle.containsKey(key)) {
-                                                                              return resourceBundle.getString(key);
-                                                                            } else if (resourceBundle != null
-                                                                                && resourceBundle.containsKey("UINotification.label.channel.default")) {
-                                                                              return resourceBundle.getString("UINotification.label.channel.default")
-                                                                                                   .replace("{0}", channelKey);
-                                                                            }
-                                                                            return channelKey;
-                                                                          }));
-    Map<String, String> channelDescriptions = channels.stream()
-                                                      .collect(Collectors.toMap(Function.identity(),
-                                                                                channel -> {
-                                                                                  String channelKey =
-                                                                                                    context.getChannelKey(channel);
-                                                                                  String key =
-                                                                                             "UINotification.description.channel-"
-                                                                                                 + channelKey;
-                                                                                  if (resourceBundle != null
-                                                                                      && resourceBundle.containsKey(key)) {
-                                                                                    return resourceBundle.getString(key);
-                                                                                  } else if (resourceBundle != null
-                                                                                      && resourceBundle.containsKey("UINotification.description.channel.default")) {
-                                                                                    return resourceBundle.getString("UINotification.description.channel.default")
-                                                                                                         .replace("{0}",
-                                                                                                                  channelKey);
-                                                                                  }
-                                                                                  return StringUtils.EMPTY;
-                                                                                }));
+      List<String> channels = getChannels();
+      Map<String, Boolean> channelStatus = computeChannelStatuses(setting, channels);
+      List<GroupProvider> groups = pluginSettingService.getGroupPlugins();
+      Map<String, String> groupsLabels = groups.stream()
+                                               .collect(Collectors.toMap(GroupProvider::getGroupId,
+                                                                         group -> context.pluginRes(group.getResourceBundleKey(),
+                                                                                                    group.getGroupId())));
+      Map<String, String> pluginLabels = groups.stream()
+                                               .flatMap(group -> group.getPluginInfos().stream())
+                                               .collect(Collectors.toMap(PluginInfo::getType,
+                                                                         plugin -> context.pluginRes("UINotification.title."
+                                                                             + plugin.getType(), plugin.getType())));
+      Map<String, String> channelLabels = channels.stream()
+                                                  .collect(Collectors.toMap(Function.identity(),
+                                                                            channel -> {
+                                                                              String channelKey = context.getChannelKey(channel);
+                                                                              String key = "UINotification.label.channel-"
+                                                                                  + channelKey;
+                                                                              if (resourceBundle != null
+                                                                                  && resourceBundle.containsKey(key)) {
+                                                                                return resourceBundle.getString(key);
+                                                                              } else if (resourceBundle != null
+                                                                                  && resourceBundle.containsKey("UINotification.label.channel.default")) {
+                                                                                return resourceBundle.getString("UINotification.label.channel.default")
+                                                                                                     .replace("{0}", channelKey);
+                                                                              }
+                                                                              return channelKey;
+                                                                            }));
+      Map<String, String> channelDescriptions = channels.stream()
+                                                        .collect(Collectors.toMap(Function.identity(),
+                                                                                  channel -> {
+                                                                                    String channelKey =
+                                                                                                      context.getChannelKey(channel);
+                                                                                    String key =
+                                                                                               "UINotification.description.channel-"
+                                                                                                   + channelKey;
+                                                                                    if (resourceBundle != null
+                                                                                        && resourceBundle.containsKey(key)) {
+                                                                                      return resourceBundle.getString(key);
+                                                                                    } else if (resourceBundle != null
+                                                                                        && resourceBundle.containsKey("UINotification.description.channel.default")) {
+                                                                                      return resourceBundle.getString("UINotification.description.channel.default")
+                                                                                                           .replace("{0}",
+                                                                                                                    channelKey);
+                                                                                    }
+                                                                                    return StringUtils.EMPTY;
+                                                                                  }));
 
-    Map<String, String> digestLabels = buildDigestLabels(context);
-    Map<String, String> digestDescriptions = buildDigestDescriptions(context);
-    List<EmailDigestChoice> emailDigestChoices = new ArrayList<>();
-    List<ChannelActivationChoice> channelCheckBoxList = new ArrayList<>();
-    boolean hasActivePlugin = computeChoices(setting,
-                                             channels,
-                                             groups,
-                                             channelStatus,
-                                             emailDigestChoices,
-                                             channelCheckBoxList);
+      Map<String, String> digestLabels = buildDigestLabels(context);
+      Map<String, String> digestDescriptions = buildDigestDescriptions(context);
+      List<EmailDigestChoice> emailDigestChoices = new ArrayList<>();
+      List<ChannelActivationChoice> channelCheckBoxList = new ArrayList<>();
+      boolean hasActivePlugin = computeChoices(setting,
+                                               channels,
+                                               groups,
+                                               channelStatus,
+                                               emailDigestChoices,
+                                               channelCheckBoxList);
 
-    UserNotificationSettings notificationSettings = new UserNotificationSettings(groups,
-                                                                                 groupsLabels,
-                                                                                 pluginLabels,
-                                                                                 channelLabels,
-                                                                                 channelDescriptions,
-                                                                                 digestLabels,
-                                                                                 digestDescriptions,
-                                                                                 hasActivePlugin,
-                                                                                 emailDigestChoices,
-                                                                                 channelCheckBoxList,
-                                                                                 channelStatus,
-                                                                                 channels);
+      UserNotificationSettings notificationSettings = new UserNotificationSettings(groups,
+                                                                                   groupsLabels,
+                                                                                   pluginLabels,
+                                                                                   channelLabels,
+                                                                                   channelDescriptions,
+                                                                                   digestLabels,
+                                                                                   digestDescriptions,
+                                                                                   hasActivePlugin,
+                                                                                   emailDigestChoices,
+                                                                                   channelCheckBoxList,
+                                                                                   channelStatus,
+                                                                                   channels);
 
-    return Response.ok(notificationSettings).build();
+      return Response.ok(notificationSettings).build();
+    } catch (Exception e) {
+      LOG.warn("Error while retrieving notification settings", e);
+      return Response.serverError().build();
+    }
   }
 
   @PATCH
