@@ -1,6 +1,9 @@
 package org.exoplatform.mfa.filter;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
@@ -19,7 +22,17 @@ import org.exoplatform.web.filter.Filter;
 
 public class MfaFilter implements Filter {
   
-  private static final Log LOG = ExoLogger.getLogger(MfaFilter.class);
+  private static String MFA_URI = "/portal/dw/mfa-access";
+  private static final Log          LOG     = ExoLogger.getLogger(MfaFilter.class);
+  private List<String> excludedUrls = new ArrayList<>(
+      Arrays.asList("/portal/skins",
+                    "/portal/scripts",
+                    "/portal/javascript",
+                    "/portal/rest",
+                    "/portal/service-worker.js",
+                    MFA_URI
+      )
+  );
   
   @Override
   public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
@@ -30,13 +43,17 @@ public class MfaFilter implements Filter {
     MfaService mfaService = container.getComponentInstanceOfType(MfaService.class);
 
     String requestUri = httpServletRequest.getRequestURI();
-    if (mfaService.isProtectedUri(requestUri)) {
-      if ((session.getAttribute("mfaValidated")==null || !(boolean)session.getAttribute("mfaValidated")) && mfaService.canAccess(requestUri)) {
-          LOG.info("Mfa Filter must redirect on page to fill token");
-          httpServletResponse.sendRedirect("/portal/dw/mfa-access?initialUri=" + requestUri);
-          return;
-        }
+    if (httpServletRequest.getRemoteUser()!=null &&
+        excludedUrls.stream().noneMatch(s -> requestUri.startsWith(s)) &&
+        (mfaService.isProtectedUri(requestUri) ||
+            mfaService.currentUserIsInProtectedGroup())) {
+      LOG.info(requestUri + " " +httpServletRequest.getRemoteUser());
+      if ((session.getAttribute("mfaValidated")==null || !(boolean)session.getAttribute("mfaValidated"))) {
+        LOG.info("Mfa Filter must redirect on page to fill token");
+        httpServletResponse.sendRedirect(MFA_URI+"?initialUri=" + requestUri);
+        return;
       }
+    }
 
     chain.doFilter(request, response);
 
