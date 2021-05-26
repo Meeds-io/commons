@@ -61,6 +61,9 @@ public class NotificationSettingsRestServiceTest extends BaseRestServicesTestCas
 
   private static final List<GroupProvider>   GROUPS   = Collections.singletonList(GROUP_PROVIDER);
 
+  private static final List<GroupProvider>   EMPTY_GROUP_PROVIDER =
+                                                                  Collections.singletonList(new GroupProvider(GROUP_PROVIDER_ID));
+
   private static final List<AbstractChannel> CHANNELS = Collections.singletonList(newChannel());
 
   private ChannelManager                     channelManager;
@@ -68,6 +71,10 @@ public class NotificationSettingsRestServiceTest extends BaseRestServicesTestCas
   private UserSettingService                 userSettingService;
 
   private UserACL                            userACL;
+
+  private ResourceBundleService              resourceBundleService;
+
+  private PluginSettingService               pluginSettingService;
 
   @Override
   protected Class<?> getComponentClass() {
@@ -78,8 +85,8 @@ public class NotificationSettingsRestServiceTest extends BaseRestServicesTestCas
   public void setUp() throws Exception {
     super.setUp();
 
-    ResourceBundleService resourceBundleService = mock(ResourceBundleService.class);
-    PluginSettingService pluginSettingService = mock(PluginSettingService.class);
+    resourceBundleService = mock(ResourceBundleService.class);
+    pluginSettingService = mock(PluginSettingService.class);
     channelManager = mock(ChannelManager.class);
     userSettingService = mock(UserSettingService.class);
     userACL = mock(UserACL.class);
@@ -209,6 +216,14 @@ public class NotificationSettingsRestServiceTest extends BaseRestServicesTestCas
     assertNotNull(notificationSettings.getChannelStatus());
     assertEquals(1, notificationSettings.getChannelStatus().size());
     assertTrue(notificationSettings.getChannelStatus().get(CHANNEL_ID));
+  }
+
+  public void testGetSettingsSameUserEmptyPlugins() throws Exception {
+    // Given
+    when(pluginSettingService.getGroupPlugins()).thenReturn(EMPTY_GROUP_PROVIDER);
+
+    // Ensure no error is raised
+    testGetSettingsSameUser();
   }
 
   public void testSaveDisableChannel() throws Exception {
