@@ -4,7 +4,7 @@
   <parent>
     <artifactId>commons</artifactId>
     <groupId>org.exoplatform.commons</groupId>
-    <version>6.3.x-SNAPSHOT</version>
+    <version>6.3.x-microservices-SNAPSHOT</version>
   </parent>
   <artifactId>commons-testing</artifactId>
   <packaging>jar</packaging>
