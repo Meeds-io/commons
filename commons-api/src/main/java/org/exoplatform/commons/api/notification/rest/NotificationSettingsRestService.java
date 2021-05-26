@@ -421,7 +421,8 @@ public class NotificationSettingsRestService implements ResourceContainer {
       //
       List<GroupProvider> groups = pluginSettingService.getGroupPlugins();
       for (GroupProvider groupProvider : groups) {
-        if (groupProvider.getGroupId().equals(id)) {
+        if (groupProvider.getGroupId().equals(id) && groupProvider.getPluginInfos() != null
+            && !groupProvider.getPluginInfos().isEmpty()) {
           return groupProvider.getPluginInfos().get(0).getBundlePath();
         }
       }
@@ -431,7 +432,8 @@ public class NotificationSettingsRestService implements ResourceContainer {
 
     public String pluginRes(String key, String id) {
       String path = getBundlePath(id);
-      ResourceBundle pluginResourceBundle = resourceBundleService.getResourceBundle(path, userLocale);
+      ResourceBundle pluginResourceBundle = StringUtils.isBlank(path) ? null
+                                                                      : resourceBundleService.getResourceBundle(path, userLocale);
       return pluginResourceBundle != null && pluginResourceBundle.containsKey(key) ? pluginResourceBundle.getString(key) : id;
     }
 
