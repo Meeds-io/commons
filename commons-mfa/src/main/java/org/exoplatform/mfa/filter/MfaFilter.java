@@ -47,7 +47,6 @@ public class MfaFilter implements Filter {
         excludedUrls.stream().noneMatch(s -> requestUri.startsWith(s)) &&
         (mfaService.isProtectedUri(requestUri) ||
             mfaService.currentUserIsInProtectedGroup())) {
-      LOG.info(requestUri + " " +httpServletRequest.getRemoteUser());
       if ((session.getAttribute("mfaValidated")==null || !(boolean)session.getAttribute("mfaValidated"))) {
         LOG.info("Mfa Filter must redirect on page to fill token");
         httpServletResponse.sendRedirect(MFA_URI+"?initialUri=" + requestUri);
