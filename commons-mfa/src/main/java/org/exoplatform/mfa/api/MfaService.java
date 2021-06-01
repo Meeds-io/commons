@@ -1,22 +1,14 @@
 package org.exoplatform.mfa.api;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.stream.Collectors;
-
-import org.exoplatform.commons.api.settings.SettingService;
-import org.exoplatform.commons.api.settings.SettingValue;
-import org.exoplatform.commons.api.settings.data.Context;
-import org.exoplatform.commons.api.settings.data.Scope;
-import org.exoplatform.commons.utils.CommonsUtils;
 import org.exoplatform.container.xml.InitParams;
 import org.exoplatform.container.xml.ValueParam;
-import org.exoplatform.mfa.api.otp.OtpConnector;
-import org.exoplatform.portal.config.UserACL;
 import org.exoplatform.services.security.ConversationState;
 import org.exoplatform.services.security.Identity;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class MfaService {
   private static final String DEFAULT_MFA_SYSTEM = "fido2";

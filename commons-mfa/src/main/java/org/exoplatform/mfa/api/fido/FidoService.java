@@ -2,8 +2,6 @@ package org.exoplatform.mfa.api.fido;
 
 import org.exoplatform.container.xml.InitParams;
 import org.exoplatform.container.xml.ValueParam;
-import org.exoplatform.mfa.api.otp.OtpConnector;
-import org.exoplatform.mfa.rest.fido.FidoRestService;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 import org.json.JSONObject;
