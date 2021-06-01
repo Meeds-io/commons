@@ -3,9 +3,7 @@ package org.exoplatform.mfa.api.otp;
 import org.exoplatform.container.xml.InitParams;
 import org.exoplatform.container.xml.ValueParam;
 
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.stream.Collectors;
 
 public class OtpService {
   

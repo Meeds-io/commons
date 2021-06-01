@@ -1,6 +1,7 @@
 package org.exoplatform.mfa.filter;
 
 import java.io.IOException;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -47,7 +48,7 @@ public class MfaFilter implements Filter {
         excludedUrls.stream().noneMatch(s -> requestUri.startsWith(s)) &&
         (mfaService.isProtectedUri(requestUri) ||
             mfaService.currentUserIsInProtectedGroup())) {
-      if ((session.getAttribute("mfaValidated")==null || !(boolean)session.getAttribute("mfaValidated"))) {
+      if (shouldAuthenticateFromSession(session)) {
         LOG.info("Mfa Filter must redirect on page to fill token");
         httpServletResponse.sendRedirect(MFA_URI+"?initialUri=" + requestUri);
         return;
@@ -57,5 +58,14 @@ public class MfaFilter implements Filter {
     chain.doFilter(request, response);
 
 
+  }
+
+  private boolean shouldAuthenticateFromSession(HttpSession session) {
+    if (session.getAttribute("mfaValidated") == null) return true;
+    if (!(boolean) session.getAttribute("mfaValidated")) return true;
+    Instant expiration = (Instant)session.getAttribute("mfaExpiration");
+    if (expiration!=null &&
+        expiration.isBefore(Instant.now())) return true;
+    return false;
   }
 }
