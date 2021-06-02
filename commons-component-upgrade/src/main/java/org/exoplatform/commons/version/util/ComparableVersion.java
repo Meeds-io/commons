@@ -299,8 +299,7 @@ public class ComparableVersion
                 {
                     return 0; // 1-0 = 1- (normalize) = 1
                 }
-                Item first = get( 0 );
-                return first.compareTo( null );
+                return -1;
             }
             switch ( item.getType() )
             {
