@@ -19,7 +19,9 @@ public class VersionComparatorTest extends TestCase {
     assertTrue(VersionComparator.isBefore("6.1.1", "6.2.0-20210531"));
     assertFalse(VersionComparator.isBefore("6.2.0", "6.2.0-M20"));
     assertFalse(VersionComparator.isBefore("6.2.0", "6.2.0-20210531"));
+    assertTrue(VersionComparator.isBefore("6.2.0-20210531", "6.2.0"));
     assertFalse(VersionComparator.isBefore("6.2.1", "6.2.0-20210531"));
+    assertTrue(VersionComparator.isBefore("6.2.0-20210531", "6.2.1"));
   }
 
   public void testIsAfter() {
