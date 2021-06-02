@@ -6,9 +6,9 @@
     messages: {}
   });
 
-  if (!Vue.i18NFetchedURLs) {
-    Vue.i18NFetchedURLs = [];
-  }
+
+  const executingFetches = {};
+  const i18NFetchedURLs = [];
 
   /**
    * Load translated strings from the given URLs and for the given language
@@ -42,21 +42,24 @@
       url = `${url}?v=${eXo.env.client.assetsVersion}`
     }
 
-    if (Vue.i18NFetchedURLs.indexOf(url) >= 0) {
-      return null;
+    if (i18NFetchedURLs.indexOf(url) >= 0) {
+      return executingFetches[url];
     } else {
-      return fetch(url, { credentials: 'include' })
+      const i18NFetch = fetch(url, { credentials: 'include' })
         .then(function (resp) {
           return resp && resp.ok && resp.json();
         })
         .then(function (msgs) {
           if (msgs) {
-            Vue.i18NFetchedURLs.push(url);
             i18n.mergeLocaleMessage(lang, msgs);
             i18n.locale = lang;
           }
           return i18n;
-        });
+        })
+        .finally(() => delete executingFetches[url]);
+      executingFetches[url] = i18NFetch;
+      i18NFetchedURLs.push(url);
+      return i18NFetch;
     }
   }
 
