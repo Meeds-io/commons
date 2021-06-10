@@ -37,7 +37,7 @@ public class PluginTemplateBuilderAdapter extends AbstractTemplateBuilder {
   @Override
   protected MessageInfo makeMessage(NotificationContext ctx) {
     BaseNotificationPlugin basePlugin =  getPluginContainer().getPlugin(ctx.getNotificationInfo().getKey());
-    if (basePlugin.isOldPlugin()) {
+    if (basePlugin != null && basePlugin.isOldPlugin()) {
       AbstractNotificationPlugin abstractPlugin = (AbstractNotificationPlugin) basePlugin;
       return abstractPlugin.buildMessage(ctx);
     }
