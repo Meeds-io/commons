@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import org.apache.commons.lang.StringUtils;
 import org.exoplatform.commons.api.settings.SettingService;
 import org.exoplatform.commons.api.settings.SettingValue;
 import org.exoplatform.commons.api.settings.data.Context;
@@ -69,7 +70,12 @@ public class DlpOperationProcessorImpl extends DlpOperationProcessor implements 
     SettingValue<?> settingValue = settingService.get(DLP_CONTEXT, DLP_SCOPE, EXO_DLP_KEYWORDS);
     return settingValue != null ? settingValue.getValue().toString() : System.getProperty(DLP_KEYWORDS);
   }
-
+  
+  @Override
+  public boolean hasKeywords() {
+    return !StringUtils.isEmpty(getKeywords());
+  }
+  
   @Override
   public void setKeywords(String keywords) {
     SettingService settingService = CommonsUtils.getService(SettingService.class);
