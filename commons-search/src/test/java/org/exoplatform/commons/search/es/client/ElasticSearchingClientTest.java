@@ -27,14 +27,17 @@ import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.exoplatform.commons.search.es.client.ElasticIndexingAuditTrail;
 import org.exoplatform.commons.search.es.client.ElasticSearchingClient;
 import org.exoplatform.commons.utils.PropertyManager;
-import org.junit.Before;
-import org.junit.Test;
+
+import org.junit.*;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.invocation.InvocationOnMock;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.junit.MockitoRule;
+import org.mockito.quality.Strictness;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.mockito.stubbing.Answer;
 
@@ -112,7 +115,7 @@ public class ElasticSearchingClientTest {
         "  }\n" +
         "}";
     initClientMock(404, response);
-    when(auditTrail.isFullLogEnabled()).thenReturn(true);
+    lenient().when(auditTrail.isFullLogEnabled()).thenReturn(true);
     //When
     elasticSearchingClient.sendRequest("mySearch", "test", "type1");
     //Then
@@ -162,7 +165,7 @@ public class ElasticSearchingClientTest {
         "  }\n" +
         "}";
     initClientMock(404, response);
-    when(auditTrail.isFullLogEnabled()).thenReturn(false);
+    lenient().when(auditTrail.isFullLogEnabled()).thenReturn(false);
     //When
     elasticSearchingClient.sendRequest("mySearch", "test", "type1");
     //Then

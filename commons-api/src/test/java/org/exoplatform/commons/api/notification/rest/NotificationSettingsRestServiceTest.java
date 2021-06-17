@@ -11,6 +11,7 @@ import javax.ws.rs.core.MultivaluedMap;
 
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
+import org.mockito.ArgumentMatcher;
 
 import org.exoplatform.commons.api.notification.NotificationContext;
 import org.exoplatform.commons.api.notification.channel.AbstractChannel;
@@ -277,19 +278,11 @@ public class NotificationSettingsRestServiceTest extends BaseRestServicesTestCas
 
     // Then
     assertEquals(String.valueOf(resp.getEntity()), 204, resp.getStatus());
-    verify(userSettingService, times(1)).save(argThat(new BaseMatcher<UserSetting>() {
+    verify(userSettingService, times(1)).save(argThat(new ArgumentMatcher<UserSetting>() {
       @Override
-      public void describeTo(Description description) {
-        //
-      }
-
-      @Override
-      public boolean matches(Object item) {
-        if (!(item instanceof UserSetting)) {
-          return false;
-        }
-        return ((UserSetting) item).isActive(CHANNEL_ID, PLUGIN_ID) && ((UserSetting) item).isChannelActive(CHANNEL_ID)
-            && ((UserSetting) item).isInWeekly(PLUGIN_ID);
+      public boolean matches(UserSetting userSetting) {
+        return userSetting.isActive(CHANNEL_ID, PLUGIN_ID) && userSetting.isChannelActive(CHANNEL_ID)
+            && userSetting.isInWeekly(PLUGIN_ID);
       }
     }));
   }

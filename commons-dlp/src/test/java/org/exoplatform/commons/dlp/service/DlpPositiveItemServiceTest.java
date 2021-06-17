@@ -13,13 +13,15 @@ import org.exoplatform.services.listener.ListenerService;
 import org.exoplatform.services.organization.OrganizationService;
 import org.exoplatform.services.organization.UserHandler;
 import org.exoplatform.services.organization.idm.UserImpl;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+
+import org.junit.*;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.junit.MockitoRule;
+import org.mockito.quality.Strictness;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import java.util.Calendar;
@@ -27,8 +29,7 @@ import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class DlpPositiveItemServiceTest extends AbstractDAOTest {
@@ -88,17 +89,17 @@ public class DlpPositiveItemServiceTest extends AbstractDAOTest {
     when(dlpServiceConnector.isEnable()).thenReturn(true);
     when(dlpServiceConnector.getItemUrl("reference1234")).thenReturn("/Security/file");
     when(dlpServiceConnector.getType()).thenReturn("file");
-    when(dlpServiceConnector.getDisplayName()).thenReturn("file");
-    when(dlpServiceConnector.isEnable()).thenReturn(true);
-    when(dlpServiceConnector.getItemUrl("ref")).thenReturn("/Security/file12");
+    lenient().when(dlpServiceConnector.getDisplayName()).thenReturn("file");
+    lenient().when(dlpServiceConnector.isEnable()).thenReturn(true);
+    lenient().when(dlpServiceConnector.getItemUrl("ref")).thenReturn("/Security/file12");
     when(dlpServiceConnector1.getType()).thenReturn("file1");
-    when(dlpServiceConnector1.getDisplayName()).thenReturn("file1");
-    when(dlpServiceConnector1.isEnable()).thenReturn(true);
-    when(dlpServiceConnector1.getItemUrl("ref1")).thenReturn("/Security/file123");
+    lenient().when(dlpServiceConnector1.getDisplayName()).thenReturn("file1");
+    lenient().when(dlpServiceConnector1.isEnable()).thenReturn(true);
+    lenient().when(dlpServiceConnector1.getItemUrl("ref1")).thenReturn("/Security/file123");
     when(dlpServiceConnector2.getType()).thenReturn("file2");
-    when(dlpServiceConnector2.getDisplayName()).thenReturn("file2");
-    when(dlpServiceConnector2.isEnable()).thenReturn(true);
-    when(dlpServiceConnector2.getItemUrl("ref2")).thenReturn("/Security/file1234");
+    lenient().when(dlpServiceConnector2.getDisplayName()).thenReturn("file2");
+    lenient().when(dlpServiceConnector2.isEnable()).thenReturn(true);
+    lenient().when(dlpServiceConnector2.getItemUrl("ref2")).thenReturn("/Security/file1234");
   }
 
   @Test
