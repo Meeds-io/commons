@@ -56,21 +56,20 @@ public class ElasticSearchServiceConnector extends SearchServiceConnector {
   private final ElasticSearchingClient client;
 
   public static final String           GROUP                                   = "group";
-  
-  public static final String           WIKI_TYPE                                   = "wikiType";
+
+  public static final String           WIKI_TYPE                               = "wikiType";
 
   //ES connector information
   //Index is optional: if null, search on all the cluster
   private String index;
 
   //Type is optional: if null, search on all the index
-  private String type;
   private List<String> searchFields;
   private List<String> boostedSearchFields;
   private List<String> searchFieldsWithBoost;
 
-  public int highlightFragmentSize;
-  public int highlightFragmentNumber;
+  private int highlightFragmentSize;
+  private int highlightFragmentNumber;
 
   //SearchResult information
   private String img;
@@ -84,7 +83,6 @@ public class ElasticSearchServiceConnector extends SearchServiceConnector {
     this.client = client;
     PropertiesParam param = initParams.getPropertiesParam("constructor.params");
     this.index = param.getProperty("index");
-    this.type = param.getProperty("type");
     if (StringUtils.isNotBlank(param.getProperty("titleField"))) this.titleElasticFieldName = param.getProperty("titleField");
     if (StringUtils.isNotBlank(param.getProperty("updatedDateField"))) this.updatedDateElasticFieldName = param.getProperty("updatedDateField");
     this.searchFields = new ArrayList<>(Arrays.asList(param.getProperty("searchFields").split(",")));
@@ -93,7 +91,7 @@ public class ElasticSearchServiceConnector extends SearchServiceConnector {
         this.boostedSearchFields = Collections.singletonList(this.titleElasticFieldName);
       }
     } else {
-      this.boostedSearchFields = new ArrayList<>(Arrays.asList(param.getProperty("boostedSearchFields").split(",")));;
+      this.boostedSearchFields = new ArrayList<>(Arrays.asList(param.getProperty("boostedSearchFields").split(",")));
     }
     if (this.boostedSearchFields != null && !this.boostedSearchFields.isEmpty()) {
       this.searchFieldsWithBoost = this.searchFields.stream().map(searchField -> {
@@ -145,7 +143,7 @@ public class ElasticSearchServiceConnector extends SearchServiceConnector {
   public Collection<SearchResult> search(SearchContext context, String query, Collection<String> sites,
                                          int offset, int limit, String sort, String order) {
     String esQuery = buildQuery(query, sites, offset, limit, sort, order);
-    String jsonResponse = this.client.sendRequest(esQuery, this.index, this.type);
+    String jsonResponse = this.client.sendRequest(esQuery, this.index);
     return buildResult(jsonResponse, context);
   }
   
@@ -157,10 +155,10 @@ public class ElasticSearchServiceConnector extends SearchServiceConnector {
     esQuery.append("    \"term\" : { \"_id\" : \""+id+"\" }\n");
     esQuery.append("  }\n");
     esQuery.append("}");
-    String jsonResponse = this.client.sendRequest(esQuery.toString(), this.index, this.type);
+    String jsonResponse = this.client.sendRequest(esQuery.toString(), this.index);
     Collection<SearchResult> results = buildResult(jsonResponse, context);
-    results.stream().forEach(searchResult -> LOG.info(searchResult));
-    return results.size()>0;
+    results.stream().forEach(LOG::info);
+    return !results.isEmpty();
   }
   
   /**
@@ -184,9 +182,10 @@ public class ElasticSearchServiceConnector extends SearchServiceConnector {
   public Collection<SearchResult> filteredSearch(SearchContext context, String query, List<ElasticSearchFilter> filters, Collection<String> sites,
                                          int offset, int limit, String sort, String order) {
     String esQuery = buildFilteredQuery(query, sites, filters, offset, limit, sort, order);
-    String jsonResponse = this.client.sendRequest(esQuery, this.index, this.type);
+    String jsonResponse = this.client.sendRequest(esQuery, this.index);
     return buildResult(jsonResponse, context);
   }
+
   /**
    *
    * Search on ES for dlp
@@ -199,7 +198,7 @@ public class ElasticSearchServiceConnector extends SearchServiceConnector {
    */
   public Collection<SearchResult> dlpSearch(SearchContext context, String query, String entityId) {
     String esQuery = buildDlpQuery(query,entityId);
-    String jsonResponse = this.client.sendRequest(esQuery, this.index, this.type);
+    String jsonResponse = this.client.sendRequest(esQuery, this.index);
     return buildResult(jsonResponse, context);
   }
   
@@ -244,7 +243,7 @@ public class ElasticSearchServiceConnector extends SearchServiceConnector {
       esQuery.append("                }\n");
       esQuery.append("            },\n");
     }
-    if (composedKeywords.size() > 0) {
+    if (!composedKeywords.isEmpty()) {
       for (String composedKeyword: composedKeywords) {
         esQuery.append("            \"should\" : {\n");
         esQuery.append("                \"multi_match\" : {\n");
@@ -598,7 +597,7 @@ public class ElasticSearchServiceConnector extends SearchServiceConnector {
   protected String getPermissionFilter() {
     StringBuilder permissionSB = new StringBuilder();
     Set<String> membershipSet = getUserMemberships();
-    if ((membershipSet != null) && (membershipSet.size()>0)) {
+    if (!membershipSet.isEmpty()) {
       String memberships = StringUtils.join(membershipSet.toArray(new String[membershipSet.size()]), "|");
       permissionSB.append("{\n")
       .append("  \"term\" : { \"permissions\" : \"")
@@ -632,7 +631,7 @@ public class ElasticSearchServiceConnector extends SearchServiceConnector {
   }
 
   protected String getSitesFilter(Collection<String> sitesCollection) {
-    if ((sitesCollection != null) && (sitesCollection.size()>0)) {
+    if (sitesCollection != null && !sitesCollection.isEmpty()) {
       List<String> sites = new ArrayList<>();
       for (String site : sitesCollection) {
         sites.add("\"" + site + "\"");
@@ -664,7 +663,7 @@ public class ElasticSearchServiceConnector extends SearchServiceConnector {
   protected String getPermissionFilterWiki(String permission) {
     StringBuilder permissionSB = new StringBuilder();
     Set<String> membershipSet = getUserMemberships();
-    if ((membershipSet != null) && (membershipSet.size()>0)) {
+    if (!membershipSet.isEmpty()) {
       String memberships = StringUtils.join(membershipSet.toArray(new String[membershipSet.size()]), "|");
       permissionSB.append("{\n")
               .append("  \"term\" : { \"permissions\" : \"")
@@ -785,14 +784,6 @@ public class ElasticSearchServiceConnector extends SearchServiceConnector {
 
   public void setSearchFields(List<String> searchFields) {
     this.searchFields = searchFields;
-  }
-
-  public String getType() {
-    return type;
-  }
-
-  public void setType(String type) {
-    this.type = type;
   }
 
   public ElasticSearchingClient getClient() {

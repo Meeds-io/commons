@@ -16,17 +16,13 @@
  */
 package org.exoplatform.commons.search.es.client;
 
-import java.util.Collections;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.conn.HttpClientConnectionManager;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.json.simple.JSONValue;
+import org.json.simple.*;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
@@ -39,21 +35,24 @@ import org.exoplatform.services.log.Log;
  * tclement@exoplatform.com 9/1/15
  */
 public class ElasticIndexingClient extends ElasticClient {
-  public static final String        EMPTY_JSON                        = "{}";
-  private static final Log          LOG                               = ExoLogger.getExoLogger(ElasticIndexingClient.class);
-  private static final String       ES_INDEX_CLIENT_PROPERTY_NAME     = "exo.es.index.server.url";
-  private static final String       ES_INDEX_CLIENT_PROPERTY_USERNAME = "exo.es.index.server.username";
-  private static final String       ES_INDEX_CLIENT_PROPERTY_PASSWORD = "exo.es.index.server.password";
-  private static final String       ES_INDEX_CLIENT_PROPERTY_MAX_CONNECTIONS = "exo.es.index.http.connections.max";
+  public static final String        EMPTY_JSON                               = "{}";
 
-  private ElasticIndexingAuditTrail auditTrail;
+  private static final Log          LOG                                      =
+                                        ExoLogger.getExoLogger(ElasticIndexingClient.class);
+
+  private static final String       ES_INDEX_CLIENT_PROPERTY_NAME            = "exo.es.index.server.url";
+
+  private static final String       ES_INDEX_CLIENT_PROPERTY_USERNAME        = "exo.es.index.server.username";
+
+  private static final String       ES_INDEX_CLIENT_PROPERTY_PASSWORD        = "exo.es.index.server.password";
+
+  private static final String       ES_INDEX_CLIENT_PROPERTY_MAX_CONNECTIONS = "exo.es.index.http.connections.max";
 
   public ElasticIndexingClient(ElasticIndexingAuditTrail auditTrail) {
     super(auditTrail);
     if (auditTrail == null) {
       throw new IllegalArgumentException("AuditTrail is null");
     }
-    this.auditTrail = auditTrail;
     // Get url client from exo global properties
     if (StringUtils.isNotBlank(PropertyManager.getProperty(ES_INDEX_CLIENT_PROPERTY_NAME))) {
       this.urlClient = PropertyManager.getProperty(ES_INDEX_CLIENT_PROPERTY_NAME);
@@ -66,7 +65,7 @@ public class ElasticIndexingClient extends ElasticClient {
   /**
    * Send request to ES to create a new index
    */
-  public boolean sendCreateIndexRequest(String index, String settings) {
+  public boolean sendCreateIndexRequest(String index, String settings, String mappings) {
     String indexURL = urlClient + "/" + index;
     if (sendIsIndexExistsRequest(index)) {
       LOG.info("Index {} already exists. Index creation requests will not be sent.", index);
@@ -74,54 +73,17 @@ public class ElasticIndexingClient extends ElasticClient {
     } else {
       LOG.info("Index {} doesn't exist. Index creation requests will be sent.", index);
 
+      String query = "{\"settings\": " + settings + ", \"mappings\": " + mappings + "}";
       long startTime = System.currentTimeMillis();
-      ElasticResponse responseCreate = sendHttpPutRequest(indexURL, settings);
+      ElasticResponse responseCreate = sendHttpPutRequest(indexURL, query);
       auditTrail.audit(ElasticIndexingAuditTrail.CREATE_INDEX,
                        null,
                        index,
-                       null,
                        responseCreate.getStatusCode(),
                        responseCreate.getMessage(),
                        (System.currentTimeMillis() - startTime));
       return true;
     }
-  }
-
-  /**
-   * Send request to ES to create a new type
-   */
-  public void sendCreateTypeRequest(String index, String type, String mappings) {
-    String url = urlClient + "/" + index + "/_mapping/" + type;
-    if (!sendIsTypeExistsRequest(index, type)) {
-      LOG.info("Mapping doesn't exist for type {}. Mapping creation requests will be sent.", type);
-      long startTime = System.currentTimeMillis();
-      ElasticResponse response = sendHttpPutRequest(url, mappings);
-      auditTrail.audit(ElasticIndexingAuditTrail.CREATE_TYPE,
-                       null,
-                       index,
-                       type,
-                       response.getStatusCode(),
-                       response.getMessage(),
-                       (System.currentTimeMillis() - startTime));
-    } else {
-      LOG.info("Mapping already exists for type {}. Mapping creation requests will not be sent.", type);
-    }
-  }
-
-  /**
-   * Send request to ES to delete all documents of the given type
-   */
-  public void sendDeleteAllDocsOfTypeRequest(String index, String type) {
-    long startTime = System.currentTimeMillis();
-    String request = getDeleteAllDocumentsRequestContent();
-    ElasticResponse response = sendHttpPostRequest(urlClient + "/" + index + "/" + type + "/_delete_by_query?conflicts=proceed&wait_for_completion=true",  request);
-    auditTrail.audit(ElasticIndexingAuditTrail.DELETE_TYPE,
-                     null,
-                     index,
-                     type,
-                     response.getStatusCode(),
-                     response.getMessage(),
-                     (System.currentTimeMillis() - startTime));
   }
 
   /**
@@ -140,29 +102,27 @@ public class ElasticIndexingClient extends ElasticClient {
    * Send request to ES to create a new Ingest pipeline for attachment
    * 
    * @param index
-   * @param type
    * @param pipelineName
    * @param processorMappings
    */
-  public void sendCreateAttachmentPipelineRequest(String index, String type, String pipelineName, String processorMappings) {
-    String url = urlClient + "/_ingest/pipeline/" +  pipelineName;
+  public void sendCreateAttachmentPipelineRequest(String index, String pipelineName, String processorMappings) {
+    String url = urlClient + "/_ingest/pipeline/" + pipelineName;
     ElasticResponse responseExists = sendHttpGetRequest(url);
     if (responseExists.getStatusCode() == HttpStatus.SC_OK || responseExists.getStatusCode() == HttpStatus.SC_NOT_FOUND
         || responseExists.getStatusCode() == HttpStatus.SC_BAD_REQUEST) {
       if (EMPTY_JSON.equals(responseExists.getMessage())) {
-        LOG.info("Pipeline doesn't exist for type {}. Mapping creation requests will be sent.", type);
+        LOG.info("Pipeline doesn't exist for index {}. Mapping creation requests will be sent.", index);
 
         long startTime = System.currentTimeMillis();
         ElasticResponse response = sendHttpPutRequest(url, processorMappings);
         auditTrail.audit(ElasticIndexingAuditTrail.CREATE_PIPELINE,
                          null,
                          index,
-                         type,
                          response.getStatusCode(),
                          response.getMessage(),
                          (System.currentTimeMillis() - startTime));
       } else {
-        LOG.info("Pipeline already exists for type {}. Pipeline creation requests will not be sent.", type);
+        LOG.info("Pipeline already exists for index {}. Pipeline creation requests will not be sent.", index);
       }
     } else {
       LOG.error("Error while creating pipeline: Unsupported HttpStatusCode {}. url={}", responseExists.getStatusCode(), url);
@@ -173,48 +133,50 @@ public class ElasticIndexingClient extends ElasticClient {
    * Send request to ES to create a new Ingest pipeline for attachment
    * 
    * @param index
-   * @param type
    * @param id
    * @param pipelineName
    * @param pipelineRequestOperation
    */
-  public void sendCreateDocOnPipeline(String index, String type, String id, String pipelineName, String pipelineRequestOperation) {
+  public void sendCreateDocOnPipeline(String index, String id, String pipelineName, String pipelineRequestOperation) {
     refreshIndex(index);
-    String pipelineURL = urlClient + "/_ingest/pipeline/" +  pipelineName;
+    String pipelineURL = urlClient + "/_ingest/pipeline/" + pipelineName;
     ElasticResponse responseExists = sendHttpGetRequest(pipelineURL);
     if (responseExists.getStatusCode() == HttpStatus.SC_OK) {
       long startTime = System.currentTimeMillis();
-      String url = urlClient + "/" + index + "/" + type + "/" + id + "?pipeline=" + pipelineName;
+      String url = urlClient + "/" + index + "/_doc/" + id + "?pipeline=" + pipelineName;
       ElasticResponse response = sendHttpPutRequest(url, pipelineRequestOperation);
       auditTrail.audit(ElasticIndexingAuditTrail.CREATE_DOC_PIPELINE,
                        null,
                        index,
-                       type,
                        response.getStatusCode(),
                        response.getMessage(),
                        (System.currentTimeMillis() - startTime));
     } else {
-      LOG.error("Error while creating attachment on pipeline '{}': Unsupported HttpStatusCode {}. url={}", pipelineName, responseExists.getStatusCode(), pipelineURL);
+      LOG.error("Error while creating attachment on pipeline '{}': Unsupported HttpStatusCode {}. url={}",
+                pipelineName,
+                responseExists.getStatusCode(),
+                pipelineURL);
     }
   }
 
   /**
-   * Send request to ES to create a new index alias for new ES Index and remove it from old index if exists
+   * Send request to ES to create a new index alias for new ES Index and remove
+   * it from old index if exists
    */
   public void sendCreateIndexAliasRequest(String index, String oldIndex, String indexAlias) {
-    if(oldIndex == null) {
+    if (oldIndex == null) {
       LOG.info("Index alias '{}' will be created to refer the index '{}'", indexAlias, index);
     } else {
       LOG.info("Index alias '{}' will be created to refer the index {} instead of old index '{}'", indexAlias, index, oldIndex);
     }
     long startTime = System.currentTimeMillis();
     String aliasesURL = urlClient + "/_aliases";
-    ElasticResponse responseUpdateIndex = sendHttpPostRequest(aliasesURL, getCreateAliasRequestContent(index, oldIndex, indexAlias));
-    if(responseUpdateIndex.getStatusCode() == HttpStatus.SC_OK) {
+    ElasticResponse responseUpdateIndex = sendHttpPostRequest(aliasesURL,
+                                                              getCreateAliasRequestContent(index, oldIndex, indexAlias));
+    if (responseUpdateIndex.getStatusCode() == HttpStatus.SC_OK) {
       auditTrail.audit(ElasticIndexingAuditTrail.CREATE_INDEX_ALIAS,
                        null,
                        index,
-                       null,
                        responseUpdateIndex.getStatusCode(),
                        responseUpdateIndex.getMessage(),
                        (System.currentTimeMillis() - startTime));
@@ -222,7 +184,6 @@ public class ElasticIndexingClient extends ElasticClient {
       auditTrail.audit(ElasticIndexingAuditTrail.CREATE_INDEX_ALIAS,
                        null,
                        index,
-                       null,
                        responseUpdateIndex.getStatusCode(),
                        responseUpdateIndex.getMessage(),
                        (System.currentTimeMillis() - startTime));
@@ -233,26 +194,11 @@ public class ElasticIndexingClient extends ElasticClient {
   }
 
   /**
-   * Send request to ES to get type existence information
-   */
-  public boolean sendIsTypeExistsRequest(String index, String type) {
-    String url = urlClient + "/" + index + "/_mapping/" + type;
-    ElasticResponse responseExists = sendHttpHeadRequest(url);
-    if (responseExists.getStatusCode() == HttpStatus.SC_OK) {
-      return true;
-    } else if(responseExists.getStatusCode() == HttpStatus.SC_NOT_FOUND) {
-      return false;
-    } else {
-      LOG.error("Error while checking Type existence: Unsupported HttpStatusCode {}. url={}", responseExists.getStatusCode(), url);
-      throw new ElasticClientException("Can't request ES to get index/type " + index + "/" + type + " existence status");
-    }
-  }
-
-  /**
    * Send request to ES to get index aliases
    */
+  @SuppressWarnings("unchecked")
   public Set<String> sendGetIndexAliasesRequest(String index) {
-    String indexAliasURL = urlClient + "/" +  index + "/_aliases/";
+    String indexAliasURL = urlClient + "/" + index + "/_aliases/";
     ElasticResponse responseExists = sendHttpGetRequest(indexAliasURL);
     // Test if he alias already exists
     if (responseExists.getStatusCode() == HttpStatus.SC_OK) {
@@ -268,7 +214,7 @@ public class ElasticIndexingClient extends ElasticClient {
       JSONParser parser = new JSONParser();
       Map<?, ?> json;
       try {
-        json = (Map<?, ?>)parser.parse(jsonResponse);
+        json = (Map<?, ?>) parser.parse(jsonResponse);
       } catch (ParseException e) {
         throw new ElasticClientException("Unable to parse JSON response: " + jsonResponse, e);
       }
@@ -276,10 +222,10 @@ public class ElasticIndexingClient extends ElasticClient {
       // if alias exists and old index doesn't exist
       // this means the alias is made on new index name
       // So nothing to change
-      if(!json.containsKey(index)) {
+      if (!json.containsKey(index)) {
         return Collections.emptySet();
       }
-      JSONObject indexAliases = (JSONObject)(((Map<?, ?>) json.get(index)).get("aliases"));
+      JSONObject indexAliases = (JSONObject) (((Map<?, ?>) json.get(index)).get("aliases"));
       return indexAliases.keySet();
     } else {
       throw new ElasticClientException("Uknow response code was sent by ES: \\n\\t\\t code = " + responseExists.getStatusCode()
@@ -292,7 +238,7 @@ public class ElasticIndexingClient extends ElasticClient {
    */
   public long sendCountIndexObjectsRequest(String index) {
     refreshIndex(index);
-    String indexCountObjectsURL = urlClient + "/" +  index + "/_count?q=*";
+    String indexCountObjectsURL = urlClient + "/" + index + "/_count?q=*";
     ElasticResponse mappingsResponse = sendHttpGetRequest(indexCountObjectsURL);
     if (mappingsResponse.getStatusCode() == HttpStatus.SC_OK) {
       String jsonResponse = mappingsResponse.getMessage();
@@ -300,15 +246,15 @@ public class ElasticIndexingClient extends ElasticClient {
       JSONParser parser = new JSONParser();
       Map<?, ?> json;
       try {
-        json = (Map<?, ?>)parser.parse(jsonResponse);
+        json = (Map<?, ?>) parser.parse(jsonResponse);
       } catch (ParseException e) {
         throw new ElasticClientException("Unable to parse JSON response: " + jsonResponse, e);
       }
 
-      if(!json.containsKey("count")) {
+      if (!json.containsKey("count")) {
         throw new ElasticClientException("Unexpected content in JSON response from ES: " + jsonResponse);
       }
-      return (Long)json.get("count");
+      return (Long) json.get("count");
     } else {
       throw new ElasticClientException("Uknow response code was sent by ES: \\n\\t\\t code = " + mappingsResponse.getStatusCode()
           + ", \\n\\t\\t message: " + mappingsResponse.getMessage());
@@ -326,15 +272,15 @@ public class ElasticIndexingClient extends ElasticClient {
       JSONParser parser = new JSONParser();
       Map<?, ?> json;
       try {
-        json = (Map<?, ?>)parser.parse(jsonResponse);
+        json = (Map<?, ?>) parser.parse(jsonResponse);
       } catch (ParseException e) {
         throw new ElasticClientException("Unable to parse JSON response: " + jsonResponse, e);
       }
 
-      if(!json.containsKey("version")) {
+      if (!json.containsKey("version")) {
         throw new ElasticClientException("Unexpected content in JSON response from ES: " + jsonResponse);
       }
-      return (String) ((JSONObject)json.get("version")).get("number");
+      return (String) ((JSONObject) json.get("version")).get("number");
     } else {
       throw new ElasticClientException("Uknow response code was sent by ES: \\n\\t\\t code = " + mappingsResponse.getStatusCode()
           + ", \\n\\t\\t message: " + mappingsResponse.getMessage());
@@ -349,23 +295,22 @@ public class ElasticIndexingClient extends ElasticClient {
   public void sendDeleteIndexRequest(String index) {
     long startTime = System.currentTimeMillis();
     ElasticResponse response = sendHttpDeleteRequest(urlClient + "/" + index);
-    auditTrail.audit(ElasticIndexingAuditTrail.DELETE_TYPE,
+    auditTrail.audit(ElasticIndexingAuditTrail.DELETE_INDEX,
                      null,
                      index,
-                     null,
                      response.getStatusCode(),
                      response.getMessage(),
                      (System.currentTimeMillis() - startTime));
-    if(response.getStatusCode() != HttpStatus.SC_OK) {
+    if (response.getStatusCode() != HttpStatus.SC_OK) {
       throw new ElasticClientException("Can't delete index " + index + ", reqponse code = " + response.getStatusCode()
           + ", message = " + response.getMessage());
     }
   }
 
   /**
-   * This operation reindex the documents from old index/type to new index/type mapping.
-   * A pipeline could be used when reindexing in case Ingest Attachment plugin is used
-   * by a target type.
+   * This operation reindex the documents from old index/type to new index/type
+   * mapping. A pipeline could be used when reindexing in case Ingest Attachment
+   * plugin is used by a target type.
    * 
    * @param index target index name
    * @param oldIndex source index name
@@ -379,12 +324,12 @@ public class ElasticIndexingClient extends ElasticClient {
     auditTrail.audit(ElasticIndexingAuditTrail.REINDEX_TYPE,
                      null,
                      index,
-                     type,
                      response.getStatusCode(),
                      response.getMessage(),
                      (System.currentTimeMillis() - startTime));
-    if(response.getStatusCode() != HttpStatus.SC_OK) {
-      throw new ElasticClientException("Can't reindex index " + index + ", type = " + type + ", reqponse code = " + response.getStatusCode()
+    if (response.getStatusCode() != HttpStatus.SC_OK) {
+      throw new ElasticClientException("Can't reindex index " + index + ", type = " + type + ", reqponse code = "
+          + response.getStatusCode()
           + ", message = " + response.getMessage());
     }
   }
@@ -404,12 +349,12 @@ public class ElasticIndexingClient extends ElasticClient {
         || responseExists.getStatusCode() == HttpStatus.SC_BAD_REQUEST) {
       return false;
     } else {
-      throw new ElasticClientException("Can't get index '"+ index +"' status");
+      throw new ElasticClientException("Can't get index '" + index + "' status");
     }
   }
 
   private void refreshIndex(String index) {
-    String indexRefreshURL = urlClient + "/" +  index + "/_refresh";
+    String indexRefreshURL = urlClient + "/" + index + "/_refresh";
     sendHttpPostRequest(indexRefreshURL, null);
   }
 
@@ -444,41 +389,31 @@ public class ElasticIndexingClient extends ElasticClient {
     }
   }
 
+  @SuppressWarnings({ "unchecked", "rawtypes" })
   private void logBulkResponseItem(JSONObject item, long executionTime) {
     for (Map.Entry operation : (Set<Map.Entry>) item.entrySet()) {
       String operationName = operation.getKey() == null ? null : (String) operation.getKey();
       if (operation.getValue() != null) {
         JSONObject operationDetails = (JSONObject) operation.getValue();
         String index = operationDetails.get("_index") == null ? null : (String) operationDetails.get("_index");
-        String type = operationDetails.get("_type") == null ? null : (String) operationDetails.get("_type");
         String id = operationDetails.get("_id") == null ? null : (String) operationDetails.get("_id");
         Long status = operationDetails.get("status") == null ? null : (Long) operationDetails.get("status");
-        String error = operationDetails.get("error") == null ? null : (String) ((JSONObject) operationDetails.get("error")).get("reason");
+        String error =
+                     operationDetails.get("error") == null ? null
+                                                           : (String) ((JSONObject) operationDetails.get("error")).get("reason");
         Integer httpStatusCode = status == null ? null : status.intValue();
         if (ElasticIndexingAuditTrail.isError(httpStatusCode)) {
-          auditTrail.logRejectedDocumentBulkOperation(operationName, id, index, type, httpStatusCode, error, executionTime);
+          auditTrail.logRejectedDocumentBulkOperation(operationName, id, index, httpStatusCode, error, executionTime);
         } else {
           if (auditTrail.isFullLogEnabled()) {
-            auditTrail.logAcceptedBulkOperation(operationName, id, index, type, httpStatusCode, error, executionTime);
+            auditTrail.logAcceptedBulkOperation(operationName, id, index, httpStatusCode, error, executionTime);
           }
         }
       }
     }
   }
 
-  private String getDeleteAllDocumentsRequestContent() {
-
-    JSONObject deleteAllRequest = new JSONObject();
-    JSONObject deleteQueryRequest = new JSONObject();
-    deleteQueryRequest.put("match_all", new JSONObject());
-    deleteAllRequest.put("query", deleteQueryRequest);
-
-    String request = deleteAllRequest.toJSONString();
-
-    LOG.debug("Delete All request to ES: \n {}", request);
-    return request;
-  }
-
+  @SuppressWarnings({ "unchecked" })
   private String getReindexRequestContent(String index, String oldIndex, String type, String pipeline) {
     JSONObject reindexRequest = new JSONObject();
 
@@ -490,7 +425,7 @@ public class ElasticIndexingClient extends ElasticClient {
     JSONObject reindexDestRequest = new JSONObject();
     reindexRequest.put("dest", reindexDestRequest);
     reindexDestRequest.put("index", index);
-    if(pipeline != null) {
+    if (pipeline != null) {
       reindexDestRequest.put("pipeline", pipeline);
     }
 
@@ -500,11 +435,12 @@ public class ElasticIndexingClient extends ElasticClient {
     return request;
   }
 
+  @SuppressWarnings({ "unchecked" })
   private String getCreateAliasRequestContent(String index, String oldIndex, String alias) {
     JSONObject updateAliasRequest = new JSONObject();
     JSONArray updateAliasActionsRequest = new JSONArray();
     updateAliasRequest.put("actions", updateAliasActionsRequest);
-    if(oldIndex != null) {
+    if (oldIndex != null) {
       JSONObject updateAliasActionRemoveRequest = new JSONObject();
       JSONObject updateAliasActionRemoveOptionsRequest = new JSONObject();
       updateAliasActionRemoveRequest.put("remove", updateAliasActionRemoveOptionsRequest);
@@ -539,19 +475,19 @@ public class ElasticIndexingClient extends ElasticClient {
   protected HttpClientConnectionManager getClientConnectionManager() {
     PoolingHttpClientConnectionManager connectionManager = new PoolingHttpClientConnectionManager();
     String maxConnectionsProperty = PropertyManager.getProperty(ES_INDEX_CLIENT_PROPERTY_MAX_CONNECTIONS);
-    if(StringUtils.isNotBlank(maxConnectionsProperty)) {
+    if (StringUtils.isNotBlank(maxConnectionsProperty)) {
       maxConnectionsProperty = maxConnectionsProperty.trim();
-      if(StringUtils.isNumeric(maxConnectionsProperty)) {
+      if (StringUtils.isNumeric(maxConnectionsProperty)) {
         int maxConnections = Integer.parseInt(maxConnectionsProperty);
-        if(maxConnections > 0) {
+        if (maxConnections > 0) {
           connectionManager.setDefaultMaxPerRoute(maxConnections);
         } else {
           LOG.warn(ES_INDEX_CLIENT_PROPERTY_MAX_CONNECTIONS + " value is not a positive number : " + maxConnectionsProperty +
-                  ". Using default HTTP max connections (" + connectionManager.getDefaultMaxPerRoute() + ").");
+              ". Using default HTTP max connections (" + connectionManager.getDefaultMaxPerRoute() + ").");
         }
       } else {
         LOG.warn(ES_INDEX_CLIENT_PROPERTY_MAX_CONNECTIONS + " value is not a valid number : " + maxConnectionsProperty +
-                ". Using default HTTP max connections (" + connectionManager.getDefaultMaxPerRoute() + ").");
+            ". Using default HTTP max connections (" + connectionManager.getDefaultMaxPerRoute() + ").");
       }
     }
     return connectionManager;

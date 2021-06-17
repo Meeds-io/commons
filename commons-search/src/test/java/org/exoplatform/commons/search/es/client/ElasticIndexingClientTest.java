@@ -77,30 +77,9 @@ public class ElasticIndexingClientTest {
     //Given
     initClientMock(404, "Not Found", 200, "Success");
     //When
-    elasticIndexingClient.sendCreateIndexRequest("index", "fakeSettings");
+    elasticIndexingClient.sendCreateIndexRequest("index", "fakeSettings", "fakeMappings");
     //Then
     verify(httpClient, times(2)).execute(any(HttpRequestBase.class));
-  }
-
-  @Test
-  public void sendCreateTypeRequest_IfCreateNewType_requestShouldBeSentToElastic() throws IOException {
-    //Given
-    initClientMock(404, "", 200, "Success");
-    //When
-    elasticIndexingClient.sendCreateTypeRequest("index", "type", "fakeMappings");
-    //Then
-    verify(httpClient, times(2)).execute(httpPostRequestCaptor.capture());
-  }
-
-  @Test
-  public void sendDeleteTypeRequest_IfCreateNewType_deleteRequestShouldBeSentToElastic() throws IOException {
-    //Given
-    initClientMock(999, "", 200, "Success");
-    //When
-    elasticIndexingClient.sendDeleteAllDocsOfTypeRequest("index", "type");
-    //Then
-    verify(httpClient).execute(httpPostRequestCaptor.capture());
-    assertEquals("http://127.0.0.1:9200/index/type/_delete_by_query?conflicts=proceed&wait_for_completion=true", httpPostRequestCaptor.getValue().getURI().toString());
   }
 
   @Test
@@ -138,10 +117,10 @@ public class ElasticIndexingClientTest {
     elasticIndexingClient.sendCUDRequest("myBulk");
     //Then
     verify(auditTrail).isFullLogEnabled();
-    verify(auditTrail).logAcceptedBulkOperation(eq("index"), eq("1"), eq("test"), eq("type1"), eq(HttpStatus.SC_OK), isNull(String.class), anyLong());
-    verify(auditTrail).logRejectedDocumentBulkOperation(eq("delete"), eq("2"), eq("test"), eq("type1"), eq(HttpStatus.SC_NOT_FOUND), isNull(String.class), anyLong());
-    verify(auditTrail).logRejectedDocumentBulkOperation(eq("create"), eq("3"), eq("test"), eq("type1"), eq(HttpStatus.SC_CONFLICT), eq("DocumentAlreadyExistsException[[test][4] [type1][3]: document already exists]"), anyLong());
-    verify(auditTrail).logRejectedDocumentBulkOperation(eq("update"), eq("1"), eq("index1"), eq("type1"), eq(HttpStatus.SC_NOT_FOUND), eq("DocumentMissingException[[index1][-1] [type1][1]: document missing]"), anyLong());
+    verify(auditTrail).logAcceptedBulkOperation(eq("index"), eq("1"), eq("test"), eq(HttpStatus.SC_OK), isNull(String.class), anyLong());
+    verify(auditTrail).logRejectedDocumentBulkOperation(eq("delete"), eq("2"), eq("test"), eq(HttpStatus.SC_NOT_FOUND), isNull(String.class), anyLong());
+    verify(auditTrail).logRejectedDocumentBulkOperation(eq("create"), eq("3"), eq("test"), eq(HttpStatus.SC_CONFLICT), eq("DocumentAlreadyExistsException[[test][4] [type1][3]: document already exists]"), anyLong());
+    verify(auditTrail).logRejectedDocumentBulkOperation(eq("update"), eq("1"), eq("index1"), eq(HttpStatus.SC_NOT_FOUND), eq("DocumentMissingException[[index1][-1] [type1][1]: document missing]"), anyLong());
     verifyNoMoreInteractions(auditTrail);
   }
 
@@ -151,33 +130,9 @@ public class ElasticIndexingClientTest {
     String response = "{\"error\":\"IndexAlreadyExistsException[[profile] already exists]\",\"status\":400}";
     initClientMock(404, "Not Found", 400, response);
     //When
-    elasticIndexingClient.sendCreateIndexRequest("profile", "mySettings");
+    elasticIndexingClient.sendCreateIndexRequest("profile", "mySettings", "someMappings");
     //Then
-    verify(auditTrail).audit(eq("create_index"), isNull(String.class), eq("profile"), isNull(String.class), eq(HttpStatus.SC_BAD_REQUEST), eq("{\"error\":\"IndexAlreadyExistsException[[profile] already exists]\",\"status\":400}"), anyLong());
-    verifyNoMoreInteractions(auditTrail);
-  }
-
-  @Test
-  public void createType_callAuditTrail() throws IOException {
-    //Given
-    String response = "{\"error\":\"IndexMissingException[[profile] missing]\",\"status\":404}";
-    initClientMock(404, "", 404, response);
-    //When
-    elasticIndexingClient.sendCreateTypeRequest("profile", "profile", "mySettings");
-    //Then
-    verify(auditTrail).audit(eq("create_type"), isNull(String.class), eq("profile"), eq("profile"), eq(HttpStatus.SC_NOT_FOUND), eq("{\"error\":\"IndexMissingException[[profile] missing]\",\"status\":404}"), anyLong());
-    verifyNoMoreInteractions(auditTrail);
-  }
-
-  @Test
-  public void deleteType_callAuditTrail() throws IOException {
-    //Given
-    String response = "{\"error\": \"TypeMissingException[[_all] type[[unknownType]] missing: No index has the type.]\",\"status\": 404}";
-    initClientMock(999, "", 404, response);
-    //When
-    elasticIndexingClient.sendDeleteAllDocsOfTypeRequest("profile", "profile");
-    //Then
-    verify(auditTrail).audit(eq("delete_type"), isNull(String.class), eq("profile"), eq("profile"), eq(HttpStatus.SC_NOT_FOUND), eq("{\"error\": \"TypeMissingException[[_all] type[[unknownType]] missing: No index has the type.]\",\"status\": 404}"), anyLong());
+    verify(auditTrail).audit(eq("create_index"), isNull(String.class), eq("profile"), eq(HttpStatus.SC_BAD_REQUEST), eq("{\"error\":\"IndexAlreadyExistsException[[profile] already exists]\",\"status\":400}"), anyLong());
     verifyNoMoreInteractions(auditTrail);
   }
 
@@ -213,7 +168,7 @@ public class ElasticIndexingClientTest {
     //Given
     initClientMock(200, "{my existing Mapping}", 999, "");
     //When
-    elasticIndexingClient.sendCreateIndexRequest("myIndex", "mySettings");
+    elasticIndexingClient.sendCreateIndexRequest("myIndex", "mySettings", "someMappings");
     //Then
     verify(httpClient, times(1)).execute(httpGetRequestCaptor.capture());
     assertEquals("http://127.0.0.1:9200/myIndex", httpGetRequestCaptor.getValue().getURI().toString());
@@ -225,11 +180,11 @@ public class ElasticIndexingClientTest {
     //Given
     initClientMock(404, ElasticIndexingClient.EMPTY_JSON, 200, "Success");
     //When
-    elasticIndexingClient.sendCreateIndexRequest("myIndex", "mySettings");
+    elasticIndexingClient.sendCreateIndexRequest("myIndex", "mySettings", "someMappings");
     //Then
     verify(httpClient, times(2)).execute(httpPutRequestCaptor.capture());
     assertEquals("http://127.0.0.1:9200/myIndex", httpPutRequestCaptor.getValue().getURI().toString());
-    assertEquals("mySettings", IOUtils.toString(httpPutRequestCaptor.getValue().getEntity().getContent()));
+    assertEquals("{\"settings\": mySettings, \"mappings\": someMappings}", IOUtils.toString(httpPutRequestCaptor.getValue().getEntity().getContent()));
     verifyNoMoreInteractions(httpClient);
   }
 

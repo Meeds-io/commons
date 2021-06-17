@@ -34,12 +34,14 @@ import java.util.Date;
 @NamedQueries({
     @NamedQuery(name = "IndexingOperation.deleteAllIndexingOperationsHavingIdLessThanOrEqual",
         query = "DELETE FROM IndexingOperation q WHERE q.id <= :id"),
-    @NamedQuery(name = "IndexingOperation.deleteAllByEntityType",
-        query = "DELETE FROM IndexingOperation q WHERE q.entityType = :entityType"),
+    @NamedQuery(name = "IndexingOperation.deleteAllByEntityIndex",
+        query = "DELETE FROM IndexingOperation q WHERE q.entityIndex = :entityIndex"),
     @NamedQuery(name = "IndexingOperation.findAll",
         query = "SELECT q FROM IndexingOperation q ORDER BY q.id")
 })
 public class IndexingOperation implements Serializable {
+
+  private static final long serialVersionUID = -2647286678124583999L;
 
   @Id
   @SequenceGenerator(name="SEQ_ES_INDEXING_QUEUE_ID", sequenceName="SEQ_ES_INDEXING_QUEUE_ID")
@@ -48,7 +50,7 @@ public class IndexingOperation implements Serializable {
   private Long id;
 
   @Column(name = "ENTITY_TYPE")
-  private String entityType;
+  private String entityIndex;
 
   @Column(name = "ENTITY_ID")
   private String entityId;
@@ -65,9 +67,9 @@ public class IndexingOperation implements Serializable {
   public IndexingOperation() {
   }
 
-  public IndexingOperation(String entityId, String entityType, OperationType operation) {
+  public IndexingOperation(String entityId, String entityIndex, OperationType operation) {
     this.entityId = entityId;
-    this.entityType = entityType;
+    this.entityIndex = entityIndex;
     this.setOperation(operation);
   }
 
@@ -87,12 +89,12 @@ public class IndexingOperation implements Serializable {
     this.entityId = entityId;
   }
 
-  public String getEntityType() {
-    return entityType;
+  public String getEntityIndex() {
+    return entityIndex;
   }
 
-  public void setEntityType(String entityType) {
-    this.entityType = entityType;
+  public void setEntityIndex(String entityIndex) {
+    this.entityIndex = entityIndex;
   }
 
   public OperationType getOperation() {
@@ -111,7 +113,7 @@ public class IndexingOperation implements Serializable {
     IndexingOperation that = (IndexingOperation) o;
 
     if (entityId != null ? !entityId.equals(that.entityId) : that.entityId != null) return false;
-    if (entityType != null ? !entityType.equals(that.entityType) : that.entityType != null) return false;
+    if (entityIndex != null ? !entityIndex.equals(that.entityIndex) : that.entityIndex != null) return false;
     if (id != null ? !id.equals(that.id) : that.id != null) return false;
     if (operation != null ? !operation.equals(that.operation) : that.operation != null) return false;
 
@@ -121,7 +123,7 @@ public class IndexingOperation implements Serializable {
   @Override
   public int hashCode() {
     int result = id != null ? id.hashCode() : 0;
-    result = 31 * result + (entityType != null ? entityType.hashCode() : 0);
+    result = 31 * result + (entityIndex != null ? entityIndex.hashCode() : 0);
     result = 31 * result + (entityId != null ? entityId.hashCode() : 0);
     result = 31 * result + (operation != null ? operation.hashCode() : 0);
     return result;

@@ -50,21 +50,22 @@ public abstract class ElasticIndexingServiceConnector extends IndexingServiceCon
 
   protected String indexAlias;
   protected String currentIndex;
-  protected String previousIndex;
   protected String mapping;
-  protected boolean reindexOnUpgrade;
   protected Integer shards = SHARDS_NUMBER_DEFAULT;
   protected Integer replicas = REPLICAS_NUMBER_DEFAULT;
 
-  public ElasticIndexingServiceConnector(InitParams initParams) {
+  protected ElasticIndexingServiceConnector(InitParams initParams) {
     PropertiesParam param = initParams.getPropertiesParam("constructor.params");
-    String reindexOnUpgradeString = param.getProperty("reindexOnUpgrade");
-    this.reindexOnUpgrade = StringUtils.isNotBlank(reindexOnUpgradeString) && reindexOnUpgradeString.trim().equalsIgnoreCase("true");
 
-    this.indexAlias = param.getProperty("index_alias");
     this.currentIndex = param.getProperty("index_current");
-    this.previousIndex = param.getProperty("index_previous");
-    setType(param.getProperty("type"));
+    if (StringUtils.isBlank(this.currentIndex)) {
+      throw new IllegalStateException("Connector ES index name is mandatory.");
+    }
+    this.indexAlias = param.getProperty("index_alias");
+    if (StringUtils.isBlank(indexAlias)) {
+      this.indexAlias = this.currentIndex;
+    }
+
     //Get number of replicas in connector declaration or exo properties
     if (StringUtils.isNotBlank(param.getProperty("replica.number"))) {
       this.replicas = Integer.valueOf(param.getProperty("replica.number"));
@@ -95,21 +96,14 @@ public abstract class ElasticIndexingServiceConnector extends IndexingServiceCon
 
   /**
    *
-   * Default mapping rules for ES type
-   * {
-     "type_name" : {
-       "properties" : {
-         "permissions" : {"type" : "keyword"},
-         "sites" : {"type" : "keyword"}
-       }
-     }
-   }
+   * Default mapping rules for ES index
    *
    * This method must be overridden by your specific connector if you want to define special mapping
    *
-   * @return JSON containing a mapping to create new type
+   * @return JSON containing a mapping to create new index
    *
    */
+  @SuppressWarnings("unchecked")
   public String getMapping() {
       if (StringUtils.isNotBlank(this.mapping)) {
         return this.mapping;
@@ -130,34 +124,15 @@ public abstract class ElasticIndexingServiceConnector extends IndexingServiceCon
       JSONObject mappingProperties = new JSONObject();
       mappingProperties.put("properties",properties);
 
-      JSONObject mappingJSON = new JSONObject();
-      mappingJSON.put(getType(), mappingProperties);
-
-      return mappingJSON.toJSONString();
-  }
-
-  public String getIndex() {
-    return indexAlias;
-  }
-
-  public void setIndex(String index) {
-    this.indexAlias = index;
+      return mappingProperties.toJSONString();
   }
 
   public String getCurrentIndex() {
     return currentIndex;
   }
 
-  public String getPreviousIndex() {
-    return previousIndex;
-  }
-
-  public void setPreviousIndex(String previousIndex) {
-    this.previousIndex = previousIndex;
-  }
-
-  public boolean isReindexOnUpgrade() {
-    return reindexOnUpgrade;
+  public String getIndexAlias() {
+    return indexAlias;
   }
 
   public Integer getShards() {
