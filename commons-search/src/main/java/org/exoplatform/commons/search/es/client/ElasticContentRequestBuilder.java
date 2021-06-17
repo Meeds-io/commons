@@ -44,32 +44,32 @@ public class ElasticContentRequestBuilder {
    *
    */
   public String getCreateIndexRequestContent(ElasticIndexingServiceConnector connector) {
-
-    StringBuilder mapping = new StringBuilder()
+    StringBuilder settings = new StringBuilder()
             .append("{")
-            .append("  \"settings\" : {\n")
-            .append("    \"number_of_shards\" : \"").append(connector.getShards()).append("\",\n")
-            .append("    \"number_of_replicas\" : \"").append(connector.getReplicas()).append("\",\n")
-            .append("    \"analysis\" : {")
-            .append("      \"analyzer\" : {")
-            .append("        \"default\" : {")
-            .append("          \"tokenizer\" : \"standard\",")
-            .append("          \"filter\" : [\"lowercase\", \"asciifolding\"]")
-            .append("        },")
-            .append("        \"letter_lowercase_asciifolding\" : {")
-            .append("          \"tokenizer\" : \"letter\",")
-            .append("          \"filter\" : [\"lowercase\", \"asciifolding\"]")
-            .append("        },")
-            .append("        \"whitespace_lowercase_asciifolding\" : {")
-            .append("          \"tokenizer\" : \"whitespace\",")
-            .append("          \"filter\" : [\"lowercase\", \"asciifolding\"]")
-            .append("        }")
+            .append("  \"number_of_shards\" : \"").append(connector.getShards()).append("\",\n")
+            .append("  \"number_of_replicas\" : \"").append(connector.getReplicas()).append("\",\n")
+            .append("  \"analysis\" : {")
+            .append("    \"analyzer\" : {")
+            .append("      \"default\" : {")
+            .append("        \"type\" : \"custom\",")
+            .append("        \"tokenizer\" : \"standard\",")
+            .append("        \"filter\" : [\"lowercase\", \"asciifolding\"]")
+            .append("      },")
+            .append("      \"letter_lowercase_asciifolding\" : {")
+            .append("        \"type\" : \"custom\",")
+            .append("        \"tokenizer\" : \"letter\",")
+            .append("        \"filter\" : [\"lowercase\", \"asciifolding\"]")
+            .append("      },")
+            .append("      \"whitespace_lowercase_asciifolding\" : {")
+            .append("        \"type\" : \"custom\",")
+            .append("        \"tokenizer\" : \"whitespace\",")
+            .append("        \"filter\" : [\"lowercase\", \"asciifolding\"]")
             .append("      }")
-            .append("    }\n")
+            .append("    }")
             .append("  }\n")
             .append("}");
 
-    String request =  mapping.toString();
+    String request =  settings.toString();
 
     LOG.debug("Create index request to ES: \n {}", request);
     return request;
@@ -137,7 +137,7 @@ public class ElasticContentRequestBuilder {
 
     Document document = connector.create(id);
     if (document==null) {
-      LOG.debug("Can't find document with id '{}' using connector '{}'. Ignore it.", id, connector.getName());
+      LOG.debug("Can't find document with id '{}' using connector '{}'. Ignore it.", id, connector.getIndexAlias());
       return null;
     }
 
@@ -216,13 +216,10 @@ public class ElasticContentRequestBuilder {
    *
    */
   private JSONObject createCUDHeaderRequestContent(ElasticIndexingServiceConnector connector, String id) {
-
-    JSONObject CUDHeader = new JSONObject();
-    CUDHeader.put("_index", connector.getIndex());
-    CUDHeader.put("_type", connector.getType());
-    CUDHeader.put("_id", id);
-
-    return CUDHeader;
+    JSONObject cudHeader = new JSONObject();
+    cudHeader.put("_index", connector.getIndexAlias());
+    cudHeader.put("_id", id);
+    return cudHeader;
   }
 
 }

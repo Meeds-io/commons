@@ -66,10 +66,6 @@
     <type>org.exoplatform.commons.search.dao.impl.IndexingOperationDAOImpl</type>
   </component>
 
-  <component>
-    <type>org.exoplatform.commons.search.rest.IndexingManagementRestServiceV1</type>
-  </component>
-
   <external-component-plugins>
     <target-component>org.exoplatform.services.scheduler.JobSchedulerService</target-component>
     <component-plugin>

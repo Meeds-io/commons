@@ -37,13 +37,32 @@ public class ElasticSearchingClient extends ElasticClient {
     }
   }
 
+  /**
+   * No need to ES Type anymore, this method will be removed
+   * shortly
+   * 
+   * @param esQuery
+   * @param index
+   * @param type
+   * @return
+   */
+  @Deprecated
   public String sendRequest(String esQuery, String index, String type) {
+    if (LOG.isDebugEnabled()) {
+      // Display stack trace
+      LOG.warn(new IllegalStateException("This method has been deprecated and will be removed in future releases."));
+    } else {
+      LOG.warn("This method has been deprecated and will be removed in future releases. To see stack trace, you can enable debug level on this class.");
+    }
+    return sendRequest(esQuery, index);
+  }
+
+  public String sendRequest(String esQuery, String index) {
     long startTime = System.currentTimeMillis();
     StringBuilder url = new StringBuilder();
     url.append(urlClient);
     if (StringUtils.isNotBlank(index)) {
       url.append("/" + index);
-      if (StringUtils.isNotBlank(type)) url.append("/" + type);
     }
     url.append("/_search");
     ElasticResponse elasticResponse = sendHttpPostRequest(url.toString(), esQuery);
@@ -53,16 +72,15 @@ public class ElasticSearchingClient extends ElasticClient {
       if(StringUtils.isBlank(response)) {
         response = "Empty response was sent by ES";
       }
-      auditTrail.logRejectedSearchOperation(ElasticIndexingAuditTrail.SEARCH_TYPE, index, type, statusCode, response, (System.currentTimeMillis() - startTime));
+      auditTrail.logRejectedSearchOperation(ElasticIndexingAuditTrail.SEARCH_INDEX, index, statusCode, response, (System.currentTimeMillis() - startTime));
     } else {
       JSONParser parser = new JSONParser();
       Map json = null;
       try {
-        json = (Map)parser.parse(response);
+        json = (Map) parser.parse(response);
       } catch (ParseException e) {
-        auditTrail.logRejectedSearchOperation(ElasticIndexingAuditTrail.SEARCH_TYPE,
+        auditTrail.logRejectedSearchOperation(ElasticIndexingAuditTrail.SEARCH_INDEX,
                                               index,
-                                              type,
                                               statusCode,
                                               "Error parsing response to JSON, content = " + response,
                                               (System.currentTimeMillis() - startTime));
@@ -73,12 +91,12 @@ public class ElasticSearchingClient extends ElasticClient {
       String error = json.get("error") == null ? null : (String) ((JSONObject) json.get("error")).get("reason");
       Integer httpStatusCode = status == null ? null : status.intValue();
       if (ElasticIndexingAuditTrail.isError(httpStatusCode)) {
-        auditTrail.logRejectedSearchOperation(ElasticIndexingAuditTrail.SEARCH_TYPE, index, type, httpStatusCode, error, (System.currentTimeMillis() - startTime));
+        auditTrail.logRejectedSearchOperation(ElasticIndexingAuditTrail.SEARCH_INDEX, index, httpStatusCode, error, (System.currentTimeMillis() - startTime));
         throw new IllegalStateException("Error occured while requesting ES HTTP error code: '" + statusCode + "', HTTP response: '"
             + response + "'");
       }
       if (auditTrail.isFullLogEnabled()) {
-        auditTrail.logAcceptedSearchOperation(ElasticIndexingAuditTrail.SEARCH_TYPE, index, type, statusCode, response, (System.currentTimeMillis() - startTime));
+        auditTrail.logAcceptedSearchOperation(ElasticIndexingAuditTrail.SEARCH_INDEX, index, statusCode, response, (System.currentTimeMillis() - startTime));
       }
     }
     return response;
