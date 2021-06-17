@@ -50,7 +50,6 @@ import org.exoplatform.commons.search.es.client.ElasticIndexingAuditTrail;
 import org.exoplatform.commons.search.es.client.ElasticIndexingClient;
 import org.exoplatform.commons.search.index.impl.ElasticIndexingOperationProcessor;
 import org.exoplatform.commons.search.index.impl.ElasticIndexingServiceConnector;
-import org.exoplatform.commons.search.integration.EmbeddedNode;
 import org.exoplatform.container.PortalContainer;
 import org.exoplatform.container.xml.InitParams;
 import org.exoplatform.container.xml.ValueParam;
@@ -95,7 +94,7 @@ public class ElasticOperationProcessorTest {
     InitParams initParams = new InitParams();
     ValueParam param = new ValueParam();
     param.setName("es.version");
-    param.setValue(EmbeddedNode.ES_VERSION);
+    param.setValue("Test version");
     initParams.addParameter(param);
     elasticIndexingOperationProcessor = new ElasticIndexingOperationProcessor(indexingOperationDAO, elasticIndexingClient, elasticContentRequestBuilder, auditTrail, entityManagerService, null, initParams);
     initElasticServiceConnector();
