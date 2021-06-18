@@ -17,14 +17,8 @@
 package org.exoplatform.commons.search.index;
 
 import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyLong;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Matchers.isNull;
+import static org.junit.Assert.*;
+import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.*;
 
 import java.io.IOException;
@@ -112,8 +106,8 @@ public class ElasticOperationProcessorTest {
   private void initElasticServiceConnector() {
     when(elasticIndexingServiceConnector.getIndex()).thenReturn("blog");
     when(elasticIndexingServiceConnector.getType()).thenReturn("post");
-    when(elasticIndexingServiceConnector.getReplicas()).thenReturn(1);
-    when(elasticIndexingServiceConnector.getShards()).thenReturn(5);
+    lenient().when(elasticIndexingServiceConnector.getReplicas()).thenReturn(1);
+    lenient().when(elasticIndexingServiceConnector.getShards()).thenReturn(5);
     when(elasticIndexingServiceConnector.canReindex()).thenReturn(true);
   }
 
@@ -183,8 +177,8 @@ public class ElasticOperationProcessorTest {
     indexingOperations.add(deleteAll);
     Document document = new Document("post", "1", new Date());
     when(indexingOperationDAO.findAllFirst(anyInt())).thenReturn(indexingOperations);
-    when(elasticIndexingServiceConnector.create("1")).thenReturn(document);
-    when(elasticIndexingServiceConnector.update("1")).thenReturn(document);
+    lenient().when(elasticIndexingServiceConnector.create("1")).thenReturn(document);
+    lenient().when(elasticIndexingServiceConnector.update("1")).thenReturn(document);
 
     //When
     elasticIndexingOperationProcessor.process();
@@ -233,8 +227,8 @@ public class ElasticOperationProcessorTest {
     indexingOperations.add(deleteAll);
     Document document = new Document("post", "1", new Date());
     when(indexingOperationDAO.findAllFirst(anyInt())).thenReturn(indexingOperations);
-    when(elasticIndexingServiceConnector.create("2")).thenReturn(document);
-    when(elasticIndexingServiceConnector.update("3")).thenReturn(document);
+    lenient().when(elasticIndexingServiceConnector.create("2")).thenReturn(document);
+    lenient().when(elasticIndexingServiceConnector.update("3")).thenReturn(document);
 
     //When
     elasticIndexingOperationProcessor.process();
@@ -337,8 +331,8 @@ public class ElasticOperationProcessorTest {
     indexingOperations.add(update);
     Document document = new Document("post", "1", new Date());
     when(indexingOperationDAO.findAllFirst(anyInt())).thenReturn(indexingOperations);
-    when(elasticIndexingServiceConnector.create("1")).thenReturn(document);
-    when(elasticIndexingServiceConnector.update("1")).thenReturn(document);
+    lenient().when(elasticIndexingServiceConnector.create("1")).thenReturn(document);
+    lenient().when(elasticIndexingServiceConnector.update("1")).thenReturn(document);
 
     //When
     elasticIndexingOperationProcessor.process();
@@ -370,8 +364,8 @@ public class ElasticOperationProcessorTest {
     indexingOperations.add(newUpdate);
     Document document = new Document("post", "1", sdf.parse("19/01/1989"));
     when(indexingOperationDAO.findAllFirst(anyInt())).thenReturn(indexingOperations);
-    when(elasticIndexingServiceConnector.create("1")).thenReturn(document);
-    when(elasticIndexingServiceConnector.update("1")).thenReturn(document);
+    lenient().when(elasticIndexingServiceConnector.create("1")).thenReturn(document);
+    lenient().when(elasticIndexingServiceConnector.update("1")).thenReturn(document);
 
     //When
     elasticIndexingOperationProcessor.process();
@@ -404,7 +398,7 @@ public class ElasticOperationProcessorTest {
     indexingOperations.add(deleteAll);
     Document document = new Document("post", "1", sdf.parse("19/01/1989"));
     when(indexingOperationDAO.findAllFirst(anyInt())).thenReturn(indexingOperations);
-    when(elasticIndexingServiceConnector.create("1")).thenReturn(document);
+    lenient().when(elasticIndexingServiceConnector.create("1")).thenReturn(document);
 
     //When
     elasticIndexingOperationProcessor.process();
@@ -437,7 +431,7 @@ public class ElasticOperationProcessorTest {
     indexingOperations.add(delete);
     Document document = new Document("post", "1", sdf.parse("19/01/1989"));
     when(indexingOperationDAO.findAllFirst(anyInt())).thenReturn(indexingOperations);
-    when(elasticIndexingServiceConnector.create("1")).thenReturn(document);
+    lenient().when(elasticIndexingServiceConnector.create("1")).thenReturn(document);
 
     //When
     elasticIndexingOperationProcessor.process();
@@ -468,7 +462,7 @@ public class ElasticOperationProcessorTest {
     indexingOperations.add(deleteAll);
     Document document = new Document("post", "1", sdf.parse("19/01/1989"));
     when(indexingOperationDAO.findAllFirst(anyInt())).thenReturn(indexingOperations);
-    when(elasticIndexingServiceConnector.update("1")).thenReturn(document);
+    lenient().when(elasticIndexingServiceConnector.update("1")).thenReturn(document);
 
     //When
     elasticIndexingOperationProcessor.process();
@@ -497,7 +491,7 @@ public class ElasticOperationProcessorTest {
     indexingOperations.add(delete);
     Document document = new Document("post", "1", sdf.parse("19/01/1989"));
     when(indexingOperationDAO.findAllFirst(anyInt())).thenReturn(indexingOperations);
-    when(elasticIndexingServiceConnector.update("1")).thenReturn(document);
+    lenient().when(elasticIndexingServiceConnector.update("1")).thenReturn(document);
 
     //When
     elasticIndexingOperationProcessor.process();
@@ -527,8 +521,8 @@ public class ElasticOperationProcessorTest {
     Document document1 = new Document("post", "1", sdf.parse("19/01/1989"));
     Document document2 = new Document("post", "2", sdf.parse("19/01/1989"));
     when(indexingOperationDAO.findAllFirst(anyInt())).thenReturn(indexingOperations);
-    when(elasticIndexingServiceConnector.create("1")).thenReturn(document1);
-    when(elasticIndexingServiceConnector.create("2")).thenReturn(document2);
+    lenient().when(elasticIndexingServiceConnector.create("1")).thenReturn(document1);
+    lenient().when(elasticIndexingServiceConnector.create("2")).thenReturn(document2);
 
     //When
     elasticIndexingOperationProcessor.process();
@@ -640,10 +634,10 @@ public class ElasticOperationProcessorTest {
     indexingOperations.add(init);
     Document document = new Document("post", "1", new Date());
     when(indexingOperationDAO.findAllFirst(anyInt())).thenReturn(indexingOperations);
-    when(elasticIndexingServiceConnector.create("1")).thenReturn(document);
-    when(elasticIndexingServiceConnector.update("1")).thenReturn(document);
-    when(elasticContentRequestBuilder.getCreateDocumentRequestContent(eq(elasticIndexingServiceConnector), anyString())).thenReturn(null);
-    when(elasticContentRequestBuilder.getUpdateDocumentRequestContent(eq(elasticIndexingServiceConnector), anyString())).thenReturn(null);
+    lenient().when(elasticIndexingServiceConnector.create("1")).thenReturn(document);
+    lenient().when(elasticIndexingServiceConnector.update("1")).thenReturn(document);
+    lenient().when(elasticContentRequestBuilder.getCreateDocumentRequestContent(eq(elasticIndexingServiceConnector), anyString())).thenReturn(null);
+    lenient().when(elasticContentRequestBuilder.getUpdateDocumentRequestContent(eq(elasticIndexingServiceConnector), anyString())).thenReturn(null);
     when(elasticContentRequestBuilder.getDeleteDocumentRequestContent(eq(elasticIndexingServiceConnector), anyString())).thenReturn(null);
 
 

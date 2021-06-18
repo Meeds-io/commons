@@ -29,17 +29,15 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
 import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.when;
+import static org.junit.Assert.*;
+import static org.mockito.Mockito.*;
 
 /**
  * Created by The eXo Platform SAS Author : Thibault Clement
@@ -160,9 +158,9 @@ public class ElasticContentRequestBuilderTest {
     SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
     sdf.setTimeZone(TimeZone.getTimeZone("GMT"));
     when(document.getLastUpdatedDate()).thenReturn(sdf.parse("19/01/1989"));
-    when(document.getId()).thenReturn("1");
-    when(document.getUrl()).thenReturn("MyUrlBaby");
-    when(document.getPermissions()).thenReturn(new HashSet<String>(Arrays.asList("vizir", "goleador" )));
+    lenient().when(document.getId()).thenReturn("1");
+    lenient().when(document.getUrl()).thenReturn("MyUrlBaby");
+    lenient().when(document.getPermissions()).thenReturn(new HashSet<String>(Arrays.asList("vizir", "goleador" )));
     Map<String, String> fields = new HashMap<>();
     fields.put("quote", "I've missed more than 9000 shots in my career. I've lost almost 300 games. "
         + "26 times, I've been trusted to take the game winning shot and missed. I've failed over and over "

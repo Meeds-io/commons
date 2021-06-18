@@ -170,7 +170,7 @@ public class TestTimeConvertUtils extends TestCase {
     assertEquals("Aug 28, 2011", TimeConvertUtils.getFormatDate(calendar.getTime(), "MMM dd, yyyy", locale));
     assertEquals("28 Aug, 2011", TimeConvertUtils.getFormatDate(calendar.getTime(), "dd MMM, yyyy", locale));
 
-    assertEquals("28 Aug, 2011, 03:30 PM", TimeConvertUtils.getFormatDate(calendar.getTime(), "dd MMM, yyyy, hh:mm a", locale));
+    assertEquals("28 Aug, 2011, 03:30 PM".toLowerCase(), TimeConvertUtils.getFormatDate(calendar.getTime(), "dd MMM, yyyy, hh:mm a", locale).toLowerCase());
     assertEquals("28 Aug, 2011, 15:30", TimeConvertUtils.getFormatDate(calendar.getTime(), "dd MMM, yyyy, HH:mm", locale));
   }
   

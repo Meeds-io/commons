@@ -9,12 +9,12 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.mockito.invocation.InvocationOnMock;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.junit.MockitoRule;
+import org.mockito.quality.Strictness;
 import org.mockito.stubbing.Answer;
 import org.powermock.api.mockito.PowerMockito;
-
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
@@ -53,12 +53,12 @@ public class DlpOperationProcessorTest {
 
   private void initDlpServiceConnector() {
     when(dlpFileServiceConnector.getType()).thenReturn("file");
-    when(dlpFileServiceConnector.getDisplayName()).thenReturn("file");
-    when(dlpFileServiceConnector.isEnable()).thenReturn(true);
+    lenient().when(dlpFileServiceConnector.getDisplayName()).thenReturn("file");
+    lenient().when(dlpFileServiceConnector.isEnable()).thenReturn(true);
     
     when(dlpActivityServiceConnector.getType()).thenReturn("activity");
-    when(dlpActivityServiceConnector.getDisplayName()).thenReturn("activity");
-    when(dlpActivityServiceConnector.isEnable()).thenReturn(true);
+    lenient().when(dlpActivityServiceConnector.getDisplayName()).thenReturn("activity");
+    lenient().when(dlpActivityServiceConnector.isEnable()).thenReturn(true);
   }
 
   @After
@@ -139,8 +139,8 @@ public class DlpOperationProcessorTest {
     List<DlpOperation> dlpOperations = getDlpOperations(dlpOperationProcessor.getBatchNumber()+10);
     when(dlpOperationDAO.findAllFirstWithOffset(anyInt(),anyInt()))
         .thenAnswer(invocation -> {
-          int offset=invocation.getArgumentAt(0, Integer.class);
-          int limit=invocation.getArgumentAt(1, Integer.class);
+          int offset=invocation.getArgument(0, Integer.class);
+          int limit=invocation.getArgument(1, Integer.class);
           return dlpOperations.stream().skip(offset).limit(limit).collect(Collectors.toList());
         });
     when(dlpOperationDAO.count()).thenReturn(Long.valueOf(dlpOperations.size()));
