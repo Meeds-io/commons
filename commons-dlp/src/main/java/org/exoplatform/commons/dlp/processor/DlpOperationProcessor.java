@@ -53,6 +53,11 @@ public abstract class DlpOperationProcessor {
    * @return the Dlp Keywords
    */
   public abstract String getKeywords();
+  
+  /**
+   * @return the Dlp Keywords
+   */
+  public abstract boolean hasKeywords();
 
   /**
    * Set the Dlp Keywords

@@ -22,7 +22,8 @@ public class DlpJob implements InterruptableJob {
   @Override
   public void execute(JobExecutionContext context) throws JobExecutionException {
     ExoFeatureService featureService = CommonsUtils.getService(ExoFeatureService.class);
-    if (featureService.isActiveFeature(DlpOperationProcessor.DLP_FEATURE)) {
+    DlpOperationProcessor dlpService = CommonsUtils.getService(DlpOperationProcessor.class);
+    if (featureService.isActiveFeature(DlpOperationProcessor.DLP_FEATURE) && dlpService.hasKeywords()) {
       LOGGER.debug("Running dlp job");
       getDlpOperationProcessor().process();
     }
