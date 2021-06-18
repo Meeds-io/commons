@@ -108,7 +108,11 @@ public class DlpOperationProcessorImpl extends DlpOperationProcessor implements 
         LOGGER.debug("DLP Operation processed : {} elements removed from queue, {} staying in queue, {} total elements in queue"
             + " after operation", processedOperations, stayingQueue, total);
       }
-      LOGGER.info("Dlp Operation Processor proceed {} queue elements, {} elements staying in queue", totalProcessed, offset);
+      if (totalProcessed==0 && offset==0) {
+        LOGGER.debug("Dlp Operation Processor proceed {} queue elements, {} elements staying in queue", totalProcessed, offset);
+      } else {
+        LOGGER.info("Dlp Operation Processor proceed {} queue elements, {} elements staying in queue", totalProcessed, offset);
+      }
     } catch (Exception e) {
       LOGGER.error("Error when processing bulk", e);
     } finally {
