@@ -14,7 +14,7 @@
             </value-param>
             <value-param>
                 <name>mfaSystem</name>
-                <value>${exo.mfa.system:fido2}</value>
+                <value>${exo.mfa.system:otp}</value>
             </value-param>
             <value-param>
                 <name>protectedGroups</name>
@@ -38,57 +38,7 @@
         <key>org.exoplatform.mfa.rest.otp.OtpRestService</key>
         <type>org.exoplatform.mfa.rest.otp.OtpRestService</type>
     </component>
-    
-    <component>
-        <key>org.exoplatform.mfa.api.fido.FidoService</key>
-        <type>org.exoplatform.mfa.api.fido.FidoService</type>
-        <init-params>
-            <value-param>
-                <name>activeConnector</name>
-                <value>GluuFido2Connector</value>
-            </value-param>
-        </init-params>
-    </component>
-    
-    <component>
-        <key>org.exoplatform.mfa.rest.fido.FidoRestService</key>
-        <type>org.exoplatform.mfa.rest.fido.FidoRestService</type>
-    </component>
-    
-    <external-component-plugins>
-        <target-component>org.exoplatform.mfa.api.fido.FidoService</target-component>
-        <component-plugin>
-            <name>GluuFido2Connector</name>
-            <set-method>addConnector</set-method>
-            <type>org.exoplatform.mfa.impl.fido.GluuFido2Connector</type>
-            <description>FidoConnector</description>
-            <init-params>
-                <value-param>
-                    <name>serverUrl</name>
-                    <value>${exo.mfa.fido.serverUrl:}</value>
-                </value-param>
-            </init-params>
-        </component-plugin>
-    </external-component-plugins>
-<!--    <external-component-plugins>-->
-<!--        <target-component>org.exoplatform.mfa.api.MfaService</target-component>-->
-<!--        <component-plugin>-->
-<!--            <name>addMfaConnector</name>-->
-<!--            <set-method>addConnector</set-method>-->
-<!--            <type>org.exoplatform.mfa.api.MfaConnector</type>-->
-<!--            <description>MfaConnector</description>-->
-<!--            <init-params>-->
-<!--                <object-param>-->
-<!--                    <name>mfaActivIdConnector</name>-->
-<!--                    <object type="org.exoplatform.mfa.impl.ActivIdMfaConnector">-->
-<!--                        <field name="name"><string>ActivIdMfaConnector</string></field>-->
-<!--                    </object>-->
-<!--                </object-param>-->
-<!--            </init-params>-->
-<!--        </component-plugin>-->
-<!--    </external-component-plugins>-->
-    
-    
+
     <external-component-plugins>
         <target-component>org.exoplatform.web.filter.ExtensibleFilter</target-component>
         <component-plugin>
