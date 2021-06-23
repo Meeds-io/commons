@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class MfaService {
-  private static final String DEFAULT_MFA_SYSTEM = "fido2";
+  private static final String DEFAULT_MFA_SYSTEM = "otp";
 
   private String              mfaSystem;
 
