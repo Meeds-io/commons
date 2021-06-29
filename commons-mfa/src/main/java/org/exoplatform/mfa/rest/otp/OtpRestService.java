@@ -22,13 +22,66 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.io.ByteArrayInputStream;
 
 @Path("/otp")
 @Api(value = "/otp", description = "Manages Otp features")
 public class OtpRestService implements ResourceContainer {
   
   private static final Log LOG = ExoLogger.getLogger(OtpRestService.class);
-  
+
+
+
+  @Path("/checkRegistration")
+  @GET
+  @Produces(MediaType.APPLICATION_JSON)
+  @RolesAllowed("users")
+  @ApiOperation(
+      value = "Check if user have activated his OTP",
+      httpMethod = "GET", response = Response.class, produces = MediaType.APPLICATION_JSON
+  )
+  @ApiResponses(
+      value = { @ApiResponse(code = HTTPStatus.OK, message = "Request fulfilled"),
+          @ApiResponse(code = HTTPStatus.BAD_REQUEST, message = "Invalid query input"),
+          @ApiResponse(code = HTTPStatus.UNAUTHORIZED, message = "Unauthorized operation"),
+          @ApiResponse(code = HTTPStatus.INTERNAL_ERROR, message = "Internal server error"), }
+  )
+  public Response checkRegistration(@Context HttpServletRequest request) {
+
+    String userId = ConversationState.getCurrent().getIdentity().getUserId();
+    OtpService otpService = CommonsUtils.getService(OtpService.class);
+    return Response.ok().entity("{\"result\":\"" + otpService.isMfaInitializedForUser(userId) + "\"}").build();
+
+  }
+
+  @Path("/generateSecret")
+  @GET
+  @Produces(MediaType.APPLICATION_JSON)
+  @RolesAllowed("users")
+  @ApiOperation(
+      value = "Generate New secret OTP for user",
+      httpMethod = "GET", response = Response.class, produces = MediaType.APPLICATION_JSON
+  )
+  @ApiResponses(
+      value = { @ApiResponse(code = HTTPStatus.OK, message = "Request fulfilled"),
+          @ApiResponse(code = HTTPStatus.BAD_REQUEST, message = "Invalid query input"),
+          @ApiResponse(code = HTTPStatus.UNAUTHORIZED, message = "Unauthorized operation"),
+          @ApiResponse(code = HTTPStatus.INTERNAL_ERROR, message = "Internal server error"), }
+  )
+  public Response generateSecret(@Context HttpServletRequest request) {
+
+    String userId = ConversationState.getCurrent().getIdentity().getUserId();
+    OtpService otpService = CommonsUtils.getService(OtpService.class);
+    if (!otpService.isMfaInitializedForUser(userId)) {
+      String secret=otpService.generateSecret(userId);
+      String urlFromSecret= otpService.generateUrlFromSecret(userId,secret);
+      return Response.ok().entity("{\"secret\":\"" + secret + "\",\"url\":\""+urlFromSecret+"\"}").build();
+    } else {
+      return Response.ok().build();
+    }
+
+  }
+
   
   @Path("/verify")
   @GET

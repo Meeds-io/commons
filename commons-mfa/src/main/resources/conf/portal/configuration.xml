@@ -27,6 +27,10 @@
         <key>org.exoplatform.mfa.api.otp.OtpService</key>
         <type>org.exoplatform.mfa.api.otp.OtpService</type>
         <init-params>
+            <value-param>
+                <name>activeConnector</name>
+                <value>ExoOtpConnector</value>
+            </value-param>
         </init-params>
     </component>
     
@@ -62,6 +66,43 @@
                         </field>
                     </object>
                 </object-param>
+            </init-params>
+        </component-plugin>
+    </external-component-plugins>
+
+
+    <external-component-plugins>
+        <target-component>org.exoplatform.mfa.api.otp.OtpService</target-component>
+        <component-plugin>
+            <name>ExoOtpConnector</name>
+            <set-method>addConnector</set-method>
+            <type>org.exoplatform.mfa.impl.otp.ExoOtpConnector</type>
+            <description>ExoOtpConnector</description>
+            <init-params>
+                <value-param>
+                    <name>timePeriod</name>
+                    <value>${exo.mfa.otp.timeperiod:30}</value>
+                </value-param>
+                <value-param>
+                    <name>secretLength</name>
+                    <value>${exo.mfa.otp.secretlength:64}</value>
+                </value-param>
+                <value-param>
+                    <name>codeDigits</name>
+                    <value>${exo.mfa.otp.codedigits:6}</value>
+                </value-param>
+                <value-param>
+                    <name>timePeriodDiscrepancy</name>
+                    <value>${exo.mfa.otp.timeperioddiscrepancy:1}</value>
+                </value-param>
+                <value-param>
+                    <name>algorithm</name>
+                    <value>${exo.mfa.otp.algorithm:SHA1}</value>
+                </value-param>
+                <value-param>
+                    <name>label</name>
+                    <value>${exo.mfa.otp.issuer:}</value>
+                </value-param>
             </init-params>
         </component-plugin>
     </external-component-plugins>

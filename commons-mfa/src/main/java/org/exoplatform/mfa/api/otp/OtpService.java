@@ -13,12 +13,8 @@ public class OtpService {
   public OtpService(InitParams initParams) {
     otpConnectors =new HashMap<>();
     ValueParam activeConnectorParam = initParams.getValueParam("activeConnector");
-    OtpConnector defaultOtpConnector =new OtpConnector("defaultConnector");
-    otpConnectors.put(defaultOtpConnector.getName(), defaultOtpConnector);
     if (activeConnectorParam!=null) {
       activeConnector=activeConnectorParam.getValue();
-    } else {
-      activeConnector = defaultOtpConnector.getName();
     }
   }
   
@@ -33,4 +29,17 @@ public class OtpService {
   private OtpConnector getActiveConnector() {
     return otpConnectors.get(activeConnector);
   }
+
+  public boolean isMfaInitializedForUser(String userId) {
+    return getActiveConnector().isMfaInitializedForUser(userId);
+  }
+
+  public String generateSecret(String userId) {
+    return getActiveConnector().generateSecret(userId);
+  }
+  public String generateUrlFromSecret(String user,String secret) {
+    return getActiveConnector().generateUrlFromSecret(user,secret);
+  }
+
+
 }

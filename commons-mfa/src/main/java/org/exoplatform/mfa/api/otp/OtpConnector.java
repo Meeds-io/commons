@@ -13,13 +13,9 @@ public class OtpConnector implements ComponentPlugin {
   public OtpConnector(String name) {
     this.name=name;
   }
-  
-  public boolean isMfaInitializedForUser(String user) {
-    return true;
-  }
-  
+
   public boolean validateToken(String user, String token) {
-    return token.equals("123456");
+    return false;
   }
   
   public String getName() {
@@ -31,15 +27,26 @@ public class OtpConnector implements ComponentPlugin {
   public void setName(String s) {
     this.name=s;
   }
-  
+
   @Override
   public String getDescription() {
     return null;
   }
-  
+
   @Override
   public void setDescription(String s) {
-  
+
   }
-  
+
+  public boolean isMfaInitializedForUser(String userId) {
+    return false;
+  }
+
+  public String generateSecret(String userId) {
+    return null;
+  }
+
+  public String generateUrlFromSecret(String user, String secret) {
+    return null;
+  }
 }
