@@ -68,6 +68,7 @@ public class ElasticSearchingClientTest {
     PropertyManager.setProperty("exo.es.search.server.url", "http://127.0.0.1:9200");
     elasticSearchingClient = new ElasticSearchingClient(auditTrail);
     elasticSearchingClient.client = httpClient;
+    elasticSearchingClient.resetMaxConnections();
   }
 
 
@@ -182,7 +183,7 @@ public class ElasticSearchingClientTest {
     PoolingHttpClientConnectionManager clientConnectionManager = (PoolingHttpClientConnectionManager) elasticSearchingClient.getClientConnectionManager();
 
     //Then
-    assertEquals(2, clientConnectionManager.getDefaultMaxPerRoute());
+    assertEquals(ElasticClient.DEFAULT_MAX_HTTP_POOL_CONNECTIONS, clientConnectionManager.getDefaultMaxPerRoute());
   }
 
   @Test
@@ -194,7 +195,7 @@ public class ElasticSearchingClientTest {
     PoolingHttpClientConnectionManager clientConnectionManager = (PoolingHttpClientConnectionManager) elasticSearchingClient.getClientConnectionManager();
 
     //Then
-    assertEquals(2, clientConnectionManager.getDefaultMaxPerRoute());
+    assertEquals(ElasticClient.DEFAULT_MAX_HTTP_POOL_CONNECTIONS, clientConnectionManager.getDefaultMaxPerRoute());
 
     PropertyManager.setProperty("exo.es.search.http.connections.max", "");
   }
@@ -208,7 +209,7 @@ public class ElasticSearchingClientTest {
     PoolingHttpClientConnectionManager clientConnectionManager = (PoolingHttpClientConnectionManager) elasticSearchingClient.getClientConnectionManager();
 
     //Then
-    assertEquals(2, clientConnectionManager.getDefaultMaxPerRoute());
+    assertEquals(ElasticClient.DEFAULT_MAX_HTTP_POOL_CONNECTIONS, clientConnectionManager.getDefaultMaxPerRoute());
 
     PropertyManager.setProperty("exo.es.search.http.connections.max", "");
   }
