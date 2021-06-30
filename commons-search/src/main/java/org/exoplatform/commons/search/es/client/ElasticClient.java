@@ -36,6 +36,8 @@ import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 
+import com.google.api.client.util.Charsets;
+
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 
@@ -45,7 +47,9 @@ import org.exoplatform.services.log.Log;
  */
 public abstract class ElasticClient {
 
-  private static final String ES_INDEX_CLIENT_DEFAULT = "http://127.0.0.1:9200";
+  public static final int             DEFAULT_MAX_HTTP_POOL_CONNECTIONS = 100;
+
+  private static final String         ES_INDEX_CLIENT_DEFAULT           = "http://127.0.0.1:9200";
 
   private static final Log    LOG                     = ExoLogger.getExoLogger(ElasticClient.class);
 
@@ -53,7 +57,7 @@ public abstract class ElasticClient {
   protected HttpClient        client;
   protected ElasticIndexingAuditTrail auditTrail;
 
-  public ElasticClient(ElasticIndexingAuditTrail auditTrail) {
+  protected ElasticClient(ElasticIndexingAuditTrail auditTrail) {
     this.client = getHttpClient();
     this.urlClient = ES_INDEX_CLIENT_DEFAULT;
     if (auditTrail==null) {
@@ -148,7 +152,7 @@ public abstract class ElasticClient {
     if (httpResponse.getEntity()!=null) {
       try {
         is = httpResponse.getEntity().getContent();
-        response = IOUtils.toString(is, "UTF-8");
+        response = IOUtils.toString(is, Charsets.UTF_8);
       } finally {
         if (is != null) {
           is.close();
@@ -183,7 +187,7 @@ public abstract class ElasticClient {
     HttpClientBuilder httpClientBuilder = HttpClients.custom()
         .setConnectionManager(clientConnectionManager)
         .setConnectionReuseStrategy(new DefaultConnectionReuseStrategy())
-        .setMaxConnPerRoute(100);
+        .setMaxConnPerRoute(getMaxConnections());
     if (StringUtils.isNotBlank(getEsUsernameProperty())) {
       CredentialsProvider credsProvider = new BasicCredentialsProvider();
       credsProvider.setCredentials(
@@ -208,5 +212,9 @@ public abstract class ElasticClient {
   protected abstract String getEsPasswordProperty();
 
   protected abstract HttpClientConnectionManager getClientConnectionManager();
+
+  protected int getMaxConnections() {
+    return DEFAULT_MAX_HTTP_POOL_CONNECTIONS;
+  }
 
 }

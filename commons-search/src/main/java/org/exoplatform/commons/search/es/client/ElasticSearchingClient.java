@@ -25,6 +25,7 @@ public class ElasticSearchingClient extends ElasticClient {
   private static final String ES_SEARCH_CLIENT_PROPERTY_PASSWORD = "exo.es.search.server.password";
   private static final String ES_SEARCH_CLIENT_PROPERTY_MAX_CONNECTIONS = "exo.es.search.http.connections.max";
 
+  private int                 maxPoolConnections;
 
   public ElasticSearchingClient(ElasticIndexingAuditTrail auditTrail) {
     super(auditTrail);
@@ -115,23 +116,28 @@ public class ElasticSearchingClient extends ElasticClient {
   @Override
   protected HttpClientConnectionManager getClientConnectionManager() {
     PoolingHttpClientConnectionManager connectionManager = new PoolingHttpClientConnectionManager();
-    String maxConnectionsProperty = PropertyManager.getProperty(ES_SEARCH_CLIENT_PROPERTY_MAX_CONNECTIONS);
-    if(StringUtils.isNotBlank(maxConnectionsProperty)) {
-      maxConnectionsProperty = maxConnectionsProperty.trim();
-      if(StringUtils.isNumeric(maxConnectionsProperty)) {
-        int maxConnections = Integer.parseInt(maxConnectionsProperty);
-        if(maxConnections > 0) {
-          connectionManager.setDefaultMaxPerRoute(maxConnections);
-        } else {
-          LOG.warn(ES_SEARCH_CLIENT_PROPERTY_MAX_CONNECTIONS + " value is not a positive number : " + maxConnectionsProperty +
-                  ". Using default HTTP max connections (" + connectionManager.getDefaultMaxPerRoute() + ").");
-        }
-      } else {
-        LOG.warn(ES_SEARCH_CLIENT_PROPERTY_MAX_CONNECTIONS + " value is not a valid number : " + maxConnectionsProperty +
-                ". Using default HTTP max connections (" + connectionManager.getDefaultMaxPerRoute() + ").");
+    connectionManager.setDefaultMaxPerRoute(getMaxConnections());
+    return connectionManager;
+  }
+
+  @Override
+  protected int getMaxConnections() {
+    if (maxPoolConnections <= 0) {
+      String maxConnectionsValue = PropertyManager.getProperty(ES_SEARCH_CLIENT_PROPERTY_MAX_CONNECTIONS);
+      if (StringUtils.isNotBlank(maxConnectionsValue) && StringUtils.isNumeric(maxConnectionsValue.trim())) {
+        maxPoolConnections = Integer.parseInt(maxConnectionsValue.trim());
+      }
+      if (maxPoolConnections <= 0) {
+        LOG.warn(ES_SEARCH_CLIENT_PROPERTY_MAX_CONNECTIONS + " value is not a positive number : " + maxConnectionsValue +
+            ". Using default HTTP max connections (" + DEFAULT_MAX_HTTP_POOL_CONNECTIONS + ").");
+        maxPoolConnections = DEFAULT_MAX_HTTP_POOL_CONNECTIONS;
       }
     }
-    return connectionManager;
+    return maxPoolConnections;
+  }
+
+  protected void resetMaxConnections() {
+    this.maxPoolConnections = 0;
   }
 
 }
