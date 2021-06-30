@@ -85,7 +85,7 @@
                 </value-param>
                 <value-param>
                     <name>secretLength</name>
-                    <value>${exo.mfa.otp.secretlength:64}</value>
+                    <value>${exo.mfa.otp.secretlength:32}</value>
                 </value-param>
                 <value-param>
                     <name>codeDigits</name>
@@ -93,7 +93,7 @@
                 </value-param>
                 <value-param>
                     <name>timePeriodDiscrepancy</name>
-                    <value>${exo.mfa.otp.timeperioddiscrepancy:1}</value>
+                    <value>${exo.mfa.otp.timeperioddiscrepancy:0}</value>
                 </value-param>
                 <value-param>
                     <name>algorithm</name>
