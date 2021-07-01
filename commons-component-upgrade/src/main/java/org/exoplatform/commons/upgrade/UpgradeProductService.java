@@ -4,6 +4,8 @@ import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import javax.servlet.ServletContext;
+
 import org.apache.commons.lang.StringUtils;
 
 import org.exoplatform.commons.api.settings.SettingService;
@@ -16,6 +18,7 @@ import org.exoplatform.commons.info.ProductInformations;
 import org.exoplatform.commons.utils.PropertyManager;
 import org.exoplatform.container.ExoContainerContext;
 import org.exoplatform.container.PortalContainer;
+import org.exoplatform.container.RootContainer.PortalContainerPostInitTask;
 import org.exoplatform.container.component.RequestLifeCycle;
 import org.exoplatform.container.xml.InitParams;
 import org.exoplatform.services.log.ExoLogger;
@@ -194,19 +197,36 @@ public class UpgradeProductService implements StartableClusterAware {
           if (upgradeProductPlugin.isAsyncUpgradeExecution()) {
             final UpgradePluginExecutionContext previousUpgradePluginExecutionContextFinal =
                                                                                            previousUpgradePluginExecutionContext;
-            Runnable task = () -> {
-              ExoContainerContext.setCurrentContainer(portalContainer);
-              RequestLifeCycle.begin(portalContainer);
-              try {
-                proceedToUpgrade(upgradeProductPlugin,
-                                 currentVersion,
-                                 previousVersion,
-                                 previousUpgradePluginExecutionContextFinal);
-              } finally {
-                RequestLifeCycle.end();
-              }
-            };
-            executorService.execute(task);
+            if (portalContainer.isStarted()) {
+              Runnable task = () -> {
+                ExoContainerContext.setCurrentContainer(portalContainer);
+                RequestLifeCycle.begin(portalContainer);
+                try {
+                  proceedToUpgrade(upgradeProductPlugin,
+                                   currentVersion,
+                                   previousVersion,
+                                   previousUpgradePluginExecutionContextFinal);
+                } finally {
+                  RequestLifeCycle.end();
+                }
+              };
+              executorService.execute(task);
+            } else {
+              PortalContainer.addInitTask(portalContainer.getPortalContext(), new PortalContainerPostInitTask() {
+                public void execute(ServletContext context, PortalContainer portalContainer) {
+                  ExoContainerContext.setCurrentContainer(portalContainer);
+                  RequestLifeCycle.begin(portalContainer);
+                  try {
+                    proceedToUpgrade(upgradeProductPlugin,
+                                     currentVersion,
+                                     previousVersion,
+                                     previousUpgradePluginExecutionContextFinal);
+                  } finally {
+                    RequestLifeCycle.end();
+                  }
+                }
+              });
+            }
           } else {
             proceedToUpgrade(upgradeProductPlugin, currentVersion, previousVersion, previousUpgradePluginExecutionContext);
           }
