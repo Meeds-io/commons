@@ -1,0 +1,33 @@
+{
+   "number_of_shards": shard.number,
+   "number_of_replicas": replica.number,
+   "max_regex_length": max_regex.length,
+   "analysis":{
+      "analyzer":{
+         "default":{
+            "type":"custom",
+            "tokenizer":"standard",
+            "filter":[
+               "lowercase",
+               "asciifolding"
+            ]
+         },
+         "letter_lowercase_asciifolding":{
+            "type":"custom",
+            "tokenizer":"letter",
+            "filter":[
+               "lowercase",
+               "asciifolding"
+            ]
+         },
+         "whitespace_lowercase_asciifolding":{
+            "type":"custom",
+            "tokenizer":"whitespace",
+            "filter":[
+               "lowercase",
+               "asciifolding"
+            ]
+         }
+      }
+   }
+}

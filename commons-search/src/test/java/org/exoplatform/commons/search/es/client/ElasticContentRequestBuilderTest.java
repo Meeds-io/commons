@@ -70,8 +70,8 @@ public class ElasticContentRequestBuilderTest {
     String request = elasticContentRequestBuilder.getCreateIndexRequestContent(elasticIndexingServiceConnector);
     // Then
     JSONObject parsedRequest = (JSONObject) JSONValue.parseWithException(request);
-    assertThat((String) parsedRequest.get("number_of_replicas"), is("2"));
-    assertThat((String) parsedRequest.get("number_of_shards"), is("3"));
+    assertThat(parsedRequest.get("number_of_replicas"), is(2l));
+    assertThat(parsedRequest.get("number_of_shards"), is(3l));
     assertNotNull(parsedRequest.get("analysis"));
     assertNotNull(((JSONObject) parsedRequest.get("analysis")).get("analyzer"));
     assertNotNull(((JSONObject) ((JSONObject) parsedRequest.get("analysis")).get("analyzer")).get("default"));
