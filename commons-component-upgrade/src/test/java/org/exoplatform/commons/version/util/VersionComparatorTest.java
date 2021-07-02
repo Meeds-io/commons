@@ -11,6 +11,24 @@ public class VersionComparatorTest extends TestCase {
     assertFalse(VersionComparator.isBefore("2.1", ""));
     assertTrue(VersionComparator.isBefore("", "2.2"));
     assertTrue(VersionComparator.isBefore("5.0.0-M32", "5.0-RC1"));
+    assertTrue(VersionComparator.isBefore("6.2.0-20210529", "6.2.0-20210531"));
+    assertFalse(VersionComparator.isBefore("6.2.0-20210601", "6.2.0-20210531"));
+    assertTrue(VersionComparator.isBefore("6.1.1", "6.2.0-20210531"));
+    assertFalse(VersionComparator.isBefore("6.2.0", "6.2.0-20210531"));
+    assertTrue(VersionComparator.isBefore("6.2.0-20210529", "6.2.0-20210531"));
+    assertFalse(VersionComparator.isBefore("6.2.0-20210601", "6.2.0-20210531"));
+    assertTrue(VersionComparator.isBefore("6.2.1-20210529", "6.2.1-20210531"));
+    assertFalse(VersionComparator.isBefore("6.2.1-20210601", "6.2.1-20210531"));
+    assertTrue(VersionComparator.isBefore("6.1.0", "6.2.0-20210531"));
+    assertTrue(VersionComparator.isBefore("6.1.1", "6.2.0-20210531"));
+    assertFalse(VersionComparator.isBefore("6.2.0", "6.2.0-M20"));
+    assertFalse(VersionComparator.isBefore("6.2.0", "6.2.0-20210531"));
+    assertTrue(VersionComparator.isBefore("6.2.0-20210531", "6.2.0"));
+    assertTrue(VersionComparator.isBefore("6.2.0-20210531", "6.2.1"));
+    assertTrue(VersionComparator.isBefore("6.2.0-20210531", "6.2.0-m01"));
+    assertTrue(VersionComparator.isBefore("6.2.0-20210531", "6.2.0-rc01"));
+    assertTrue(VersionComparator.isBefore("6.2.0-rc02", "6.2.0-rc03"));
+    assertTrue(VersionComparator.isBefore("6.2.0-m15", "6.2.0-rc03"));
   }
 
   public void testIsAfter() {
