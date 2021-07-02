@@ -51,6 +51,13 @@
 
   <component>
     <type>org.exoplatform.commons.search.es.client.ElasticContentRequestBuilder</type>
+    <init-params>
+      <value-param>
+        <name>index.settings.path</name>
+        <description>Default index settings to use for Search indexing connectors</description>
+        <value>${exo.es.index.settings.path:jar:/es-default-index-settings.json}</value>
+      </value-param>
+    </init-params>
   </component>
 
   <component>

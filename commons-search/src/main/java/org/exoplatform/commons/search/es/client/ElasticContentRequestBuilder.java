@@ -16,15 +16,19 @@
 */
 package org.exoplatform.commons.search.es.client;
 
-import org.exoplatform.commons.search.domain.Document;
-import org.exoplatform.commons.search.index.impl.ElasticIndexingServiceConnector;
-import org.exoplatform.services.log.ExoLogger;
-import org.exoplatform.services.log.Log;
-import org.json.simple.JSONArray;
+import java.io.InputStream;
+
+import org.apache.commons.lang3.StringUtils;
 import org.json.simple.JSONObject;
 
-import java.util.HashMap;
-import java.util.Map;
+import org.exoplatform.commons.search.domain.Document;
+import org.exoplatform.commons.search.index.impl.ElasticIndexingServiceConnector;
+import org.exoplatform.commons.utils.IOUtil;
+import org.exoplatform.container.ExoContainerContext;
+import org.exoplatform.container.configuration.ConfigurationManager;
+import org.exoplatform.container.xml.InitParams;
+import org.exoplatform.services.log.ExoLogger;
+import org.exoplatform.services.log.Log;
 
 /**
  * Created by The eXo Platform SAS
@@ -36,43 +40,46 @@ public class ElasticContentRequestBuilder {
 
   private static final Log LOG = ExoLogger.getExoLogger(ElasticContentRequestBuilder.class);
 
+  private static final long    DEFAULT_MAX_REGEX_LENGTH         = 65536l;
+
+  private static final String  DEFAULT_INDEX_SETTINGS_FILE_PATH = "jar:/es-default-index-settings.json";
+
+  private static final String  INDEX_SETTINGS_FILE_PATH_PARAM   = "index.settings.path";
+
+  private ConfigurationManager configurationManager;
+
+  private String               defaultSettingsPath;
+
+  private String               defaultSettings;
+
+  public ElasticContentRequestBuilder(ConfigurationManager configurationManager, InitParams initParams) {
+    this.configurationManager = configurationManager;
+    if (initParams != null && initParams.getValueParam(INDEX_SETTINGS_FILE_PATH_PARAM) != null) {
+      this.defaultSettingsPath = initParams.getValueParam(INDEX_SETTINGS_FILE_PATH_PARAM).getValue();
+    }
+    if (StringUtils.isBlank(this.defaultSettingsPath)) {
+      this.defaultSettingsPath = DEFAULT_INDEX_SETTINGS_FILE_PATH;
+    }
+  }
+
+  public ElasticContentRequestBuilder() {
+    this(ExoContainerContext.getService(ConfigurationManager.class), null);
+  }
+
   /**
    *
    * Get an ES create Index request content
    *
+   * @param connector ES connector
    * @return JSON containing a create index request content
    *
    */
   public String getCreateIndexRequestContent(ElasticIndexingServiceConnector connector) {
-    StringBuilder settings = new StringBuilder()
-            .append("{")
-            .append("  \"number_of_shards\" : \"").append(connector.getShards()).append("\",\n")
-            .append("  \"number_of_replicas\" : \"").append(connector.getReplicas()).append("\",\n")
-            .append("  \"analysis\" : {")
-            .append("    \"analyzer\" : {")
-            .append("      \"default\" : {")
-            .append("        \"type\" : \"custom\",")
-            .append("        \"tokenizer\" : \"standard\",")
-            .append("        \"filter\" : [\"lowercase\", \"asciifolding\"]")
-            .append("      },")
-            .append("      \"letter_lowercase_asciifolding\" : {")
-            .append("        \"type\" : \"custom\",")
-            .append("        \"tokenizer\" : \"letter\",")
-            .append("        \"filter\" : [\"lowercase\", \"asciifolding\"]")
-            .append("      },")
-            .append("      \"whitespace_lowercase_asciifolding\" : {")
-            .append("        \"type\" : \"custom\",")
-            .append("        \"tokenizer\" : \"whitespace\",")
-            .append("        \"filter\" : [\"lowercase\", \"asciifolding\"]")
-            .append("      }")
-            .append("    }")
-            .append("  }\n")
-            .append("}");
-
-    String request =  settings.toString();
-
-    LOG.debug("Create index request to ES: \n {}", request);
-    return request;
+    String settings = getDefaultSettings().replace("shard.number", String.valueOf(connector.getShards()))
+                                          .replace("replica.number", String.valueOf(connector.getReplicas()))
+                                          .replace("max_regex.length", String.valueOf(DEFAULT_MAX_REGEX_LENGTH));
+    LOG.debug("Create index request to ES: \n {}", settings);
+    return settings;
   }
 
   /**
@@ -206,6 +213,17 @@ public class ElasticContentRequestBuilder {
     return request;
   }
 
+  public String getDefaultSettings() {
+    if (this.defaultSettings == null) {
+      try {
+        this.defaultSettings = getFileContent(this.defaultSettingsPath);
+      } catch (Exception e) {
+        throw new IllegalStateException("Failed to retrieve default ES index settings from path: " + this.defaultSettingsPath, e);
+      }
+    }
+    return this.defaultSettings;
+  }
+
   /**
    *
    * Create an ES content containing information for bulk request
@@ -220,6 +238,11 @@ public class ElasticContentRequestBuilder {
     cudHeader.put("_index", connector.getIndexAlias());
     cudHeader.put("_id", id);
     return cudHeader;
+  }
+
+  private String getFileContent(String filePath) throws Exception {
+    InputStream mappingFileIS = configurationManager.getInputStream(filePath);
+    return IOUtil.getStreamContentAsString(mappingFileIS);
   }
 
 }
