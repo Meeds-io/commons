@@ -37,6 +37,14 @@
 
 					origInit.call( this );
 
+          this.on( 'handleResponse', function( response ) {
+            editor.fire('embedHandleResponse', response);
+          }, this );
+          this.on( 'requestCanceled', function() {
+            editor.fire('embedCanceled');
+          }, this );
+
+
 					// Need to wait for #ready with the initial content loading, because on #init there's no data yet.
 					this.once( 'ready', function() {
 						// When widget is created using dialog, the dialog's code will handle loading the content
