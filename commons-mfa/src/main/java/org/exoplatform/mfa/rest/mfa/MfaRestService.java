@@ -85,7 +85,7 @@ public class MfaRestService implements ResourceContainer {
   @GET
   @Produces(MediaType.APPLICATION_JSON)
   @RolesAllowed("users")
-  @ApiOperation(value = "Get MFA Status", httpMethod = "GET", response = Response.class, produces = MediaType.APPLICATION_JSON)
+  @ApiOperation(value = "Get MFA feature status", httpMethod = "GET", response = Response.class, produces = MediaType.APPLICATION_JSON)
   @ApiResponses(value = { @ApiResponse(code = HTTPStatus.OK, message = "Request fulfilled"),
           @ApiResponse(code = HTTPStatus.UNAUTHORIZED, message = "Unauthorized operation"),
           @ApiResponse(code = HTTPStatus.INTERNAL_ERROR, message = "Internal server error"), })
