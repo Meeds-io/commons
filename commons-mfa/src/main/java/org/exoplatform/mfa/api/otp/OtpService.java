@@ -3,6 +3,7 @@ package org.exoplatform.mfa.api.otp;
 import org.exoplatform.container.xml.InitParams;
 import org.exoplatform.container.xml.ValueParam;
 
+import java.time.Clock;
 import java.util.HashMap;
 
 public class OtpService {
@@ -13,17 +14,13 @@ public class OtpService {
   public OtpService(InitParams initParams) {
     otpConnectors =new HashMap<>();
     ValueParam activeConnectorParam = initParams.getValueParam("activeConnector");
-    OtpConnector defaultOtpConnector =new OtpConnector("defaultConnector");
-    otpConnectors.put(defaultOtpConnector.getName(), defaultOtpConnector);
     if (activeConnectorParam!=null) {
       activeConnector=activeConnectorParam.getValue();
-    } else {
-      activeConnector = defaultOtpConnector.getName();
     }
   }
   
   public boolean validateToken(String user, String token) {
-    return getActiveConnector().validateToken(user,token);
+    return getActiveConnector().validateToken(user, token, Clock.systemDefaultZone());
   }
   
   public void addConnector (OtpConnector mfaConnector) {
@@ -33,4 +30,17 @@ public class OtpService {
   private OtpConnector getActiveConnector() {
     return otpConnectors.get(activeConnector);
   }
+
+  public boolean isMfaInitializedForUser(String userId) {
+    return getActiveConnector().isMfaInitializedForUser(userId);
+  }
+
+  public String generateSecret(String userId) {
+    return getActiveConnector().generateSecret(userId);
+  }
+  public String generateUrlFromSecret(String user,String secret) {
+    return getActiveConnector().generateUrlFromSecret(user,secret);
+  }
+
+
 }
