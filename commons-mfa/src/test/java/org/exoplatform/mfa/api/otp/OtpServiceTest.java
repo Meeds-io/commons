@@ -73,7 +73,7 @@ public class OtpServiceTest {
     otpService.generateSecret("user");
 
     //THEN
-    verify(otpConnector, times(1)).generateSecret(eq("user"));
+    verify(otpConnector, times(1)).generateSecret("user");
   }
 
 
@@ -85,7 +85,7 @@ public class OtpServiceTest {
     otpService.generateUrlFromSecret("user","secret");
 
     //THEN
-    verify(otpConnector, times(1)).generateUrlFromSecret(eq("user"),eq("secret"));
+    verify(otpConnector, times(1)).generateUrlFromSecret("user","secret");
   }
 
 

@@ -75,7 +75,7 @@ public class OtpRestServiceTest {
     Response response = otpRestService.verifyToken(request,"123456");
     assertEquals("{\"result\":\"true\"}", response.getEntity().toString());
 
-    verify(session,times(1)).setAttribute(eq("mfaValidated"), eq(true));
+    verify(session,times(1)).setAttribute("mfaValidated", true);
 
 
   }
