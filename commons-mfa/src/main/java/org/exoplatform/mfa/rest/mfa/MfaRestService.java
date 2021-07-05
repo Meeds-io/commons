@@ -1,10 +1,7 @@
 package org.exoplatform.mfa.rest.mfa;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+
+import io.swagger.annotations.*;
 import org.exoplatform.common.http.HTTPStatus;
 import org.exoplatform.mfa.api.MfaService;
 
@@ -23,6 +20,7 @@ import org.exoplatform.mfa.storage.dto.RevocationRequest;
 import org.exoplatform.mfa.rest.entities.RevocationRequestEntity;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
+
 import org.exoplatform.services.rest.resource.ResourceContainer;
 import org.exoplatform.services.security.ConversationState;
 import org.json.JSONException;
@@ -34,6 +32,11 @@ import java.util.stream.Collectors;
 @Path("/mfa")
 @Api(value = "/mfa")
 public class MfaRestService implements ResourceContainer {
+  private  MfaService mfaService;
+
+  public MfaRestService(MfaService mfaService) {
+    this.mfaService = mfaService;
+  }
 
   private MfaService mfaService;
 
@@ -61,7 +64,36 @@ public class MfaRestService implements ResourceContainer {
       return Response.serverError().build();
 
     }
+  }
 
+  @Path("/switchMfaFeatureActivation/{status}")
+  @PUT
+  @Produces(MediaType.APPLICATION_JSON)
+  @RolesAllowed("users")
+  @ApiOperation(value = "Switch the Activated MFA System", httpMethod = "PUT", response = Response.class, produces = MediaType.APPLICATION_JSON)
+  @ApiResponses(value = { @ApiResponse(code = HTTPStatus.OK, message = "Request fulfilled"),
+      @ApiResponse(code = HTTPStatus.UNAUTHORIZED, message = "Unauthorized operation"),
+      @ApiResponse(code = HTTPStatus.INTERNAL_ERROR, message = "Internal server error"), })
+  public Response disableMfaFeature(@ApiParam(value = "Switch the Activated MFA System to enabled or disabled", required = true) String status) {
+   if(status != null && Boolean.valueOf(status)) {
+     mfaService.enableMfaFeature(status);
+   }else {
+     mfaService.disableMfaFeature(status);
+   }
+   return Response.ok().build();
+  }
+
+  @Path("/getMfaStatus")
+  @GET
+  @Produces(MediaType.APPLICATION_JSON)
+  @RolesAllowed("users")
+  @ApiOperation(value = "Get MFA Status", httpMethod = "GET", response = Response.class, produces = MediaType.APPLICATION_JSON)
+  @ApiResponses(value = { @ApiResponse(code = HTTPStatus.OK, message = "Request fulfilled"),
+          @ApiResponse(code = HTTPStatus.UNAUTHORIZED, message = "Unauthorized operation"),
+          @ApiResponse(code = HTTPStatus.INTERNAL_ERROR, message = "Internal server error"), })
+  public Response getMfaStatus() {
+    boolean status = mfaService.getMfaStatus();
+    return Response.ok().entity("{\"mfaStatus\":\"" + status + "\"}").build();
   }
 
   @Path("/revocations")
