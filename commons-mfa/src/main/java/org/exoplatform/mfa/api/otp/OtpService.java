@@ -3,6 +3,7 @@ package org.exoplatform.mfa.api.otp;
 import org.exoplatform.container.xml.InitParams;
 import org.exoplatform.container.xml.ValueParam;
 
+import java.time.Clock;
 import java.util.HashMap;
 
 public class OtpService {
@@ -19,7 +20,7 @@ public class OtpService {
   }
   
   public boolean validateToken(String user, String token) {
-    return getActiveConnector().validateToken(user,token);
+    return getActiveConnector().validateToken(user, token, Clock.systemDefaultZone());
   }
   
   public void addConnector (OtpConnector mfaConnector) {

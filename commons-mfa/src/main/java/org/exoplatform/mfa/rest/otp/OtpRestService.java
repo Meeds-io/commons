@@ -30,6 +30,11 @@ public class OtpRestService implements ResourceContainer {
   
   private static final Log LOG = ExoLogger.getLogger(OtpRestService.class);
 
+  private OtpService otpService;
+
+  public OtpRestService(OtpService otpService) {
+    this.otpService=otpService;
+  }
 
 
   @Path("/checkRegistration")
@@ -49,7 +54,6 @@ public class OtpRestService implements ResourceContainer {
   public Response checkRegistration(@Context HttpServletRequest request) {
 
     String userId = ConversationState.getCurrent().getIdentity().getUserId();
-    OtpService otpService = CommonsUtils.getService(OtpService.class);
     return Response.ok().entity("{\"result\":\"" + otpService.isMfaInitializedForUser(userId) + "\"}").build();
 
   }
@@ -71,7 +75,6 @@ public class OtpRestService implements ResourceContainer {
   public Response generateSecret(@Context HttpServletRequest request) {
 
     String userId = ConversationState.getCurrent().getIdentity().getUserId();
-    OtpService otpService = CommonsUtils.getService(OtpService.class);
     if (!otpService.isMfaInitializedForUser(userId)) {
       String secret=otpService.generateSecret(userId);
       String urlFromSecret= otpService.generateUrlFromSecret(userId,secret);
@@ -103,7 +106,6 @@ public class OtpRestService implements ResourceContainer {
     String userId=null;
     try {
   
-      OtpService otpService = CommonsUtils.getService(OtpService.class);
       try {
         userId = ConversationState.getCurrent().getIdentity().getUserId();
       } catch (Exception e) {

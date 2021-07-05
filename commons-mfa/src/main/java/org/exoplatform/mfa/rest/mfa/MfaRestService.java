@@ -24,6 +24,12 @@ import org.json.JSONObject;
 @Api(value = "/mfa", description = "Manages MFA features")
 public class MfaRestService implements ResourceContainer {
 
+  private MfaService mfaService;
+
+  public MfaRestService(MfaService mfaService) {
+    this.mfaService=mfaService;
+  }
+
   @Path("/settings")
   @GET
   @Produces(MediaType.APPLICATION_JSON)
@@ -33,7 +39,6 @@ public class MfaRestService implements ResourceContainer {
       @ApiResponse(code = HTTPStatus.UNAUTHORIZED, message = "Unauthorized operation"),
       @ApiResponse(code = HTTPStatus.INTERNAL_ERROR, message = "Internal server error"), })
   public Response getMfaSystem() {
-    MfaService mfaService = CommonsUtils.getService(MfaService.class);
     JSONObject result = new JSONObject();
     try {
       result.put("mfaSystem", mfaService.getMfaSystem());
