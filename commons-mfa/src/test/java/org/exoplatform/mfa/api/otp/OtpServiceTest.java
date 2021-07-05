@@ -62,7 +62,7 @@ public class OtpServiceTest {
     otpService.isMfaInitializedForUser("user");
 
     //THEN
-    verify(otpConnector, times(1)).isMfaInitializedForUser(eq("user"));
+    verify(otpConnector, times(1)).isMfaInitializedForUser("user");
   }
 
   @Test

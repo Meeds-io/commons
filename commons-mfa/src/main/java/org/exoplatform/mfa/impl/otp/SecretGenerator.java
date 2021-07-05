@@ -6,7 +6,7 @@ import java.security.SecureRandom;
 public class SecretGenerator {
 
   private final SecureRandom randomBytes = new SecureRandom();
-  private final static Base32 encoder = new Base32();
+  private static final Base32 encoder = new Base32();
   private final int numCharacters;
 
   public SecretGenerator() {

@@ -8,8 +8,8 @@ import java.security.NoSuchAlgorithmException;
 
 public class CodeGenerator  {
 
-  private final String algorithm = "HmacSHA1";
-  private final int digits;
+  private static final String ALGORITHM = "HmacSHA1";
+  private final int           digits;
 
   public CodeGenerator() {
     this(6);
@@ -23,7 +23,7 @@ public class CodeGenerator  {
     this.digits = digits;
   }
 
-  public String generate(String key, long counter) throws Exception{
+  public String generate(String key, long counter) throws NoSuchAlgorithmException, InvalidKeyException {
     byte[] hash = generateHash(key, counter);
     return getDigitsFromHash(hash);
   }
@@ -41,8 +41,8 @@ public class CodeGenerator  {
     // Create a HMAC-SHA1 signing key from the shared key
     Base32 codec = new Base32();
     byte[] decodedKey = codec.decode(key);
-    SecretKeySpec signKey = new SecretKeySpec(decodedKey, algorithm);
-    Mac mac = Mac.getInstance(algorithm);
+    SecretKeySpec signKey = new SecretKeySpec(decodedKey, ALGORITHM);
+    Mac mac = Mac.getInstance(ALGORITHM);
     mac.init(signKey);
 
     // Create a hash of the counter value
@@ -66,6 +66,7 @@ public class CodeGenerator  {
     truncatedHash %= Math.pow(10, digits);
 
     // Left pad with 0s for a n-digit code
-    return String.format("%0" + digits + "d", truncatedHash);
+    String format = "%0"+digits+"d";
+    return String.format(format, truncatedHash);
   }
 }

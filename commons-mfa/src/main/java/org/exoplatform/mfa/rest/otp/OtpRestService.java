@@ -6,7 +6,6 @@ import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import org.exoplatform.common.http.HTTPStatus;
-import org.exoplatform.commons.utils.CommonsUtils;
 import org.exoplatform.mfa.api.otp.OtpService;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
@@ -22,10 +21,9 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.io.ByteArrayInputStream;
 
 @Path("/otp")
-@Api(value = "/otp", description = "Manages Otp features")
+@Api(value = "/otp")
 public class OtpRestService implements ResourceContainer {
   
   private static final Log LOG = ExoLogger.getLogger(OtpRestService.class);
@@ -101,16 +99,13 @@ public class OtpRestService implements ResourceContainer {
           @ApiResponse(code = HTTPStatus.INTERNAL_ERROR, message = "Internal server error"), }
   )
   public Response verifyToken(@Context HttpServletRequest request,
-      @ApiParam(value = "Token to verify", required = true) @QueryParam("token") String token) {
+                              @ApiParam(value = "Token to verify", required = true) @QueryParam("token") String token) {
   
     String userId=null;
     try {
-  
-      try {
-        userId = ConversationState.getCurrent().getIdentity().getUserId();
-      } catch (Exception e) {
-        return Response.status(HTTPStatus.UNAUTHORIZED).build();
-      }
+
+      userId = ConversationState.getCurrent().getIdentity().getUserId();
+
       boolean otpResult = otpService.validateToken(userId,token);
       request.getSession().setAttribute("mfaValidated",otpResult);
       return Response.ok().entity("{\"result\":\"" + otpResult + "\"}").build();
