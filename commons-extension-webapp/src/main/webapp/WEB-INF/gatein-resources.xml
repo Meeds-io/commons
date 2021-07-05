@@ -518,7 +518,7 @@
       <adapter>
         (function() {
           <include>/javascript/purify.min.js</include>
-          Vue.directive('sanitized-html',(el, binding) => el.innerHTML = DOMPurify.sanitize(Autolinker.link(binding.value, {newWindow: true}), {USE_PROFILES: {html: true}}));
+          Vue.directive('sanitized-html',(el, binding) => el.innerHTML = DOMPurify.sanitize(Autolinker.link(binding.value, {newWindow: true}), {USE_PROFILES: {html: true},ADD_ATTR: ['target'],ADD_ATTR: ['rel']}));
         })();
       </adapter>
     </script>
