@@ -3,6 +3,7 @@ package org.exoplatform.mfa.rest.mfa;
 
 import io.swagger.annotations.*;
 import org.exoplatform.common.http.HTTPStatus;
+import org.exoplatform.commons.utils.CommonsUtils;
 import org.exoplatform.mfa.api.MfaService;
 
 import javax.annotation.security.RolesAllowed;
@@ -32,11 +33,6 @@ import java.util.stream.Collectors;
 @Path("/mfa")
 @Api(value = "/mfa")
 public class MfaRestService implements ResourceContainer {
-  private  MfaService mfaService;
-
-  public MfaRestService(MfaService mfaService) {
-    this.mfaService = mfaService;
-  }
 
   private MfaService mfaService;
 
@@ -56,6 +52,7 @@ public class MfaRestService implements ResourceContainer {
       @ApiResponse(code = HTTPStatus.UNAUTHORIZED, message = "Unauthorized operation"),
       @ApiResponse(code = HTTPStatus.INTERNAL_ERROR, message = "Internal server error"), })
   public Response getMfaSystem() {
+    MfaService mfaService = CommonsUtils.getService(MfaService.class);
     JSONObject result = new JSONObject();
     try {
       result.put("mfaSystem", mfaService.getMfaSystem());
@@ -75,7 +72,8 @@ public class MfaRestService implements ResourceContainer {
       @ApiResponse(code = HTTPStatus.UNAUTHORIZED, message = "Unauthorized operation"),
       @ApiResponse(code = HTTPStatus.INTERNAL_ERROR, message = "Internal server error"), })
   public Response disableMfaFeature(@ApiParam(value = "Switch the Activated MFA System to enabled or disabled", required = true) String status) {
-   if(status != null && Boolean.valueOf(status)) {
+    MfaService mfaService = CommonsUtils.getService(MfaService.class);
+    if(status != null && Boolean.valueOf(status)) {
      mfaService.enableMfaFeature(status);
    }else {
      mfaService.disableMfaFeature(status);
@@ -92,6 +90,7 @@ public class MfaRestService implements ResourceContainer {
           @ApiResponse(code = HTTPStatus.UNAUTHORIZED, message = "Unauthorized operation"),
           @ApiResponse(code = HTTPStatus.INTERNAL_ERROR, message = "Internal server error"), })
   public Response getMfaStatus() {
+    MfaService mfaService = CommonsUtils.getService(MfaService.class);
     boolean status = mfaService.getMfaStatus();
     return Response.ok().entity("{\"mfaStatus\":\"" + status + "\"}").build();
   }
