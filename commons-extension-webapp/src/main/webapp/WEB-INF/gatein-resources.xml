@@ -500,14 +500,7 @@
       <adapter>
         (function() {
           <include>/javascript/autolinker.min.js</include>
-          Vue.directive('sanitized-html',(el, binding) =>
-          DOMPurify.addHook('afterSanitizeAttributes', function (node) {
-          // add noopener attribute to external links to eliminate vulnerabilities
-          if ('target' in node) {
-          node.setAttribute('rel', 'noopener');
-          }
-          });
-          el.innerHTML = DOMPurify.sanitize(Autolinker.link(binding.value, {newWindow: true}), {USE_PROFILES: {html: true},ADD_ATTR: ['target']}));
+          Vue.directive('autolinker',(el, binding) => el.innerHTML = Autolinker.link(binding.value, {sanitizeHtml: true}));
         })();
       </adapter>
     </script>
@@ -525,7 +518,14 @@
       <adapter>
         (function() {
           <include>/javascript/purify.min.js</include>
-          Vue.directive('sanitized-html',(el, binding) => el.innerHTML = DOMPurify.sanitize(Autolinker.link(binding.value, {newWindow: true}), {USE_PROFILES: {html: true},ADD_ATTR: ['target','rel']}));
+          Vue.directive('sanitized-html',(el, binding) =>
+          DOMPurify.addHook('afterSanitizeAttributes', function (node) {
+          // add noopener attribute to external links to eliminate vulnerabilities
+          if ('target' in node) {
+          node.setAttribute('rel', 'noopener');
+          }
+          });
+          el.innerHTML = DOMPurify.sanitize(Autolinker.link(binding.value, {newWindow: true}), {USE_PROFILES: {html: true},ADD_ATTR: ['target']}));
         })();
       </adapter>
     </script>
