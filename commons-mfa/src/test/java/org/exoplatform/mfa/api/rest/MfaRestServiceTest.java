@@ -159,8 +159,8 @@ public class MfaRestServiceTest {
   
   @Test
   public void testChangeMfaFeatureActivation() {
-    featureService.saveActiveFeature(MFA_FEATURE, false);
-    boolean response = mfaService.isMfaFeatureActivated();
-    assertFalse(response);
+    Response response = mfaRestService.changeMfaFeatureActivation("true");
+
+    assertEquals(200 ,response.getStatus());
   }
 }

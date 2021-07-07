@@ -76,14 +76,9 @@ public class MfaRestService implements ResourceContainer {
       @ApiResponse(code = HTTPStatus.UNAUTHORIZED, message = "Unauthorized operation"),
       @ApiResponse(code = HTTPStatus.INTERNAL_ERROR, message = "Internal server error"), })
   public Response changeMfaFeatureActivation(@ApiParam(value = "Switch the Activated MFA System to avtivated or deactivated", required = true) String status) {
-    try {
-      boolean isActiveBool = Boolean.parseBoolean(status);
-      featureService.saveActiveFeature(MFA_FEATURE, isActiveBool);
-      return Response.ok().type(MediaType.TEXT_PLAIN).build();
-    } catch (Exception e) {
-      LOG.warn("Error when changing MFA feature activation with name '{}'", MFA_FEATURE, e);
-      return Response.serverError().entity(e.getMessage()).build();
-    }
+    boolean isActiveBool = Boolean.parseBoolean(status);
+    featureService.saveActiveFeature(MFA_FEATURE, isActiveBool);
+    return Response.ok().type(MediaType.TEXT_PLAIN).build();
   }
 
   @Path("/revocations")

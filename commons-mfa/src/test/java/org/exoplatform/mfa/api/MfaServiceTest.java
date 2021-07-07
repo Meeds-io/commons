@@ -26,6 +26,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.mock;
 
 public class MfaServiceTest {
   
@@ -39,6 +40,7 @@ public class MfaServiceTest {
 
   @Before
   public void setUp() {
+    featureService=mock(ExoFeatureService.class);
     InitParams initParams = new InitParams();
     ValueParam protectedGroupNavigations = new ValueParam();
     protectedGroupNavigations.setName("protectedGroupNavigations");
@@ -68,6 +70,7 @@ public class MfaServiceTest {
     List<MembershipEntry> groups = new ArrayList<>();
     MembershipEntry mb = new MembershipEntry("/platform/administrators", "member");
     groups.add(mb);
+   
     Identity rootIdentity=new Identity("root", groups);
     ConversationState.setCurrent(new ConversationState(rootIdentity));
     
@@ -167,5 +170,11 @@ public class MfaServiceTest {
     assertEquals(revocationRequest.getUser(),result.getUser());
     assertEquals(revocationRequest.getType(),result.getType());
 
+  }
+
+  @Test
+  public void testIsMfaFeatureActivated() {
+    boolean isMfaActivated = mfaService.isMfaFeatureActivated();
+    assertFalse(isMfaActivated);
   }
 }

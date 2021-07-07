@@ -152,6 +152,10 @@ public class MfaService {
   }
   
   public boolean isMfaFeatureActivated() {
-    return featureService.isActiveFeature(MFA_FEATURE);
+    Boolean isMfaFeatureAcivated = featureService.isActiveFeature(MFA_FEATURE);
+    if(isMfaFeatureAcivated == null) {
+      return true;
+    }
+    return isMfaFeatureAcivated;
   }
 }
