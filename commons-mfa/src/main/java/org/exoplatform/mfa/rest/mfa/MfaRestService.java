@@ -9,11 +9,13 @@ import org.exoplatform.mfa.api.MfaService;
 
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import org.exoplatform.services.rest.resource.ResourceContainer;
+import org.exoplatform.services.security.ConversationState;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -45,5 +47,21 @@ public class MfaRestService implements ResourceContainer {
 
     }
 
+  }
+
+  @Path("/revocation")
+  @POST
+  @Produces(MediaType.APPLICATION_JSON)
+  @RolesAllowed("users")
+  @ApiOperation(value = "Create a Revocation Request", httpMethod = "POST", response = Response.class, produces =
+      MediaType.APPLICATION_JSON)
+  @ApiResponses(value = { @ApiResponse(code = HTTPStatus.OK, message = "Request fulfilled"),
+      @ApiResponse(code = HTTPStatus.UNAUTHORIZED, message = "Unauthorized operation"),
+      @ApiResponse(code = HTTPStatus.INTERNAL_ERROR, message = "Internal server error"),
+      @ApiResponse(code = HTTPStatus.CONFLICT, message = "A revocation Request exists") })
+  public Response addRevocationRequest(String type) {
+    String userId = ConversationState.getCurrent().getIdentity().getUserId();
+    boolean result=mfaService.addRevocationRequest(userId,type);
+    return Response.ok().entity("{\"result\":\"" + result + "\"}").build();
   }
 }

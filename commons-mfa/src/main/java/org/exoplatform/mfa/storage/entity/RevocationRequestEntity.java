@@ -1,0 +1,69 @@
+package org.exoplatform.mfa.storage.entity;
+
+import org.exoplatform.commons.api.persistence.ExoEntity;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
+
+@Entity(name = "RevocationRequestEntity")
+@ExoEntity
+@Table(name = "MFA_REVOCATION_REQUEST")
+@NamedQueries({
+    @NamedQuery(name = "RevocationRequestEntity.countByUsernameAndType", query = "SELECT count(*) FROM RevocationRequestEntity "
+        + "revocationRequest WHERE revocationRequest.user = :username "
+        + "AND revocationRequest.type = :type")
+})
+public class RevocationRequestEntity {
+
+  @Id
+  @SequenceGenerator(name = "SEQ_REVOCATION_REQUEST_ID", sequenceName = "SEQ_REVOCATION_REQUEST_ID")
+  @GeneratedValue(strategy = GenerationType.AUTO, generator = "SEQ_REVOCATION_REQUEST_ID")
+  @Column(name = "ID")
+  private Long id;
+
+  @Column(name = "USER", nullable = false)
+  private String user;
+
+  @Column(name = "TYPE")
+  private String type;
+
+  public RevocationRequestEntity(Long id, String user, String type) {
+    this.id = id;
+    this.user = user;
+    this.type = type;
+  }
+
+  public RevocationRequestEntity() {
+  }
+
+  public Long getId() {
+    return id;
+  }
+
+  public void setId(Long id) {
+    this.id = id;
+  }
+
+  public String getUser() {
+    return user;
+  }
+
+  public void setUser(String user) {
+    this.user = user;
+  }
+
+  public String getType() {
+    return type;
+  }
+
+  public void setType(String type) {
+    this.type = type;
+  }
+}

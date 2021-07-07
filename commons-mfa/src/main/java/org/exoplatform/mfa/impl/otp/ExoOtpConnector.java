@@ -48,9 +48,9 @@ public class ExoOtpConnector implements OtpConnector {
   public ExoOtpConnector(InitParams initParams, SettingService settingService, BrandingService brandingService) {
     this.settingservice=settingService;
     if (initParams.getValueParam(ISSUER_PARAM)!=null && !initParams.getValueParam(ISSUER_PARAM).getValue().isBlank()) {
-      issuer =initParams.getValueParam(ISSUER_PARAM).getValue();
+      issuer = initParams.getValueParam(ISSUER_PARAM).getValue();
     } else {
-      issuer =brandingService.getCompanyName();
+      issuer = brandingService.getCompanyName();
     }
 
     if (initParams.getValueParam("timePeriod")!=null) {
