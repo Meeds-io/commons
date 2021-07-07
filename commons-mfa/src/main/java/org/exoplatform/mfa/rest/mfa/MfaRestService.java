@@ -3,6 +3,7 @@ package org.exoplatform.mfa.rest.mfa;
 
 import io.swagger.annotations.*;
 import org.exoplatform.common.http.HTTPStatus;
+import org.exoplatform.commons.api.settings.ExoFeatureService;
 import org.exoplatform.commons.utils.CommonsUtils;
 import org.exoplatform.mfa.api.MfaService;
 
@@ -21,7 +22,8 @@ import org.exoplatform.mfa.storage.dto.RevocationRequest;
 import org.exoplatform.mfa.rest.entities.RevocationRequestEntity;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
-
+import org.exoplatform.services.log.ExoLogger;
+import org.exoplatform.services.log.Log;
 import org.exoplatform.services.rest.resource.ResourceContainer;
 import org.exoplatform.services.security.ConversationState;
 import org.json.JSONException;
@@ -34,10 +36,11 @@ import java.util.stream.Collectors;
 @Api(value = "/mfa")
 public class MfaRestService implements ResourceContainer {
 
+  public static final String MFA_FEATURE = "mfa";
+
   private MfaService mfaService;
 
   private static final Log LOG = ExoLogger.getLogger(MfaRestService.class);
-
 
   public MfaRestService(MfaService mfaService) {
     this.mfaService=mfaService;
@@ -52,7 +55,6 @@ public class MfaRestService implements ResourceContainer {
       @ApiResponse(code = HTTPStatus.UNAUTHORIZED, message = "Unauthorized operation"),
       @ApiResponse(code = HTTPStatus.INTERNAL_ERROR, message = "Internal server error"), })
   public Response getMfaSystem() {
-    MfaService mfaService = CommonsUtils.getService(MfaService.class);
     JSONObject result = new JSONObject();
     try {
       result.put("mfaSystem", mfaService.getMfaSystem());
@@ -63,7 +65,7 @@ public class MfaRestService implements ResourceContainer {
     }
   }
 
-  @Path("/switchMfaFeatureActivation/{status}")
+  @Path("/changeMfaFeatureActivation/{status}")
   @PUT
   @Produces(MediaType.APPLICATION_JSON)
   @RolesAllowed("users")
@@ -71,28 +73,16 @@ public class MfaRestService implements ResourceContainer {
   @ApiResponses(value = { @ApiResponse(code = HTTPStatus.OK, message = "Request fulfilled"),
       @ApiResponse(code = HTTPStatus.UNAUTHORIZED, message = "Unauthorized operation"),
       @ApiResponse(code = HTTPStatus.INTERNAL_ERROR, message = "Internal server error"), })
-  public Response disableMfaFeature(@ApiParam(value = "Switch the Activated MFA System to enabled or disabled", required = true) String status) {
-    MfaService mfaService = CommonsUtils.getService(MfaService.class);
-    if(status != null && Boolean.valueOf(status)) {
-     mfaService.enableMfaFeature(status);
-   }else {
-     mfaService.disableMfaFeature(status);
-   }
-   return Response.ok().build();
-  }
-
-  @Path("/getMfaStatus")
-  @GET
-  @Produces(MediaType.APPLICATION_JSON)
-  @RolesAllowed("users")
-  @ApiOperation(value = "Get MFA feature status", httpMethod = "GET", response = Response.class, produces = MediaType.APPLICATION_JSON)
-  @ApiResponses(value = { @ApiResponse(code = HTTPStatus.OK, message = "Request fulfilled"),
-          @ApiResponse(code = HTTPStatus.UNAUTHORIZED, message = "Unauthorized operation"),
-          @ApiResponse(code = HTTPStatus.INTERNAL_ERROR, message = "Internal server error"), })
-  public Response getMfaStatus() {
-    MfaService mfaService = CommonsUtils.getService(MfaService.class);
-    boolean status = mfaService.getMfaStatus();
-    return Response.ok().entity("{\"mfaStatus\":\"" + status + "\"}").build();
+  public Response changeMfaFeatureActivation(@ApiParam(value = "Switch the Activated MFA System to avtivated or deactivated", required = true) String status) {
+    try {
+      ExoFeatureService featureService = CommonsUtils.getService(ExoFeatureService.class);
+      boolean isActiveBool = Boolean.parseBoolean(status);
+      featureService.saveActiveFeature(MFA_FEATURE, isActiveBool);
+      return Response.ok().type(MediaType.TEXT_PLAIN).build();
+    } catch (Exception e) {
+      LOG.warn("Error when changing MFA feature activation with name '{}'", MFA_FEATURE, e);
+      return Response.serverError().entity(e.getMessage()).build();
+    }
   }
 
   @Path("/revocations")
