@@ -1,11 +1,11 @@
 package org.exoplatform.mfa.api;
 
-
 import org.exoplatform.commons.api.settings.SettingService;
 import org.exoplatform.commons.api.settings.SettingValue;
 import org.exoplatform.commons.api.settings.data.Context;
 import org.exoplatform.commons.api.settings.data.Scope;
 import org.exoplatform.commons.utils.CommonsUtils;
+import org.exoplatform.commons.api.settings.ExoFeatureService;
 import org.exoplatform.container.xml.InitParams;
 import org.exoplatform.container.xml.ValueParam;
 import org.exoplatform.mfa.api.otp.OtpService;
@@ -21,16 +21,21 @@ import java.util.stream.Collectors;
 public class MfaService {
   private static final String DEFAULT_MFA_SYSTEM = "otp";
 
+  public static final String MFA_FEATURE = "mfa";
+
   private String              mfaSystem;
+
+  private ExoFeatureService featureService;
 
   private List<String>        protectedNavigations=new ArrayList<>();
   private List<String>        protectedGroups=new ArrayList<>();
-
 
   private MfaStorage      mfaStorage;
 
   public MfaService(InitParams initParams, MfaStorage mfaStorage) {
 
+  public MfaService(InitParams initParams, MfaStorage mfaStorage, ExoFeatureService featureService) {
+    this.featureService = featureService;
     ValueParam protectedGroupNavigations = initParams.getValueParam("protectedGroupNavigations");
     if (protectedGroupNavigations!=null) {
       this.protectedNavigations = Arrays.stream(protectedGroupNavigations.getValue().split(","))
@@ -144,5 +149,9 @@ public class MfaService {
     SettingService settingService = CommonsUtils.getService(SettingService.class);
     SettingValue<?> settingValue = settingService.get(Context.GLOBAL, Scope.GLOBAL.id(null), "MFA_STATUS");
     return Boolean.valueOf(settingValue.getValue().toString());
+  }
+  
+  public boolean isMfaFeatureActivated() {
+    return featureService.isActiveFeature(MFA_FEATURE);
   }
 }

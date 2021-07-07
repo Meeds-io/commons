@@ -40,10 +40,13 @@ public class MfaRestService implements ResourceContainer {
 
   private MfaService mfaService;
 
+  private ExoFeatureService featureService;
+
   private static final Log LOG = ExoLogger.getLogger(MfaRestService.class);
 
-  public MfaRestService(MfaService mfaService) {
+  public MfaRestService(MfaService mfaService, ExoFeatureService featureService) {
     this.mfaService=mfaService;
+    this.featureService=featureService;
   }
 
   @Path("/settings")
@@ -75,7 +78,6 @@ public class MfaRestService implements ResourceContainer {
       @ApiResponse(code = HTTPStatus.INTERNAL_ERROR, message = "Internal server error"), })
   public Response changeMfaFeatureActivation(@ApiParam(value = "Switch the Activated MFA System to avtivated or deactivated", required = true) String status) {
     try {
-      ExoFeatureService featureService = CommonsUtils.getService(ExoFeatureService.class);
       boolean isActiveBool = Boolean.parseBoolean(status);
       featureService.saveActiveFeature(MFA_FEATURE, isActiveBool);
       return Response.ok().type(MediaType.TEXT_PLAIN).build();

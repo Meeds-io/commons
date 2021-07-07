@@ -1,5 +1,6 @@
 package org.exoplatform.mfa.api;
 
+import org.exoplatform.commons.api.settings.ExoFeatureService;
 import org.exoplatform.container.xml.ValueParam;
 import org.exoplatform.container.xml.InitParams;
 import org.exoplatform.mfa.storage.MfaStorage;
@@ -10,6 +11,7 @@ import org.exoplatform.services.security.Identity;
 import org.exoplatform.services.security.MembershipEntry;
 import org.junit.Before;
 import org.junit.Test;
+
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 
@@ -32,6 +34,9 @@ public class MfaServiceTest {
   @Mock
   MfaStorage mfaStorage;
 
+  @Mock
+  ExoFeatureService featureService;
+
   @Before
   public void setUp() {
     InitParams initParams = new InitParams();
@@ -46,7 +51,7 @@ public class MfaServiceTest {
     initParams.addParam(protectedGroups);
 
     mfaStorage=mock(MfaStorage.class);
-    this.mfaService=new MfaService(initParams,mfaStorage);
+    this.mfaService=new MfaService(initParams,mfaStorage,featureService);
   }
   
   @Test

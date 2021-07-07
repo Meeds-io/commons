@@ -1,5 +1,6 @@
 package org.exoplatform.mfa.api.rest;
 
+import org.exoplatform.commons.api.settings.ExoFeatureService;
 import org.exoplatform.mfa.api.MfaService;
 import org.exoplatform.mfa.api.otp.OtpService;
 import org.exoplatform.mfa.rest.mfa.MfaRestService;
@@ -18,8 +19,9 @@ import javax.ws.rs.core.Response;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
+
 import static org.mockito.Mockito.doNothing;
+import static org.junit.Assert.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -32,12 +34,17 @@ public class MfaRestServiceTest {
   @Mock
   MfaService mfaService;
 
+  @Mock
+  ExoFeatureService featureService;
+
+  public static final String MFA_FEATURE = "mfa";
+
   @Before
   public void setUp() {
     mfaService=mock(MfaService.class);
-    mfaRestService = new MfaRestService(mfaService);
+    featureService=mock(ExoFeatureService.class);
+    mfaRestService = new MfaRestService(mfaService, featureService);
   }
-
   private void startSessionAs(String username) {
     Identity identity = new Identity(username);
     ConversationState state = new ConversationState(identity);
@@ -55,6 +62,7 @@ public class MfaRestServiceTest {
   }
 
   @Test
+
   public void testAddNonExistingRevocationRequest() {
     String user = "john";
     String mfaSystem = "otp";
@@ -147,5 +155,12 @@ public class MfaRestServiceTest {
     assertEquals(400,response.getStatus());
     verify(mfaService,times(0)).confirmRevocationRequest(0L);
     verify(mfaService,times(0)).cancelRevocationRequest(0L);
+  }
+  
+  @Test
+  public void testChangeMfaFeatureActivation() {
+    featureService.saveActiveFeature(MFA_FEATURE, false);
+    boolean response = mfaService.isMfaFeatureActivated();
+    assertFalse(response);
   }
 }
