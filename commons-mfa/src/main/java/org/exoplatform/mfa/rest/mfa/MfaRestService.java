@@ -4,7 +4,6 @@ package org.exoplatform.mfa.rest.mfa;
 import io.swagger.annotations.*;
 import org.exoplatform.common.http.HTTPStatus;
 import org.exoplatform.commons.api.settings.ExoFeatureService;
-import org.exoplatform.commons.utils.CommonsUtils;
 import org.exoplatform.mfa.api.MfaService;
 
 import javax.annotation.security.RolesAllowed;
