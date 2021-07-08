@@ -16,8 +16,13 @@ import javax.persistence.Table;
 @ExoEntity
 @Table(name = "MFA_REVOCATION_REQUEST")
 @NamedQueries({
-    @NamedQuery(name = "RevocationRequestEntity.countByUsernameAndType", query = "SELECT count(*) FROM RevocationRequestEntity "
-        + "revocationRequest WHERE revocationRequest.user = :username "
+    @NamedQuery(name = "RevocationRequestEntity.countByUsernameAndType", query = "SELECT count(*) "
+        + "FROM RevocationRequestEntity revocationRequest "
+        + "WHERE revocationRequest.username = :username "
+        + "AND revocationRequest.type = :type"),
+    @NamedQuery(name = "RevocationRequestEntity.deleteByUsernameAndType", query = "DELETE "
+        + "FROM RevocationRequestEntity revocationRequest "
+        + "WHERE revocationRequest.username = :username "
         + "AND revocationRequest.type = :type")
 })
 public class RevocationRequestEntity {
@@ -28,15 +33,15 @@ public class RevocationRequestEntity {
   @Column(name = "ID")
   private Long id;
 
-  @Column(name = "USER", nullable = false)
-  private String user;
+  @Column(name = "USERNAME", nullable = false)
+  private String username;
 
   @Column(name = "TYPE")
   private String type;
 
-  public RevocationRequestEntity(Long id, String user, String type) {
+  public RevocationRequestEntity(Long id, String username, String type) {
     this.id = id;
-    this.user = user;
+    this.username = username;
     this.type = type;
   }
 
@@ -51,12 +56,12 @@ public class RevocationRequestEntity {
     this.id = id;
   }
 
-  public String getUser() {
-    return user;
+  public String getUsername() {
+    return username;
   }
 
-  public void setUser(String user) {
-    this.user = user;
+  public void setUsername(String username) {
+    this.username = username;
   }
 
   public String getType() {

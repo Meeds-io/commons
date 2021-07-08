@@ -1,5 +1,6 @@
 package org.exoplatform.mfa.api.storage;
 
+import org.exoplatform.commons.persistence.impl.EntityManagerService;
 import org.exoplatform.container.ExoContainerContext;
 import org.exoplatform.container.PortalContainer;
 import org.exoplatform.container.RootContainer;
@@ -17,6 +18,7 @@ import org.mockito.Mock;
 
 import static org.jgroups.util.Util.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
 
@@ -42,6 +44,8 @@ public class MfaStorageTest {
     assertNotNull(container);
 
     ExoContainerContext.setCurrentContainer(container);
+
+
     RequestLifeCycle.begin(container);
   }
 
@@ -50,6 +54,7 @@ public class MfaStorageTest {
     RevocationRequestDAO revocationRequestDAO = ExoContainerContext.getService(RevocationRequestDAO.class);
     revocationRequestDAO.deleteAll();
 
+
     RequestLifeCycle.end();
     container.stop();
     container = null;
@@ -57,7 +62,7 @@ public class MfaStorageTest {
   }
 
   @Test
-  public void testCreateRevocationRequest() throws Exception {
+  public void testCreateRevocationRequest() {
     MfaStorage mfaStorage = ExoContainerContext.getService(MfaStorage.class);
     assertNotNull(mfaStorage);
 
@@ -93,5 +98,32 @@ public class MfaStorageTest {
     assertEquals(2L,mfaStorage.countByUsernameAndType(user,type));
 
   }
+
+  @Test
+  public void testDeleteByUsernameAndType() {
+    MfaStorage mfaStorage = ExoContainerContext.getService(MfaStorage.class);
+
+    String user ="john";
+    String type="otp";
+    assertEquals(0L,mfaStorage.countByUsernameAndType(user,type));
+
+    RevocationRequest revocationRequest = new RevocationRequest(null,user, type);
+    mfaStorage.createRevocationRequest(revocationRequest);
+    assertEquals(1L,mfaStorage.countByUsernameAndType(user,type));
+
+    mfaStorage.createRevocationRequest(revocationRequest);
+    assertEquals(2L,mfaStorage.countByUsernameAndType(user,type));
+
+//    entityMgrService.getEntityManager().getTransaction().commit();
+//    entityMgrService.getEntityManager().getTransaction().begin();
+    mfaStorage.deleteRevocationRequest(user,type);
+//    mfaStorage.delete(revocationRequest);
+//    entityMgrService.getEntityManager().getTransaction().commit();
+//    entityMgrService.getEntityManager().getTransaction().begin();
+    assertEquals(0L,mfaStorage.countByUsernameAndType(user,type));
+
+  }
+
+
 
 }

@@ -20,6 +20,9 @@ import org.exoplatform.mfa.storage.dao.RevocationRequestDAO;
 import org.exoplatform.mfa.storage.dto.RevocationRequest;
 import org.exoplatform.mfa.storage.entity.RevocationRequestEntity;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 /**
  * Storage service to access / load and save applications. This service will be
  * used , as well, to convert from JPA entity to DTO.
@@ -45,6 +48,10 @@ public class MfaStorage {
     return revocationRequestDAO.countByUsernameAndType(username,type);
   }
 
+  public void deleteRevocationRequest(String username, String type) {
+    revocationRequestDAO.deleteByUsernameAndType(username, type);
+  }
+
   private RevocationRequestEntity toEntity(RevocationRequest revocationRequest) {
     if (revocationRequest == null) {
       return null;
@@ -57,7 +64,7 @@ public class MfaStorage {
       return null;
     }
     return new RevocationRequest(revocationRequestEntity.getId(),
-                                  revocationRequestEntity.getUser(),
+                                  revocationRequestEntity.getUsername(),
                                   revocationRequestEntity.getType());
   }
 }

@@ -77,4 +77,8 @@ public class MfaService {
   public boolean hasRevocationRequest(String username, String mfaType) {
     return mfaStorage.countByUsernameAndType(username,mfaType) > 0;
   }
+
+  public void deleteRevocationRequest(String username, String type) {
+    mfaStorage.deleteRevocationRequest(username,type);
+  }
 }

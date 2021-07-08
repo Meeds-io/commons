@@ -94,4 +94,14 @@ public class MfaServiceTest {
 
     verify(mfaStorage,times(1)).createRevocationRequest(any());
   }
+
+  @Test
+  public void testDeleteRevocationRequest(){
+
+    String type = "otp";
+    String user = "john";
+    mfaService.deleteRevocationRequest(user, type);
+
+    verify(mfaStorage,times(1)).deleteRevocationRequest(user,type);
+  }
 }

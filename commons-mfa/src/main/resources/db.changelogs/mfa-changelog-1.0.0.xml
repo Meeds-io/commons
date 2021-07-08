@@ -38,7 +38,7 @@ Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
       <column name="ID" type="BIGINT" autoIncrement="${autoIncrement}" startWith="1">
         <constraints nullable="false" primaryKey="true" primaryKeyName="PK_MFA_REVOCATION_REQUEST_ID" />
       </column>
-      <column name="user" type="VARCHAR(100)">
+      <column name="USERNAME" type="VARCHAR(100)">
         <constraints nullable="false" />
       </column>
       <column name="TYPE" type="VARCHAR(50)">

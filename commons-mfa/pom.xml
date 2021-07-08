@@ -11,7 +11,7 @@
   <packaging>jar</packaging>
   <name>eXo PLF:: Commons - Commons MFA</name>
   <properties>
-    <exo.test.coverage.ratio>0.73</exo.test.coverage.ratio>
+    <exo.test.coverage.ratio>0.85</exo.test.coverage.ratio>
   </properties>
   <dependencies>
     <!-- PLF dependencies -->
@@ -54,4 +54,13 @@
       <type>test-jar</type>
     </dependency>
   </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>com.jcabi</groupId>
+        <artifactId>jcabi-maven-plugin</artifactId>
+      </plugin>
+    </plugins>
+  </build>
 </project>
