@@ -6,7 +6,6 @@ import org.exoplatform.mfa.storage.entity.RevocationRequestEntity;
 
 import javax.persistence.Query;
 import javax.persistence.TypedQuery;
-import java.util.List;
 
 public class RevocationRequestDAO extends GenericDAOJPAImpl<RevocationRequestEntity, Long> {
 

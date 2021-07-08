@@ -20,9 +20,6 @@ import org.exoplatform.mfa.storage.dao.RevocationRequestDAO;
 import org.exoplatform.mfa.storage.dto.RevocationRequest;
 import org.exoplatform.mfa.storage.entity.RevocationRequestEntity;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
 /**
  * Storage service to access / load and save applications. This service will be
  * used , as well, to convert from JPA entity to DTO.
