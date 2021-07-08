@@ -21,6 +21,10 @@ import java.util.stream.Collectors;
 public class MfaService {
   private static final String DEFAULT_MFA_SYSTEM = "otp";
 
+  private static final String MFA_OIDC = "oidc";
+
+  private static final String MFA_FIDO = "fido";
+
   public static final String MFA_FEATURE = "mfa";
 
   private String              mfaSystem;
@@ -151,6 +155,23 @@ public class MfaService {
     return Boolean.valueOf(settingValue.getValue().toString());
   }
   
+  public void switchMfaSystem(String mfaSystem) {
+    switch (mfaSystem) {
+      case "OTP" :
+        this.mfaSystem = DEFAULT_MFA_SYSTEM;
+        break;
+      case "Fido 2" :
+        this.mfaSystem = MFA_FIDO;
+        break;
+      case "SuperGluu" :
+        this.mfaSystem = MFA_OIDC;
+        break;
+      default:
+        this.mfaSystem =DEFAULT_MFA_SYSTEM;
+        break;
+    }
+  }
+
   public boolean isMfaFeatureActivated() {
     Boolean isMfaFeatureAcivated = featureService.isActiveFeature(MFA_FEATURE);
     if(isMfaFeatureAcivated == null) {

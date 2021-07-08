@@ -18,9 +18,7 @@ import org.mockito.Mock;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -176,5 +174,24 @@ public class MfaServiceTest {
   public void testIsMfaFeatureActivated() {
     boolean isMfaActivated = mfaService.isMfaFeatureActivated();
     assertFalse(isMfaActivated);
+  }
+
+  @Test
+  public void testGetMfaSystem() {
+    String mfaSystem = mfaService.getMfaSystem();
+    assertEquals("otp", mfaSystem);
+  }
+
+
+  @Test
+  public void testswitchMfaSystem() {
+    String mfaSystem = mfaService.getMfaSystem();
+    assertEquals("otp", mfaSystem);
+
+    mfaService.switchMfaSystem("Fido 2");
+    assertEquals("fido", mfaService.getMfaSystem());
+
+    mfaService.switchMfaSystem("SuperGluu");
+    assertEquals("oidc", mfaService.getMfaSystem());
   }
 }

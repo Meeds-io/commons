@@ -41,8 +41,6 @@ public class MfaRestService implements ResourceContainer {
 
   private ExoFeatureService featureService;
 
-  private static final Log LOG = ExoLogger.getLogger(MfaRestService.class);
-
   public MfaRestService(MfaService mfaService, ExoFeatureService featureService) {
     this.mfaService=mfaService;
     this.featureService=featureService;
@@ -160,4 +158,16 @@ public class MfaRestService implements ResourceContainer {
                                        revocationRequest.getType());
   }
 
+  @Path("/changeMfaSystem/{mfaSystem}")
+  @PUT
+  @Produces(MediaType.APPLICATION_JSON)
+  @RolesAllowed("users")
+  @ApiOperation(value = "Change the MFA MFA System", httpMethod = "PUT", response = Response.class, produces = MediaType.APPLICATION_JSON)
+  @ApiResponses(value = { @ApiResponse(code = HTTPStatus.OK, message = "Request fulfilled"),
+          @ApiResponse(code = HTTPStatus.UNAUTHORIZED, message = "Unauthorized operation"),
+          @ApiResponse(code = HTTPStatus.INTERNAL_ERROR, message = "Internal server error"), })
+  public Response changeMfaSystem(@ApiParam(value = "Change the MFA MFA System to OTP, Fido 2 or SuperGluu", required = true) String mfaSystem) {
+    mfaService.switchMfaSystem(mfaSystem);
+    return Response.ok().type(MediaType.TEXT_PLAIN).build();
+  }
 }

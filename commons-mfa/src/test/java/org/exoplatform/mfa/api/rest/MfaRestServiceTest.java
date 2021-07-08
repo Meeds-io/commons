@@ -163,4 +163,11 @@ public class MfaRestServiceTest {
 
     assertEquals(200 ,response.getStatus());
   }
+
+  @Test
+  public void testChangeMfaSystem() {
+    Response response = mfaRestService.changeMfaSystem("SuperGluu");
+
+    assertEquals(200 ,response.getStatus());
+  }
 }
