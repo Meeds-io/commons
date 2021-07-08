@@ -3,6 +3,7 @@ package org.exoplatform.mfa.api.otp;
 import org.exoplatform.commons.api.settings.SettingService;
 import org.exoplatform.container.xml.InitParams;
 import org.exoplatform.container.xml.ValueParam;
+import org.exoplatform.mfa.api.MfaService;
 import org.exoplatform.mfa.api.otp.OtpConnector;
 import org.exoplatform.mfa.api.otp.OtpService;
 import org.exoplatform.mfa.impl.otp.ExoOtpConnector;
@@ -26,6 +27,9 @@ public class OtpServiceTest {
   @Mock
   OtpConnector otpConnector;
 
+  @Mock
+  MfaService mfaService;
+
   @Before
   public void setUp() {
     InitParams initParams = new InitParams();
@@ -33,7 +37,8 @@ public class OtpServiceTest {
     valueParam.setName("activeConnector");
     valueParam.setValue("ExoOtpConnector");
     initParams.addParam(valueParam);
-    this.otpService=new OtpService(initParams);
+    mfaService = mock(MfaService.class);
+    this.otpService=new OtpService(initParams,mfaService);
 
     otpConnector = mock(ExoOtpConnector.class);
     doCallRealMethod().when(otpConnector).setName(anyString());
@@ -46,12 +51,29 @@ public class OtpServiceTest {
   @Test
   public void testValidateToken() {
     //GIVEN
-
+    String user = "john";
+    String token = "token";
     //WHEN
-    otpService.validateToken("user","token");
+    when(otpConnector.validateToken(eq(user),eq(token),any())).thenReturn(true);
+    otpService.validateToken(user,token);
 
     //THEN
-    verify(otpConnector, times(1)).validateToken(eq("user"),eq("token"),any());
+    verify(otpConnector, times(1)).validateToken(eq(user),eq(token),any());
+    verify(mfaService, times(1)).deleteRevocationRequest(user,otpService.getType());
+  }
+
+  @Test
+  public void testInValidateToken() {
+    //GIVEN
+    String user = "john";
+    String token = "token";
+    //WHEN
+    when(otpConnector.validateToken(eq(user),eq(token),any())).thenReturn(false);
+    otpService.validateToken(user,token);
+
+    //THEN
+    verify(otpConnector, times(1)).validateToken(eq(user),eq(token),any());
+    verify(mfaService, times(0)).deleteRevocationRequest(user,otpService.getType());
   }
 
   @Test

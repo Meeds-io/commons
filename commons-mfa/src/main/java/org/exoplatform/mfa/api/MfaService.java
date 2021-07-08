@@ -2,7 +2,8 @@ package org.exoplatform.mfa.api;
 
 import org.exoplatform.container.xml.InitParams;
 import org.exoplatform.container.xml.ValueParam;
-import org.exoplatform.services.security.ConversationState;
+import org.exoplatform.mfa.storage.MfaStorage;
+import org.exoplatform.mfa.storage.dto.RevocationRequest;
 import org.exoplatform.services.security.Identity;
 
 import java.util.ArrayList;
@@ -18,7 +19,10 @@ public class MfaService {
   private List<String>        protectedNavigations=new ArrayList<>();
   private List<String>        protectedGroups=new ArrayList<>();
 
-  public MfaService(InitParams initParams) {
+
+  private MfaStorage      mfaStorage;
+
+  public MfaService(InitParams initParams, MfaStorage mfaStorage) {
 
     ValueParam protectedGroupNavigations = initParams.getValueParam("protectedGroupNavigations");
     if (protectedGroupNavigations!=null) {
@@ -28,9 +32,9 @@ public class MfaService {
                                         .collect(Collectors.toList());
     }
   
-    ValueParam protectedGroups = initParams.getValueParam("protectedGroups");
-    if (protectedGroups!=null) {
-      this.protectedGroups = Arrays.stream(protectedGroups.getValue().split(","))
+    ValueParam protectedGroupsValueParam = initParams.getValueParam("protectedGroups");
+    if (protectedGroupsValueParam!=null) {
+      this.protectedGroups = Arrays.stream(protectedGroupsValueParam.getValue().split(","))
                                    .filter(s -> !s.isEmpty())
                                    .collect(Collectors.toList());
     }
@@ -41,19 +45,40 @@ public class MfaService {
     } else {
       mfaSystem = DEFAULT_MFA_SYSTEM;
     }
+
+    this.mfaStorage=mfaStorage;
   }
 
   public boolean isProtectedUri(String requestUri) {
-    return protectedNavigations.stream().filter(s -> requestUri.contains(s)).count() > 0;
+    return protectedNavigations.stream().anyMatch(requestUri::contains);
 
   }
   
-  public boolean currentUserIsInProtectedGroup() {
-    Identity identity = ConversationState.getCurrent().getIdentity();
-    return protectedGroups.stream().anyMatch(group -> identity.isMemberOf(group));
+  public boolean currentUserIsInProtectedGroup(Identity identity) {
+    return protectedGroups.stream().anyMatch(identity::isMemberOf);
   }
 
   public String getMfaSystem() {
     return mfaSystem;
+  }
+
+  public boolean addRevocationRequest(String username, String mfaType) {
+    if (!hasRevocationRequest(username,mfaType)) {
+      RevocationRequest revocationRequest = new RevocationRequest();
+      revocationRequest.setUser(username);
+      revocationRequest.setType(mfaType);
+      mfaStorage.createRevocationRequest(revocationRequest);
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  public boolean hasRevocationRequest(String username, String mfaType) {
+    return mfaStorage.countByUsernameAndType(username,mfaType) > 0;
+  }
+
+  public void deleteRevocationRequest(String username, String type) {
+    mfaStorage.deleteRevocationRequest(username,type);
   }
 }
