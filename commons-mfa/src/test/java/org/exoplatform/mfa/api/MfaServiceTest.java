@@ -4,6 +4,7 @@ import org.exoplatform.container.xml.ValueParam;
 import org.exoplatform.container.xml.InitParams;
 import org.exoplatform.mfa.storage.MfaStorage;
 import org.exoplatform.mfa.storage.dto.RevocationRequest;
+import org.exoplatform.portal.branding.BrandingService;
 import org.exoplatform.services.security.ConversationState;
 import org.exoplatform.services.security.Identity;
 import org.exoplatform.services.security.MembershipEntry;
@@ -96,12 +97,70 @@ public class MfaServiceTest {
   }
 
   @Test
-  public void testDeleteRevocationRequest(){
+  public void testDeleteRevocationRequestByUserAndType(){
 
     String type = "otp";
     String user = "john";
     mfaService.deleteRevocationRequest(user, type);
 
     verify(mfaStorage,times(1)).deleteRevocationRequest(user,type);
+  }
+
+  @Test
+  public void testCancelRevocationRequest(){
+    long id = 0L;
+    mfaService.cancelRevocationRequest(id);
+    ArgumentCaptor<RevocationRequest> revocationRequestArgumentCaptor=ArgumentCaptor.forClass(RevocationRequest.class);
+    verify(mfaStorage,times(1)).deleteById(id);
+  }
+
+  @Test
+  public void testConfirmRevocationRequest(){
+    //To activate when OtpService is loaded as connector in mfa service
+//    long id = 0L;
+//    RevocationRequest returnedRevocationRequest = new RevocationRequest();
+//    returnedRevocationRequest.setId(id);
+//    returnedRevocationRequest.setUser("user");
+//    returnedRevocationRequest.setType("otp");
+//
+//    when(mfaStorage.findById(id)).thenReturn(returnedRevocationRequest);
+//
+//    mfaService.confirmRevocationRequest(id);
+//    verify(mfaStorage,times(1)).deleteById(id);
+  }
+
+  @Test
+  public void testFindAll() {
+
+    List<RevocationRequest> revocationRequests = new ArrayList<>();
+    revocationRequests.add(new RevocationRequest(0L,"john","otp"));
+    revocationRequests.add(new RevocationRequest(1L,"mary","otp"));
+
+    when(mfaStorage.findAll()).thenReturn(revocationRequests);
+
+    List<RevocationRequest> returnedRevocationRequests = mfaService.getAllRevocationRequests();
+    assertEquals(revocationRequests.size(),returnedRevocationRequests.size());
+    returnedRevocationRequests.stream().forEach(revocationRequest -> {
+      RevocationRequest rq = revocationRequests.stream()
+                                               .filter(revocationRequest1 -> revocationRequest1.getId()==revocationRequest.getId())
+                                               .findFirst().get();
+      assertEquals(revocationRequest.getUser(),rq.getUser());
+      assertEquals(revocationRequest.getType(),rq.getType());
+
+    });
+  }
+
+  @Test
+  public void testFindById() {
+
+    RevocationRequest revocationRequest = new RevocationRequest(0L,"john","otp");
+    when(mfaStorage.findById(0L)).thenReturn(revocationRequest);
+
+    RevocationRequest result = mfaService.getRevocationRequestById(revocationRequest.getId());
+
+    assertEquals(revocationRequest.getId(),result.getId());
+    assertEquals(revocationRequest.getUser(),result.getUser());
+    assertEquals(revocationRequest.getType(),result.getType());
+
   }
 }

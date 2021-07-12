@@ -114,16 +114,73 @@ public class MfaStorageTest {
     mfaStorage.createRevocationRequest(revocationRequest);
     assertEquals(2L,mfaStorage.countByUsernameAndType(user,type));
 
-//    entityMgrService.getEntityManager().getTransaction().commit();
-//    entityMgrService.getEntityManager().getTransaction().begin();
     mfaStorage.deleteRevocationRequest(user,type);
-//    mfaStorage.delete(revocationRequest);
-//    entityMgrService.getEntityManager().getTransaction().commit();
-//    entityMgrService.getEntityManager().getTransaction().begin();
     assertEquals(0L,mfaStorage.countByUsernameAndType(user,type));
 
   }
 
+  @Test
+  public void testDeleteById() {
+    MfaStorage mfaStorage = ExoContainerContext.getService(MfaStorage.class);
+
+    String user ="john";
+    String user2 ="mary";
+    String type="otp";
+    assertEquals(0,mfaStorage.findAll().size());
+
+    RevocationRequest revocationRequest = new RevocationRequest(null,user, type);
+    revocationRequest=mfaStorage.createRevocationRequest(revocationRequest);
+    assertEquals(1,mfaStorage.findAll().size());
+    RevocationRequest revocationRequest2 = new RevocationRequest(null,user2, type);
+    revocationRequest2=mfaStorage.createRevocationRequest(revocationRequest2);
+    assertEquals(2,mfaStorage.findAll().size());
+
+    mfaStorage.deleteById(revocationRequest.getId());
+    assertEquals(1,mfaStorage.findAll().size());
+    assertEquals(revocationRequest2.getId(),mfaStorage.findAll().get(0).getId());
 
 
+  }
+
+  @Test
+  public void testFindAll() {
+    MfaStorage mfaStorage = ExoContainerContext.getService(MfaStorage.class);
+
+    String user1 = "john";
+    String user2 = "mary";
+    String user3 = "franck";
+    String type = "otp";
+    assertEquals(0, mfaStorage.findAll().size());
+
+    RevocationRequest revocationRequest = new RevocationRequest(null, user1, type);
+    mfaStorage.createRevocationRequest(revocationRequest);
+    assertEquals(1, mfaStorage.findAll().size());
+
+    revocationRequest = new RevocationRequest(null, user2, type);
+    mfaStorage.createRevocationRequest(revocationRequest);
+    assertEquals(2, mfaStorage.findAll().size());
+
+    revocationRequest = new RevocationRequest(null, user3, type);
+    mfaStorage.createRevocationRequest(revocationRequest);
+    assertEquals(3, mfaStorage.findAll().size());
+
+  }
+
+
+  @Test
+  public void testFindBy() {
+    MfaStorage mfaStorage = ExoContainerContext.getService(MfaStorage.class);
+
+    String user1 = "john";
+    String type = "otp";
+    assertEquals(0, mfaStorage.findAll().size());
+
+    RevocationRequest revocationRequest = new RevocationRequest(null, user1, type);
+    revocationRequest = mfaStorage.createRevocationRequest(revocationRequest);
+    assertEquals(1, mfaStorage.findAll().size());
+
+    assertEquals(revocationRequest.getId(), mfaStorage.findById(revocationRequest.getId()).getId());
+
+
+  }
 }

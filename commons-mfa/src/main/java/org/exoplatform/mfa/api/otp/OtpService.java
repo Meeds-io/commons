@@ -48,6 +48,9 @@ public class OtpService {
   public String generateSecret(String userId) {
     return getActiveConnector().generateSecret(userId);
   }
+  public void removeSecret(String userId) {
+    getActiveConnector().removeSecret(userId);
+  }
   public String generateUrlFromSecret(String user,String secret) {
     return getActiveConnector().generateUrlFromSecret(user,secret);
   }

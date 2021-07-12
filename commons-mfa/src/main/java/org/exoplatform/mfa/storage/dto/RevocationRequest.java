@@ -9,10 +9,15 @@ public class RevocationRequest implements Serializable {
   private Long id;
 
   private String user;
-
   private String type;
 
   public RevocationRequest(Long id, String user, String type) {
+    this.id = id;
+    this.user = user;
+    this.type = type;
+  }
+
+  public RevocationRequest(Long id, String user, String fullname, String type) {
     this.id = id;
     this.user = user;
     this.type = type;
@@ -49,7 +54,7 @@ public class RevocationRequest implements Serializable {
   public String toString() {
     return "RevocationRequest{" +
         "id=" + id +
-        ", identityId=" + user +
+        ", user='" + user + '\'' +
         ", type='" + type + '\'' +
         '}';
   }
