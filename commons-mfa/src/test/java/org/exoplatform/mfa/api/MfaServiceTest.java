@@ -3,9 +3,12 @@ package org.exoplatform.mfa.api;
 import org.exoplatform.commons.api.settings.ExoFeatureService;
 import org.exoplatform.container.xml.ValueParam;
 import org.exoplatform.container.xml.InitParams;
+
 import org.exoplatform.mfa.storage.MfaStorage;
 import org.exoplatform.mfa.storage.dto.RevocationRequest;
 import org.exoplatform.portal.branding.BrandingService;
+import org.exoplatform.mfa.api.otp.OtpService;
+
 import org.exoplatform.services.security.ConversationState;
 import org.exoplatform.services.security.Identity;
 import org.exoplatform.services.security.MembershipEntry;
@@ -36,6 +39,9 @@ public class MfaServiceTest {
   @Mock
   ExoFeatureService featureService;
 
+  @Mock
+  OtpService otpService;
+
   @Before
   public void setUp() {
     featureService=mock(ExoFeatureService.class);
@@ -52,6 +58,16 @@ public class MfaServiceTest {
 
     mfaStorage=mock(MfaStorage.class);
     this.mfaService=new MfaService(initParams,mfaStorage,featureService);
+  }
+
+  @Test
+  public void testOtpService() {
+    otpService=mock(OtpService.class);
+    when(otpService.getType()).thenReturn("otp");
+    MfaSystemComponentPlugin componentPlugin = mock(MfaSystemComponentPlugin.class);
+    when(componentPlugin.getMfaSystemService()).thenReturn(otpService);
+    this.mfaService.addConnector(componentPlugin);
+    assertEquals("otp",mfaService.getMfaSystemService("otp").getType());
   }
   
   @Test
@@ -172,8 +188,9 @@ public class MfaServiceTest {
 
   @Test
   public void testIsMfaFeatureActivated() {
+    when(featureService.isActiveFeature(any())).thenReturn(true);
     boolean isMfaActivated = mfaService.isMfaFeatureActivated();
-    assertFalse(isMfaActivated);
+    assertTrue(isMfaActivated);
   }
 
   @Test

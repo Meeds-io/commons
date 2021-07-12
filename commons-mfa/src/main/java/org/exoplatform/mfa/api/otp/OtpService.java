@@ -2,12 +2,14 @@ package org.exoplatform.mfa.api.otp;
 
 import org.exoplatform.container.xml.InitParams;
 import org.exoplatform.container.xml.ValueParam;
-import org.exoplatform.mfa.api.MfaService;
+import org.exoplatform.mfa.api.MfaSystemService;
+
 
 import java.time.Clock;
 import java.util.HashMap;
 
-public class OtpService {
+public class OtpService implements MfaSystemService {
+
 
   private static final String TYPE = "otp";
 

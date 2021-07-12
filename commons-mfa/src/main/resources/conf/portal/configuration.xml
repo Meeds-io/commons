@@ -25,7 +25,7 @@
             </value-param>
         </init-params>
     </component>
-    
+
     <component>
         <key>org.exoplatform.mfa.api.otp.OtpService</key>
         <type>org.exoplatform.mfa.api.otp.OtpService</type>
@@ -81,39 +81,17 @@
             </init-params>
         </component-plugin>
     </external-component-plugins>
-
-
     <external-component-plugins>
-        <target-component>org.exoplatform.mfa.api.otp.OtpService</target-component>
+        <target-component>org.exoplatform.mfa.api.MfaService</target-component>
         <component-plugin>
-            <name>ExoOtpConnector</name>
+            <name>OtpSystem</name>
             <set-method>addConnector</set-method>
-            <type>org.exoplatform.mfa.impl.otp.ExoOtpConnector</type>
-            <description>ExoOtpConnector</description>
+            <type>org.exoplatform.mfa.api.MfaSystemComponentPlugin</type>
+            <description>Mfa Otp Component Plugin</description>
             <init-params>
                 <value-param>
-                    <name>timePeriod</name>
-                    <value>${exo.mfa.otp.timeperiod:30}</value>
-                </value-param>
-                <value-param>
-                    <name>secretLength</name>
-                    <value>${exo.mfa.otp.secretlength:32}</value>
-                </value-param>
-                <value-param>
-                    <name>codeDigits</name>
-                    <value>${exo.mfa.otp.codedigits:6}</value>
-                </value-param>
-                <value-param>
-                    <name>timePeriodDiscrepancy</name>
-                    <value>${exo.mfa.otp.timeperioddiscrepancy:0}</value>
-                </value-param>
-                <value-param>
-                    <name>algorithm</name>
-                    <value>${exo.mfa.otp.algorithm:SHA1}</value>
-                </value-param>
-                <value-param>
-                    <name>issuer</name>
-                    <value>${exo.mfa.otp.issuer:}</value>
+                    <name>service</name>
+                    <value>org.exoplatform.mfa.api.otp.OtpService</value>
                 </value-param>
             </init-params>
         </component-plugin>
@@ -136,9 +114,9 @@
     </external-component-plugins>
     
     <external-component-plugins>
-        <target-component>org.exoplatform.mfa.api.MfaService</target-component>
+        <target-component>org.exoplatform.mfa.api.otp.OtpService</target-component>
         <component-plugin>
-            <name>AddMfaSystem</name>
+            <name>ExoOtpConnector</name>
             <set-method>addConnector</set-method>
             <type>org.exoplatform.mfa.impl.otp.ExoOtpConnector</type>
             <description>ExoOtpConnector</description>
@@ -170,4 +148,7 @@
             </init-params>
         </component-plugin>
     </external-component-plugins>
+
+
+
 </configuration>

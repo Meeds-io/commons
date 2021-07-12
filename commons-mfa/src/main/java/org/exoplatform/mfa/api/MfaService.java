@@ -12,7 +12,6 @@ import org.exoplatform.mfa.api.otp.OtpService;
 import org.exoplatform.mfa.storage.MfaStorage;
 import org.exoplatform.mfa.storage.dto.RevocationRequest;
 import org.exoplatform.services.security.Identity;
-import org.gatein.common.util.ListMap;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -34,6 +33,7 @@ public class MfaService {
   
   private HashMap<String, String> mfaConnectors;
   
+    private Map<String, MfaSystemComponentPlugin> mfaSystemServices;
   
   public MfaService(InitParams initParams, MfaStorage mfaStorage, ExoFeatureService featureService) {
     this.featureService = featureService;
@@ -58,8 +58,16 @@ public class MfaService {
     } else {
       mfaSystem = DEFAULT_MFA_SYSTEM;
     }
-
     this.mfaStorage=mfaStorage;
+    mfaSystemServices=new HashMap<>();
+  }
+
+  public MfaSystemService getMfaSystemService(String type) {
+    return mfaSystemServices.get(type).getMfaSystemService();
+  }
+
+  public void addConnector(MfaSystemComponentPlugin mfaSystemComponentPlugin) {
+    this.mfaSystemServices.put(mfaSystemComponentPlugin.getMfaSystemService().getType(), mfaSystemComponentPlugin);
   }
 
   public boolean isProtectedUri(String requestUri) {
@@ -178,6 +186,7 @@ public class MfaService {
   }
 
   public boolean isMfaFeatureActivated() {
+
     return featureService.isActiveFeature(MFA_FEATURE);
   }
 
