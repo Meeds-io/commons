@@ -55,6 +55,25 @@ public class MfaRestService implements ResourceContainer {
     }
   }
 
+  @Path("/available")
+  @GET
+  @Produces(MediaType.APPLICATION_JSON)
+  @RolesAllowed("users")
+  @ApiOperation(value = "Get Activated MFA System", httpMethod = "GET", response = Response.class, produces = MediaType.APPLICATION_JSON)
+  @ApiResponses(value = { @ApiResponse(code = HTTPStatus.OK, message = "Request fulfilled"),
+      @ApiResponse(code = HTTPStatus.UNAUTHORIZED, message = "Unauthorized operation"),
+      @ApiResponse(code = HTTPStatus.INTERNAL_ERROR, message = "Internal server error"), })
+  public Response getAvalailableMfaSystems() {
+    JSONObject result = new JSONObject();
+    try {
+      result.put("available", mfaService.getAvailableMfaSystems());
+      return Response.ok().entity(result.toString()).build();
+    } catch (JSONException e) {
+      return Response.serverError().build();
+
+    }
+  }
+
   @Path("/changeMfaFeatureActivation/{status}")
   @PUT
   @Produces(MediaType.APPLICATION_JSON)
@@ -155,9 +174,12 @@ public class MfaRestService implements ResourceContainer {
   @ApiResponses(value = { @ApiResponse(code = HTTPStatus.OK, message = "Request fulfilled"),
           @ApiResponse(code = HTTPStatus.UNAUTHORIZED, message = "Unauthorized operation"),
           @ApiResponse(code = HTTPStatus.INTERNAL_ERROR, message = "Internal server error"), })
-  public Response changeMfaSystem(@ApiParam(value = "Change the MFA MFA System to OTP, Fido 2 or SuperGluu", required = true) String mfaSystem) {
-    mfaService.setMfaSystem(mfaSystem);
-    return Response.ok().type(MediaType.TEXT_PLAIN).build();
+  public Response changeMfaSystem(@ApiParam(value = "Change the MFA MFA System", required = true) String mfaSystem) {
+    if (mfaService.setMfaSystem(mfaSystem)) {
+      return Response.ok().type(MediaType.TEXT_PLAIN).build();
+    } else {
+      return Response.status(Response.Status.BAD_REQUEST).build();
+    }
   }
 
   @POST

@@ -17,7 +17,7 @@
             </value-param>
             <value-param>
                 <name>mfaSystem</name>
-                <value>${exo.mfa.system:otp}</value>
+                <value>${exo.mfa.system:OTP}</value>
             </value-param>
             <value-param>
                 <name>protectedGroups</name>

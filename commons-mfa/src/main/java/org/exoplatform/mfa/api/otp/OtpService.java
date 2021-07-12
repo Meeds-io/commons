@@ -10,8 +10,7 @@ import java.util.HashMap;
 
 public class OtpService implements MfaSystemService {
 
-
-  private static final String TYPE = "otp";
+  private static final String TYPE = "OTP";
 
   private HashMap<String, OtpConnector> otpConnectors;
   private String                        activeConnector;

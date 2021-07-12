@@ -196,14 +196,14 @@ public class MfaServiceTest {
   @Test
   public void testGetMfaSystem() {
     String mfaSystem = mfaService.getMfaSystem();
-    assertEquals("otp", mfaSystem);
+    assertEquals("OTP", mfaSystem);
   }
 
   @Test
   public void testSaveActiveFeature() {
     mfaService.saveActiveFeature("otp");
     String mfaSystem = mfaService.getMfaSystem();
-    assertEquals("otp", mfaSystem);
+    assertEquals("OTP", mfaSystem);
   }
 
   @Test
@@ -216,14 +216,67 @@ public class MfaServiceTest {
   }
 
   @Test
-  public void testswitchMfaSystem() {
+  public void testswitchMfaSystemToExistingOne() {
+    MfaSystemService system1=mock(MfaSystemService.class);
+    when(system1.getType()).thenReturn("type1");
+    MfaSystemComponentPlugin componentPlugin = mock(MfaSystemComponentPlugin.class);
+    when(componentPlugin.getMfaSystemService()).thenReturn(system1);
+    this.mfaService.addConnector(componentPlugin);
+
+
     String mfaSystem = mfaService.getMfaSystem();
-    assertEquals("otp", mfaSystem);
+    assertEquals("OTP", mfaSystem);
 
-    mfaService.setMfaSystem("fido");
-    assertEquals("fido", mfaService.getMfaSystem());
+    boolean result = mfaService.setMfaSystem("type1");
+    assertTrue(result);
+    assertEquals("type1", mfaService.getMfaSystem());
 
-    mfaService.setMfaSystem("oidc");
-    assertEquals("oidc", mfaService.getMfaSystem());
+  }
+
+  @Test
+  public void testswitchMfaSystemToNonExistingOne() {
+    MfaSystemService system1=mock(MfaSystemService.class);
+    when(system1.getType()).thenReturn("type1");
+    MfaSystemComponentPlugin componentPlugin = mock(MfaSystemComponentPlugin.class);
+    when(componentPlugin.getMfaSystemService()).thenReturn(system1);
+    this.mfaService.addConnector(componentPlugin);
+
+
+    String mfaSystem = mfaService.getMfaSystem();
+    assertEquals("OTP", mfaSystem);
+
+    boolean result = mfaService.setMfaSystem("type2");
+    assertFalse(result);
+    assertEquals("OTP", mfaService.getMfaSystem());
+
+  }
+
+  @Test
+  public void testGetAvailableMfaSystems() {
+
+    MfaSystemService system1=mock(MfaSystemService.class);
+    when(system1.getType()).thenReturn("type1");
+    MfaSystemComponentPlugin componentPlugin = mock(MfaSystemComponentPlugin.class);
+    when(componentPlugin.getMfaSystemService()).thenReturn(system1);
+    this.mfaService.addConnector(componentPlugin);
+
+    MfaSystemService system2=mock(MfaSystemService.class);
+    when(system2.getType()).thenReturn("type2");
+    MfaSystemComponentPlugin componentPlugin2 = mock(MfaSystemComponentPlugin.class);
+    when(componentPlugin2.getMfaSystemService()).thenReturn(system2);
+    this.mfaService.addConnector(componentPlugin2);
+
+    MfaSystemService system3=mock(MfaSystemService.class);
+    when(system3.getType()).thenReturn("type3");
+    MfaSystemComponentPlugin componentPlugin3 = mock(MfaSystemComponentPlugin.class);
+    when(componentPlugin3.getMfaSystemService()).thenReturn(system3);
+    this.mfaService.addConnector(componentPlugin3);
+
+    assertEquals(3,this.mfaService.getAvailableMfaSystems().size());
+    assertTrue(this.mfaService.getAvailableMfaSystems().stream().anyMatch(s -> s.equals("type1")));
+    assertTrue(this.mfaService.getAvailableMfaSystems().stream().anyMatch(s -> s.equals("type2")));
+    assertTrue(this.mfaService.getAvailableMfaSystems().stream().anyMatch(s -> s.equals("type3")));
+
   }
 }
+

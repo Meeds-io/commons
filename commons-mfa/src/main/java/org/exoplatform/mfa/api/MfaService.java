@@ -17,7 +17,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class MfaService {
-  private static final String DEFAULT_MFA_SYSTEM = "otp";
+  private static final String DEFAULT_MFA_SYSTEM = "OTP";
 
   public static final String MFA_FEATURE = "mfa";
 
@@ -82,7 +82,7 @@ public class MfaService {
   public String getMfaSystem() {
     return mfaSystem;
   }
-
+  
   public boolean addRevocationRequest(String username, String mfaType) {
     if (!hasRevocationRequest(username,mfaType)) {
       RevocationRequest revocationRequest = new RevocationRequest();
@@ -175,14 +175,24 @@ public class MfaService {
         this.mfaSystem =DEFAULT_MFA_SYSTEM;
         break;
     }
+    
+  }
+  
+  public List<String> getAvailableMfaSystems() {
+    return new ArrayList<>(this.mfaSystemServices.keySet());
   }
 
   public void saveActiveFeature(String status) {
     featureService.saveActiveFeature(MFA_FEATURE, Boolean.parseBoolean(status));;
   }
 
-  public void setMfaSystem(String mfaSystem) {
-    this.mfaSystem = mfaSystem;
+  public boolean setMfaSystem(String mfaSystem) {
+    if (mfaSystemServices.containsKey(mfaSystem)) {
+      this.mfaSystem = mfaSystem;
+      return true;
+    } else {
+      return false;
+    }
   }
 
   public boolean isMfaFeatureActivated() {

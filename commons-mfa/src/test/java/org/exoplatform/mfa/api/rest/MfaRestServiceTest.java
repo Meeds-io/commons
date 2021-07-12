@@ -157,10 +157,17 @@ public class MfaRestServiceTest {
   }
 
   @Test
-  public void testChangeMfaSystem() {
+  public void testChangeMfaSystemWithExistingOne() {
+    when(mfaService.setMfaSystem("oidc")).thenReturn(true);
     Response response = mfaRestService.changeMfaSystem("oidc");
-
     assertEquals(200 ,response.getStatus());
+    verify(mfaService,times(1)).setMfaSystem("oidc");
+  }
+  @Test
+  public void testChangeMfaSystemWithNonExistingOne() {
+    when(mfaService.setMfaSystem("oidc")).thenReturn(false);
+    Response response = mfaRestService.changeMfaSystem("oidc");
+    assertEquals(400 ,response.getStatus());
     verify(mfaService,times(1)).setMfaSystem("oidc");
   }
 
@@ -178,5 +185,13 @@ public class MfaRestServiceTest {
 
     assertEquals(200 ,response.getStatus());
     verify(mfaService,times(1)).saveProtectedGroups("/platform/users, /platform/rewarding");
+  }
+
+  @Test
+  public void testGetMfaSystems() {
+    Response response = mfaRestService.getAvalailableMfaSystems();
+
+    assertEquals(200 ,response.getStatus());
+    verify(mfaService,times(1)).getAvailableMfaSystems();
   }
 }
