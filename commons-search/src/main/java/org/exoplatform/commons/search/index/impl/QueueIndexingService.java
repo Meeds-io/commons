@@ -1,14 +1,13 @@
 package org.exoplatform.commons.search.index.impl;
 
+import java.util.List;
+
 import org.apache.commons.lang.StringUtils;
+
 import org.exoplatform.commons.search.dao.IndexingOperationDAO;
 import org.exoplatform.commons.search.domain.IndexingOperation;
 import org.exoplatform.commons.search.domain.OperationType;
 import org.exoplatform.commons.search.index.IndexingService;
-import org.exoplatform.services.log.ExoLogger;
-import org.exoplatform.services.log.Log;
-
-import java.util.List;
 
 /**
  * Created by The eXo Platform SAS
@@ -17,8 +16,6 @@ import java.util.List;
  * 7/22/15
  */
 public class QueueIndexingService implements IndexingService {
-
-  private static final Log LOG = ExoLogger.getExoLogger(QueueIndexingService.class);
 
   private final IndexingOperationDAO indexingOperationDAO;
 
@@ -55,26 +52,6 @@ public class QueueIndexingService implements IndexingService {
     addToIndexingQueue(connectorName, id, OperationType.DELETE);
   }
 
-  @Override
-  public void reindexAll(String connectorName) {
-    addToIndexingQueue(connectorName, null, OperationType.REINDEX_ALL);
-  }
-
-  @Override
-  public void unindexAll(String connectorName) {
-    addToIndexingQueue(connectorName, null, OperationType.DELETE_ALL);
-  }
-
-  @Override
-  public void clearQueue() {
-    indexingOperationDAO.deleteAll();
-  }
-
-  @Override
-  public void clearQueue(String entityType) {
-    indexingOperationDAO.deleteAllByEntityType(entityType);
-  }
-
   /**
    * Add a new operation to the create queue
    * @param connectorName Name of the connector
@@ -86,10 +63,6 @@ public class QueueIndexingService implements IndexingService {
     if (operation==null) {
       throw new IllegalArgumentException("Operation cannot be null");
     }
-    /*
-    if (!getConnectors().containsKey(connectorName)) {
-      throw new IllegalStateException("Connector ["+connectorName+"] has not been registered.");
-    }*/
     switch (operation) {
       //A new type of document need to be initialise
       case INIT: indexingOperationDAO.create(getIndexingOperation(connectorName, OperationType.INIT, entityId));
@@ -104,19 +77,14 @@ public class QueueIndexingService implements IndexingService {
       case DELETE: indexingOperationDAO.create(getIndexingOperation(connectorName, OperationType.DELETE, entityId));
         break;
       //All entities of a specific type need to be deleted
-      case DELETE_ALL: indexingOperationDAO.create(getIndexingOperation(connectorName, OperationType.DELETE_ALL, entityId));
-        break;
-      //All entities of a specific type need to be reindexed
-      case REINDEX_ALL: indexingOperationDAO.create(getIndexingOperation(connectorName, OperationType.REINDEX_ALL, entityId));
-        break;
       default:
         throw new IllegalArgumentException(operation+" is not an accepted operation for the Indexing Queue");
     }
   }
 
-  private IndexingOperation getIndexingOperation (String connector, OperationType operation, String entityId) {
+  private IndexingOperation getIndexingOperation(String connector, OperationType operation, String entityId) {
     IndexingOperation indexingOperation = new IndexingOperation();
-    indexingOperation.setEntityType(connector);
+    indexingOperation.setEntityIndex(connector);
     indexingOperation.setOperation(operation);
     if (entityId != null) indexingOperation.setEntityId(entityId);
     return indexingOperation;
@@ -132,9 +100,10 @@ public class QueueIndexingService implements IndexingService {
 
   /**
    * get the number of operations in indexQueue
+   * @return long for number of operations
    * @LevelAPI Experimental
    */
-  public Long getNumberOperations() {
+  public long getNumberOperations() {
     return indexingOperationDAO.count();
   }
 

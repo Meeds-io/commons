@@ -17,7 +17,6 @@
 package org.exoplatform.commons.search.es.client;
 
 import org.exoplatform.commons.search.domain.Document;
-import org.exoplatform.commons.search.es.client.ElasticContentRequestBuilder;
 import org.exoplatform.commons.search.index.impl.ElasticIndexingServiceConnector;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -71,12 +70,11 @@ public class ElasticContentRequestBuilderTest {
     String request = elasticContentRequestBuilder.getCreateIndexRequestContent(elasticIndexingServiceConnector);
     // Then
     JSONObject parsedRequest = (JSONObject) JSONValue.parseWithException(request);
-    JSONObject settings = (JSONObject) parsedRequest.get("settings");
-    assertThat((String) settings.get("number_of_replicas"), is("2"));
-    assertThat((String) settings.get("number_of_shards"), is("3"));
-    assertNotNull(settings.get("analysis"));
-    assertNotNull(((JSONObject) settings.get("analysis")).get("analyzer"));
-    assertNotNull(((JSONObject) ((JSONObject) settings.get("analysis")).get("analyzer")).get("default"));
+    assertThat(parsedRequest.get("number_of_replicas"), is(2l));
+    assertThat(parsedRequest.get("number_of_shards"), is(3l));
+    assertNotNull(parsedRequest.get("analysis"));
+    assertNotNull(((JSONObject) parsedRequest.get("analysis")).get("analyzer"));
+    assertNotNull(((JSONObject) ((JSONObject) parsedRequest.get("analysis")).get("analyzer")).get("default"));
   }
 
   @Test
@@ -87,7 +85,6 @@ public class ElasticContentRequestBuilderTest {
     // Then
     JSONObject parsedRequest = (JSONObject) JSONValue.parseWithException(request);
     JSONObject delete = (JSONObject) parsedRequest.get("delete");
-    assertThat((String) delete.get("_type"), is("type1"));
     assertThat((String) delete.get("_id"), is("1"));
     assertThat((String) delete.get("_index"), is("test"));
   }
@@ -103,7 +100,6 @@ public class ElasticContentRequestBuilderTest {
     String[] lines = request.split("\n");
     JSONObject parsedRequestLine1 = (JSONObject) JSONValue.parseWithException(lines[0]);
     JSONObject create = (JSONObject) parsedRequestLine1.get("create");
-    assertThat((String) create.get("_type"), is("type1"));
     assertThat((String) create.get("_id"), is("1"));
     assertThat((String) create.get("_index"), is("test"));
     JSONObject parsedRequestLine2 = (JSONObject) JSONValue.parseWithException(lines[1]);
@@ -129,7 +125,6 @@ public class ElasticContentRequestBuilderTest {
     String[] lines = request.split("\n");
     JSONObject parsedRequestLine1 = (JSONObject) JSONValue.parseWithException(lines[0]);
     JSONObject create = (JSONObject) parsedRequestLine1.get("index");
-    assertThat((String) create.get("_type"), is("type1"));
     assertThat((String) create.get("_id"), is("1"));
     assertThat((String) create.get("_index"), is("test"));
     JSONObject parsedRequestLine2 = (JSONObject) JSONValue.parseWithException(lines[1]);
@@ -146,12 +141,12 @@ public class ElasticContentRequestBuilderTest {
   }
 
   private void initElasticServiceConnectorMock() {
-    when(elasticIndexingServiceConnector.getIndex()).thenReturn("test");
-    when(elasticIndexingServiceConnector.getType()).thenReturn("type1");
-    when(elasticIndexingServiceConnector.getReplicas()).thenReturn(2);
-    when(elasticIndexingServiceConnector.getShards()).thenReturn(3);
-    when(elasticIndexingServiceConnector.create("1")).thenReturn(document);
-    when(elasticIndexingServiceConnector.update("1")).thenReturn(document);
+    lenient().when(elasticIndexingServiceConnector.getConnectorName()).thenReturn("test2");
+    lenient().when(elasticIndexingServiceConnector.getIndexAlias()).thenReturn("test");
+    lenient().when(elasticIndexingServiceConnector.getReplicas()).thenReturn(2);
+    lenient().when(elasticIndexingServiceConnector.getShards()).thenReturn(3);
+    lenient().when(elasticIndexingServiceConnector.create("1")).thenReturn(document);
+    lenient().when(elasticIndexingServiceConnector.update("1")).thenReturn(document);
   }
 
   private void initDocumentMock() throws ParseException {

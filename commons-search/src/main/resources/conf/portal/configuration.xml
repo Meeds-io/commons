@@ -36,7 +36,7 @@
     <init-params>
       <value-param>
         <name>es.version</name>
-        <value>${exo.es.version.minor:5.6}</value>
+        <value>${exo.es.version.minor:7.13}</value>
       </value-param>
     </init-params>
   </component>
@@ -51,6 +51,13 @@
 
   <component>
     <type>org.exoplatform.commons.search.es.client.ElasticContentRequestBuilder</type>
+    <init-params>
+      <value-param>
+        <name>index.settings.path</name>
+        <description>Default index settings to use for Search indexing connectors</description>
+        <value>${exo.es.index.settings.path:jar:/es-default-index-settings.json}</value>
+      </value-param>
+    </init-params>
   </component>
 
   <component>
@@ -64,10 +71,6 @@
   <component>
     <key>org.exoplatform.commons.search.dao.IndexingOperationDAO</key>
     <type>org.exoplatform.commons.search.dao.impl.IndexingOperationDAOImpl</type>
-  </component>
-
-  <component>
-    <type>org.exoplatform.commons.search.rest.IndexingManagementRestServiceV1</type>
   </component>
 
   <external-component-plugins>

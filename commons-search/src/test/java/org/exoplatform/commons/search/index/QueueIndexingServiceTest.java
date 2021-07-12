@@ -79,16 +79,6 @@ public class QueueIndexingServiceTest {
   }
 
   @Test
-  public void unindexAll_ifDeleteAllOperation_deleteAllIndexingQueueCreated() {
-    //Given
-    IndexingOperation indexingOperation = new IndexingOperation(null,"post",OperationType.DELETE_ALL);
-    //When
-    queueIndexingService.unindexAll("post");
-    //Then
-    verify(indexingOperationDAO, times(1)).create(indexingOperation);
-  }
-
-  @Test
   public void unindex_ifDeleteOperation_deleteIndexingQueueCreated() {
     //Given
     IndexingOperation indexingOperation = new IndexingOperation("1","post",OperationType.DELETE);
@@ -104,16 +94,6 @@ public class QueueIndexingServiceTest {
     IndexingOperation indexingOperation = new IndexingOperation("1","post",OperationType.UPDATE);
     //When
     queueIndexingService.reindex("post", "1");
-    //Then
-    verify(indexingOperationDAO, times(1)).create(indexingOperation);
-  }
-
-  @Test
-  public void reindexAll_commandsAreInsertedInIndexingQueue() throws ParseException {
-    //Given
-    IndexingOperation indexingOperation = new IndexingOperation(null,"post",OperationType.REINDEX_ALL);
-    //When
-    queueIndexingService.reindexAll("post");
     //Then
     verify(indexingOperationDAO, times(1)).create(indexingOperation);
   }

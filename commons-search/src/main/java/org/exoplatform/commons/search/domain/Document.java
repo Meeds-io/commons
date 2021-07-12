@@ -30,7 +30,6 @@ import java.util.*;
  * @author <a href="mailto:tuyennt@exoplatform.com">Tuyen Nguyen The</a>.
  */
 public class Document {
-  private String type;
   private String id;
   private String url;
   private Date lastUpdatedDate;
@@ -44,8 +43,7 @@ public class Document {
   }
 
   @Deprecated
-  public Document(String type, String id, String url, Date lastUpdatedDate, String[] permissions, Map<String, String> fields) {
-    this.type = type;
+  public Document(String id, String url, Date lastUpdatedDate, String[] permissions, Map<String, String> fields) {
     this.id = id;
     this.url = url;
     this.lastUpdatedDate = lastUpdatedDate;
@@ -55,8 +53,7 @@ public class Document {
   }
 
   @Deprecated
-  public Document(String type, String id, String url, Date lastUpdatedDate, String[] permissions, Map<String, String> fields, String[] sites) {
-    this.type = type;
+  public Document(String id, String url, Date lastUpdatedDate, String[] permissions, Map<String, String> fields, String[] sites) {
     this.id = id;
     this.url = url;
     this.lastUpdatedDate = lastUpdatedDate;
@@ -65,8 +62,7 @@ public class Document {
     this.sites = sites;
   }
 
-  public Document(String type, String id, String url, Date lastUpdatedDate, Set<String> permissions, Map<String, String> fields) {
-    this.type = type;
+  public Document(String id, String url, Date lastUpdatedDate, Set<String> permissions, Map<String, String> fields) {
     this.id = id;
     this.url = url;
     this.lastUpdatedDate = lastUpdatedDate;
@@ -75,8 +71,7 @@ public class Document {
     this.sites = null;
   }
 
-  public Document(String type, String id, String url, Date lastUpdatedDate, Set<String> permissions , List<String> tags, Map<String, String> fields) {
-    this.type = type;
+  public Document(String id, String url, Date lastUpdatedDate, Set<String> permissions , List<String> tags, Map<String, String> fields) {
     this.id = id;
     this.url = url;
     this.lastUpdatedDate = lastUpdatedDate;
@@ -86,8 +81,7 @@ public class Document {
     this.sites = null;
   }
 
-  public Document(String type, String id, String url, Date lastUpdatedDate, Set<String> permissions, Map<String, String> fields, String[] sites) {
-    this.type = type;
+  public Document(String id, String url, Date lastUpdatedDate, Set<String> permissions, Map<String, String> fields, String[] sites) {
     this.id = id;
     this.url = url;
     this.lastUpdatedDate = lastUpdatedDate;
@@ -96,18 +90,9 @@ public class Document {
     this.sites = sites;
   }
 
-  public Document(String type, String id, Date lastUpdatedDate) {
-    this.type = type;
+  public Document(String id, Date lastUpdatedDate) {
     this.id = id;
     this.lastUpdatedDate = lastUpdatedDate;
-  }
-
-  public String getType() {
-    return type;
-  }
-
-  public void setType(String type) {
-    this.type = type;
   }
 
   public String getId() {

@@ -68,6 +68,7 @@ public class ElasticSearchingClientTest {
     PropertyManager.setProperty("exo.es.search.server.url", "http://127.0.0.1:9200");
     elasticSearchingClient = new ElasticSearchingClient(auditTrail);
     elasticSearchingClient.client = httpClient;
+    elasticSearchingClient.resetMaxConnections();
   }
 
 
@@ -91,10 +92,10 @@ public class ElasticSearchingClientTest {
     initClientMock(200, response);
     when(auditTrail.isFullLogEnabled()).thenReturn(true);
     //When
-    elasticSearchingClient.sendRequest("mySearch", "test", "type1");
+    elasticSearchingClient.sendRequest("mySearch", "test");
     //Then
     verify(auditTrail).isFullLogEnabled();
-    verify(auditTrail).logAcceptedSearchOperation(eq("search_type"), eq("test"), eq("type1"), eq(HttpStatus.SC_OK), eq(response), anyLong());
+    verify(auditTrail).logAcceptedSearchOperation(eq("search_type"), eq("test"), eq(HttpStatus.SC_OK), eq(response), anyLong());
     verifyNoMoreInteractions(auditTrail);
   }
 
@@ -117,9 +118,9 @@ public class ElasticSearchingClientTest {
     initClientMock(404, response);
     lenient().when(auditTrail.isFullLogEnabled()).thenReturn(true);
     //When
-    elasticSearchingClient.sendRequest("mySearch", "test", "type1");
+    elasticSearchingClient.sendRequest("mySearch", "test");
     //Then
-    verify(auditTrail).logRejectedSearchOperation(eq("search_type"), eq("test"), eq("type1"), eq(HttpStatus.SC_NOT_FOUND), anyString(), anyLong());
+    verify(auditTrail).logRejectedSearchOperation(eq("search_type"), eq("test"), eq(HttpStatus.SC_NOT_FOUND), anyString(), anyLong());
     verifyNoMoreInteractions(auditTrail);
   }
 
@@ -142,7 +143,7 @@ public class ElasticSearchingClientTest {
     initClientMock(200, response);
     when(auditTrail.isFullLogEnabled()).thenReturn(false);
     //When
-    elasticSearchingClient.sendRequest("mySearch", "test", "type1");
+    elasticSearchingClient.sendRequest("mySearch", "test");
     //Then
     verify(auditTrail).isFullLogEnabled();
     verifyNoMoreInteractions(auditTrail);
@@ -167,9 +168,9 @@ public class ElasticSearchingClientTest {
     initClientMock(404, response);
     lenient().when(auditTrail.isFullLogEnabled()).thenReturn(false);
     //When
-    elasticSearchingClient.sendRequest("mySearch", "test", "type1");
+    elasticSearchingClient.sendRequest("mySearch", "test");
     //Then
-    verify(auditTrail).logRejectedSearchOperation(eq("search_type"), eq("test"), eq("type1"), eq(HttpStatus.SC_NOT_FOUND), anyString(), anyLong());
+    verify(auditTrail).logRejectedSearchOperation(eq("search_type"), eq("test"), eq(HttpStatus.SC_NOT_FOUND), anyString(), anyLong());
     verifyNoMoreInteractions(auditTrail);
   }
 
@@ -182,7 +183,7 @@ public class ElasticSearchingClientTest {
     PoolingHttpClientConnectionManager clientConnectionManager = (PoolingHttpClientConnectionManager) elasticSearchingClient.getClientConnectionManager();
 
     //Then
-    assertEquals(2, clientConnectionManager.getDefaultMaxPerRoute());
+    assertEquals(ElasticClient.DEFAULT_MAX_HTTP_POOL_CONNECTIONS, clientConnectionManager.getDefaultMaxPerRoute());
   }
 
   @Test
@@ -194,7 +195,7 @@ public class ElasticSearchingClientTest {
     PoolingHttpClientConnectionManager clientConnectionManager = (PoolingHttpClientConnectionManager) elasticSearchingClient.getClientConnectionManager();
 
     //Then
-    assertEquals(2, clientConnectionManager.getDefaultMaxPerRoute());
+    assertEquals(ElasticClient.DEFAULT_MAX_HTTP_POOL_CONNECTIONS, clientConnectionManager.getDefaultMaxPerRoute());
 
     PropertyManager.setProperty("exo.es.search.http.connections.max", "");
   }
@@ -208,7 +209,7 @@ public class ElasticSearchingClientTest {
     PoolingHttpClientConnectionManager clientConnectionManager = (PoolingHttpClientConnectionManager) elasticSearchingClient.getClientConnectionManager();
 
     //Then
-    assertEquals(2, clientConnectionManager.getDefaultMaxPerRoute());
+    assertEquals(ElasticClient.DEFAULT_MAX_HTTP_POOL_CONNECTIONS, clientConnectionManager.getDefaultMaxPerRoute());
 
     PropertyManager.setProperty("exo.es.search.http.connections.max", "");
   }

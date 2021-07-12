@@ -10,7 +10,7 @@
   <packaging>jar</packaging>
   <name>eXo PLF:: Commons - Commons Search</name>
   <properties>
-    <exo.test.coverage.ratio>0.44</exo.test.coverage.ratio>
+    <exo.test.coverage.ratio>0.49</exo.test.coverage.ratio>
   </properties>
   <dependencies>
     <!-- PLF dependencies -->
@@ -71,30 +71,8 @@
     </dependency>
     <!-- ES Test -->
     <dependency>
-      <groupId>org.elasticsearch</groupId>
-      <artifactId>elasticsearch</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.elasticsearch.plugin</groupId>
-      <artifactId>reindex-client</artifactId>
-      <scope>test</scope>
-    </dependency>
-  
-    <dependency>
-      <groupId>org.elasticsearch.plugin</groupId>
-      <artifactId>transport-netty4-client</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
       <groupId>net.java.dev.jna</groupId>
       <artifactId>jna</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <!-- Required by Elasticsearch -->
-    <dependency>
-      <groupId>org.elasticsearch.plugin</groupId>
-      <artifactId>ingest-attachment</artifactId>
       <scope>test</scope>
     </dependency>
   </dependencies>
@@ -103,15 +81,6 @@
       <plugin>
         <groupId>com.jcabi</groupId>
         <artifactId>jcabi-maven-plugin</artifactId>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-surefire-plugin</artifactId>
-        <configuration>
-          <systemPropertyVariables>
-            <tests.security.manager>false</tests.security.manager>
-          </systemPropertyVariables>
-        </configuration>
       </plugin>
     </plugins>
   </build>

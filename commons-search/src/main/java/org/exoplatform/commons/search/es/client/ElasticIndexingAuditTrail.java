@@ -12,19 +12,15 @@ import org.exoplatform.services.log.Log;
 public class ElasticIndexingAuditTrail {
   public static final String  REINDEX_ALL         = "reindex_all";
 
-  public static final String  DELETE_ALL          = "delete_all";
-
   public static final String  CREATE_INDEX        = "create_index";
 
-  public static final String  CREATE_INDEX_ALIAS        = "create_index_alias";
+  public static final String  DELETE_INDEX        = "delete_index";
 
-  public static final String  CREATE_TYPE         = "create_type";
+  public static final String  CREATE_INDEX_ALIAS  = "create_index_alias";
 
-  public static final String  DELETE_TYPE         = "delete_type";
+  public static final String  REINDEX_TYPE        = "reindex_type";
 
-  public static final String  REINDEX_TYPE         = "reindex_type";
-
-  public static final String  SEARCH_TYPE         = "search_type";
+  public static final String  SEARCH_INDEX        = "search_type";
 
   public static final String  CREATE_PIPELINE     = "create_pipeline";
 
@@ -43,25 +39,23 @@ public class ElasticIndexingAuditTrail {
   public void audit(String action,
                     String entityId,
                     String index,
-                    String type,
                     Integer httpStatusCode,
                     String message,
                     long executionTime) {
     if (isError(httpStatusCode)) {
-      logError(action, entityId, index, type, httpStatusCode, message, executionTime);
+      logError(action, entityId, index, httpStatusCode, message, executionTime);
     } else {
-      logInfo(action, entityId, index, type, httpStatusCode, message, executionTime);
+      logInfo(action, entityId, index, httpStatusCode, message, executionTime);
     }
   }
 
   public void logRejectedDocumentBulkOperation(String action,
                                                String entityId,
                                                String index,
-                                               String type,
                                                Integer httpStatusCode,
                                                String message,
                                                long executionTime) {
-    logError(action, entityId, index, type, httpStatusCode, message, executionTime);
+    logError(action, entityId, index, httpStatusCode, message, executionTime);
   }
 
   public boolean isFullLogEnabled() {
@@ -71,35 +65,31 @@ public class ElasticIndexingAuditTrail {
   public void logAcceptedBulkOperation(String action,
                                        String entityId,
                                        String index,
-                                       String type,
                                        Integer httpStatusCode,
                                        String message,
                                        long executionTime) {
-    logDebug(action, entityId, index, type, httpStatusCode, message, executionTime);
+    logDebug(action, entityId, index, httpStatusCode, message, executionTime);
   }
 
   public void logRejectedSearchOperation(String action,
                                             String index,
-                                            String type,
                                             Integer httpStatusCode,
                                             String message,
                                             long executionTime) {
-    logError(action, null, index, type, httpStatusCode, message, executionTime);
+    logError(action, null, index, httpStatusCode, message, executionTime);
   }
 
   public void logAcceptedSearchOperation(String action,
                                        String index,
-                                       String type,
                                        Integer httpStatusCode,
                                        String message,
                                        long executionTime) {
-    logDebug(action, null, index, type, httpStatusCode, message, executionTime);
+    logDebug(action, null, index, httpStatusCode, message, executionTime);
   }
 
   private void logInfo(String action,
                        String entityId,
                        String index,
-                       String type,
                        Integer httpStatusCode,
                        String message,
                        long executionTime) {
@@ -107,7 +97,6 @@ public class ElasticIndexingAuditTrail {
         action,
         StringUtils.isBlank(entityId) ? "" : escape(entityId),
         StringUtils.isBlank(index) ? "" : escape(index),
-        StringUtils.isBlank(type) ? "" : escape(type),
         httpStatusCode == null ? "" : httpStatusCode,
         StringUtils.isBlank(message) ? "" : escape(message),
         executionTime);
@@ -116,7 +105,6 @@ public class ElasticIndexingAuditTrail {
   private void logError(String action,
                         String entityId,
                         String index,
-                        String type,
                         Integer httpStatusCode,
                         String message,
                         long executionTime) {
@@ -124,7 +112,6 @@ public class ElasticIndexingAuditTrail {
         action,
         StringUtils.isBlank(entityId) ? "" : escape(entityId),
         StringUtils.isBlank(index) ? "" : escape(index),
-        StringUtils.isBlank(type) ? "" : escape(type),
         httpStatusCode == null ? "" : httpStatusCode,
         StringUtils.isBlank(message) ? "" : escape(message),
         executionTime);
@@ -133,7 +120,6 @@ public class ElasticIndexingAuditTrail {
   private void logDebug(String action,
                         String entityId,
                         String index,
-                        String type,
                         Integer httpStatusCode,
                         String message,
                         long executionTime) {
@@ -141,7 +127,6 @@ public class ElasticIndexingAuditTrail {
         action,
         StringUtils.isBlank(entityId) ? "" : escape(entityId),
         StringUtils.isBlank(index) ? "" : escape(index),
-        StringUtils.isBlank(type) ? "" : escape(type),
         httpStatusCode == null ? "" : httpStatusCode,
         StringUtils.isBlank(message) ? "" : escape(message),
         executionTime);

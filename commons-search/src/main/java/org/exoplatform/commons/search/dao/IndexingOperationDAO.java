@@ -33,8 +33,6 @@ public interface IndexingOperationDAO extends GenericDAO<IndexingOperation, Long
 
   void deleteAllIndexingOperationsHavingIdLessThanOrEqual(long id);
 
-  void deleteAllByEntityType(String entityType);
-
   List<IndexingOperation> findAll(int offset, int limit);
 }
 

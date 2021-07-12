@@ -60,7 +60,7 @@ public class IndexingOperationDAOTest extends AbstractDAOTest {
     List<IndexingOperation> indexingOperations = indexingOperationDAO.findAll();
     assertEquals(indexingOperations.size(), 0);
     IndexingOperation indexingOperation = new IndexingOperation();
-    indexingOperation.setEntityType("blog");
+    indexingOperation.setEntityIndex("blog");
     indexingOperation.setOperation(OperationType.INIT);
 
     //When
@@ -78,7 +78,7 @@ public class IndexingOperationDAOTest extends AbstractDAOTest {
   public void testDatabaseAutoGeneratingTimestamp () throws NoSuchFieldException, IllegalAccessException {
     //Given
     IndexingOperation indexingOperation1 = new IndexingOperation();
-    indexingOperation1.setEntityType("blog");
+    indexingOperation1.setEntityIndex("blog");
     indexingOperation1.setOperation(OperationType.INIT);
     indexingOperationDAO.create(indexingOperation1);
     PortalContainer container = PortalContainer.getInstance();
