@@ -25,6 +25,7 @@ require(['SHARED/jquery', 'SHARED/suggester'],function($) {
       });
       $inputor.on('hidden' + alias, function() {
         suggesterShowing = false;
+        editor.fire('change');
       });
     }
   }

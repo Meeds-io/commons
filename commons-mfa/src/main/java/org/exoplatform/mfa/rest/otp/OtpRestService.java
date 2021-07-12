@@ -6,7 +6,6 @@ import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import org.exoplatform.common.http.HTTPStatus;
-import org.exoplatform.commons.utils.CommonsUtils;
 import org.exoplatform.mfa.api.otp.OtpService;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
@@ -24,11 +23,66 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 @Path("/otp")
-@Api(value = "/otp", description = "Manages Otp features")
+@Api(value = "/otp")
 public class OtpRestService implements ResourceContainer {
   
   private static final Log LOG = ExoLogger.getLogger(OtpRestService.class);
-  
+
+  private OtpService otpService;
+
+  public OtpRestService(OtpService otpService) {
+    this.otpService=otpService;
+  }
+
+
+  @Path("/checkRegistration")
+  @GET
+  @Produces(MediaType.APPLICATION_JSON)
+  @RolesAllowed("users")
+  @ApiOperation(
+      value = "Check if user have activated his OTP",
+      httpMethod = "GET", response = Response.class, produces = MediaType.APPLICATION_JSON
+  )
+  @ApiResponses(
+      value = { @ApiResponse(code = HTTPStatus.OK, message = "Request fulfilled"),
+          @ApiResponse(code = HTTPStatus.BAD_REQUEST, message = "Invalid query input"),
+          @ApiResponse(code = HTTPStatus.UNAUTHORIZED, message = "Unauthorized operation"),
+          @ApiResponse(code = HTTPStatus.INTERNAL_ERROR, message = "Internal server error"), }
+  )
+  public Response checkRegistration(@Context HttpServletRequest request) {
+
+    String userId = ConversationState.getCurrent().getIdentity().getUserId();
+    return Response.ok().entity("{\"result\":\"" + otpService.isMfaInitializedForUser(userId) + "\"}").build();
+
+  }
+
+  @Path("/generateSecret")
+  @GET
+  @Produces(MediaType.APPLICATION_JSON)
+  @RolesAllowed("users")
+  @ApiOperation(
+      value = "Generate New secret OTP for user",
+      httpMethod = "GET", response = Response.class, produces = MediaType.APPLICATION_JSON
+  )
+  @ApiResponses(
+      value = { @ApiResponse(code = HTTPStatus.OK, message = "Request fulfilled"),
+          @ApiResponse(code = HTTPStatus.BAD_REQUEST, message = "Invalid query input"),
+          @ApiResponse(code = HTTPStatus.UNAUTHORIZED, message = "Unauthorized operation"),
+          @ApiResponse(code = HTTPStatus.INTERNAL_ERROR, message = "Internal server error"), }
+  )
+  public Response generateSecret(@Context HttpServletRequest request) {
+
+    String userId = ConversationState.getCurrent().getIdentity().getUserId();
+    if (!otpService.isMfaInitializedForUser(userId)) {
+      String secret=otpService.generateSecret(userId);
+      String urlFromSecret= otpService.generateUrlFromSecret(userId,secret);
+      return Response.ok().entity("{\"secret\":\"" + secret + "\",\"url\":\""+urlFromSecret+"\"}").build();
+    } else {
+      return Response.ok().build();
+    }
+
+  }
+
   
   @Path("/verify")
   @GET
@@ -45,17 +99,13 @@ public class OtpRestService implements ResourceContainer {
           @ApiResponse(code = HTTPStatus.INTERNAL_ERROR, message = "Internal server error"), }
   )
   public Response verifyToken(@Context HttpServletRequest request,
-      @ApiParam(value = "Token to verify", required = true) @QueryParam("token") String token) {
+                              @ApiParam(value = "Token to verify", required = true) @QueryParam("token") String token) {
   
     String userId=null;
     try {
-  
-      OtpService otpService = CommonsUtils.getService(OtpService.class);
-      try {
-        userId = ConversationState.getCurrent().getIdentity().getUserId();
-      } catch (Exception e) {
-        return Response.status(HTTPStatus.UNAUTHORIZED).build();
-      }
+
+      userId = ConversationState.getCurrent().getIdentity().getUserId();
+
       boolean otpResult = otpService.validateToken(userId,token);
       request.getSession().setAttribute("mfaValidated",otpResult);
       return Response.ok().entity("{\"result\":\"" + otpResult + "\"}").build();

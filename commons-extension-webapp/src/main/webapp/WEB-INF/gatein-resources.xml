@@ -518,8 +518,16 @@
       <adapter>
         (function() {
           <include>/javascript/purify.min.js</include>
-          Vue.directive('sanitized-html',(el, binding) => el.innerHTML = DOMPurify.sanitize(Autolinker.link(binding.value, {newWindow: true}), {USE_PROFILES: {html: true}}));
-        })();
+          Vue.directive('sanitized-html',function(el, binding) {
+          el.innerHTML = DOMPurify.sanitize(Autolinker.link(binding.value, {newWindow: true}), {USE_PROFILES: {html: true},ADD_ATTR: ['target']});
+            DOMPurify.addHook('afterSanitizeAttributes', function (node) {
+            // add noopener attribute to external links to eliminate vulnerabilities
+            if ('target' in node) {
+             node.setAttribute('rel', 'noopener');
+            }
+          });
+          })
+          })();
       </adapter>
     </script>
     <depends>

@@ -58,6 +58,8 @@ public class ProductInformations implements Startable {
 
   public static final String  NB_USERS                              = "number of users";
 
+  public static final String  PRODUCT_NAME                          = "product.name";
+
   public static final String  PRODUCT_GROUP_ID                      = "product.groupId";
 
   public static final String  PRODUCT_REVISION                      = "product.revision";
@@ -133,6 +135,10 @@ public class ProductInformations implements Startable {
 
   public String getDuration() {
     return productInformation.get(DELAY);
+  }
+
+  public String getProductName() {
+    return productInformation.get(PRODUCT_NAME);
   }
 
   public String getProductCode() {

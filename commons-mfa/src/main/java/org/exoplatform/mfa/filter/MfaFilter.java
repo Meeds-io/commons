@@ -19,6 +19,7 @@ import org.exoplatform.container.PortalContainer;
 import org.exoplatform.mfa.api.MfaService;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
+import org.exoplatform.services.security.ConversationState;
 import org.exoplatform.web.filter.Filter;
 
 public class MfaFilter implements Filter {
@@ -47,7 +48,7 @@ public class MfaFilter implements Filter {
     if (httpServletRequest.getRemoteUser()!=null &&
         excludedUrls.stream().noneMatch(s -> requestUri.startsWith(s)) &&
         (mfaService.isProtectedUri(requestUri) ||
-            mfaService.currentUserIsInProtectedGroup())) {
+            mfaService.currentUserIsInProtectedGroup(ConversationState.getCurrent().getIdentity()))) {
       if (shouldAuthenticateFromSession(session)) {
         LOG.info("Mfa Filter must redirect on page to fill token");
         httpServletResponse.sendRedirect(MFA_URI+"?initialUri=" + requestUri);
