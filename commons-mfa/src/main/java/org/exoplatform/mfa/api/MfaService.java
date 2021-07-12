@@ -12,18 +12,13 @@ import org.exoplatform.mfa.api.otp.OtpService;
 import org.exoplatform.mfa.storage.MfaStorage;
 import org.exoplatform.mfa.storage.dto.RevocationRequest;
 import org.exoplatform.services.security.Identity;
+import org.gatein.common.util.ListMap;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class MfaService {
   private static final String DEFAULT_MFA_SYSTEM = "otp";
-
-  private static final String MFA_OIDC = "oidc";
-
-  private static final String MFA_FIDO = "fido";
 
   public static final String MFA_FEATURE = "mfa";
 
@@ -32,12 +27,14 @@ public class MfaService {
   private ExoFeatureService featureService;
 
   private List<String>        protectedNavigations=new ArrayList<>();
+
   private List<String>        protectedGroups=new ArrayList<>();
 
   private MfaStorage      mfaStorage;
-
-  public MfaService(InitParams initParams, MfaStorage mfaStorage) {
-
+  
+  private HashMap<String, String> mfaConnectors;
+  
+  
   public MfaService(InitParams initParams, MfaStorage mfaStorage, ExoFeatureService featureService) {
     this.featureService = featureService;
     ValueParam protectedGroupNavigations = initParams.getValueParam("protectedGroupNavigations");
@@ -172,11 +169,23 @@ public class MfaService {
     }
   }
 
+  public void saveActiveFeature(String status) {
+    featureService.saveActiveFeature(MFA_FEATURE, Boolean.parseBoolean(status));;
+  }
+
+  public void setMfaSystem(String mfaSystem) {
+    this.mfaSystem = mfaSystem;
+  }
+
   public boolean isMfaFeatureActivated() {
-    Boolean isMfaFeatureAcivated = featureService.isActiveFeature(MFA_FEATURE);
-    if(isMfaFeatureAcivated == null) {
-      return true;
-    }
-    return isMfaFeatureAcivated;
+    return featureService.isActiveFeature(MFA_FEATURE);
+  }
+
+  public void saveProtectedGroups(String groups) {
+    this.protectedGroups = Arrays.asList(groups.split(","));
+  }
+
+  public String getProtectedGroups() {
+    return String.join(",", this.protectedGroups);
   }
 }

@@ -7,15 +7,6 @@ import org.exoplatform.commons.api.settings.ExoFeatureService;
 import org.exoplatform.mfa.api.MfaService;
 
 import javax.annotation.security.RolesAllowed;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 
 import org.exoplatform.mfa.storage.dto.RevocationRequest;
 import org.exoplatform.mfa.rest.entities.RevocationRequestEntity;
@@ -23,6 +14,10 @@ import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
+import javax.ws.rs.*;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+
 import org.exoplatform.services.rest.resource.ResourceContainer;
 import org.exoplatform.services.security.ConversationState;
 import org.json.JSONException;
@@ -35,15 +30,10 @@ import java.util.stream.Collectors;
 @Api(value = "/mfa")
 public class MfaRestService implements ResourceContainer {
 
-  public static final String MFA_FEATURE = "mfa";
-
   private MfaService mfaService;
 
-  private ExoFeatureService featureService;
-
-  public MfaRestService(MfaService mfaService, ExoFeatureService featureService) {
+  public MfaRestService(MfaService mfaService) {
     this.mfaService=mfaService;
-    this.featureService=featureService;
   }
 
   @Path("/settings")
@@ -68,14 +58,13 @@ public class MfaRestService implements ResourceContainer {
   @Path("/changeMfaFeatureActivation/{status}")
   @PUT
   @Produces(MediaType.APPLICATION_JSON)
-  @RolesAllowed("users")
+  @RolesAllowed("administrators")
   @ApiOperation(value = "Switch the Activated MFA System", httpMethod = "PUT", response = Response.class, produces = MediaType.APPLICATION_JSON)
   @ApiResponses(value = { @ApiResponse(code = HTTPStatus.OK, message = "Request fulfilled"),
       @ApiResponse(code = HTTPStatus.UNAUTHORIZED, message = "Unauthorized operation"),
       @ApiResponse(code = HTTPStatus.INTERNAL_ERROR, message = "Internal server error"), })
   public Response changeMfaFeatureActivation(@ApiParam(value = "Switch the Activated MFA System to avtivated or deactivated", required = true) String status) {
-    boolean isActiveBool = Boolean.parseBoolean(status);
-    featureService.saveActiveFeature(MFA_FEATURE, isActiveBool);
+    mfaService.saveActiveFeature(status);
     return Response.ok().type(MediaType.TEXT_PLAIN).build();
   }
 
@@ -161,13 +150,43 @@ public class MfaRestService implements ResourceContainer {
   @Path("/changeMfaSystem/{mfaSystem}")
   @PUT
   @Produces(MediaType.APPLICATION_JSON)
-  @RolesAllowed("users")
-  @ApiOperation(value = "Change the MFA MFA System", httpMethod = "PUT", response = Response.class, produces = MediaType.APPLICATION_JSON)
+  @RolesAllowed("administrators")
+  @ApiOperation(value = "Change the MFA System", httpMethod = "PUT", response = Response.class, produces = MediaType.APPLICATION_JSON)
   @ApiResponses(value = { @ApiResponse(code = HTTPStatus.OK, message = "Request fulfilled"),
           @ApiResponse(code = HTTPStatus.UNAUTHORIZED, message = "Unauthorized operation"),
           @ApiResponse(code = HTTPStatus.INTERNAL_ERROR, message = "Internal server error"), })
   public Response changeMfaSystem(@ApiParam(value = "Change the MFA MFA System to OTP, Fido 2 or SuperGluu", required = true) String mfaSystem) {
-    mfaService.switchMfaSystem(mfaSystem);
+    mfaService.setMfaSystem(mfaSystem);
     return Response.ok().type(MediaType.TEXT_PLAIN).build();
+  }
+
+  @POST
+  @Path("/saveProtectedGroups")
+  @RolesAllowed("administrators")
+  @ApiOperation(value = "set mfa groups",
+          httpMethod = "POST",
+          response = Response.class,
+          produces = "application/json",
+          notes = "set mfa groups")
+  @ApiResponses(value = {
+          @ApiResponse (code = HTTPStatus.OK, message = "Request fulfilled"),
+          @ApiResponse(code = HTTPStatus.UNAUTHORIZED, message = "Unauthorized operation"),
+          @ApiResponse(code = HTTPStatus.INTERNAL_ERROR, message = "Internal server error") })
+  public Response saveProtectedGroups(@ApiParam(value = "groups", required = true) String groups) {
+    mfaService.saveProtectedGroups(groups);
+    return Response.ok().entity("{\"groups\":\"" + groups + "\"}").build();
+  }
+
+  @Path("/getProtectedGroups")
+  @GET
+  @Produces(MediaType.APPLICATION_JSON)
+  @RolesAllowed("administrators")
+  @ApiOperation(value = "Get protected groups for MFA System", httpMethod = "GET", response = Response.class, produces = MediaType.APPLICATION_JSON)
+  @ApiResponses(value = { @ApiResponse(code = HTTPStatus.OK, message = "Request fulfilled"),
+          @ApiResponse(code = HTTPStatus.UNAUTHORIZED, message = "Unauthorized operation"),
+          @ApiResponse(code = HTTPStatus.INTERNAL_ERROR, message = "Internal server error"), })
+  public Response getProtectedGroups() {
+    String groups = mfaService.getProtectedGroups();
+    return Response.ok().entity("{\"protectedGroups\":\"" + groups + "\"}").build();
   }
 }

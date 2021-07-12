@@ -22,10 +22,7 @@ import java.util.List;
 
 import static org.mockito.Mockito.doNothing;
 import static org.junit.Assert.*;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 public class MfaRestServiceTest {
 
@@ -33,11 +30,6 @@ public class MfaRestServiceTest {
 
   @Mock
   MfaService mfaService;
-
-  @Mock
-  ExoFeatureService featureService;
-
-  public static final String MFA_FEATURE = "mfa";
 
   @Before
   public void setUp() {
@@ -62,7 +54,6 @@ public class MfaRestServiceTest {
   }
 
   @Test
-
   public void testAddNonExistingRevocationRequest() {
     String user = "john";
     String mfaSystem = "otp";
@@ -162,12 +153,30 @@ public class MfaRestServiceTest {
     Response response = mfaRestService.changeMfaFeatureActivation("true");
 
     assertEquals(200 ,response.getStatus());
+    verify(mfaService,times(1)).saveActiveFeature("true");
   }
 
   @Test
   public void testChangeMfaSystem() {
-    Response response = mfaRestService.changeMfaSystem("SuperGluu");
+    Response response = mfaRestService.changeMfaSystem("oidc");
 
     assertEquals(200 ,response.getStatus());
+    verify(mfaService,times(1)).setMfaSystem("oidc");
+  }
+
+  @Test
+  public void testGetProtectedGroups() {
+    Response response = mfaRestService.getProtectedGroups();
+
+    assertEquals(200 ,response.getStatus());
+    verify(mfaService,times(1)).getProtectedGroups();
+  }
+
+  @Test
+  public void testSaveProtectedGroups() {
+    Response response = mfaRestService.saveProtectedGroups("/platform/users, /platform/rewarding");
+
+    assertEquals(200 ,response.getStatus());
+    verify(mfaService,times(1)).saveProtectedGroups("/platform/users, /platform/rewarding");
   }
 }

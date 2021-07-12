@@ -45,7 +45,7 @@ public class MfaFilter implements Filter {
     MfaService mfaService = container.getComponentInstanceOfType(MfaService.class);
 
     String requestUri = httpServletRequest.getRequestURI();
-    if (mfaService.isMfaFeatureActivated() && httpServletRequest.getRemoteUser()!=null &&
+    if (httpServletRequest.getRemoteUser() != null && mfaService.isMfaFeatureActivated() &&
         excludedUrls.stream().noneMatch(s -> requestUri.startsWith(s)) &&
         (mfaService.isProtectedUri(requestUri) ||
             mfaService.currentUserIsInProtectedGroup(ConversationState.getCurrent().getIdentity()))) {

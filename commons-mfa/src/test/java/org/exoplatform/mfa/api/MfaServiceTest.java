@@ -182,16 +182,31 @@ public class MfaServiceTest {
     assertEquals("otp", mfaSystem);
   }
 
+  @Test
+  public void testSaveActiveFeature() {
+    mfaService.saveActiveFeature("otp");
+    String mfaSystem = mfaService.getMfaSystem();
+    assertEquals("otp", mfaSystem);
+  }
+
+  @Test
+  public void testSaveProtectedGroups() {
+    String groups = mfaService.getProtectedGroups();
+    assertEquals("/platform/administrators", groups);
+    mfaService.saveProtectedGroups("/platform/rewarding, /platform/users");
+    groups = mfaService.getProtectedGroups();
+    assertEquals("/platform/rewarding, /platform/users", groups);
+  }
 
   @Test
   public void testswitchMfaSystem() {
     String mfaSystem = mfaService.getMfaSystem();
     assertEquals("otp", mfaSystem);
 
-    mfaService.switchMfaSystem("Fido 2");
+    mfaService.setMfaSystem("fido");
     assertEquals("fido", mfaService.getMfaSystem());
 
-    mfaService.switchMfaSystem("SuperGluu");
+    mfaService.setMfaSystem("oidc");
     assertEquals("oidc", mfaService.getMfaSystem());
   }
 }
