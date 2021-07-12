@@ -184,8 +184,8 @@ public class ExoOtpConnectorTest {
 
     //then
     verify(settingService, times(1))
-        .remove(eq(new Context(Context.USER.getName(), defaultUser)), eq(Scope.APPLICATION), eq(OTP_SECRET));
+        .remove(new Context(Context.USER.getName(), defaultUser), Scope.APPLICATION,OTP_SECRET);
     verify(settingService, times(1))
-        .remove(eq(new Context(Context.USER.getName(), defaultUser)), eq(Scope.APPLICATION), eq(OTP_SECRET_CHECKED));
+        .remove(new Context(Context.USER.getName(), defaultUser), Scope.APPLICATION, OTP_SECRET_CHECKED);
   }
 }

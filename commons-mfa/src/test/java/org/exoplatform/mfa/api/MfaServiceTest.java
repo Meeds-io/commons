@@ -114,8 +114,8 @@ public class MfaServiceTest {
     verify(mfaStorage,times(1)).deleteById(id);
   }
 
-  @Test
-  public void testConfirmRevocationRequest(){
+//  @Test
+//  public void testConfirmRevocationRequest(){
     //To activate when OtpService is loaded as connector in mfa service
 //    long id = 0L;
 //    RevocationRequest returnedRevocationRequest = new RevocationRequest();
@@ -127,7 +127,7 @@ public class MfaServiceTest {
 //
 //    mfaService.confirmRevocationRequest(id);
 //    verify(mfaStorage,times(1)).deleteById(id);
-  }
+//  }
 
   @Test
   public void testFindAll() {

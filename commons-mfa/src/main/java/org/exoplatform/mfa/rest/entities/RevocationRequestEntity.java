@@ -5,11 +5,11 @@ import java.util.Map;
 
 public class RevocationRequestEntity {
 
-  public long id;
+  private long id;
 
-  public String username;
+  private String username;
 
-  public String type;
+  private String type;
 
   public RevocationRequestEntity(long id, String username, String type) {
     this.id = id;

@@ -17,12 +17,6 @@ public class RevocationRequest implements Serializable {
     this.type = type;
   }
 
-  public RevocationRequest(Long id, String user, String fullname, String type) {
-    this.id = id;
-    this.user = user;
-    this.type = type;
-  }
-
   public RevocationRequest() {
   }
 
