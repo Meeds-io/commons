@@ -4,12 +4,9 @@ import org.exoplatform.commons.utils.CommonsUtils;
 import org.exoplatform.container.component.ComponentPlugin;
 import org.exoplatform.container.xml.InitParams;
 import org.exoplatform.container.xml.ValueParam;
-import org.exoplatform.mfa.rest.otp.OtpRestService;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 
-import java.util.Arrays;
-import java.util.stream.Collectors;
 
 public class MfaSystemComponentPlugin implements ComponentPlugin {
 

@@ -10,7 +10,6 @@ import org.exoplatform.services.resources.ResourceBundleService;
 import java.time.Clock;
 import java.util.HashMap;
 import java.util.Locale;
-import java.util.ResourceBundle;
 
 public class OtpService implements MfaSystemService {
 
