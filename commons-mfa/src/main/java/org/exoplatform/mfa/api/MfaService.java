@@ -4,11 +4,9 @@ import org.exoplatform.commons.api.settings.SettingService;
 import org.exoplatform.commons.api.settings.SettingValue;
 import org.exoplatform.commons.api.settings.data.Context;
 import org.exoplatform.commons.api.settings.data.Scope;
-import org.exoplatform.commons.utils.CommonsUtils;
 import org.exoplatform.commons.api.settings.ExoFeatureService;
 import org.exoplatform.container.xml.InitParams;
 import org.exoplatform.container.xml.ValueParam;
-import org.exoplatform.mfa.api.otp.OtpService;
 import org.exoplatform.mfa.storage.MfaStorage;
 import org.exoplatform.mfa.storage.dto.RevocationRequest;
 import org.exoplatform.services.security.Identity;
@@ -124,11 +122,8 @@ public class MfaService {
 
   public void confirmRevocationRequest(Long id) {
     RevocationRequest revocationRequest = mfaStorage.findById(id);
-    if (revocationRequest!=null && revocationRequest.getType().equals("otp")) {
-      //todo : change this when services are added in map by configuration
-      OtpService otpService = CommonsUtils.getService(OtpService.class);
-      otpService.removeSecret(revocationRequest.getUser());
-    }
+    String type = revocationRequest.getType();
+    mfaSystemServices.get(type).getMfaSystemService().removeSecret(revocationRequest.getUser());
     mfaStorage.deleteById(id);
   }
 
