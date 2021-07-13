@@ -6,16 +6,11 @@ import org.exoplatform.commons.api.settings.data.Context;
 import org.exoplatform.commons.api.settings.data.Scope;
 import org.exoplatform.commons.utils.CommonsUtils;
 import org.exoplatform.commons.api.settings.ExoFeatureService;
-import org.exoplatform.commons.api.settings.SettingService;
-import org.exoplatform.commons.api.settings.SettingValue;
-import org.exoplatform.commons.api.settings.data.Context;
-import org.exoplatform.commons.api.settings.data.Scope;
 import org.exoplatform.container.xml.InitParams;
 import org.exoplatform.container.xml.ValueParam;
 import org.exoplatform.mfa.api.otp.OtpService;
 import org.exoplatform.mfa.storage.MfaStorage;
 import org.exoplatform.mfa.storage.dto.RevocationRequest;
-import org.exoplatform.services.security.ConversationState;
 import org.exoplatform.services.security.Identity;
 
 import java.util.*;
@@ -39,8 +34,6 @@ public class MfaService {
   private List<String>        protectedGroups;
 
   private MfaStorage      mfaStorage;
-  
-  private HashMap<String, String> mfaConnectors;
   
   private Map<String, MfaSystemComponentPlugin> mfaSystemServices;
   
@@ -143,43 +136,6 @@ public class MfaService {
     mfaStorage.deleteById(id);
   }
 
-  public void disableMfaFeature(String status) {
-    SettingService settingService = CommonsUtils.getService(SettingService.class);
-    if(protectedNavigations != null&& !this.protectedNavigations.isEmpty()) {
-        settingService.set(Context.GLOBAL, Scope.GLOBAL.id(null), "PROTECTED_GROUPS_NAVIGATIONS", SettingValue.create(String.join(",", this.protectedNavigations)));
-        this.protectedNavigations = new ArrayList<>();
-    }
-    if(protectedGroups != null&& !this.protectedGroups.isEmpty()) {
-        settingService.set(Context.GLOBAL, Scope.GLOBAL.id(null), "PROTECTED_GROUPS", SettingValue.create(String.join(",", this.protectedGroups)));
-        this.protectedGroups = new ArrayList<>();
-    }
-    settingService.set(Context.GLOBAL, Scope.GLOBAL.id(null), "MFA_STATUS", SettingValue.create(status));
-  }
-
-  public void enableMfaFeature(String status) {
-    SettingService settingService = CommonsUtils.getService(SettingService.class);
-    if(this.protectedNavigations.isEmpty()) {
-      SettingValue<?> protectedNavigationsValue = settingService.get(Context.GLOBAL, Scope.GLOBAL.id(null), "PROTECTED_GROUPS_NAVIGATIONS");
-      if(protectedNavigationsValue != null) {
-        this.protectedNavigations = Arrays.asList(protectedNavigationsValue.getValue().toString().split(","));
-      }
-    }
-    if(this.protectedGroups.isEmpty()) {
-      SettingValue<?> protectedGroupsValue = settingService.get(Context.GLOBAL, Scope.GLOBAL.id(null), "PROTECTED_GROUPS");
-      if(protectedGroupsValue != null) {
-        this.protectedGroups = Arrays.asList(protectedGroupsValue.getValue().toString().split(","));
-      }
-    }
-    settingService.set(Context.GLOBAL, Scope.GLOBAL.id(null), "MFA_STATUS", SettingValue.create(status));
-  }
-
-  public boolean getMfaStatus() {
-    SettingService settingService = CommonsUtils.getService(SettingService.class);
-    SettingValue<?> settingValue = settingService.get(Context.GLOBAL, Scope.GLOBAL.id(null), "MFA_STATUS");
-    return Boolean.valueOf(settingValue.getValue().toString());
-  }
-
-  
   public List<String> getAvailableMfaSystems() {
     return new ArrayList<>(this.mfaSystemServices.keySet());
   }

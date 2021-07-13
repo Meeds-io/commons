@@ -7,11 +7,8 @@ import org.exoplatform.mfa.api.MfaService;
 
 import javax.annotation.security.RolesAllowed;
 
-import org.exoplatform.mfa.rest.otp.OtpRestService;
 import org.exoplatform.mfa.storage.dto.RevocationRequest;
 import org.exoplatform.mfa.rest.entities.RevocationRequestEntity;
-import org.exoplatform.services.log.ExoLogger;
-import org.exoplatform.services.log.Log;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 
@@ -224,7 +221,7 @@ public class MfaRestService implements ResourceContainer {
   public Response getProtectedGroups() {
 
     JSONArray groups = new JSONArray();
-    mfaService.getProtectedGroups().stream().forEach(group -> groups.put(group));
+    mfaService.getProtectedGroups().stream().forEach(groups::put);
     return Response.ok().entity("{\"protectedGroups\":" + groups + "}").build();
   }
 }

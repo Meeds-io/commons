@@ -12,6 +12,7 @@ import org.exoplatform.mfa.storage.dto.RevocationRequest;
 import org.exoplatform.portal.branding.BrandingService;
 import org.exoplatform.portal.branding.BrandingServiceImpl;
 import org.exoplatform.services.naming.InitialContextInitializer;
+import org.exoplatform.services.resources.ResourceBundleService;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -33,6 +34,9 @@ public class MfaStorageTest {
   @Mock
   ExoFeatureService featureService;
 
+  @Mock
+  ResourceBundleService resourceBundleService;
+
   @Before
   public void setup() {
 
@@ -46,8 +50,13 @@ public class MfaStorageTest {
     }
 
     featureService = mock(ExoFeatureService.class);
-    if (rootContainer.getComponentInstanceOfType(BrandingService.class) == null) {
+    if (rootContainer.getComponentInstanceOfType(ExoFeatureService.class) == null) {
       rootContainer.registerComponentInstance(ExoFeatureService.class.getName(), featureService);
+    }
+
+    resourceBundleService = mock(ResourceBundleService.class);
+    if (rootContainer.getComponentInstanceOfType(ResourceBundleService.class) == null) {
+      rootContainer.registerComponentInstance(ResourceBundleService.class.getName(), resourceBundleService);
     }
     container = PortalContainer.getInstance();
     assertNotNull(container);
