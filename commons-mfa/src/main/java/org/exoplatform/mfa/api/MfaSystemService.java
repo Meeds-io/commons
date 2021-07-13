@@ -10,6 +10,6 @@ public interface MfaSystemService {
 
   String getHelpContent(Locale locale);
 
-  default void removeSecret(String User) {}
+  default void removeSecret(String user) {}
 
 }
