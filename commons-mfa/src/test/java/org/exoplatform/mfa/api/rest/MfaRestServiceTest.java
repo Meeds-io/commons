@@ -29,29 +29,19 @@ public class MfaRestServiceTest {
 
   MfaRestService mfaRestService;
 
+
   @Mock
   MfaService mfaService;
 
   @Before
   public void setUp() {
     mfaService=mock(MfaService.class);
-    featureService=mock(ExoFeatureService.class);
-    mfaRestService = new MfaRestService(mfaService, featureService);
+    mfaRestService = new MfaRestService(mfaService);
   }
   private void startSessionAs(String username) {
     Identity identity = new Identity(username);
     ConversationState state = new ConversationState(identity);
     ConversationState.setCurrent(state);
-  }
-
-  @Test
-  public void testGetMfaSystem() {
-    when(mfaService.getMfaSystem()).thenReturn("otp");
-
-    Response response = mfaRestService.getMfaSystem();
-
-    assertEquals("{\"mfaSystem\":\"otp\"}",response.getEntity().toString());
-
   }
 
   @Test

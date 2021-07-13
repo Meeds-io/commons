@@ -1,5 +1,6 @@
 package org.exoplatform.mfa.api.storage;
 
+import org.exoplatform.commons.api.settings.ExoFeatureService;
 import org.exoplatform.commons.persistence.impl.EntityManagerService;
 import org.exoplatform.container.ExoContainerContext;
 import org.exoplatform.container.PortalContainer;
@@ -28,6 +29,10 @@ public class MfaStorageTest {
   @Mock
   BrandingService brandingService;
 
+
+  @Mock
+  ExoFeatureService featureService;
+
   @Before
   public void setup() {
 
@@ -40,6 +45,10 @@ public class MfaStorageTest {
       rootContainer.registerComponentInstance(BrandingService.class.getName(), brandingService);
     }
 
+    featureService = mock(ExoFeatureService.class);
+    if (rootContainer.getComponentInstanceOfType(BrandingService.class) == null) {
+      rootContainer.registerComponentInstance(ExoFeatureService.class.getName(), featureService);
+    }
     container = PortalContainer.getInstance();
     assertNotNull(container);
 

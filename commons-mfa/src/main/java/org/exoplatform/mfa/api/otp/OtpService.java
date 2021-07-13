@@ -2,6 +2,7 @@ package org.exoplatform.mfa.api.otp;
 
 import org.exoplatform.container.xml.InitParams;
 import org.exoplatform.container.xml.ValueParam;
+import org.exoplatform.mfa.api.MfaService;
 import org.exoplatform.mfa.api.MfaSystemService;
 import org.exoplatform.services.resources.ResourceBundleService;
 
@@ -19,7 +20,7 @@ public class OtpService implements MfaSystemService {
   private String                        activeConnector;
 
 
-  private MfaService mfaService;
+  private MfaService            mfaService;
   private ResourceBundleService resourceBundleService;
   
   public OtpService(InitParams initParams, MfaService mfaService, ResourceBundleService resourceBundleService) {

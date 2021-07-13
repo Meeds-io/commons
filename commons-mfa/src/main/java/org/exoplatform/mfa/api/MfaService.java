@@ -15,6 +15,7 @@ import org.exoplatform.container.xml.ValueParam;
 import org.exoplatform.mfa.api.otp.OtpService;
 import org.exoplatform.mfa.storage.MfaStorage;
 import org.exoplatform.mfa.storage.dto.RevocationRequest;
+import org.exoplatform.services.security.ConversationState;
 import org.exoplatform.services.security.Identity;
 
 import java.util.*;
@@ -53,12 +54,7 @@ public class MfaService {
                                         .map(s -> "/portal/g/" + s.replace("/", ":"))
                                         .collect(Collectors.toList());
     }
-  
-    ValueParam protectedGroupsValueParam = initParams.getValueParam("protectedGroups");
-    if (protectedGroupsValueParam!=null) {
-      this.protectedGroups = Arrays.stream(protectedGroupsValueParam.getValue().split(","))
-                                   .filter(s -> !s.isEmpty())
-                                   .collect(Collectors.toList());
+
     String protectedGroupsValue="";
     if (settingService.get(Context.GLOBAL, Scope.GLOBAL,MFA_PROTECTED_GROUPS)!=null &&
         !settingService.get(Context.GLOBAL,Scope.GLOBAL,MFA_PROTECTED_GROUPS).getValue().toString().isEmpty()) {
@@ -95,12 +91,6 @@ public class MfaService {
   }
   
   public boolean currentUserIsInProtectedGroup(Identity identity) {
-    return protectedNavigations.stream().filter(requestUri::contains).count() > 0;
-
-  }
-  
-  public boolean currentUserIsInProtectedGroup() {
-    Identity identity = ConversationState.getCurrent().getIdentity();
     return protectedGroups.stream().anyMatch(identity::isMemberOf);
   }
 
@@ -188,24 +178,7 @@ public class MfaService {
     SettingValue<?> settingValue = settingService.get(Context.GLOBAL, Scope.GLOBAL.id(null), "MFA_STATUS");
     return Boolean.valueOf(settingValue.getValue().toString());
   }
-  
-  public void switchMfaSystem(String mfaSystem) {
-    switch (mfaSystem) {
-      case "OTP" :
-        this.mfaSystem = DEFAULT_MFA_SYSTEM;
-        break;
-      case "Fido 2" :
-        this.mfaSystem = MFA_FIDO;
-        break;
-      case "SuperGluu" :
-        this.mfaSystem = MFA_OIDC;
-        break;
-      default:
-        this.mfaSystem =DEFAULT_MFA_SYSTEM;
-        break;
-    }
-    
-  }
+
   
   public List<String> getAvailableMfaSystems() {
     return new ArrayList<>(this.mfaSystemServices.keySet());

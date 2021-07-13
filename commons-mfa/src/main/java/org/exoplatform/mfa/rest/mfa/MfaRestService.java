@@ -7,6 +7,7 @@ import org.exoplatform.mfa.api.MfaService;
 
 import javax.annotation.security.RolesAllowed;
 
+import org.exoplatform.mfa.rest.otp.OtpRestService;
 import org.exoplatform.mfa.storage.dto.RevocationRequest;
 import org.exoplatform.mfa.rest.entities.RevocationRequestEntity;
 import org.exoplatform.services.log.ExoLogger;
@@ -38,6 +39,9 @@ import java.util.Locale;
 public class MfaRestService implements ResourceContainer {
 
   private MfaService mfaService;
+
+  private static final Log LOG = ExoLogger.getLogger(MfaRestService.class);
+
 
   public MfaRestService(MfaService mfaService) {
     this.mfaService=mfaService;
