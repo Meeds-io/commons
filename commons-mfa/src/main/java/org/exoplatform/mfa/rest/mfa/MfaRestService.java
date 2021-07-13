@@ -3,7 +3,6 @@ package org.exoplatform.mfa.rest.mfa;
 
 import io.swagger.annotations.*;
 import org.exoplatform.common.http.HTTPStatus;
-import org.exoplatform.commons.api.settings.ExoFeatureService;
 import org.exoplatform.mfa.api.MfaService;
 
 import javax.annotation.security.RolesAllowed;
@@ -14,7 +13,11 @@ import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
+
+import javax.servlet.http.HttpServletRequest;
+
 import javax.ws.rs.*;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
@@ -25,6 +28,9 @@ import org.json.JSONObject;
 
 import java.util.List;
 import java.util.stream.Collectors;
+
+import java.util.Locale;
+
 
 @Path("/mfa")
 @Api(value = "/mfa")
@@ -44,10 +50,13 @@ public class MfaRestService implements ResourceContainer {
   @ApiResponses(value = { @ApiResponse(code = HTTPStatus.OK, message = "Request fulfilled"),
       @ApiResponse(code = HTTPStatus.UNAUTHORIZED, message = "Unauthorized operation"),
       @ApiResponse(code = HTTPStatus.INTERNAL_ERROR, message = "Internal server error"), })
-  public Response getMfaSystem() {
+  public Response getMfaSystem(@Context HttpServletRequest request) {
     JSONObject result = new JSONObject();
+    Locale locale = request == null ? Locale.ENGLISH : request.getLocale();
     try {
-      result.put("mfaSystem", mfaService.getMfaSystem());
+      result.put("mfaSystem", mfaService.getMfaSystemService().getType());
+      result.put("helpTitle", mfaService.getMfaSystemService().getHelpTitle(locale));
+      result.put("helpContent", mfaService.getMfaSystemService().getHelpContent(locale));
       return Response.ok().entity(result.toString()).build();
     } catch (JSONException e) {
       return Response.serverError().build();

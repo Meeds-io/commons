@@ -50,7 +50,7 @@ public class MfaFilter implements Filter {
         (mfaService.isProtectedUri(requestUri) ||
             mfaService.currentUserIsInProtectedGroup(ConversationState.getCurrent().getIdentity()))) {
       if (shouldAuthenticateFromSession(session)) {
-        LOG.info("Mfa Filter must redirect on page to fill token");
+        LOG.debug("Mfa Filter must redirect on page to fill token");
         httpServletResponse.sendRedirect(MFA_URI+"?initialUri=" + requestUri);
         return;
       }

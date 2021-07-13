@@ -3,10 +3,13 @@ package org.exoplatform.mfa.api.otp;
 import org.exoplatform.container.xml.InitParams;
 import org.exoplatform.container.xml.ValueParam;
 import org.exoplatform.mfa.api.MfaSystemService;
+import org.exoplatform.services.resources.ResourceBundleService;
 
 
 import java.time.Clock;
 import java.util.HashMap;
+import java.util.Locale;
+import java.util.ResourceBundle;
 
 public class OtpService implements MfaSystemService {
 
@@ -15,15 +18,18 @@ public class OtpService implements MfaSystemService {
   private HashMap<String, OtpConnector> otpConnectors;
   private String                        activeConnector;
 
+
   private MfaService mfaService;
+  private ResourceBundleService resourceBundleService;
   
-  public OtpService(InitParams initParams, MfaService mfaService) {
+  public OtpService(InitParams initParams, MfaService mfaService, ResourceBundleService resourceBundleService) {
     otpConnectors =new HashMap<>();
     ValueParam activeConnectorParam = initParams.getValueParam("activeConnector");
     if (activeConnectorParam!=null) {
       activeConnector=activeConnectorParam.getValue();
     }
     this.mfaService=mfaService;
+    this.resourceBundleService=resourceBundleService;
   }
   
   public boolean validateToken(String user, String token) {
@@ -59,4 +65,15 @@ public class OtpService implements MfaSystemService {
   public String getType() {
     return TYPE;
   }
+
+  @Override
+  public String getHelpTitle(Locale locale) {
+    return resourceBundleService.getResourceBundle("locale.portlet.mfaAccess.mfaAccess",locale).getString("mfa.otp.help.title");
+  }
+
+  @Override
+  public String getHelpContent(Locale locale) {
+    return resourceBundleService.getResourceBundle("locale.portlet.mfaAccess.mfaAccess",locale).getString("mfa.otp.help.content");
+  }
+
 }

@@ -2,6 +2,7 @@ package org.exoplatform.mfa.api.rest;
 
 import org.exoplatform.commons.api.settings.ExoFeatureService;
 import org.exoplatform.mfa.api.MfaService;
+import org.exoplatform.mfa.api.MfaSystemComponentPlugin;
 import org.exoplatform.mfa.api.otp.OtpService;
 import org.exoplatform.mfa.rest.mfa.MfaRestService;
 import org.exoplatform.mfa.rest.otp.OtpRestService;

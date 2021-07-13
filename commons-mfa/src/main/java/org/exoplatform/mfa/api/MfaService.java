@@ -80,7 +80,11 @@ public class MfaService {
   }
 
   public String getMfaSystem() {
-    return mfaSystem;
+    return this.mfaSystem;
+  }
+
+  public MfaSystemService getMfaSystemService() {
+    return this.mfaSystemServices.get(mfaSystem).getMfaSystemService();
   }
   
   public boolean addRevocationRequest(String username, String mfaType) {

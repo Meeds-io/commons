@@ -8,6 +8,7 @@ import org.exoplatform.mfa.api.otp.OtpConnector;
 import org.exoplatform.mfa.api.otp.OtpService;
 import org.exoplatform.mfa.impl.otp.ExoOtpConnector;
 import org.exoplatform.portal.branding.BrandingService;
+import org.exoplatform.services.resources.ResourceBundleService;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -26,6 +27,8 @@ public class OtpServiceTest {
 
   @Mock
   OtpConnector otpConnector;
+  @Mock
+  ResourceBundleService resourceBundleService;
 
   @Mock
   MfaService mfaService;
@@ -37,9 +40,11 @@ public class OtpServiceTest {
     valueParam.setName("activeConnector");
     valueParam.setValue("ExoOtpConnector");
     initParams.addParam(valueParam);
-    mfaService = mock(MfaService.class);
-    this.otpService=new OtpService(initParams,mfaService);
-
+    this.mfaService = mock(MfaService.class);
+    this.resourceBundleService=mock(ResourceBundleService.class);
+    
+    this.otpService=new OtpService(initParams,mfaService,resourceBundleService);
+    
     otpConnector = mock(ExoOtpConnector.class);
     doCallRealMethod().when(otpConnector).setName(anyString());
     when(otpConnector.getName()).thenCallRealMethod();
