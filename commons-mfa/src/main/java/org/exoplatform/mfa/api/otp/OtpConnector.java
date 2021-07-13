@@ -27,6 +27,8 @@ public interface OtpConnector extends ComponentPlugin {
   default String generateSecret(String userId) {
     return null;
   }
+  default void removeSecret(String userId) {
+  }
 
   default String generateUrlFromSecret(String user, String secret) {
     return null;

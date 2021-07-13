@@ -170,4 +170,22 @@ public class ExoOtpConnectorTest {
              settingValueArgumentCaptor.capture());
     assertTrue(Boolean.parseBoolean((String)settingValueArgumentCaptor.getValue().getValue()));
   }
+
+  @Test
+  public void testRemoveSecret() {
+    //GIVEN
+
+    InitParams initParams=new InitParams();
+    OtpConnector exoOtpConnector = new ExoOtpConnector(initParams, settingService, brandingService);
+
+    //when
+    exoOtpConnector.removeSecret(defaultUser);
+
+
+    //then
+    verify(settingService, times(1))
+        .remove(new Context(Context.USER.getName(), defaultUser), Scope.APPLICATION,OTP_SECRET);
+    verify(settingService, times(1))
+        .remove(new Context(Context.USER.getName(), defaultUser), Scope.APPLICATION, OTP_SECRET_CHECKED);
+  }
 }

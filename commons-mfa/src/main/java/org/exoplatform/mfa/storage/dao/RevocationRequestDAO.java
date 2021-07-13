@@ -25,4 +25,21 @@ public class RevocationRequestDAO extends GenericDAOJPAImpl<RevocationRequestEnt
     query.executeUpdate();
   }
 
+  @ExoTransactional
+  public void deleteById(Long id) {
+    Query query = getEntityManager().createNamedQuery("RevocationRequestEntity.deleteById");
+    query.setParameter("id",id);
+    query.executeUpdate();
+  }
+
+  @ExoTransactional
+  public RevocationRequestEntity findById(Long id) {
+    TypedQuery<RevocationRequestEntity> query = getEntityManager().createNamedQuery("RevocationRequestEntity.findById",
+                                                                                    RevocationRequestEntity.class);
+    query.setParameter("id",id);
+    return query.getSingleResult();
+  }
+
+
+
 }

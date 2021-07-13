@@ -23,7 +23,14 @@ import javax.persistence.Table;
     @NamedQuery(name = "RevocationRequestEntity.deleteByUsernameAndType", query = "DELETE "
         + "FROM RevocationRequestEntity revocationRequest "
         + "WHERE revocationRequest.username = :username "
-        + "AND revocationRequest.type = :type")
+        + "AND revocationRequest.type = :type"),
+    @NamedQuery(name = "RevocationRequestEntity.deleteById", query = "DELETE "
+        + "FROM RevocationRequestEntity revocationRequest "
+        + "WHERE revocationRequest.id = :id")
+    ,
+    @NamedQuery(name = "RevocationRequestEntity.findById", query = "SELECT revocationRequest "
+        + "FROM RevocationRequestEntity revocationRequest "
+        + "WHERE revocationRequest.id = :id")
 })
 public class RevocationRequestEntity {
 

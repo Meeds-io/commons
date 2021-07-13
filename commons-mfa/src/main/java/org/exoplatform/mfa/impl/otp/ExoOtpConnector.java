@@ -95,6 +95,12 @@ public class ExoOtpConnector implements OtpConnector {
   }
 
   @Override
+  public void removeSecret(String user) {
+    settingservice.remove(new Context(Context.USER.getName(), user), Scope.APPLICATION, OTP_SECRET);
+    settingservice.remove(new Context(Context.USER.getName(), user), Scope.APPLICATION, OTP_SECRET_CHECKED);
+  }
+
+  @Override
   public String generateUrlFromSecret(String user, String secret) {
     return "otpauth://totp/"+uriEncode(user)+"?"+
             "secret="+uriEncode(secret)+

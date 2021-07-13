@@ -110,6 +110,16 @@ public class OtpServiceTest {
     verify(otpConnector, times(1)).generateUrlFromSecret("user","secret");
   }
 
+  @Test
+  public void testRemoveSecret() {
+    //GIVEN
+
+    //WHEN
+    otpService.removeSecret("user");
+
+    //THEN
+    verify(otpConnector, times(1)).removeSecret("user");
+  }
 
 
 
