@@ -23,6 +23,7 @@ import javax.ws.rs.core.Response;
 
 import org.exoplatform.services.rest.resource.ResourceContainer;
 import org.exoplatform.services.security.ConversationState;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -217,7 +218,9 @@ public class MfaRestService implements ResourceContainer {
           @ApiResponse(code = HTTPStatus.UNAUTHORIZED, message = "Unauthorized operation"),
           @ApiResponse(code = HTTPStatus.INTERNAL_ERROR, message = "Internal server error"), })
   public Response getProtectedGroups() {
-    String groups = mfaService.getProtectedGroups();
-    return Response.ok().entity("{\"protectedGroups\":\"" + groups + "\"}").build();
+
+    JSONArray groups = new JSONArray();
+    mfaService.getProtectedGroups().stream().forEach(group -> groups.put(group));
+    return Response.ok().entity("{\"protectedGroups\":" + groups + "}").build();
   }
 }
