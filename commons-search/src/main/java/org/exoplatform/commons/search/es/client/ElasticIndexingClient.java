@@ -62,6 +62,7 @@ public class ElasticIndexingClient extends ElasticClient {
     } else {
       LOG.info("Using default as Indexing URL");
     }
+    initHttpClient();
   }
 
   /**

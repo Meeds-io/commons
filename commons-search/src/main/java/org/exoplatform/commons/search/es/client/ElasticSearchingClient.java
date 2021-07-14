@@ -36,6 +36,7 @@ public class ElasticSearchingClient extends ElasticClient {
     } else {
       LOG.info("Using default as Searching URL");
     }
+    initHttpClient();
   }
 
   /**

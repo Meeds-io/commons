@@ -58,7 +58,6 @@ public abstract class ElasticClient {
   protected ElasticIndexingAuditTrail auditTrail;
 
   protected ElasticClient(ElasticIndexingAuditTrail auditTrail) {
-    this.client = getHttpClient();
     this.urlClient = ES_INDEX_CLIENT_DEFAULT;
     if (auditTrail==null) {
       throw new IllegalArgumentException("AuditTrail is null");
@@ -126,6 +125,7 @@ public abstract class ElasticClient {
     return response;
   }
 
+  
   protected ElasticResponse sendHttpHeadRequest(String url) {
     ElasticResponse response;
 
@@ -137,6 +137,36 @@ public abstract class ElasticClient {
       throw new ElasticClientException(e);
     }
     return response;
+  }
+
+  protected void initHttpClient() {
+    this.client = getHttpClient();
+  }
+
+  protected HttpClient getHttpClient() {
+    // Check if Basic Authentication need to be used
+    HttpClientConnectionManager clientConnectionManager = getClientConnectionManager();
+    HttpClientBuilder httpClientBuilder = HttpClients.custom()
+        .setConnectionManager(clientConnectionManager)
+        .setConnectionReuseStrategy(new DefaultConnectionReuseStrategy())
+        .setMaxConnPerRoute(getMaxConnections());
+    if (StringUtils.isNotBlank(getEsUsernameProperty())) {
+      CredentialsProvider credsProvider = new BasicCredentialsProvider();
+      credsProvider.setCredentials(
+              new AuthScope(AuthScope.ANY_HOST, AuthScope.ANY_PORT),
+              new UsernamePasswordCredentials(getEsUsernameProperty(),
+                                              getEsPasswordProperty()));
+
+      HttpClient httpClient = httpClientBuilder
+          .setDefaultCredentialsProvider(credsProvider)
+          .build();
+      LOG.debug("Basic authentication for ES activated with username = {}",
+                getEsUsernameProperty());
+      return httpClient;
+    } else {
+      LOG.debug("Basic authentication for ES not activated");
+      return httpClientBuilder.build();
+    }
   }
 
   /**
@@ -178,32 +208,6 @@ public abstract class ElasticClient {
           url,
           response.getStatusCode(),
           response.getMessage());
-    }
-  }
-
-  private HttpClient getHttpClient() {
-    // Check if Basic Authentication need to be used
-    HttpClientConnectionManager clientConnectionManager = getClientConnectionManager();
-    HttpClientBuilder httpClientBuilder = HttpClients.custom()
-        .setConnectionManager(clientConnectionManager)
-        .setConnectionReuseStrategy(new DefaultConnectionReuseStrategy())
-        .setMaxConnPerRoute(getMaxConnections());
-    if (StringUtils.isNotBlank(getEsUsernameProperty())) {
-      CredentialsProvider credsProvider = new BasicCredentialsProvider();
-      credsProvider.setCredentials(
-              new AuthScope(AuthScope.ANY_HOST, AuthScope.ANY_PORT),
-              new UsernamePasswordCredentials(getEsUsernameProperty(),
-                                              getEsPasswordProperty()));
-
-      HttpClient httpClient = httpClientBuilder
-          .setDefaultCredentialsProvider(credsProvider)
-          .build();
-      LOG.debug("Basic authentication for ES activated with username = {}",
-                getEsUsernameProperty());
-      return httpClient;
-    } else {
-      LOG.debug("Basic authentication for ES not activated");
-      return httpClientBuilder.build();
     }
   }
 
