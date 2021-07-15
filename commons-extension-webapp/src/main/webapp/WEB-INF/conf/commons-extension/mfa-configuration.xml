@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-               xsi:schemaLocation="http://www.exoplatform.org/xml/ns/kernel_1_2.xsd http://www.exoplatform.org/xml/ns/kernel_1_2.xsd"
-               xmlns="http://www.exoplatform.org/xml/ns/kernel_1_2.xsd">
+<configuration
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.exoplatform.org/xml/ns/kernel_1_2.xsd http://www.exoplatform.org/xml/ns/kernel_1_2.xsd"
+        xmlns="http://www.exoplatform.org/xml/ns/kernel_1_2.xsd">
 
 
     <component>
@@ -36,7 +37,7 @@
             </value-param>
         </init-params>
     </component>
-    
+
     <component>
         <key>org.exoplatform.mfa.rest.mfa.MfaRestService</key>
         <type>org.exoplatform.mfa.rest.mfa.MfaRestService</type>
@@ -67,7 +68,7 @@
                     <name>Mfa Redirect Filter</name>
                     <object type="org.exoplatform.web.filter.FilterDefinition">
                         <field name="filter">
-                            <object type="org.exoplatform.mfa.filter.MfaFilter" />
+                            <object type="org.exoplatform.mfa.filter.MfaFilter"/>
                         </field>
                         <field name="patterns">
                             <collection type="java.util.ArrayList" item-type="java.lang.String">
@@ -112,7 +113,7 @@
             </init-params>
         </component-plugin>
     </external-component-plugins>
-    
+
     <external-component-plugins>
         <target-component>org.exoplatform.mfa.api.otp.OtpService</target-component>
         <component-plugin>
@@ -148,7 +149,6 @@
             </init-params>
         </component-plugin>
     </external-component-plugins>
-
 
 
 </configuration>

@@ -24,6 +24,18 @@ Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
   </component>
 
   <component>
+    <key>org.exoplatform.mfa.storage.MfaStorage</key>
+    <type>org.exoplatform.mfa.storage.MfaStorage</type>
+  </component>
+
+
+  <component>
+    <key>org.exoplatform.mfa.storage.dao.RevocationRequestDAO</key>
+    <type>org.exoplatform.mfa.storage.dao.RevocationRequestDAO</type>
+  </component>
+
+
+  <component>
     <key>org.exoplatform.portal.config.UserACL</key>
     <type>org.exoplatform.portal.config.UserACL</type>
     <init-params>
