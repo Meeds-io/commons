@@ -17,7 +17,7 @@
             </value-param>
             <value-param>
                 <name>mfaSystem</name>
-                <value>${exo.mfa.system:otp}</value>
+                <value>${exo.mfa.system:OTP}</value>
             </value-param>
             <value-param>
                 <name>protectedGroups</name>
@@ -25,7 +25,7 @@
             </value-param>
         </init-params>
     </component>
-    
+
     <component>
         <key>org.exoplatform.mfa.api.otp.OtpService</key>
         <type>org.exoplatform.mfa.api.otp.OtpService</type>
@@ -81,8 +81,38 @@
             </init-params>
         </component-plugin>
     </external-component-plugins>
+    <external-component-plugins>
+        <target-component>org.exoplatform.mfa.api.MfaService</target-component>
+        <component-plugin>
+            <name>OtpSystem</name>
+            <set-method>addConnector</set-method>
+            <type>org.exoplatform.mfa.api.MfaSystemComponentPlugin</type>
+            <description>Mfa Otp Component Plugin</description>
+            <init-params>
+                <value-param>
+                    <name>service</name>
+                    <value>org.exoplatform.mfa.api.otp.OtpService</value>
+                </value-param>
+            </init-params>
+        </component-plugin>
+    </external-component-plugins>
 
-
+    <external-component-plugins>
+        <target-component>org.exoplatform.commons.api.persistence.DataInitializer</target-component>
+        <component-plugin>
+            <name>MfaChangeLogsPlugin</name>
+            <set-method>addChangeLogsPlugin</set-method>
+            <type>org.exoplatform.commons.persistence.impl.ChangeLogsPlugin</type>
+            <init-params>
+                <values-param>
+                    <name>changelogs</name>
+                    <description>Change logs of MFA</description>
+                    <value>db.changelogs/mfa-changelog-1.0.0.xml</value>
+                </values-param>
+            </init-params>
+        </component-plugin>
+    </external-component-plugins>
+    
     <external-component-plugins>
         <target-component>org.exoplatform.mfa.api.otp.OtpService</target-component>
         <component-plugin>
@@ -112,26 +142,13 @@
                     <value>${exo.mfa.otp.algorithm:SHA1}</value>
                 </value-param>
                 <value-param>
-                    <name>issuer</name>
+                    <name>label</name>
                     <value>${exo.mfa.otp.issuer:}</value>
                 </value-param>
             </init-params>
         </component-plugin>
     </external-component-plugins>
 
-    <external-component-plugins>
-        <target-component>org.exoplatform.commons.api.persistence.DataInitializer</target-component>
-        <component-plugin>
-            <name>MfaChangeLogsPlugin</name>
-            <set-method>addChangeLogsPlugin</set-method>
-            <type>org.exoplatform.commons.persistence.impl.ChangeLogsPlugin</type>
-            <init-params>
-                <values-param>
-                    <name>changelogs</name>
-                    <description>Change logs of MFA</description>
-                    <value>db.changelogs/mfa-changelog-1.0.0.xml</value>
-                </values-param>
-            </init-params>
-        </component-plugin>
-    </external-component-plugins>
+
+
 </configuration>

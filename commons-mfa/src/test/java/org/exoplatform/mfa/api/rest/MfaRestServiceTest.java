@@ -1,6 +1,8 @@
 package org.exoplatform.mfa.api.rest;
 
+import org.exoplatform.commons.api.settings.ExoFeatureService;
 import org.exoplatform.mfa.api.MfaService;
+import org.exoplatform.mfa.api.MfaSystemComponentPlugin;
 import org.exoplatform.mfa.api.otp.OtpService;
 import org.exoplatform.mfa.rest.mfa.MfaRestService;
 import org.exoplatform.mfa.rest.otp.OtpRestService;
@@ -18,16 +20,15 @@ import javax.ws.rs.core.Response;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
+
 import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.junit.Assert.*;
+import static org.mockito.Mockito.*;
 
 public class MfaRestServiceTest {
 
   MfaRestService mfaRestService;
+
 
   @Mock
   MfaService mfaService;
@@ -37,21 +38,10 @@ public class MfaRestServiceTest {
     mfaService=mock(MfaService.class);
     mfaRestService = new MfaRestService(mfaService);
   }
-
   private void startSessionAs(String username) {
     Identity identity = new Identity(username);
     ConversationState state = new ConversationState(identity);
     ConversationState.setCurrent(state);
-  }
-
-  @Test
-  public void testGetMfaSystem() {
-    when(mfaService.getMfaSystem()).thenReturn("otp");
-
-    Response response = mfaRestService.getMfaSystem();
-
-    assertEquals("{\"mfaSystem\":\"otp\"}",response.getEntity().toString());
-
   }
 
   @Test
@@ -147,5 +137,52 @@ public class MfaRestServiceTest {
     assertEquals(400,response.getStatus());
     verify(mfaService,times(0)).confirmRevocationRequest(0L);
     verify(mfaService,times(0)).cancelRevocationRequest(0L);
+  }
+  
+  @Test
+  public void testChangeMfaFeatureActivation() {
+    Response response = mfaRestService.changeMfaFeatureActivation("true");
+
+    assertEquals(200 ,response.getStatus());
+    verify(mfaService,times(1)).saveActiveFeature("true");
+  }
+
+  @Test
+  public void testChangeMfaSystemWithExistingOne() {
+    when(mfaService.setMfaSystem("oidc")).thenReturn(true);
+    Response response = mfaRestService.changeMfaSystem("oidc");
+    assertEquals(200 ,response.getStatus());
+    verify(mfaService,times(1)).setMfaSystem("oidc");
+  }
+  @Test
+  public void testChangeMfaSystemWithNonExistingOne() {
+    when(mfaService.setMfaSystem("oidc")).thenReturn(false);
+    Response response = mfaRestService.changeMfaSystem("oidc");
+    assertEquals(400 ,response.getStatus());
+    verify(mfaService,times(1)).setMfaSystem("oidc");
+  }
+
+  @Test
+  public void testGetProtectedGroups() {
+    Response response = mfaRestService.getProtectedGroups();
+
+    assertEquals(200 ,response.getStatus());
+    verify(mfaService,times(1)).getProtectedGroups();
+  }
+
+  @Test
+  public void testSaveProtectedGroups() {
+    Response response = mfaRestService.saveProtectedGroups("/platform/users, /platform/rewarding");
+
+    assertEquals(200 ,response.getStatus());
+    verify(mfaService,times(1)).saveProtectedGroups("/platform/users, /platform/rewarding");
+  }
+
+  @Test
+  public void testGetMfaSystems() {
+    Response response = mfaRestService.getAvalailableMfaSystems();
+
+    assertEquals(200 ,response.getStatus());
+    verify(mfaService,times(1)).getAvailableMfaSystems();
   }
 }

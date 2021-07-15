@@ -11,7 +11,7 @@
   <packaging>jar</packaging>
   <name>eXo PLF:: Commons - Commons MFA</name>
   <properties>
-    <exo.test.coverage.ratio>0.85</exo.test.coverage.ratio>
+    <exo.test.coverage.ratio>0.70</exo.test.coverage.ratio>
   </properties>
   <dependencies>
     <!-- PLF dependencies -->

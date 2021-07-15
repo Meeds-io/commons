@@ -1,29 +1,36 @@
 package org.exoplatform.mfa.api;
 
+import org.exoplatform.commons.api.settings.ExoFeatureService;
+import org.exoplatform.commons.api.settings.SettingService;
+import org.exoplatform.commons.api.settings.data.Context;
+import org.exoplatform.commons.api.settings.data.Scope;
 import org.exoplatform.container.xml.ValueParam;
 import org.exoplatform.container.xml.InitParams;
+
 import org.exoplatform.mfa.storage.MfaStorage;
 import org.exoplatform.mfa.storage.dto.RevocationRequest;
 import org.exoplatform.portal.branding.BrandingService;
+import org.exoplatform.mfa.api.otp.OtpService;
+
 import org.exoplatform.services.security.ConversationState;
 import org.exoplatform.services.security.Identity;
 import org.exoplatform.services.security.MembershipEntry;
 import org.junit.Before;
 import org.junit.Test;
+
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.mock;
 
 public class MfaServiceTest {
   
@@ -32,8 +39,21 @@ public class MfaServiceTest {
   @Mock
   MfaStorage mfaStorage;
 
+  @Mock
+  ExoFeatureService featureService;
+  @Mock
+  SettingService settingService;
+
+
+  @Mock
+  OtpService otpService;
+
   @Before
   public void setUp() {
+    featureService=mock(ExoFeatureService.class);
+    settingService=mock(SettingService.class);
+    when(settingService.get(Context.GLOBAL, Scope.GLOBAL, "mfaSystem")).thenReturn(null);
+    when(settingService.get(Context.GLOBAL, Scope.GLOBAL, "protectedGroups")).thenReturn(null);
     InitParams initParams = new InitParams();
     ValueParam protectedGroupNavigations = new ValueParam();
     protectedGroupNavigations.setName("protectedGroupNavigations");
@@ -45,8 +65,23 @@ public class MfaServiceTest {
     protectedGroups.setValue("/platform/administrators");
     initParams.addParam(protectedGroups);
 
+    ValueParam mfaSystem = new ValueParam();
+    mfaSystem.setName("mfaSystem");
+    mfaSystem.setValue("OTP");
+    initParams.addParam(mfaSystem);
+
     mfaStorage=mock(MfaStorage.class);
-    this.mfaService=new MfaService(initParams,mfaStorage);
+    this.mfaService=new MfaService(initParams,mfaStorage,featureService,settingService);
+  }
+
+  @Test
+  public void testOtpService() {
+    otpService=mock(OtpService.class);
+    when(otpService.getType()).thenReturn("otp");
+    MfaSystemComponentPlugin componentPlugin = mock(MfaSystemComponentPlugin.class);
+    when(componentPlugin.getMfaSystemService()).thenReturn(otpService);
+    this.mfaService.addConnector(componentPlugin);
+    assertEquals("otp",mfaService.getMfaSystemService("otp").getType());
   }
   
   @Test
@@ -63,6 +98,7 @@ public class MfaServiceTest {
     List<MembershipEntry> groups = new ArrayList<>();
     MembershipEntry mb = new MembershipEntry("/platform/administrators", "member");
     groups.add(mb);
+   
     Identity rootIdentity=new Identity("root", groups);
     ConversationState.setCurrent(new ConversationState(rootIdentity));
     
@@ -163,4 +199,99 @@ public class MfaServiceTest {
     assertEquals(revocationRequest.getType(),result.getType());
 
   }
+
+  @Test
+  public void testIsMfaFeatureActivated() {
+    when(featureService.isActiveFeature(any())).thenReturn(true);
+    boolean isMfaActivated = mfaService.isMfaFeatureActivated();
+    assertTrue(isMfaActivated);
+  }
+
+  @Test
+  public void testGetMfaSystem() {
+    String mfaSystem = mfaService.getMfaSystem();
+    assertEquals("OTP", mfaSystem);
+  }
+
+  @Test
+  public void testSaveActiveFeature() {
+    mfaService.saveActiveFeature("otp");
+    String mfaSystem = mfaService.getMfaSystem();
+    assertEquals("OTP", mfaSystem);
+  }
+
+  @Test
+  public void testSaveProtectedGroups() {
+    List<String> groups = mfaService.getProtectedGroups();
+    assertEquals("/platform/administrators", groups.get(0));
+    mfaService.saveProtectedGroups("/platform/rewarding,/platform/users");
+    groups = mfaService.getProtectedGroups();
+    assertEquals("/platform/rewarding", groups.get(0));
+    assertEquals("/platform/users", groups.get(1));
+  }
+
+  @Test
+  public void testswitchMfaSystemToExistingOne() {
+    MfaSystemService system1=mock(MfaSystemService.class);
+    when(system1.getType()).thenReturn("type1");
+    MfaSystemComponentPlugin componentPlugin = mock(MfaSystemComponentPlugin.class);
+    when(componentPlugin.getMfaSystemService()).thenReturn(system1);
+    this.mfaService.addConnector(componentPlugin);
+
+
+    String mfaSystem = mfaService.getMfaSystem();
+    assertEquals("OTP", mfaSystem);
+
+    boolean result = mfaService.setMfaSystem("type1");
+    assertTrue(result);
+    assertEquals("type1", mfaService.getMfaSystem());
+
+  }
+
+  @Test
+  public void testswitchMfaSystemToNonExistingOne() {
+    MfaSystemService system1=mock(MfaSystemService.class);
+    when(system1.getType()).thenReturn("type1");
+    MfaSystemComponentPlugin componentPlugin = mock(MfaSystemComponentPlugin.class);
+    when(componentPlugin.getMfaSystemService()).thenReturn(system1);
+    this.mfaService.addConnector(componentPlugin);
+
+
+    String mfaSystem = mfaService.getMfaSystem();
+    assertEquals("OTP", mfaSystem);
+
+    boolean result = mfaService.setMfaSystem("type2");
+    assertFalse(result);
+    assertEquals("OTP", mfaService.getMfaSystem());
+
+  }
+
+  @Test
+  public void testGetAvailableMfaSystems() {
+
+    MfaSystemService system1=mock(MfaSystemService.class);
+    when(system1.getType()).thenReturn("type1");
+    MfaSystemComponentPlugin componentPlugin = mock(MfaSystemComponentPlugin.class);
+    when(componentPlugin.getMfaSystemService()).thenReturn(system1);
+    this.mfaService.addConnector(componentPlugin);
+
+    MfaSystemService system2=mock(MfaSystemService.class);
+    when(system2.getType()).thenReturn("type2");
+    MfaSystemComponentPlugin componentPlugin2 = mock(MfaSystemComponentPlugin.class);
+    when(componentPlugin2.getMfaSystemService()).thenReturn(system2);
+    this.mfaService.addConnector(componentPlugin2);
+
+    MfaSystemService system3=mock(MfaSystemService.class);
+    when(system3.getType()).thenReturn("type3");
+    MfaSystemComponentPlugin componentPlugin3 = mock(MfaSystemComponentPlugin.class);
+    when(componentPlugin3.getMfaSystemService()).thenReturn(system3);
+    this.mfaService.addConnector(componentPlugin3);
+
+    assertEquals(3,this.mfaService.getAvailableMfaSystems().size());
+    assertTrue(this.mfaService.getAvailableMfaSystems().stream().anyMatch(s -> s.equals("type1")));
+    assertTrue(this.mfaService.getAvailableMfaSystems().stream().anyMatch(s -> s.equals("type2")));
+    assertTrue(this.mfaService.getAvailableMfaSystems().stream().anyMatch(s -> s.equals("type3")));
+
+  }
 }
+
