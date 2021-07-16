@@ -3,6 +3,7 @@ package org.exoplatform.mfa.rest.mfa;
 
 import io.swagger.annotations.*;
 import org.exoplatform.common.http.HTTPStatus;
+import org.exoplatform.mfa.api.MfaNavigations;
 import org.exoplatform.mfa.api.MfaService;
 
 import javax.annotation.security.RolesAllowed;
@@ -223,5 +224,52 @@ public class MfaRestService implements ResourceContainer {
     JSONArray groups = new JSONArray();
     mfaService.getProtectedGroups().stream().forEach(groups::put);
     return Response.ok().entity("{\"protectedGroups\":" + groups + "}").build();
+  }
+
+  @Path("/getProtectedNavigations")
+  @GET
+  @Produces(MediaType.APPLICATION_JSON)
+  @RolesAllowed("administrators")
+  @ApiOperation(value = "Get protected navigations for MFA System", httpMethod = "GET", response = Response.class, produces = MediaType.APPLICATION_JSON)
+  @ApiResponses(value = { @ApiResponse(code = HTTPStatus.OK, message = "Request fulfilled"),
+          @ApiResponse(code = HTTPStatus.UNAUTHORIZED, message = "Unauthorized operation"),
+          @ApiResponse(code = HTTPStatus.INTERNAL_ERROR, message = "Internal server error"), })
+  public Response getProtectedNavigations() {
+
+    List<MfaNavigations> mfaNavigations = mfaService.getProtectedNavigations();
+    return Response.ok().entity(mfaNavigations).build();
+  }
+
+  @POST
+  @Path("/saveProtectedNavigations")
+  @RolesAllowed("administrators")
+  @ApiOperation(value = "set mfa navigations",
+          httpMethod = "POST",
+          response = Response.class,
+          produces = "application/json",
+          notes = "set mfa groups")
+  @ApiResponses(value = {
+          @ApiResponse (code = HTTPStatus.OK, message = "Request fulfilled"),
+          @ApiResponse(code = HTTPStatus.UNAUTHORIZED, message = "Unauthorized operation"),
+          @ApiResponse(code = HTTPStatus.INTERNAL_ERROR, message = "Internal server error") })
+  public Response saveProtectedNavigations(@ApiParam(value = "navigations", required = true) String navigations) {
+    mfaService.saveProtectedNavigations(navigations);
+    return Response.ok().entity("{\"navigations\":\"" + navigations + "\"}").build();
+  }
+
+  @DELETE
+  @Path("/deleteNavigation/{navigation}")
+  @RolesAllowed("administrators")
+  @ApiOperation(value = "Delete a navigation",
+          httpMethod = "DELETE",
+          response = Response.class,
+          notes = "This delete the protected navigation")
+  @ApiResponses(value = {
+          @ApiResponse (code = HTTPStatus.OK, message = "Request fulfilled"),
+          @ApiResponse(code = HTTPStatus.UNAUTHORIZED, message = "Unauthorized operation"),
+          @ApiResponse(code = HTTPStatus.INTERNAL_ERROR, message = "Internal server error") })
+  public Response deleteNavigation(@ApiParam(value = "navigation", required = true) @PathParam("navigation") String navigation) {
+    mfaService.deleteProtectedNavigations(navigation);
+    return Response.ok().build();
   }
 }

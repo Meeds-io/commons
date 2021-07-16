@@ -26,6 +26,8 @@ public class MfaService {
 
   private static final String MFA_PROTECTED_GROUPS = "protectedGroups";
 
+  private static final String MFA_PROTECTED_NAVIGATIONS = "protectedGroupNavigations";
+
   private String              mfaSystem;
 
   private ExoFeatureService featureService;
@@ -48,28 +50,33 @@ public class MfaService {
     this.featureService = featureService;
     this.settingService = settingService;
     this.listenerService = listenerService;
-    ValueParam protectedGroupNavigations = initParams.getValueParam("protectedGroupNavigations");
-    if (protectedGroupNavigations!=null) {
-      this.protectedNavigations = Arrays.stream(protectedGroupNavigations.getValue().split(","))
-                                        .filter(s -> !s.isEmpty())
-                                        .map(s -> "/portal/g/" + s.replace("/", ":"))
-                                        .collect(Collectors.toList());
+
+    String protectedGroupNavigationsValue="";
+    if (settingService.get(Context.GLOBAL, Scope.GLOBAL,MFA_PROTECTED_NAVIGATIONS)!=null &&
+            !settingService.get(Context.GLOBAL,Scope.GLOBAL,MFA_PROTECTED_NAVIGATIONS).getValue().toString().isEmpty()) {
+      protectedGroupNavigationsValue=settingService.get(Context.GLOBAL, Scope.GLOBAL,MFA_PROTECTED_NAVIGATIONS).getValue().toString();
+    } else  {
+      protectedGroupNavigationsValue=initParams.getValueParam(MFA_PROTECTED_NAVIGATIONS).getValue();
     }
+    this.protectedNavigations = Arrays.stream(protectedGroupNavigationsValue.split(","))
+            .filter(s -> !s.isEmpty())
+            .map(s -> "/portal/g/" + s.replace("/", ":"))
+            .collect(Collectors.toList());
 
     String protectedGroupsValue="";
     if (settingService.get(Context.GLOBAL, Scope.GLOBAL,MFA_PROTECTED_GROUPS)!=null &&
-        !settingService.get(Context.GLOBAL,Scope.GLOBAL,MFA_PROTECTED_GROUPS).getValue().toString().isEmpty()) {
+            !settingService.get(Context.GLOBAL,Scope.GLOBAL,MFA_PROTECTED_GROUPS).getValue().toString().isEmpty()) {
       protectedGroupsValue=settingService.get(Context.GLOBAL, Scope.GLOBAL,MFA_PROTECTED_GROUPS).getValue().toString();
     } else  {
       protectedGroupsValue=initParams.getValueParam(MFA_PROTECTED_GROUPS).getValue();
     }
     this.protectedGroups = Arrays.stream(protectedGroupsValue.split(","))
-                                 .filter(s -> !s.isEmpty())
-                                 .collect(Collectors.toList());
+            .filter(s -> !s.isEmpty())
+            .collect(Collectors.toList());
 
     mfaSystemServices=new HashMap<>();
     if (settingService.get(Context.GLOBAL, Scope.GLOBAL,MFA_SYSTEM_SETTING)!=null &&
-        !settingService.get(Context.GLOBAL,Scope.GLOBAL,MFA_SYSTEM_SETTING).getValue().toString().isEmpty()) {
+            !settingService.get(Context.GLOBAL,Scope.GLOBAL,MFA_SYSTEM_SETTING).getValue().toString().isEmpty()) {
       this.mfaSystem=settingService.get(Context.GLOBAL, Scope.GLOBAL,MFA_SYSTEM_SETTING).getValue().toString();
     } else {
       this.mfaSystem = initParams.getValueParam(MFA_SYSTEM_SETTING).getValue();
@@ -176,5 +183,25 @@ public class MfaService {
 
   public List<String> getProtectedGroups() {
     return this.protectedGroups;
+  }
+
+  public void saveProtectedNavigations(String navigations) {
+    settingService.set(Context.GLOBAL, Scope.GLOBAL, MFA_PROTECTED_NAVIGATIONS, new SettingValue<>(navigations));
+    this.protectedNavigations = Arrays.asList(navigations.split(","));
+  }
+
+  public void deleteProtectedNavigations(String navigation) {
+    this.protectedNavigations = this.protectedNavigations.stream().filter(nav-> !nav.equals(navigation)).collect(Collectors.toList());
+  }
+
+  public List<MfaNavigations> getProtectedNavigations() {
+    List<MfaNavigations> mfaNavigations = new LinkedList<>();
+    for(int i = 0; i < this.protectedNavigations.size(); i++) {
+      MfaNavigations mfaNavigations1= new MfaNavigations();
+      mfaNavigations1.setId(i);
+      mfaNavigations1.setName(this.protectedNavigations.get(i));
+      mfaNavigations.add(mfaNavigations1);
+    }
+    return mfaNavigations;
   }
 }

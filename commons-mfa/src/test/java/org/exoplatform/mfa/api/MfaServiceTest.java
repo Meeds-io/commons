@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
@@ -237,6 +238,25 @@ public class MfaServiceTest {
     groups = mfaService.getProtectedGroups();
     assertEquals("/platform/rewarding", groups.get(0));
     assertEquals("/platform/users", groups.get(1));
+  }
+
+  @Test
+  public void testSaveProtectedNavigations() {
+    mfaService.saveProtectedNavigations("UsersManegement, GroupsManegement");
+    List<MfaNavigations> mfaNavigations = mfaService.getProtectedNavigations();
+    assertEquals(mfaNavigations.size(), 2);
+    assertEquals(mfaNavigations.get(0).getName(), "UsersManegement");
+    assertEquals(mfaNavigations.get(1).getName(), " GroupsManegement");
+  }
+
+  @Test
+  public void testDeleteProtectedNavigations() {
+    mfaService.saveProtectedNavigations("UsersManegement, GroupsManegement");
+    List<MfaNavigations> mfaNavigations = mfaService.getProtectedNavigations();
+    assertEquals(mfaNavigations.size(), 2);
+    mfaService.deleteProtectedNavigations("UsersManegement");
+    mfaNavigations = mfaService.getProtectedNavigations();
+    assertEquals(mfaNavigations.size(), 1);
   }
 
   @Test
