@@ -31,6 +31,7 @@ import java.util.regex.Pattern;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.StringUtils;
 import org.exoplatform.commons.api.notification.plugin.config.PluginConfig;
+import org.exoplatform.commons.api.notification.plugin.config.TemplateConfig;
 import org.exoplatform.commons.api.notification.service.template.TemplateContext;
 import org.exoplatform.commons.api.notification.template.Element;
 import org.exoplatform.commons.api.notification.template.ElementVisitor;
@@ -113,7 +114,11 @@ public class TemplateUtils {
       reader = new InputStreamReader(getTemplateInputStream(templatePath));
       IOTools.copy(reader, templateText);
     } catch (Exception e) {
-      LOG.warn("Failed to read template file: {}. An empty message will be used", templatePath, e);
+      if (StringUtils.startsWith(templatePath, TemplateConfig.DEFAULT_SRC_RESOURCE_TEMPLATE_KEY)) {
+        LOG.info("Failed to read default template file: {}. An empty message will be used", templatePath);
+      } else {
+        LOG.warn("Failed to read template file: {}. An empty message will be used", templatePath, e);
+      }
     } finally {
       if (reader != null) {
         reader.close();
