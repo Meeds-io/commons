@@ -51,6 +51,7 @@
 						// (because it handles success and error), so do load the content only when loading data.
 						if ( this.data.loadOnReady ) {
 							this.loadContent( this.data.url, {
+                noNotifications: true,
 								callback: function() {
 									// Do not load the content again on widget's next initialization (e.g. after undo or paste).
 									// Plus, this is a small trick that we change loadOnReady now, inside the callback.
