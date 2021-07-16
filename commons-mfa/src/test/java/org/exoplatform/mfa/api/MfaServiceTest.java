@@ -12,9 +12,10 @@ import org.exoplatform.container.xml.InitParams;
 
 import org.exoplatform.mfa.storage.MfaStorage;
 import org.exoplatform.mfa.storage.dto.RevocationRequest;
-import org.exoplatform.portal.branding.BrandingService;
 import org.exoplatform.mfa.api.otp.OtpService;
 
+import org.exoplatform.services.listener.Event;
+import org.exoplatform.services.listener.ListenerService;
 import org.exoplatform.services.security.ConversationState;
 import org.exoplatform.services.security.Identity;
 import org.exoplatform.services.security.MembershipEntry;
@@ -29,6 +30,7 @@ import java.util.List;
 
 import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -46,14 +48,19 @@ public class MfaServiceTest {
   @Mock
   SettingService settingService;
 
+  @Mock
+  ListenerService listenerService;
+
 
   @Mock
   OtpService otpService;
 
   @Before
-  public void setUp() {
+  public void setUp() throws Exception {
     featureService=mock(ExoFeatureService.class);
     settingService=mock(SettingService.class);
+    listenerService=mock(ListenerService.class);
+    doNothing().when(listenerService).broadcast(any());
     when(settingService.get(Context.GLOBAL, Scope.GLOBAL, "mfaSystem")).thenReturn(null);
     when(settingService.get(Context.GLOBAL, Scope.GLOBAL, "protectedGroups")).thenReturn(null);
     InitParams initParams = new InitParams();
@@ -73,7 +80,7 @@ public class MfaServiceTest {
     initParams.addParam(mfaSystem);
 
     mfaStorage=mock(MfaStorage.class);
-    this.mfaService=new MfaService(initParams,mfaStorage,featureService,settingService);
+    this.mfaService=new MfaService(initParams,mfaStorage,featureService,settingService,listenerService);
   }
 
   @Test

@@ -9,6 +9,10 @@ import org.exoplatform.container.xml.InitParams;
 import org.exoplatform.container.xml.ValueParam;
 import org.exoplatform.mfa.storage.MfaStorage;
 import org.exoplatform.mfa.storage.dto.RevocationRequest;
+import org.exoplatform.services.listener.Event;
+import org.exoplatform.services.listener.ListenerService;
+import org.exoplatform.services.log.ExoLogger;
+import org.exoplatform.services.log.Log;
 import org.exoplatform.services.security.Identity;
 
 import java.util.*;
@@ -32,12 +36,18 @@ public class MfaService {
   private List<String>        protectedGroups;
 
   private MfaStorage      mfaStorage;
-  
+  private ListenerService listenerService;
+
+  private static final Log LOG = ExoLogger.getLogger(MfaService.class);
+
+
   private Map<String, MfaSystemComponentPlugin> mfaSystemServices;
   
-  public MfaService(InitParams initParams, MfaStorage mfaStorage, ExoFeatureService featureService, SettingService settingService) {
+  public MfaService(InitParams initParams, MfaStorage mfaStorage, ExoFeatureService featureService,
+                    SettingService settingService, ListenerService listenerService) {
     this.featureService = featureService;
     this.settingService = settingService;
+    this.listenerService = listenerService;
     ValueParam protectedGroupNavigations = initParams.getValueParam("protectedGroupNavigations");
     if (protectedGroupNavigations!=null) {
       this.protectedNavigations = Arrays.stream(protectedGroupNavigations.getValue().split(","))
@@ -99,6 +109,11 @@ public class MfaService {
       revocationRequest.setUser(username);
       revocationRequest.setType(mfaType);
       mfaStorage.createRevocationRequest(revocationRequest);
+      try {
+        listenerService.broadcast(new Event("mfa.listener.create.revocation.request", null, username));
+      } catch (Exception e) {
+        LOG.error("Error when broadcasting mfa revocation request event", e);
+      }
       return true;
     } else {
       return false;
