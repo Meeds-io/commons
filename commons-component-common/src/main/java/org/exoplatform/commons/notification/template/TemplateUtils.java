@@ -113,7 +113,7 @@ public class TemplateUtils {
       reader = new InputStreamReader(getTemplateInputStream(templatePath));
       IOTools.copy(reader, templateText);
     } catch (Exception e) {
-      LOG.debug("Failed to reader template file: " + templatePath, e);
+      LOG.warn("Failed to read template file: {}. An empty message will be used", templatePath, e);
     } finally {
       if (reader != null) {
         reader.close();
