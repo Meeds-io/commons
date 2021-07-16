@@ -112,7 +112,7 @@ public class MfaService {
       try {
         listenerService.broadcast(new Event("mfa.listener.create.revocation.request", null, username));
       } catch (Exception e) {
-        LOG.error("Error when broadcasting dlp detect positive item", e);
+        LOG.error("Error when broadcasting mfa revocation request event", e);
       }
       return true;
     } else {
