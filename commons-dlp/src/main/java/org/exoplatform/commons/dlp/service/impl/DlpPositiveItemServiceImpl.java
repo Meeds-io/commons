@@ -126,6 +126,7 @@ public class DlpPositiveItemServiceImpl implements DlpPositiveItemService {
     dlpPositiveItem.setType(dlpPositiveItemEntity.getType());
     dlpPositiveItem.setKeywords(dlpPositiveItemEntity.getKeywords());
     dlpPositiveItem.setAuthor(dlpPositiveItemEntity.getAuthor());
+    dlpPositiveItem.setReference(dlpPositiveItemEntity.getReference());
     User user = organizationService.getUserHandler()
                                      .findUserByName(dlpPositiveItemEntity.getAuthor());
     if (user!=null) {
