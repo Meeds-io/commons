@@ -30,16 +30,18 @@ public class ResourceBundleREST implements ResourceContainer {
 
   private static final Date         DEFAULT_LAST_MODIFED        = new Date();
 
-  // half a day
-  private static final int          CACHE_IN_SECONDS            = 43200;
+  // 7 days
+  private static final int          CACHE_IN_SECONDS            = 604800;
 
   private static final int          CACHE_IN_MILLI_SECONDS      = CACHE_IN_SECONDS * 1000;
+
+  static {
+    CACHE_CONTROL.setMaxAge(CACHE_IN_SECONDS);
+  }
 
   public ResourceBundleREST(ResourceBundleService resourceBundleService, LocaleConfigService localeConfigService) {
     this.resourceBundleService = resourceBundleService;
     this.localeConfigService = localeConfigService;
-
-    CACHE_CONTROL.setMaxAge(CACHE_IN_SECONDS);
   }
 
   @GET
