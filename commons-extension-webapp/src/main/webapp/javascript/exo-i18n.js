@@ -6,9 +6,10 @@
     messages: {}
   });
 
-
-  const executingFetches = {};
-  const i18NFetchedURLs = [];
+  window.eXoI18N = window.eXoI18N || {};
+  window.eXoI18N.executingFetches = window.eXoI18N.executingFetches || {};
+  window.eXoI18N.i18NFetchedURLs = window.eXoI18N.i18NFetchedURLs || [];
+  window.eXoI18N.i18NPreloadedMessages = window.eXoI18N.i18NPreloadedMessages || {};
 
   /**
    * Load translated strings from the given URLs and for the given language
@@ -42,23 +43,26 @@
       url = `${url}?v=${eXo.env.client.assetsVersion}`
     }
 
-    if (i18NFetchedURLs.indexOf(url) >= 0) {
-      return executingFetches[url];
+    const msgs = window.eXoI18N.i18NPreloadedMessages[url];
+    if (msgs) {
+      delete window.eXoI18N.i18NPreloadedMessages[url];
+      i18n.mergeLocaleMessage(lang, msgs);
+      return Promise.resolve(i18n);
+    } else if (window.eXoI18N.i18NFetchedURLs.indexOf(url) >= 0) {
+      return window.eXoI18N.executingFetches[url];
     } else {
-      const i18NFetch = fetch(url, { credentials: 'include' })
-        .then(function (resp) {
-          return resp && resp.ok && resp.json();
-        })
-        .then(function (msgs) {
+      const i18NFetch = fetch(url)
+        .then(resp => resp && resp.ok && resp.json())
+        .then(msgs => {
           if (msgs) {
             i18n.mergeLocaleMessage(lang, msgs);
             i18n.locale = lang;
           }
           return i18n;
         })
-        .finally(() => delete executingFetches[url]);
-      executingFetches[url] = i18NFetch;
-      i18NFetchedURLs.push(url);
+        .finally(() => delete window.eXoI18N.executingFetches[url]);
+      window.eXoI18N.executingFetches[url] = i18NFetch;
+      window.eXoI18N.i18NFetchedURLs.push(url);
       return i18NFetch;
     }
   }
