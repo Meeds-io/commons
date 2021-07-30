@@ -138,7 +138,7 @@
 			 
 				</div>
         <div class="centerLoginContent">
-          <form name="loginForm" action="<%= contextPath + "/login"%>" method="post" style="margin: 0px;">
+          <form name="loginForm" action="<%= contextPath + "/login"%>" method="post" style="margin: 0px;" autocomplete="off">
                 <% if (uri != null) { 
                         uri = EntityEncoder.FULL.encode(uri);
                 %>
