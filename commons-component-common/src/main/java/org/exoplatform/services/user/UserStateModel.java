@@ -16,65 +16,77 @@
  */
 package org.exoplatform.services.user;
 
-import org.apache.commons.lang.StringUtils;
-
 import java.io.Serializable;
 import java.util.Objects;
-
 
 public class UserStateModel implements Serializable {
   private static final long serialVersionUID = -416451728545284362L;
 
-  private String userId = null;
-      
-  private long lastActivity = 0;
-  
-  private String status = null;
-  
-  public UserStateModel() {}
-  
+  private String            userId           = null;
+
+  /**
+   * @deprecated not needed field anymore
+   */
+  @Deprecated
+  private long              lastActivity     = 0;
+
+  private String            status           = null;
+
+  public UserStateModel() {
+  }
+
   public UserStateModel(String userId, long lastActivity, String status) {
     this.userId = userId;
     this.lastActivity = lastActivity;
     this.status = status;
   }
-  
+
   public String getUserId() {
     return this.userId;
   }
-  
+
   public void setUserId(String userId) {
     this.userId = userId;
   }
-  
+
+  /**
+   * @deprecated not needed field anymore
+   */
+  @Deprecated
   public long getLastActivity() {
     return this.lastActivity;
   }
-  
+
+  /**
+   * @deprecated not needed field anymore
+   */
+  @Deprecated
   public void setLastActivity(long lastActivity) {
     this.lastActivity = lastActivity;
   }
-  
+
   public String getStatus() {
     return this.status;
   }
-  
+
   public void setStatus(String status) {
     this.status = status;
   }
-  
+
   public UserStateModel clone() {
     return new UserStateModel(this.getUserId(), this.getLastActivity(), this.getStatus());
   }
 
   @Override
   public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
     UserStateModel that = (UserStateModel) o;
     return lastActivity == that.lastActivity &&
-            Objects.equals(userId, that.userId) &&
-            Objects.equals(status, that.status);
+        Objects.equals(userId, that.userId) &&
+        Objects.equals(status, that.status);
   }
 
   @Override
