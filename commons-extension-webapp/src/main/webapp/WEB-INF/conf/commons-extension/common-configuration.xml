@@ -24,6 +24,14 @@
   </component>
 
   <component>
+     <type>org.exoplatform.services.user.UserStateService</type>
+  </component>
+
+  <component>
+    <type>org.exoplatform.services.user.UserStateServiceREST</type>
+  </component>
+
+  <component>
     <type>org.exoplatform.commons.info.PlatformInformationRESTService</type>
   </component>
 

@@ -17,110 +17,85 @@
 package org.exoplatform.services.user;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
-import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang.math.NumberUtils;
+import org.mortbay.cometd.continuation.EXoContinuationBayeux;
 
 import org.exoplatform.services.cache.CacheService;
 import org.exoplatform.services.cache.ExoCache;
-import org.exoplatform.services.log.ExoLogger;
-import org.exoplatform.services.log.Log;
-import org.exoplatform.services.security.ConversationState;
-import org.exoplatform.services.security.IdentityConstants;
 
 public class UserStateService {
-  private static final Log         LOG                     = ExoLogger.getLogger(UserStateService.class.getName());
 
-  public static final String       DEFAULT_STATUS          = "available";
+  public static final String             DEFAULT_STATUS        = "available";
 
-  public static final String       USER_STATE_CACHE_NAME = "commons.UserStateService";
+  public static final String             STATUS_OFFLINE        = "offline";
 
-  private static final int         DEFAULT_OFFLINE_DELAY   = 60000;
+  public static final String             INVISIBLE             = "invisible";
 
-  private final int                delay;
+  public static final String             USER_STATE_CACHE_NAME = "commons.UserStateService";
 
-  ExoCache<String, UserStateModel> userStateCache          = null;
+  private static final int               DEFAULT_OFFLINE_DELAY = 60000;
 
-  public UserStateService(CacheService cacheService) {
-    userStateCache = cacheService.getCacheInstance(USER_STATE_CACHE_NAME);
-    String strDelay = System.getProperty("user.status.offline.delay");
-    int configuredDelay = NumberUtils.toInt(strDelay, DEFAULT_OFFLINE_DELAY);
-    delay = (configuredDelay > 0) ? configuredDelay : DEFAULT_OFFLINE_DELAY;
+  private final ExoCache<String, String> userStateCache;
+
+  private final EXoContinuationBayeux    eXoContinuationBayeux;
+
+  public UserStateService(EXoContinuationBayeux eXoContinuationBayeux, CacheService cacheService) {
+    this.eXoContinuationBayeux = eXoContinuationBayeux;
+    this.userStateCache = cacheService.getCacheInstance(USER_STATE_CACHE_NAME);
   }
 
-  public int getDelay() {
-    return delay;
-  }
-
-  // Add or update a userState
-  public void save(UserStateModel model) {
-    userStateCache.put(model.getUserId(), model);
-  }
-
-  // Get userState for a user
-  public UserStateModel getUserState(String userId) {
-    if (StringUtils.isBlank(userId)) {
-      throw new IllegalArgumentException("Parameter userId is mandatory");
-    }
-    UserStateModel model = getUserStateFromCache(userId);
-    if (model != null) {
-      model = model.clone();
-    } else {
-      ConversationState state = ConversationState.getCurrent();
-      if (state == null || state.getIdentity() == null || state.getIdentity().getUserId() == null
-          || !userId.equals(state.getIdentity().getUserId())) {
-        return null;
-      }
-      // The current query is requested by a user that is online
-      // but his state is not stored in cache, so cache it
-      model = ping(userId);
-    }
-    return model;
-  }
-
-  // Ping to update last activity
-  public UserStateModel ping(String userId) {
-    if (userId == null || IdentityConstants.ANONIM.equals(userId)) {
-      return null;
-    }
-    UserStateModel model = getUserStateFromCache(userId);
-    long lastActivity = Calendar.getInstance().getTimeInMillis();
-    if (model == null) {
-      model = new UserStateModel(userId, lastActivity, DEFAULT_STATUS);
-    } else {
-      model.setLastActivity(lastActivity);
-    }
-    save(model);
-    return model;
-  }
-
-  // Get all users online
+  /**
+   * @return {@link List} of {@link UserStateModel} of online users
+   */
   public List<UserStateModel> online() {
-    List<UserStateModel> onlineUsers = new LinkedList<>();
-    try {
-      @SuppressWarnings("unchecked")
-      List<UserStateModel> users = (List<UserStateModel>) userStateCache.getCachedObjects();
-      //
-      Collections.sort(users, new LastActivityComparatorASC());
-      for (UserStateModel userStateModel : users) {
-        if (isOnline(userStateModel)) {
-          onlineUsers.add(userStateModel);
-        }
-      }
-    } catch (Exception e) {
-      LOG.error("Exception when getting online user: {}", e);
-    }
-    return onlineUsers;
+    long lastActivity = System.currentTimeMillis();
+    Set<String> connectedUserIds = eXoContinuationBayeux.getConnectedUserIds();
+    return connectedUserIds.stream()
+                           .map(userId -> {
+                             String status = userStateCache.get(userId);
+                             if (status == null) {
+                               status = DEFAULT_STATUS;
+                             } else if (STATUS_OFFLINE.equals(status) || INVISIBLE.equals(status)) {
+                               return null;
+                             }
+                             return new UserStateModel(userId, lastActivity, status);
+                           })
+                           .filter(Objects::nonNull)
+                           .collect(Collectors.toList());
   }
 
+  /**
+   * Checks whether a user is online or not
+   * 
+   * @param userId user name
+   * @return true if user is still connected else false
+   */
   public boolean isOnline(String userId) {
-    UserStateModel model = getUserState(userId);
-    if (model != null) {
-      return isOnline(model);
-    }
-    return false;
+    return eXoContinuationBayeux.isPresent(userId);
   }
 
+  /**
+   * Return user connection state
+   * 
+   * @param userId user name
+   * @return {@link UserStateModel}
+   */
+  public UserStateModel getUserState(String userId) {
+    boolean online = eXoContinuationBayeux.isPresent(userId);
+    if (!online) {
+      return new UserStateModel(userId, 0, STATUS_OFFLINE);
+    }
+    String status = userStateCache.get(userId);
+    if (status == null) {
+      status = DEFAULT_STATUS;
+    }
+    return new UserStateModel(userId, System.currentTimeMillis(), status);
+  }
+
+  /**
+   * @return Last logged in user
+   */
   public UserStateModel lastLogin() {
     List<UserStateModel> online = online();
     if (!online.isEmpty()) {
@@ -129,25 +104,57 @@ public class UserStateService {
     return null;
   }
 
-  private UserStateModel getUserStateFromCache(String userId) {
-    return userStateCache.get(userId);
+  /**
+   * Changes online status of the user: donotditurb, absent, available ...
+   * 
+   * @param userId user name
+   * @param status Status of the online user
+   */
+  public void saveStatus(String userId, String status) {
+    userStateCache.put(userId, status);
   }
 
-  private boolean isOnline(UserStateModel model) {
-    if (model != null) {
-      long iDate = Calendar.getInstance().getTimeInMillis();
-      if (model.getLastActivity() >= (iDate - delay)) {
-        return true;
-      }
-    }
-    return false;
+  /**
+   * @return default delay to consider user as inactive
+   * @deprecated Not needed anymore since we check connected users on WebSocket
+   *             Channel
+   */
+  @Deprecated
+  public int getDelay() {
+    return DEFAULT_OFFLINE_DELAY;
   }
 
-  public static class LastActivityComparatorASC implements Comparator<UserStateModel> {
-    public int compare(UserStateModel u1, UserStateModel u2) {
-      Long date1 = u1.getLastActivity();
-      Long date2 = u2.getLastActivity();
-      return date1.compareTo(date2);
+  /**
+   * Changes user online/offline status
+   * 
+   * @param model {@link UserStateModel}
+   * @deprecated use {@link UserStateService#saveStatus(String, String)} instead
+   */
+  @Deprecated
+  public void save(UserStateModel model) {
+    saveStatus(model.getUserId(), model.getStatus());
+  }
+
+  /**
+   * Changes user status to online and saves the last activity time
+   * 
+   * @param userId user name
+   * @return saved {@link UserStateModel}
+   * @deprecated not needed anymore since the user online status is managed in
+   *             realtime with WebSocket Channel
+   */
+  @Deprecated
+  public UserStateModel ping(String userId) {
+    UserStateModel userState = getUserState(userId);
+    if (userState == null) {
+      saveStatus(userId, DEFAULT_STATUS);
+      return new UserStateModel(userId, System.currentTimeMillis(), DEFAULT_STATUS);
+    } else {
+      return userState;
     }
+  }
+
+  public void clearCache() {
+    userStateCache.clearCache();
   }
 }
