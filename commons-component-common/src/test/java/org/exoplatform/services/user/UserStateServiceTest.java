@@ -16,144 +16,107 @@
  */
 package org.exoplatform.services.user;
 
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Collection;
-import java.util.Date;
-import java.util.GregorianCalendar;
-import java.util.List;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
-import org.exoplatform.commons.notification.BaseNotificationTestCase;
+import java.util.*;
+
+import org.mortbay.cometd.continuation.EXoContinuationBayeux;
+
 import org.exoplatform.commons.testing.BaseCommonsTestCase;
-import org.exoplatform.component.test.ConfigurationUnit;
-import org.exoplatform.component.test.ConfiguredBy;
-import org.exoplatform.component.test.ContainerScope;
-import org.exoplatform.services.security.ConversationState;
-import org.exoplatform.services.security.Identity;
-import org.exoplatform.services.security.MembershipEntry;
+import org.exoplatform.services.cache.CacheService;
+import org.exoplatform.services.security.*;
 
 /**
- * Created by The eXo Platform SAS
- * Author : eXoPlatform
- *          exo@exoplatform.com
- * Apr 22, 2014  
+ * Created by The eXo Platform SAS Author : eXoPlatform exo@exoplatform.com Apr
+ * 22, 2014
  */
 public class UserStateServiceTest extends BaseCommonsTestCase {
-  private String SUPER_USER = "root";
 
-  private UserStateService userStateService;
-  
+  private String                SUPER_USER = "root";
+
+  private EXoContinuationBayeux eXoContinuationBayeux;
+
+  private UserStateService      userStateService;
+
   @Override
   public void setUp() throws Exception {
     super.setUp();
     //
     loginUser(SUPER_USER, false);
 
-    userStateService = getService(UserStateService.class);
+    eXoContinuationBayeux = mock(EXoContinuationBayeux.class);
+    userStateService = new UserStateService(eXoContinuationBayeux, getService(CacheService.class));
   }
 
   protected void tearDown() throws Exception {
-    //
-    userStateService.userStateCache.clearCache();
+    super.tearDown();
+    userStateService.clearCache();
   }
 
   public void testGetUserState() throws Exception {
-    UserStateModel userModel = 
-        new UserStateModel(SUPER_USER,
-                           new Date().getTime(),
-                           UserStateService.DEFAULT_STATUS);
-
-    userStateService.save(userModel);
-    UserStateModel model1 = userStateService.getUserState(SUPER_USER + "temp");
-    assertNull(model1);
-
-    UserStateModel model2 = userStateService.getUserState(SUPER_USER);
-    assertNotNull(model2);
-
-    assertEquals(SUPER_USER, model2.getUserId());
-    assertEquals(userModel.getLastActivity(), model2.getLastActivity());
-    assertEquals(UserStateService.DEFAULT_STATUS, model2.getStatus());
-  }
-  
-  public void testPing() throws Exception {
-    UserStateModel userModel = 
-        new UserStateModel(SUPER_USER,
-                           new Date().getTime(),
-                           UserStateService.DEFAULT_STATUS);
-    userStateService.save(userModel);
-    userStateService.ping(userModel.getUserId());
-
-    assertNotSame(userModel.getLastActivity(), userStateService.getUserState(SUPER_USER).getLastActivity());
-
-    Calendar currentTime = new GregorianCalendar();
-    Calendar time = (Calendar) currentTime.clone();
-    time.add(Calendar.MINUTE, -10);
-    userModel.setLastActivity(time.getTime().getTime());
-
-    userStateService.save(userModel);
-    userStateService.ping(userModel.getUserId());
-
-    assertNotSame(userModel.getLastActivity(), userStateService.getUserState(SUPER_USER).getLastActivity());
-
     //
     loginUser("mary", true);
-    assertTrue(userStateService.getUserState("mary").getStatus().equals(UserStateService.DEFAULT_STATUS));
+    when(eXoContinuationBayeux.isPresent("mary")).thenReturn(true);
+
+    assertEquals(UserStateService.DEFAULT_STATUS, userStateService.getUserState("mary").getStatus());
+
     //
     loginUser("demo", false);
+    when(eXoContinuationBayeux.isPresent("demo")).thenReturn(true);
 
     // get status of user Mary by current user Demo
-    assertNotNull("User state of 'mary' is null while it was pinged before", userStateService.getUserState("mary"));
-    assertNotNull("User state status of 'mary' is null while it was pinged before", userStateService.getUserState("mary").getStatus());
-    assertTrue(userStateService.getUserState("mary").getStatus().equals(UserStateService.DEFAULT_STATUS));
-    // get status of user Demo by anonymous user
-    ConversationState.setCurrent(null);
+    assertEquals(UserStateService.DEFAULT_STATUS, userStateService.getUserState("demo").getStatus());
+    assertEquals(UserStateService.DEFAULT_STATUS, userStateService.getUserState("mary").getStatus());
 
-    assertNull(userStateService.getUserState("demo"));
+    when(eXoContinuationBayeux.isPresent("demo")).thenReturn(false);
+    assertEquals(UserStateService.STATUS_OFFLINE, userStateService.getUserState("demo").getStatus());
   }
-  
+
   public void testOnline() throws Exception {
     long date = new Date().getTime();
-    UserStateModel userModel = 
-        new UserStateModel(SUPER_USER,
-                           date,
-                           UserStateService.DEFAULT_STATUS);
+    UserStateModel userModel = new UserStateModel(SUPER_USER,
+                                                  date,
+                                                  UserStateService.STATUS_OFFLINE);
     userStateService.save(userModel);
-    userStateService.ping(userModel.getUserId());
+    when(eXoContinuationBayeux.getConnectedUserIds()).thenReturn(Collections.singleton(SUPER_USER));
 
     //
     List<UserStateModel> onlines = userStateService.online();
+    assertEquals(0, onlines.size());
+
+    String status = "doNotDisturb";
+    userStateService.saveStatus(SUPER_USER, status);
+    onlines = userStateService.online();
     assertEquals(1, onlines.size());
     assertEquals(SUPER_USER, onlines.get(0).getUserId());
-    assertNotSame(date, onlines.get(0).getLastActivity());
-    assertEquals(UserStateService.DEFAULT_STATUS, onlines.get(0).getStatus());
+    assertNotNull(onlines.get(0).getLastActivity());
+    assertEquals(status, onlines.get(0).getStatus());
   }
-  
+
   public void testLastLogin() {
     assertNull(userStateService.lastLogin());
     loginUser("user1", true);
+    when(eXoContinuationBayeux.getConnectedUserIds()).thenReturn(Collections.singleton("user1"));
     assertEquals("user1", userStateService.lastLogin().getUserId());
 
     loginUser("user2", true);
+    when(eXoContinuationBayeux.getConnectedUserIds()).thenReturn(new LinkedHashSet<>(Arrays.asList("user1", "user2")));
     assertEquals("user2", userStateService.lastLogin().getUserId());
   }
 
   public void testIsOnline() throws Exception {
-    long date = new Date().getTime();
-    UserStateModel userModel = 
-        new UserStateModel(SUPER_USER,
-                           date,
-                           UserStateService.DEFAULT_STATUS);
-    userStateService.save(userModel);
-    userStateService.ping(userModel.getUserId());
+    when(eXoContinuationBayeux.isPresent(SUPER_USER)).thenReturn(true);
 
     assertTrue(userStateService.isOnline(SUPER_USER));
-    //
+
     assertFalse(userStateService.isOnline("demo"));
-    //
-    loginUser("demo", true);
+
+    when(eXoContinuationBayeux.isPresent("demo")).thenReturn(true);
+
     assertTrue(userStateService.isOnline("demo"));
   }
-  
+
   private void loginUser(String userId, boolean hasPing) {
     Collection<MembershipEntry> membershipEntries = new ArrayList<MembershipEntry>();
     MembershipEntry membershipEntry = new MembershipEntry("/platform/administrators", "*");
@@ -163,7 +126,7 @@ public class UserStateServiceTest extends BaseCommonsTestCase {
     ConversationState.setCurrent(state);
     //
     if (hasPing) {
-      userStateService.ping(userId);
+      userStateService.saveStatus(userId, UserStateService.DEFAULT_STATUS);
     }
   }
 }
