@@ -2,6 +2,7 @@ package org.exoplatform.commons.search.es.client;
 
 import org.apache.commons.lang.StringUtils;
 
+import org.exoplatform.commons.utils.PropertyManager;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 
@@ -108,13 +109,25 @@ public class ElasticIndexingAuditTrail {
                         Integer httpStatusCode,
                         String message,
                         long executionTime) {
-    AUDIT_TRAIL.error(LOG_PATTERN,
-        action,
-        StringUtils.isBlank(entityId) ? "" : escape(entityId),
-        StringUtils.isBlank(index) ? "" : escape(index),
-        httpStatusCode == null ? "" : httpStatusCode,
-        StringUtils.isBlank(message) ? "" : escape(message),
-        executionTime);
+    if (AUDIT_TRAIL.isDebugEnabled() || PropertyManager.isDevelopping()) {
+      // display stack Trace for Debugging
+      AUDIT_TRAIL.error(LOG_PATTERN,
+                        action,
+                        StringUtils.isBlank(entityId) ? "" : escape(entityId),
+                        StringUtils.isBlank(index) ? "" : escape(index),
+                        httpStatusCode == null ? "" : httpStatusCode,
+                        StringUtils.isBlank(message) ? "" : escape(message),
+                        executionTime,
+                        new IllegalStateException());
+    } else {
+      AUDIT_TRAIL.error(LOG_PATTERN,
+                        action,
+                        StringUtils.isBlank(entityId) ? "" : escape(entityId),
+                        StringUtils.isBlank(index) ? "" : escape(index),
+                        httpStatusCode == null ? "" : httpStatusCode,
+                        StringUtils.isBlank(message) ? "" : escape(message),
+                        executionTime);
+    }
   }
 
   private void logDebug(String action,
