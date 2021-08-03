@@ -26,6 +26,7 @@ import org.apache.commons.lang.StringUtils;
 import org.exoplatform.commons.api.notification.model.NotificationInfo;
 import org.exoplatform.commons.api.notification.model.WebNotificationFilter;
 import org.exoplatform.commons.api.notification.service.storage.WebNotificationStorage;
+import org.exoplatform.commons.cache.future.FutureExoCache;
 import org.exoplatform.commons.notification.impl.jpa.web.JPAWebNotificationStorage;
 import org.exoplatform.commons.notification.impl.service.storage.cache.model.*;
 import org.exoplatform.services.cache.*;
