@@ -52,11 +52,6 @@
     <key>org.exoplatform.commons.diff.DiffService</key>
     <type>org.exoplatform.commons.diff.DiffService</type>
   </component>
-  
-  <component>
-    <key>org.exoplatform.services.user.UserStateService</key>
-     <type>org.exoplatform.services.user.UserStateService</type>
-  </component>
 
   <component>
     <key>org.exoplatform.commons.embedder.OembedEmbedder</key>
@@ -115,14 +110,6 @@
         <value>${exo.cluster.startable.check.period:120000}</value>
       </value-param>
     </init-params>
-  </component>
-
-  <component>
-    <type>org.exoplatform.services.user.UserStateService</type>
-  </component>
-
-  <component>
-    <type>org.exoplatform.services.user.UserStateServiceREST</type>
   </component>
 
   <external-component-plugins>

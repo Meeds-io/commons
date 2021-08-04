@@ -1,5 +1,8 @@
 package org.mortbay.cometd.continuation;
 
+import java.util.*;
+import java.util.Map.Entry;
+
 /*
  * Copyright (C) 2003-2014 eXo Platform SAS.
  *
@@ -18,30 +21,17 @@ package org.mortbay.cometd.continuation;
  */
 import javax.servlet.ServletConfig;
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-
 import org.cometd.bayeux.ChannelId;
-import org.cometd.bayeux.server.BayeuxServer;
-import org.cometd.bayeux.server.SecurityPolicy;
-import org.cometd.bayeux.server.ServerChannel;
-import org.cometd.bayeux.server.ServerMessage;
-import org.cometd.bayeux.server.ServerSession;
+import org.cometd.bayeux.server.*;
 import org.cometd.oort.Oort;
 import org.cometd.oort.Seti;
-import org.cometd.server.AbstractServerTransport;
-import org.cometd.server.BayeuxServerImpl;
-import org.cometd.server.ServerSessionImpl;
+import org.cometd.server.*;
 import org.eclipse.jetty.util.ConcurrentHashSet;
+import org.picocontainer.Disposable;
+
 import org.exoplatform.container.ExoContainerContext;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
-import org.picocontainer.Disposable;
 
 /**
  * Created by The eXo Platform SAS.
@@ -54,12 +44,12 @@ public class EXoContinuationBayeux extends BayeuxServerImpl implements Disposabl
   /**
    * Map for userToken.
    */
-  private static Map<String, String>      userToken         = new HashMap<String, String>();
+  private static Map<String, String>      userToken         = new HashMap<>();
 
   /**
    * Stores the eXoID <=> clientID association
    */
-  private static Map<String, Set<String>> clientIDs         = new ConcurrentHashMap<String, Set<String>>();
+  private static Map<String, Set<String>> clientIDs         = Collections.synchronizedMap(new LinkedHashMap<>());
 
   /**
    * Cometd webapp context name
@@ -343,4 +333,7 @@ public class EXoContinuationBayeux extends BayeuxServerImpl implements Disposabl
     }
   }
 
+  public Set<String> getConnectedUserIds() {
+    return clientIDs.keySet();
+  }
 }

@@ -469,16 +469,6 @@
     </depends>
   </module>
   <module>
-    <name>presence</name>
-    <as>plfUtils</as>
-    <script>
-      <path>/javascript/presence.js</path>
-    </script>
-    <depends>
-      <module>jquery</module>
-    </depends>
-  </module>
-  <module>
     <name>autoLinker</name>
     <script>
       <minify>false</minify>
