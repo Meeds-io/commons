@@ -1,12 +1,19 @@
 package org.exoplatform.mfa.api;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import org.exoplatform.commons.api.settings.ExoFeatureService;
 import org.exoplatform.commons.api.settings.SettingService;
 import org.exoplatform.commons.api.settings.SettingValue;
 import org.exoplatform.commons.api.settings.data.Context;
 import org.exoplatform.commons.api.settings.data.Scope;
-import org.exoplatform.commons.api.settings.ExoFeatureService;
 import org.exoplatform.container.xml.InitParams;
-import org.exoplatform.container.xml.ValueParam;
 import org.exoplatform.mfa.storage.MfaStorage;
 import org.exoplatform.mfa.storage.dto.RevocationRequest;
 import org.exoplatform.services.listener.Event;
@@ -15,67 +22,74 @@ import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 import org.exoplatform.services.security.Identity;
 
-import java.util.*;
-import java.util.stream.Collectors;
-
 public class MfaService {
 
-  public static final String MFA_FEATURE = "mfa";
+  public static final String                    MFA_FEATURE               = "mfa";
 
-  private static final String MFA_SYSTEM_SETTING = "mfaSystem";
+  private static final String                   MFA_SYSTEM_SETTING        = "mfaSystem";
 
-  private static final String MFA_PROTECTED_GROUPS = "protectedGroups";
+  private static final String                   MFA_PROTECTED_GROUPS      = "protectedGroups";
 
-  private String              mfaSystem;
+  private static final String                   MFA_PROTECTED_NAVIGATIONS = "protectedGroupNavigations";
 
-  private ExoFeatureService featureService;
-  private SettingService    settingService;
+  private String                                mfaSystem;
 
-  private List<String>        protectedNavigations=new ArrayList<>();
+  private ExoFeatureService                     featureService;
 
-  private List<String>        protectedGroups;
+  private SettingService                        settingService;
 
-  private MfaStorage      mfaStorage;
-  private ListenerService listenerService;
+  private List<String>                          protectedNavigations      = new ArrayList<>();
 
-  private static final Log LOG = ExoLogger.getLogger(MfaService.class);
+  private List<String>                          protectedGroups;
 
+  private MfaStorage                            mfaStorage;
+
+  private ListenerService                       listenerService;
+
+  private static final Log                      LOG                       = ExoLogger.getLogger(MfaService.class);
 
   private Map<String, MfaSystemComponentPlugin> mfaSystemServices;
-  
-  public MfaService(InitParams initParams, MfaStorage mfaStorage, ExoFeatureService featureService,
-                    SettingService settingService, ListenerService listenerService) {
+
+  public MfaService(InitParams initParams,
+                    MfaStorage mfaStorage,
+                    ExoFeatureService featureService,
+                    SettingService settingService,
+                    ListenerService listenerService) {
     this.featureService = featureService;
     this.settingService = settingService;
     this.listenerService = listenerService;
-    ValueParam protectedGroupNavigations = initParams.getValueParam("protectedGroupNavigations");
-    if (protectedGroupNavigations!=null) {
-      this.protectedNavigations = Arrays.stream(protectedGroupNavigations.getValue().split(","))
-                                        .filter(s -> !s.isEmpty())
-                                        .map(s -> "/portal/g/" + s.replace("/", ":"))
-                                        .collect(Collectors.toList());
+
+    String protectedGroupNavigationsValue = "";
+    if (settingService.get(Context.GLOBAL, Scope.GLOBAL, MFA_PROTECTED_NAVIGATIONS) != null) {
+      protectedGroupNavigationsValue = settingService.get(Context.GLOBAL, Scope.GLOBAL, MFA_PROTECTED_NAVIGATIONS)
+                                                     .getValue()
+                                                     .toString();
+    } else {
+      protectedGroupNavigationsValue = initParams.getValueParam(MFA_PROTECTED_NAVIGATIONS).getValue();
+    }
+    if (protectedGroupNavigationsValue.isEmpty()) {
+      this.protectedNavigations = new ArrayList<>();
+    } else {
+      this.protectedNavigations = Arrays.asList(protectedGroupNavigationsValue.split(","));
     }
 
-    String protectedGroupsValue="";
-    if (settingService.get(Context.GLOBAL, Scope.GLOBAL,MFA_PROTECTED_GROUPS)!=null &&
-        !settingService.get(Context.GLOBAL,Scope.GLOBAL,MFA_PROTECTED_GROUPS).getValue().toString().isEmpty()) {
-      protectedGroupsValue=settingService.get(Context.GLOBAL, Scope.GLOBAL,MFA_PROTECTED_GROUPS).getValue().toString();
-    } else  {
-      protectedGroupsValue=initParams.getValueParam(MFA_PROTECTED_GROUPS).getValue();
+    String protectedGroupsValue = "";
+    if (settingService.get(Context.GLOBAL, Scope.GLOBAL, MFA_PROTECTED_GROUPS) != null) {
+      protectedGroupsValue = settingService.get(Context.GLOBAL, Scope.GLOBAL, MFA_PROTECTED_GROUPS).getValue().toString();
+    } else {
+      protectedGroupsValue = initParams.getValueParam(MFA_PROTECTED_GROUPS).getValue();
     }
-    this.protectedGroups = Arrays.stream(protectedGroupsValue.split(","))
-                                 .filter(s -> !s.isEmpty())
-                                 .collect(Collectors.toList());
+    this.protectedGroups = Arrays.stream(protectedGroupsValue.split(",")).filter(s -> !s.isEmpty()).collect(Collectors.toList());
 
-    mfaSystemServices=new HashMap<>();
-    if (settingService.get(Context.GLOBAL, Scope.GLOBAL,MFA_SYSTEM_SETTING)!=null &&
-        !settingService.get(Context.GLOBAL,Scope.GLOBAL,MFA_SYSTEM_SETTING).getValue().toString().isEmpty()) {
-      this.mfaSystem=settingService.get(Context.GLOBAL, Scope.GLOBAL,MFA_SYSTEM_SETTING).getValue().toString();
+    mfaSystemServices = new HashMap<>();
+    if (settingService.get(Context.GLOBAL, Scope.GLOBAL, MFA_SYSTEM_SETTING) != null
+        && !settingService.get(Context.GLOBAL, Scope.GLOBAL, MFA_SYSTEM_SETTING).getValue().toString().isEmpty()) {
+      this.mfaSystem = settingService.get(Context.GLOBAL, Scope.GLOBAL, MFA_SYSTEM_SETTING).getValue().toString();
     } else {
       this.mfaSystem = initParams.getValueParam(MFA_SYSTEM_SETTING).getValue();
     }
-    this.mfaStorage=mfaStorage;
-    mfaSystemServices=new HashMap<>();
+    this.mfaStorage = mfaStorage;
+    mfaSystemServices = new HashMap<>();
   }
 
   public MfaSystemService getMfaSystemService(String type) {
@@ -90,7 +104,7 @@ public class MfaService {
     return protectedNavigations.stream().anyMatch(requestUri::contains);
 
   }
-  
+
   public boolean currentUserIsInProtectedGroup(Identity identity) {
     return protectedGroups.stream().anyMatch(identity::isMemberOf);
   }
@@ -102,9 +116,9 @@ public class MfaService {
   public MfaSystemService getMfaSystemService() {
     return this.mfaSystemServices.get(mfaSystem).getMfaSystemService();
   }
-  
+
   public boolean addRevocationRequest(String username, String mfaType) {
-    if (!hasRevocationRequest(username,mfaType)) {
+    if (!hasRevocationRequest(username, mfaType)) {
       RevocationRequest revocationRequest = new RevocationRequest();
       revocationRequest.setUser(username);
       revocationRequest.setType(mfaType);
@@ -121,16 +135,17 @@ public class MfaService {
   }
 
   public boolean hasRevocationRequest(String username, String mfaType) {
-    return mfaStorage.countByUsernameAndType(username,mfaType) > 0;
+    return mfaStorage.countByUsernameAndType(username, mfaType) > 0;
   }
 
   public void deleteRevocationRequest(String username, String type) {
-    mfaStorage.deleteRevocationRequest(username,type);
+    mfaStorage.deleteRevocationRequest(username, type);
   }
 
   public List<RevocationRequest> getAllRevocationRequests() {
     return mfaStorage.findAll();
   }
+
   public RevocationRequest getRevocationRequestById(Long id) {
     return mfaStorage.findById(id);
   }
@@ -157,7 +172,7 @@ public class MfaService {
   public boolean setMfaSystem(String mfaSystem) {
     if (mfaSystemServices.containsKey(mfaSystem)) {
       settingService.set(Context.GLOBAL, Scope.GLOBAL, MFA_SYSTEM_SETTING, new SettingValue<>(mfaSystem));
-      this.mfaSystem=mfaSystem;
+      this.mfaSystem = mfaSystem;
       return true;
     } else {
       return false;
@@ -176,5 +191,30 @@ public class MfaService {
 
   public List<String> getProtectedGroups() {
     return this.protectedGroups;
+  }
+
+  public void saveProtectedNavigations(String navigations) {
+    settingService.set(Context.GLOBAL, Scope.GLOBAL, MFA_PROTECTED_NAVIGATIONS, new SettingValue<>(navigations));
+    if (navigations.isEmpty()) {
+      this.protectedNavigations = new ArrayList<>();
+    } else {
+      this.protectedNavigations = Arrays.asList(navigations.split(","));
+    }
+  }
+
+  public void deleteProtectedNavigations(String navigation) {
+    this.protectedNavigations = this.protectedNavigations.stream()
+                                                         .filter(nav -> !nav.equals(navigation))
+                                                         .collect(Collectors.toList());
+  }
+
+  public List<MfaNavigations> getProtectedNavigations() {
+    List<MfaNavigations> mfaNavigations = new LinkedList<>();
+    for (int i = 0; i < this.protectedNavigations.size(); i++) {
+      MfaNavigations mfaNavigations1 = new MfaNavigations();
+      mfaNavigations1.setId(this.protectedNavigations.get(i));
+      mfaNavigations.add(mfaNavigations1);
+    }
+    return mfaNavigations;
   }
 }

@@ -185,4 +185,28 @@ public class MfaRestServiceTest {
     assertEquals(200 ,response.getStatus());
     verify(mfaService,times(1)).getAvailableMfaSystems();
   }
+
+  @Test
+  public void testGetProtectedNavigations() {
+    Response response = mfaRestService.getProtectedNavigations();
+
+    assertEquals(200 ,response.getStatus());
+    verify(mfaService,times(1)).getProtectedNavigations();
+  }
+
+  @Test
+  public void testDeleteNavigation() {
+    Response response = mfaRestService.deleteNavigation("UsersManegement");
+
+    assertEquals(200 ,response.getStatus());
+    verify(mfaService,times(1)).deleteProtectedNavigations("UsersManegement");
+  }
+
+  @Test
+  public void testSaveProtectedNavigations() {
+    Response response = mfaRestService.saveProtectedNavigations("UsersManegement, GroupsManegement");
+
+    assertEquals(200 ,response.getStatus());
+    verify(mfaService,times(1)).saveProtectedNavigations("UsersManegement, GroupsManegement");
+  }
 }
