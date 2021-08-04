@@ -240,19 +240,19 @@ public class MfaServiceTest {
   public void testSaveProtectedNavigations() {
     mfaService.saveProtectedNavigations("UsersManegement, GroupsManegement");
     List<MfaNavigations> mfaNavigations = mfaService.getProtectedNavigations();
-    assertEquals(mfaNavigations.size(), 2);
-    assertEquals(mfaNavigations.get(0).getId(), "UsersManegement");
-    assertEquals(mfaNavigations.get(1).getId(), " GroupsManegement");
+    assertEquals(2,mfaNavigations.size());
+    assertEquals("UsersManegement",mfaNavigations.get(0).getId());
+    assertEquals(" GroupsManegement",mfaNavigations.get(1).getId());
   }
 
   @Test
   public void testDeleteProtectedNavigations() {
     mfaService.saveProtectedNavigations("UsersManegement, GroupsManegement");
     List<MfaNavigations> mfaNavigations = mfaService.getProtectedNavigations();
-    assertEquals(mfaNavigations.size(), 2);
+    assertEquals(2,mfaNavigations.size());
     mfaService.deleteProtectedNavigations("UsersManegement");
     mfaNavigations = mfaService.getProtectedNavigations();
-    assertEquals(mfaNavigations.size(), 1);
+    assertEquals(1,mfaNavigations.size());
   }
 
   @Test
