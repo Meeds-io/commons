@@ -40,7 +40,6 @@ public class GenericDispatchedViewPortlet extends GenericPortlet {
         jsModule = ResourceScope.PORTLET + "/" + getPortletContext().getPortletContextName() + "/"
             + getPortletConfig().getPortletName();
       }
-      jsModule = config.getInitParameter("js-manager-jsModule");
       jsToAppend = config.getInitParameter("js-manager-javascript-content");
       if (StringUtils.isBlank(jsToAppend)) {
         String alias = getPortletName();
