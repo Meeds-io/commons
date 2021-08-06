@@ -1,7 +1,7 @@
 (function () {
 
   var i18n = new VueI18n({
-    locale: 'en', // set locale
+    locale: eXo.env.portal.language, // set locale
     fallbackLocale: 'en',
     messages: {}
   });
@@ -15,9 +15,10 @@
    * Load translated strings from the given URLs and for the given language
    * @param {string} lang - Language to load strings for
    * @param {(string|string[])} urls - Single URL or array of URLs to load i18n files from
+   * @param {string} synchLoading - Whether to fetch I18N in 'sync' (default), 'async' or 'defer' (after page loading)
    * @returns {Promise} Promise giving the i18n object with loaded translated strings
    */
-  function loadLanguageAsync(lang, urls) {
+  function loadLanguageAsync(lang, urls, synchLoading) {
     if (!lang) {
       lang = i18n.locale;
     }
@@ -26,11 +27,20 @@
       urls = [ urls ];
     }
 
-    let promises = [];
+    const promises = [];
     urls.forEach(url => {
-      const promise = fetchLangFile(url, lang);
-      if (promise) {
-        promises.push(promise);
+      if (synchLoading === 'async') {
+        fetchLangFile(url, lang);
+      } else if (synchLoading === 'defer') {
+        // Load bundles after page loaded event emited
+        eXo.env.portal.addOnLoadCallback(() => {
+          fetchLangFile(url, lang);
+        });
+      } else { // 'sync', default option
+        const promise = fetchLangFile(url, lang);
+        if (promise) {
+          promises.push(promise);
+        }
       }
     });
     return Promise.all(promises).then(() => i18n);
