@@ -31,5 +31,4 @@
   <import>war:/conf/commons-extension/resource-bundle-configuration.xml</import>
   <import>war:/conf/commons-extension/upgrade-configuration.xml</import>
   <import>war:/conf/commons-extension/feature-configuration.xml</import>
-  <import>war:/conf/commons-extension/mfa-configuration.xml</import>
 </configuration>
