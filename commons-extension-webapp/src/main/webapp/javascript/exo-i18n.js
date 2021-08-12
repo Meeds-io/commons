@@ -77,5 +77,8 @@
     }
   }
 
-  return { 'loadLanguageAsync': loadLanguageAsync };
+  return {
+    'loadLanguageAsync': loadLanguageAsync,
+    'i18n': i18n,
+  };
 })();
