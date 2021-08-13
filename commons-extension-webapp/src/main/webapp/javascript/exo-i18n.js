@@ -1,24 +1,39 @@
 (function () {
 
-  var i18n = new VueI18n({
+  const i18NFetchedURLsKey = `${window.location.pathname}_${eXo.env.portal.language}_${eXo.env.client.assetsVersion}_URLs`;
+  const i18NFetchedURLsValue = sessionStorage && sessionStorage.getItem(i18NFetchedURLsKey);
+  const i18NFetchedURLs = i18NFetchedURLsValue && JSON.parse(i18NFetchedURLsValue) || [];
+  window.eXoI18N = {
+    executingFetches: {},
+    i18NFetchedURLs,
+  };
+
+  const preloadedMessages = {};
+  window.eXoI18N.i18NFetchedURLs.forEach((url, index) => {
+    const cachedMessages = sessionStorage && sessionStorage.getItem(url);
+    if (cachedMessages && cachedMessages.length) {
+      Object.assign(preloadedMessages, JSON.parse(cachedMessages));
+    } else {
+      delete window.eXoI18N.i18NFetchedURLs[index];
+    }
+  });
+  window.eXoI18N.i18NFetchedURLs = window.eXoI18N.i18NFetchedURLs.filter(url => !!url);
+
+  const i18nMessages = {};
+  i18nMessages[eXo.env.portal.language] = preloadedMessages;
+  const i18n = new VueI18n({
     locale: eXo.env.portal.language, // set locale
     fallbackLocale: 'en',
-    messages: {}
+    messages: i18nMessages,
   });
-
-  window.eXoI18N = window.eXoI18N || {};
-  window.eXoI18N.executingFetches = window.eXoI18N.executingFetches || {};
-  window.eXoI18N.i18NFetchedURLs = window.eXoI18N.i18NFetchedURLs || [];
-  window.eXoI18N.i18NPreloadedMessages = window.eXoI18N.i18NPreloadedMessages || {};
 
   /**
    * Load translated strings from the given URLs and for the given language
    * @param {string} lang - Language to load strings for
    * @param {(string|string[])} urls - Single URL or array of URLs to load i18n files from
-   * @param {string} synchLoading - Whether to fetch I18N in 'sync' (default), 'async' or 'defer' (after page loading)
    * @returns {Promise} Promise giving the i18n object with loaded translated strings
    */
-  function loadLanguageAsync(lang, urls, synchLoading) {
+  function loadLanguageAsync(lang, urls) {
     if (!lang) {
       lang = i18n.locale;
     }
@@ -29,18 +44,9 @@
 
     const promises = [];
     urls.forEach(url => {
-      if (synchLoading === 'async') {
-        fetchLangFile(url, lang);
-      } else if (synchLoading === 'defer') {
-        // Load bundles after page loaded event emited
-        eXo.env.portal.addOnLoadCallback(() => {
-          fetchLangFile(url, lang);
-        });
-      } else { // 'sync', default option
-        const promise = fetchLangFile(url, lang);
-        if (promise) {
-          promises.push(promise);
-        }
+      const promise = fetchLangFile(url, lang);
+      if (promise) {
+        promises.push(promise);
       }
     });
     return Promise.all(promises).then(() => i18n);
@@ -53,27 +59,38 @@
       url = `${url}?v=${eXo.env.client.assetsVersion}`
     }
 
-    const msgs = window.eXoI18N.i18NPreloadedMessages[url];
-    if (msgs) {
-      delete window.eXoI18N.i18NPreloadedMessages[url];
-      i18n.mergeLocaleMessage(lang, msgs);
-      return Promise.resolve(i18n);
-    } else if (window.eXoI18N.i18NFetchedURLs.indexOf(url) >= 0) {
+    if (window.eXoI18N.executingFetches[url]) {
       return window.eXoI18N.executingFetches[url];
+    } else if (window.eXoI18N.i18NFetchedURLs.indexOf(url) >= 0) {
+      return Promise.resolve(i18n);
     } else {
-      const i18NFetch = fetch(url)
-        .then(resp => resp && resp.ok && resp.json())
-        .then(msgs => {
-          if (msgs) {
-            i18n.mergeLocaleMessage(lang, msgs);
-            i18n.locale = lang;
+      const cachedMessages = sessionStorage && sessionStorage.getItem(url);
+      const i18NFetch = (cachedMessages && Promise.resolve(JSON.parse(cachedMessages)) || fetch(url).then(resp => resp && resp.ok && resp.json()));
+      window.eXoI18N.executingFetches[url] = i18NFetch;
+      return i18NFetch
+        .then(data => {
+          if (data) {
+            i18n.mergeLocaleMessage(lang, data);
+            if (!cachedMessages) {
+              try {
+                sessionStorage.setItem(url, JSON.stringify(data));
+              } catch (e) {
+                // QuotaExceededError can be thrown, thus nothing to do here
+              }
+            }
           }
           return i18n;
         })
-        .finally(() => delete window.eXoI18N.executingFetches[url]);
-      window.eXoI18N.executingFetches[url] = i18NFetch;
-      window.eXoI18N.i18NFetchedURLs.push(url);
-      return i18NFetch;
+        .finally(() => {
+          delete window.eXoI18N.executingFetches[url];
+          window.eXoI18N.i18NFetchedURLs.push(url);
+          try {
+            sessionStorage.setItem(i18NFetchedURLsKey, JSON.stringify(window.eXoI18N.i18NFetchedURLs));
+          } catch (e) {
+            // QuotaExceededError can be thrown, thus nothing to do here
+          }
+          return i18n;
+        });
     }
   }
 
