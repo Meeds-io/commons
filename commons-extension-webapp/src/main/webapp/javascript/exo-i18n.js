@@ -71,7 +71,7 @@
         .then(data => {
           if (data) {
             i18n.mergeLocaleMessage(lang, data);
-            if (!cachedMessages) {
+            if (!cachedMessages && !eXo.developing) {
               try {
                 sessionStorage.setItem(url, JSON.stringify(data));
               } catch (e) {
