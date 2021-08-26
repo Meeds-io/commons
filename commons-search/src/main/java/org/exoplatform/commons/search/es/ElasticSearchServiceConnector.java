@@ -521,15 +521,18 @@ public class ElasticSearchServiceConnector extends SearchServiceConnector {
     StringBuilder filterJSON = new StringBuilder();
 
     for (ElasticSearchFilter filter: filters) {
-
-      filterJSON.append("                  ,\n");
-      filterJSON.append("                  {\n");
-      filterJSON.append("                   \"bool\" : {\n");
-      filterJSON.append("                     \"should\" : [\n");
-      filterJSON.append("                      " + getFilter(filter) + "\n");
-      filterJSON.append("                       ]\n");
-      filterJSON.append("                    }\n");
-      filterJSON.append("                  }");
+      if (filter.getType().equals(ElasticSearchFilterType.FILTER_MY_WORK_DOCS)) {
+        filterJSON.append(getFilter(filter));
+      } else {
+        filterJSON.append("                  ,\n");
+        filterJSON.append("                  {\n");
+        filterJSON.append("                   \"bool\" : {\n");
+        filterJSON.append("                     \"should\" : [\n");
+        filterJSON.append("                      " + getFilter(filter) + "\n");
+        filterJSON.append("                       ]\n");
+        filterJSON.append("                    }\n");
+        filterJSON.append("                  }");
+      }
 
     }
 
@@ -547,6 +550,8 @@ public class ElasticSearchServiceConnector extends SearchServiceConnector {
         return getNotExistFilter(filter.getField());
       case FILTER_CUSTOM:
         return getCustomFilter(filter.getValue());
+      case FILTER_MY_WORK_DOCS:
+        return myWorkDocumentsFilter(filter.getValue());
     }
     return "";
   }
@@ -606,7 +611,17 @@ public class ElasticSearchServiceConnector extends SearchServiceConnector {
   private String getCustomFilter(String value) {
     return value;
   }
+  private String myWorkDocumentsFilter(String value) {
+    StringBuilder filterJSON = new StringBuilder();
+    filterJSON.append("                  ,\n");
+    filterJSON.append("                  {\n");
+    filterJSON.append("                   \"bool\" : {\n");
+    filterJSON.append("                       " + value + "\n");
+    filterJSON.append("                    }\n");
+    filterJSON.append("                  }");
 
+    return filterJSON.toString();
+  }
   protected String getPermissionFilter() {
     StringBuilder permissionSB = new StringBuilder();
     Set<String> membershipSet = getUserMemberships();
