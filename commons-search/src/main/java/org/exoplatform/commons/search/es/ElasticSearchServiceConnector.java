@@ -735,7 +735,7 @@ public class ElasticSearchServiceConnector extends SearchServiceConnector {
     return ConversationState.getCurrent().getIdentity().getUserId();
   }
 
-  private Set<String> getUserMemberships() {
+  protected Set<String> getUserMemberships() {
     ConversationState conversationState = ConversationState.getCurrent();
     if (conversationState == null) {
       throw new IllegalStateException("No Identity found: ConversationState.getCurrent() is null");
