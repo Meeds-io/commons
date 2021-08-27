@@ -98,4 +98,11 @@ public class HTMLSanitizerTest {
     String sanitized = HTMLSanitizer.sanitize(input);
     assertEquals("<iframe allow=\"fullscreen\" frameborder=\"0\"></iframe>", sanitized);
   }
+
+  @Test
+  public void testAllowTargetLinksSanitize() throws Exception {
+    String input = "<a class=\"class\" href=\"url\" target=\"_blank\">link</a>";
+    String sanitized = HTMLSanitizer.sanitize(input);
+    assertEquals("<a class=\"class\" href=\"url\" target=\"_blank\" rel=\"nofollow noopener noreferrer\">link</a>", sanitized);
+  }
 }
