@@ -17,8 +17,8 @@
       msg : {
         OK : $("span#msgSaveOK", localizeStatus).text(),
         NOK: $("span#msgSaveKO", localizeStatus).text(),
-        NameNOK: $("span#msgNameNok", localizeStatus).text(),
-        EmailNOK: $("span#msgEmailNok", localizeStatus).text()
+        NameNOK: $("span#msgInvalidName", localizeStatus).text(),
+        EmailNOK: $("span#msgInvalidEmail", localizeStatus).text()
       },
       init : function() {
     	$("a.edit-setting").click(function() {
