@@ -123,8 +123,8 @@
 		<span id="Error">${_ctx.appRes("NotificationAdmin.label.Error")}</span>
 		<span id="msgSaveOK">${_ctx.appRes("NotificationAdmin.msg.saveOK")}</span>
 		<span id="msgSaveKO">${_ctx.appRes("NotificationAdmin.msg.saveKO")}</span>
-		<span id="msgNameNok">${_ctx.appRes("NotificationAdmin.msg.NameNOK")}</span>
-		<span id="msgEmailNok">${_ctx.appRes("NotificationAdmin.msg.EmailNOK")}</span>
+		<span id="msgInvalidName">${_ctx.appRes("NotificationAdmin.msg.invalidName")}</span>
+		<span id="msgInvalidEmail">${_ctx.appRes("NotificationAdmin.msg.invalidEmail")}</span>
 	</div>
 
 </div>
