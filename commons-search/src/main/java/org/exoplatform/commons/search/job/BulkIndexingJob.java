@@ -37,8 +37,14 @@ public class BulkIndexingJob implements InterruptableJob {
   @Override
   public void execute(JobExecutionContext context) throws JobExecutionException {
     LOG.debug("Running job BulkIndexingJob");
-
+    long startTime = System.currentTimeMillis();
     getIndexingOperationProcessor().process();
+    long duration = System.currentTimeMillis() - startTime;
+    if (duration > 60000) {
+      LOG.info("End running BulkIndexingJob in {}ms", duration);
+    } else {
+      LOG.debug("End running BulkIndexingJob in {}ms", duration);
+    }
   }
 
   @Override
