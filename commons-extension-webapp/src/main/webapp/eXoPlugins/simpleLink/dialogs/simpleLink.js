@@ -39,6 +39,9 @@ CKEDITOR.dialog.add( 'simpleLinkDialog', function( editor ) {
                             }
                             element.setAttribute("href", url);
                             element.setAttribute("data-cke-saved-href", url);
+                            if (!url.includes(`${document.location.host}${eXo.env.portal.context}`)) {
+                                element.setAttribute('target', '_blank');
+                            }
 
                         },
                         onLoad : function () {
