@@ -46,6 +46,7 @@ import org.exoplatform.services.security.MembershipEntry;
  * 7/30/15
  */
 public class ElasticSearchServiceConnector extends SearchServiceConnector {
+
   private static final Log LOG = ExoLogger.getLogger(ElasticSearchServiceConnector.class);
 
   public static final String HIGHLIGHT_FRAGMENT_SIZE_PARAM_NAME = "highlightFragmentSize";

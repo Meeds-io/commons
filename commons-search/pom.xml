@@ -10,16 +10,20 @@
   <packaging>jar</packaging>
   <name>eXo PLF:: Commons - Commons Search</name>
   <properties>
-    <exo.test.coverage.ratio>0.49</exo.test.coverage.ratio>
+    <exo.test.coverage.ratio>0.46</exo.test.coverage.ratio>
   </properties>
   <dependencies>
     <!-- PLF dependencies -->
     <dependency>
-      <groupId>org.exoplatform.commons</groupId>
-      <artifactId>commons-component-common</artifactId>
+      <groupId>org.exoplatform.gatein.portal</groupId>
+      <artifactId>exo.portal.component.common</artifactId>
       <scope>provided</scope>
     </dependency>
     <!-- Others dependencies -->
+    <dependency>
+      <groupId>org.json</groupId>
+      <artifactId>json</artifactId>
+    </dependency>
     <dependency>
       <groupId>com.googlecode.json-simple</groupId>
       <artifactId>json-simple</artifactId>

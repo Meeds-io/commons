@@ -117,9 +117,11 @@ public class CommonsUtils {
      * Gets the service.
      *
      * @param clazz the clazz
-     *
      * @return the service
+     * @deprecated user {@link ExoContainerContext#getService(Class)} instead
+     *             since this method is part of a high level module
      */
+    @Deprecated
     public static <T> T getService(Class<T> clazz) {
       return getService(clazz, null);
     }
@@ -131,7 +133,10 @@ public class CommonsUtils {
      * @param containerName the container's name
      *
      * @return the service
+     * @deprecated user {@link ExoContainerContext#getService(Class, String)} instead
+     *             since this method is part of a high level module
      */
+    @Deprecated
     public static <T> T getService(Class<T> clazz, String containerName) {
       ExoContainer container = ExoContainerContext.getCurrentContainer();
       if (containerName != null) {

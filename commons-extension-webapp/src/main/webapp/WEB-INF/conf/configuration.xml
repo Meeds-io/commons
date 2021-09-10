@@ -23,7 +23,7 @@
    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
    xsi:schemaLocation="http://www.exoplatform.org/xml/ns/kernel_1_2.xsd http://www.exoplatform.org/xml/ns/kernel_1_2.xsd"
    xmlns="http://www.exoplatform.org/xml/ns/kernel_1_2.xsd">
-  <import>war:/conf/commons-extension/cometd-configuration.xml</import>
+  <import>jar:/conf/cometd-configuration.xml</import>
   <import>war:/conf/commons-extension/common-configuration.xml</import>
   <import>war:/conf/commons-extension/webui-configuration.xml</import>
   <import>war:/conf/commons-extension/css-class-configuration.xml</import>
