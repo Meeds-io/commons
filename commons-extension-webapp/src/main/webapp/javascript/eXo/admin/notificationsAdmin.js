@@ -64,10 +64,19 @@
     	});
     	//
         $("#btSetSender").click(function() {
-          NotificationAdmin.saveSenderInfo($("input#senderName").val(), $("input#senderEmail").val());
+          if (NotificationAdmin.validateEmail($("input#senderEmail").val())) {
+            NotificationAdmin.saveSenderInfo($("input#senderName").val(), $("input#senderEmail").val());
+          } else {
+            NotificationAdmin.showMessage(NotificationAdmin.msg.NOK, NotificationAdmin.status.NOK);
+          }
         });
       },
-      
+
+      validateEmail : function (email) {
+          const regex = /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+          return regex.test(email);
+      },
+
       saveSenderInfo : function(name, email) {
         $("#notificationAdmin").jzAjax({
           url : "NotificationsAdministration.saveSender()",
