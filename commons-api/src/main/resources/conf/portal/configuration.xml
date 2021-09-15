@@ -25,40 +25,25 @@
     xsi:schemaLocation="http://www.exoplatform.org/xml/ns/kernel_1_2.xsd http://www.exoplatform.org/xml/ns/kernel_1_2.xsd"
     xmlns="http://www.exoplatform.org/xml/ns/kernel_1_2.xsd">
 
-  <component>
-    <type>org.exoplatform.commons.api.websocket.ExtensibleWSFilter</type>
-  </component>
-  
-  <component>
-    <key>org.exoplatform.commons.api.ui.PlugableUIService</key>
-    <type>org.exoplatform.commons.api.ui.PlugableUIServiceImpl</type>
-  </component>
-
-  <!-- sample configuration 
   <external-component-plugins>
-    <target-component>org.exoplatform.commons.api.websocket.ExtensibleWSFilter</target-component>
+    <target-component>org.exoplatform.services.resources.ResourceBundleService</target-component>
     <component-plugin>
-      <name>Filter Definition Plugin</name>      
-      <set-method>addFilterDefinitions</set-method>
-      <type>org.exoplatform.commons.api.websocket.WSFilterDefinitionPlugin</type>
+      <name>Commons UI Component Resource Bundle</name>
+      <set-method>addResourceBundle</set-method>
+      <type>org.exoplatform.services.resources.impl.BaseResourceBundlePlugin</type>
       <init-params>
-        <object-param>
-          <name>WS Filter</name>
-          <object type="org.exoplatform.commons.api.websocket.WSFilterDefinition">
-            <field name="filter">
-              <object type="org.exoplatform.CustomWSFilter"/>
-            </field>
-            <field name="patterns">
-              <collection type="java.util.ArrayList" item-type="java.lang.String">
-                <value>
-                  <string>/.*</string>
-                </value>
-              </collection>
-            </field>
-          </object>
-        </object-param>
-      </init-params>
+        <values-param>
+          <name>classpath.resources</name>
+          <description>The resources that start with the following package name should be load from file system</description>
+          <value>locale.commons.Commons</value>          
+        </values-param>
+        <values-param>
+          <name>portal.resource.names</name>
+          <description>The properties files of the portal , those file will be merged into one ResoruceBundle properties </description>
+          <value>locale.commons.Commons</value>
+        </values-param>
+       </init-params>
     </component-plugin>
   </external-component-plugins>
-  -->
+
 </configuration>

@@ -1,4 +1,4 @@
-package org.exoplatform.commons.api.notification.rest;
+package org.exoplatform.commons.notification.rest;
 
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;

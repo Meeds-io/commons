@@ -16,9 +16,6 @@
  */
 package org.exoplatform.commons.notification.template;
 
-import groovy.lang.Writable;
-import groovy.text.Template;
-
 import java.io.StringWriter;
 import java.io.Writer;
 
@@ -26,16 +23,17 @@ import org.exoplatform.commons.api.notification.channel.AbstractChannel;
 import org.exoplatform.commons.api.notification.channel.ChannelManager;
 import org.exoplatform.commons.api.notification.channel.template.AbstractTemplateBuilder;
 import org.exoplatform.commons.api.notification.model.PluginKey;
-import org.exoplatform.commons.api.notification.plugin.AbstractNotificationChildPlugin;
-import org.exoplatform.commons.api.notification.plugin.AbstractNotificationPlugin;
-import org.exoplatform.commons.api.notification.plugin.BaseNotificationPlugin;
+import org.exoplatform.commons.api.notification.plugin.*;
 import org.exoplatform.commons.api.notification.service.setting.PluginContainer;
 import org.exoplatform.commons.api.notification.service.template.TemplateContext;
 import org.exoplatform.commons.api.notification.template.Element;
 import org.exoplatform.commons.api.notification.template.ElementVisitor;
-import org.exoplatform.commons.utils.CommonsUtils;
+import org.exoplatform.container.ExoContainerContext;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
+
+import groovy.lang.Writable;
+import groovy.text.Template;
 
 /**
  * Created by The eXo Platform SAS
@@ -58,13 +56,13 @@ public class GroovyElementVisitor implements ElementVisitor {
     try {
       Template engine = null;
       PluginKey pluginKey = new PluginKey(ctx.getPluginId());
-      BaseNotificationPlugin plugin = CommonsUtils.getService(PluginContainer.class).getPlugin(pluginKey);
+      BaseNotificationPlugin plugin = ExoContainerContext.getService(PluginContainer.class).getPlugin(pluginKey);
       if (plugin instanceof AbstractNotificationChildPlugin) {
         engine = ((AbstractNotificationChildPlugin) plugin).getTemplateEngine();
       } else if (plugin.isOldPlugin()) {
         engine = ((AbstractNotificationPlugin) plugin).getTemplateEngine();
       } else {
-        AbstractChannel channel = CommonsUtils.getService(ChannelManager.class).getChannel(ctx.getChannelKey());
+        AbstractChannel channel = ExoContainerContext.getService(ChannelManager.class).getChannel(ctx.getChannelKey());
         AbstractTemplateBuilder builder = channel.getTemplateBuilder(pluginKey);
         if (builder != null) {
           engine = builder.getTemplateEngine();

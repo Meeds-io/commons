@@ -1,4 +1,4 @@
-package org.exoplatform.commons.api.notification.rest.model;
+package org.exoplatform.commons.notification.rest.model;
 
 import java.util.List;
 import java.util.Map;

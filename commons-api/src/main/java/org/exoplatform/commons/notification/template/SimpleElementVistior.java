@@ -16,14 +16,10 @@
  */
 package org.exoplatform.commons.notification.template;
 
-import java.io.IOException;
-import java.io.StringWriter;
-import java.io.Writer;
+import java.io.*;
 
 import org.exoplatform.commons.api.notification.service.template.TemplateContext;
-import org.exoplatform.commons.api.notification.template.Element;
-import org.exoplatform.commons.api.notification.template.ElementVisitor;
-import org.exoplatform.commons.api.notification.template.TemplateTransformer;
+import org.exoplatform.commons.api.notification.template.*;
 
 /**
  * Created by The eXo Platform SAS

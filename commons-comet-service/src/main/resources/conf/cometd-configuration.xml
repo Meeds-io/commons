@@ -17,7 +17,38 @@
 	 <component>
 	  <type>org.exoplatform.ws.frameworks.cometd.transport.RESTContinuationService</type>
 	 </component>
-	 <!--<component>
+
+  <component>
+    <type>org.exoplatform.commons.api.websocket.ExtensibleWSFilter</type>
+  </component>
+
+  <!-- sample configuration 
+  <external-component-plugins>
+    <target-component>org.exoplatform.commons.api.websocket.ExtensibleWSFilter</target-component>
+    <component-plugin>
+      <name>Filter Definition Plugin</name>      
+      <set-method>addFilterDefinitions</set-method>
+      <type>org.exoplatform.commons.api.websocket.WSFilterDefinitionPlugin</type>
+      <init-params>
+        <object-param>
+          <name>WS Filter</name>
+          <object type="org.exoplatform.commons.api.websocket.WSFilterDefinition">
+            <field name="filter">
+              <object type="org.exoplatform.CustomWSFilter"/>
+            </field>
+            <field name="patterns">
+              <collection type="java.util.ArrayList" item-type="java.lang.String">
+                <value>
+                  <string>/.*</string>
+                </value>
+              </collection>
+            </field>
+          </object>
+        </object-param>
+      </init-params>
+    </component-plugin>
+  </external-component-plugins>
+  -->	 <!--<component>
 	  <type>org.exoplatform.ws.frameworks.cometd.loadbalancer.RESTLoadBalancerService</type>
 	 </component>
 	 <component>

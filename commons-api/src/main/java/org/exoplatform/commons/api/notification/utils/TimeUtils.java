@@ -14,75 +14,69 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, see<http://www.gnu.org/licenses/>.
  */
-package org.exoplatform.webui.utils;
+
+package org.exoplatform.commons.api.notification.utils;
 
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.GregorianCalendar;
-import java.util.Locale;
-import java.util.ResourceBundle;
+import java.util.*;
 
 import org.apache.commons.lang.ArrayUtils;
+
 import org.exoplatform.container.ExoContainerContext;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 import org.exoplatform.services.resources.ResourceBundleService;
-import org.exoplatform.web.application.RequestContext;
-import org.exoplatform.webui.application.WebuiRequestContext;
 
-/**
- * Created by The eXo Platform SAS
- * Author : Vu Duy Tu
- *          tu.duy@exoplatform.com
- * Jul 5, 2011  
- * @deprecated use org.exoplatform.commons.api.notification.utils.TimeUtils instead
- */
-@Deprecated
-public class TimeConvertUtils {
-  private static final Log      LOG = ExoLogger.getLogger(TimeConvertUtils.class);
-  
-  public static String[] strs                 = new String[] { "SECOND", "MINUTE", "HOUR", "DAY",
-                                                               "WEEK", "MONTH", "YEAR", "DECADE"};
+public class TimeUtils {
 
-  public static int      DAY                  = 3;
+  private static final Log     LOG                  = ExoLogger.getLogger(TimeUtils.class);
 
-  public static int      WEEK                 = 4;
+  public static final String[] PERIODS              = new String[] { "SECOND", "MINUTE", "HOUR", "DAY",
+      "WEEK", "MONTH", "YEAR", "DECADE" };
 
-  public static int      MONTH                = 5;
+  public static final int      DAY                  = 3;
 
-  public static int      YEAR                 = 6;
+  public static final int      WEEK                 = 4;
 
-  private static float   MINISECOND_OF_MINUTE = 60 * 1000.0f;
+  public static final int      MONTH                = 5;
 
-  private static float   MINUTE_OF_HOUR       = 60.0f;
+  public static final int      YEAR                 = 6;
 
-  private static float   HOUR_OF_DAY          = 24.0f;
+  private static final float   MINISECOND_OF_MINUTE = 60 * 1000.0f;
 
-  private static float   DAY_OF_WEEK          = 7.0f;
+  private static final float   MINUTE_OF_HOUR       = 60.0f;
 
-  private static float   WEEK_OF_MONTH        = 4.33f;
+  private static final float   HOUR_OF_DAY          = 24.0f;
 
-  private static float   MONTH_OF_YEAR        = 12;
+  private static final float   DAY_OF_WEEK          = 7.0f;
 
-  private static float   YEAR_OF_DECADE       = 10.0f;
+  private static final float   WEEK_OF_MONTH        = 4.33f;
 
-  private static Float[] timeLength           = new Float[] { MINISECOND_OF_MINUTE, MINUTE_OF_HOUR, HOUR_OF_DAY,
-                                                              DAY_OF_WEEK, WEEK_OF_MONTH, MONTH_OF_YEAR, 
-                                                              YEAR_OF_DECADE, YEAR_OF_DECADE };
-  private static String  JUSTNOW              = "JUSTNOW";
+  private static final float   MONTH_OF_YEAR        = 12;
 
-  private static String  SPACE                = " ";
+  private static final float   YEAR_OF_DECADE       = 10.0f;
 
-  private static String  STR_EMPTY            = "";
+  private static final Float[] timeLength           = new Float[] { MINISECOND_OF_MINUTE, MINUTE_OF_HOUR, HOUR_OF_DAY,
+      DAY_OF_WEEK, WEEK_OF_MONTH, MONTH_OF_YEAR,
+      YEAR_OF_DECADE, YEAR_OF_DECADE };
 
-  private static String  STR_S                = "_S";
+  private static final String  JUSTNOW              = "JUSTNOW";
 
-  private static String  UNDERSCORE           = "_";
+  private static final String  SPACE                = " ";
 
-  private static String  RESOURCE_KEY         = "TimeConvert.type.";
+  private static final String  STR_EMPTY            = "";
 
-  private static String convertXTimeAgo(Date myDate, Date baseDate){
+  private static final String  STR_S                = "_S";
+
+  private static final String  UNDERSCORE           = "_";
+
+  private static final String  RESOURCE_KEY         = "TimeConvert.type.";
+
+  private TimeUtils() {
+    // Class with static methods only
+  }
+
+  private static String convertXTimeAgo(Date myDate, Date baseDate) {
     float delta = (baseDate.getTime() - myDate.getTime());
     int i = 0;
     for (i = 0; (delta >= timeLength[i]) && i < timeLength.length - 1; i++) {
@@ -92,8 +86,11 @@ public class TimeConvertUtils {
     if (l < 0 || i < 1) {
       return JUSTNOW;
     }
-    return new StringBuilder().append(l).append(SPACE)
-                              .append(strs[i]).append((l > 1) ? STR_S : STR_EMPTY).toString();
+    return new StringBuilder().append(l)
+                              .append(SPACE)
+                              .append(PERIODS[i])
+                              .append((l > 1) ? STR_S : STR_EMPTY)
+                              .toString();
   }
 
   public static String convertXTimeAgo(Date myDate, String format) {
@@ -111,10 +108,12 @@ public class TimeConvertUtils {
   /**
    * Convert date to display string with format X time ago
    * 
-   * @param myDate The object date input for convert, it must has ZoneTime is server ZoneTime
+   * @param myDate The object date input for convert, it must has ZoneTime is
+   *          server ZoneTime
    * @param format The date/time format
    * @param locale The Local of current location(language/country).
-   * @param limit The value set for limit convert x time ago. It must is: TimeConvertUtils.YEAR, MONTH, WEEK, DAY.
+   * @param limit The value set for limit convert x time ago. It must is:
+   *          TimeConvertUtils.YEAR, MONTH, WEEK, DAY.
    * @return String
    */
   public static String convertXTimeAgoByTimeServer(Date myDate, String format, Locale locale, int limit) {
@@ -125,61 +124,51 @@ public class TimeConvertUtils {
   /**
    * Convert date to display string with format X time ago
    * 
-   * @param myDate The object date input for convert, it must has ZoneTime is GMT+0
+   * @param myDate The object date input for convert, it must has ZoneTime is
+   *          GMT+0
    * @param format The date/time format
    * @param locale The Local of current location(language/country).
-   * @param limit The value set for limit convert x time ago. It must is: TimeConvertUtils.YEAR, MONTH, WEEK, DAY.
-   * @return String 
+   * @param limit The value set for limit convert x time ago. It must is:
+   *          TimeConvertUtils.YEAR, MONTH, WEEK, DAY.
+   * @return String
    */
   public static String convertXTimeAgo(Date myDate, String format, Locale locale, int limit) {
     Date baseDate = getGreenwichMeanTime().getTime();
     return convertXTimeAgo(myDate, baseDate, format, locale, limit);
   }
-  
+
   private static String convertXTimeAgo(Date myDate, Date baseDate, String format, Locale locale, int limit) {
     String[] values = convertXTimeAgo(myDate, baseDate).split(SPACE);
     if (values[0].equals(JUSTNOW))
       return getResourceBundle(RESOURCE_KEY + JUSTNOW, locale);
-    int i = ArrayUtils.indexOf(strs, values[1].replace(STR_S, STR_EMPTY));
+    int i = ArrayUtils.indexOf(PERIODS, values[1].replace(STR_S, STR_EMPTY));
     if (limit == 0 || i < limit) {
       return getMessage(getResourceBundle(RESOURCE_KEY + values[1].replace(UNDERSCORE, STR_EMPTY),
                                           locale),
                         new String[] { values[0] });
     }
-          
-    if (locale != null) {
-      return getFormatDate(myDate, format, locale);
-    } else {
-      return getFormatDate(myDate, format);
-    }
-  }
 
-  public static String getFormatDate(Date myDate, String format) {
-    return getFormatDate(myDate, format, getLocale());
+    return getFormatDate(myDate, format, locale);
   }
 
   public static String getFormatDate(Date myDate, String format, Locale locale) {
     /* h,hh,H, m, mm, d, dd, EEE, EEEE, M, MM, MMM, MMMM, yy, yyyy */
     if (myDate == null)
       return STR_EMPTY;
+    if (locale == null) {
+      locale = Locale.getDefault();
+    }
     return new SimpleDateFormat(format, locale).format(myDate);
   }
 
   private static String getResourceBundle(String key, Locale locale) {
-    if (locale == null) {
-      locale = getLocale();
-    }
-    ResourceBundle res = null;
-    RequestContext ctx = WebuiRequestContext.getCurrentInstance();
-    if (ctx != null) {
-      res = ctx.getApplicationResourceBundle();
-    }
     // if null, try another way
-    ResourceBundleService bundleService = (ResourceBundleService) ExoContainerContext.getCurrentContainer()
-                                                                .getComponentInstanceOfType(ResourceBundleService.class);
-    if (res == null && bundleService != null) {
-      res = bundleService.getResourceBundle("locale.commons.Commons", locale);
+    ResourceBundleService bundleService = ExoContainerContext.getCurrentContainer()
+                                                             .getComponentInstanceOfType(ResourceBundleService.class);
+    if (locale == null) {
+      locale = Locale.getDefault();
     }
+    ResourceBundle res = bundleService.getResourceBundle("locale.commons.Commons", locale);
     // still null
     String keyString = key.substring(key.lastIndexOf(".") + 1).toLowerCase();
     if (res == null) {
@@ -193,14 +182,14 @@ public class TimeConvertUtils {
       return keyString;
     }
   }
-  
+
   private static String getMessage(String message, String[] args) {
     if (message != null && args != null) {
       String oldMes = message;
       for (int i = 0; i < args.length; i++) {
         message = message.replace("{" + i + "}", args[i]);
       }
-      if(message.equals(oldMes) && args.length == 1) {
+      if (message.equals(oldMes) && args.length == 1) {
         message = args[0] + SPACE + message;
       }
     }
@@ -208,55 +197,38 @@ public class TimeConvertUtils {
   }
 
   /**
-   * Get current {@link Locale}
-   * @return {@link Locale} 
-   */
-  public static Locale getLocale() {
-    RequestContext ctx = WebuiRequestContext.getCurrentInstance();
-    if (ctx == null) {
-      return Locale.ENGLISH;
-    }
-
-    Locale locale = ctx.getLocale();
-    if (locale == null) {
-      return Locale.ENGLISH;
-    }
-
-    return locale;
-  }
-
-  /**
    * Get current time GMT/Zulu or UTC,(zone time is 0+GMT)
-   * @return Calendar 
+   * 
+   * @return Calendar
    */
   public static Calendar getGreenwichMeanTime() {
-    Calendar calendar = GregorianCalendar.getInstance();
+    Calendar calendar = Calendar.getInstance();
     calendar.setLenient(false);
     int gmtoffset = calendar.get(Calendar.DST_OFFSET) + calendar.get(Calendar.ZONE_OFFSET);
     calendar.setTimeInMillis(System.currentTimeMillis() - gmtoffset);
     return calendar;
   }
-  
+
   /**
-   * Cleanup the string to be valid of Java variable
-   * Ex: input = "123 sdkjh s;:sdlkjh d"
-   *     output = "_123_sdkjh_s__sdlkjh_d"
+   * Cleanup the string to be valid of Java variable Ex: input = "123 sdkjh
+   * s;:sdlkjh d" output = "_123_sdkjh_s__sdlkjh_d"
+   * 
    * @return
    */
   public static String santializeJavaVariable(String input) {
     String s = input;
     StringBuilder sb = new StringBuilder();
-    if(!Character.isJavaIdentifierStart(s.charAt(0))) {
-        sb.append("_");
+    if (!Character.isJavaIdentifierStart(s.charAt(0))) {
+      sb.append("_");
     }
     for (char c : s.toCharArray()) {
-        if(!Character.isJavaIdentifierPart(c)) {
-            sb.append("_");
-        } else {
-            sb.append(c);
-        }
+      if (!Character.isJavaIdentifierPart(c)) {
+        sb.append("_");
+      } else {
+        sb.append(c);
+      }
     }
-    
+
     return sb.toString();
   }
 }

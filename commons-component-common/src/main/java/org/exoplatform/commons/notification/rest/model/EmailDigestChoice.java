@@ -1,19 +1,21 @@
-package org.exoplatform.commons.api.notification.rest.model;
+package org.exoplatform.commons.notification.rest.model;
 
-public class ChannelActivationChoice {
+public class EmailDigestChoice {
+  String  channelId;
 
-  private String  channelId;
+  String  pluginId;
 
-  private String  pluginId;
+  String  value;
 
-  private boolean active;
+  boolean channelActive;
 
-  private boolean channelActive;
-
-  public ChannelActivationChoice(String channelId, String pluginId, boolean active, boolean channelActive) {
+  public EmailDigestChoice(String channelId,
+                           String pluginId,
+                           String value,
+                           boolean channelActive) {
     this.channelId = channelId;
     this.pluginId = pluginId;
-    this.active = active;
+    this.value = value;
     this.channelActive = channelActive;
   }
 
@@ -33,12 +35,12 @@ public class ChannelActivationChoice {
     this.pluginId = pluginId;
   }
 
-  public boolean isActive() {
-    return active;
+  public String getValue() {
+    return value;
   }
 
-  public void setActive(boolean active) {
-    this.active = active;
+  public void setValue(String value) {
+    this.value = value;
   }
 
   public boolean isChannelActive() {

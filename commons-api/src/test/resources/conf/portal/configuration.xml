@@ -15,4 +15,6 @@
     <key>org.exoplatform.services.resources.LocaleConfigService</key>
     <type>org.exoplatform.commons.test.MockLocaleConfigService</type>
   </component>
+
+  <import>jar:/conf/exo.portal.component.resources-configuration.xml</import>
 </configuration>

@@ -18,13 +18,11 @@ package org.exoplatform.commons.notification.template;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Locale;
-import java.util.ResourceBundle;
-import java.util.Scanner;
+import java.util.*;
 
 import org.apache.commons.lang.StringUtils;
-import org.exoplatform.commons.notification.NotificationUtils;
-import org.exoplatform.commons.utils.CommonsUtils;
+
+import org.exoplatform.container.ExoContainerContext;
 import org.exoplatform.container.configuration.ConfigurationManager;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
@@ -74,7 +72,7 @@ public class TemplateResourceBundle {
   }
 
   public String appRes(String key) {
-    return getResourceBundle(key, NotificationUtils.getLocale(language), bundlePath);
+    return getResourceBundle(key, TemplateUtils.getLocale(language), bundlePath);
   }
 
   public String appRes(String key, String... strs) {
@@ -91,7 +89,7 @@ public class TemplateResourceBundle {
     String id = new StringBuffer(CONF_LOCATION).append(resourceLocale.replace(".", "/"))
                       .append("_").append(locale.getLanguage()).append(".properties").toString();
     try {
-      ConfigurationManager configurationManager = CommonsUtils.getService(ConfigurationManager.class);
+      ConfigurationManager configurationManager = ExoContainerContext.getService(ConfigurationManager.class);
       InputStream inputStream = configurationManager.getInputStream(id);
       if (inputStream != null) {
         String data = getContent(inputStream);
@@ -120,7 +118,7 @@ public class TemplateResourceBundle {
     }
 
     ResourceBundle res = null;
-    ResourceBundleService bundleService = CommonsUtils.getService(ResourceBundleService.class);
+    ResourceBundleService bundleService = ExoContainerContext.getService(ResourceBundleService.class);
     if (bundleService != null) {
       res = bundleService.getResourceBundle(resourceLocale, locale);
       // if null, try another way

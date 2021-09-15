@@ -112,6 +112,11 @@
     </init-params>
   </component>
 
+  <component>
+    <key>org.exoplatform.commons.api.ui.PlugableUIService</key>
+    <type>org.exoplatform.commons.api.ui.PlugableUIServiceImpl</type>
+  </component>
+
   <external-component-plugins>
     <target-component>org.exoplatform.services.cache.CacheService</target-component>
     <component-plugin>

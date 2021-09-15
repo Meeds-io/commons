@@ -198,6 +198,11 @@ public class NotificationServiceImpl extends AbstractService implements Notifica
         + "ms.");
   }
 
+  @Override
+  public NotificationContext createNotificationContextInstance() {
+    return NotificationContextImpl.cloneInstance();
+  }
+
   private void send(NotificationContext context, List<UserSetting> userSettings) {
     final boolean stats = notificationContextFactory.getStatistics().isStatisticsEnabled();
 

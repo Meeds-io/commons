@@ -19,7 +19,6 @@ package org.exoplatform.commons.notification.template;
 import org.exoplatform.commons.api.notification.template.Element;
 import org.exoplatform.commons.api.notification.template.ElementVisitor;
 
-
 /**
  * Created by The eXo Platform SAS
  * Author : eXoPlatform
@@ -28,7 +27,7 @@ import org.exoplatform.commons.api.notification.template.ElementVisitor;
  */
 
 public class DigestTemplate extends SimpleElement {
-  
+
   public enum ElementType {
     DIGEST_ONE(1),
     DIGEST_THREE(3),

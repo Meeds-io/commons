@@ -19,21 +19,18 @@ package org.exoplatform.commons.api.notification.plugin;
 import java.util.Locale;
 
 import org.apache.commons.lang3.StringUtils;
+
 import org.exoplatform.commons.api.settings.SettingService;
 import org.exoplatform.commons.api.settings.SettingValue;
 import org.exoplatform.commons.api.settings.data.Context;
 import org.exoplatform.commons.api.settings.data.Scope;
+import org.exoplatform.commons.utils.I18N;
 import org.exoplatform.commons.utils.MailUtils;
 import org.exoplatform.container.ExoContainerContext;
 import org.exoplatform.container.PortalContainer;
 import org.exoplatform.container.component.ComponentRequestLifecycle;
 import org.exoplatform.container.component.RequestLifeCycle;
-import org.exoplatform.services.organization.OrganizationService;
-import org.exoplatform.services.organization.User;
-import org.exoplatform.services.organization.UserHandler;
-import org.exoplatform.portal.localization.LocaleContextInfoUtils;
-import org.exoplatform.services.resources.LocaleContextInfo;
-import org.exoplatform.services.resources.LocalePolicy;
+import org.exoplatform.services.organization.*;
 
 public class NotificationPluginUtils {
 
@@ -132,14 +129,11 @@ public class NotificationPluginUtils {
    * @return
    */
   public static String getLanguage(String userId) {
-    LocaleContextInfo localeCtx = LocaleContextInfoUtils.buildLocaleContextInfo(userId);
-    LocalePolicy localePolicy = ExoContainerContext.getCurrentContainer().getComponentInstanceOfType(LocalePolicy.class);
-    String lang = null;
-    if(localePolicy != null) {
-      Locale locale = localePolicy.determineLocale(localeCtx);
-      lang = locale.toString();
+    Locale locale = I18N.getUserLocale(userId);
+    if(locale != null) {
+      return locale.toString();
     }
-    return lang;
+    return null;
   }
 
   public static OrganizationService getOrganizationService() {

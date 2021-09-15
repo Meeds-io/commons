@@ -1,4 +1,4 @@
-package org.exoplatform.commons.api.notification.rest;
+package org.exoplatform.commons.notification.rest;
 
 import org.exoplatform.commons.api.notification.model.NotificationInfo;
 import org.exoplatform.commons.api.notification.service.WebNotificationService;

@@ -1,4 +1,4 @@
-package org.exoplatform.commons.api.notification.rest;
+package org.exoplatform.commons.notification.rest;
 
 import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.*;
@@ -20,9 +20,9 @@ import org.exoplatform.commons.api.notification.channel.template.AbstractTemplat
 import org.exoplatform.commons.api.notification.channel.template.TemplateProvider;
 import org.exoplatform.commons.api.notification.model.*;
 import org.exoplatform.commons.api.notification.plugin.config.PluginConfig;
-import org.exoplatform.commons.api.notification.rest.model.UserNotificationSettings;
 import org.exoplatform.commons.api.notification.service.setting.PluginSettingService;
 import org.exoplatform.commons.api.notification.service.setting.UserSettingService;
+import org.exoplatform.commons.notification.rest.model.UserNotificationSettings;
 import org.exoplatform.portal.config.UserACL;
 import org.exoplatform.portal.rest.services.BaseRestServicesTestCase;
 import org.exoplatform.services.resources.ResourceBundleService;

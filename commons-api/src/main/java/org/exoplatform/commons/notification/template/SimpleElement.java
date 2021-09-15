@@ -23,36 +23,35 @@ import org.exoplatform.commons.api.notification.template.Element;
 import org.exoplatform.commons.api.notification.template.ElementVisitor;
 
 /**
- * Created by The eXo Platform SAS
- * Author : eXoPlatform
- *          thanhvc@exoplatform.com
- * Aug 1, 2013  
+ * Created by The eXo Platform SAS Author : eXoPlatform thanhvc@exoplatform.com
+ * Aug 1, 2013
  */
 public class SimpleElement implements Element {
 
   /**
    * The language
    */
-  private String language;
+  private String       language;
+
   /**
    * The template
    */
-  private String template;
-  
+  private String       template;
+
   /**
    * The template configure
    */
   private PluginConfig pluginConfig;
-  
+
   /**
    * need add new line tag
    */
-  private boolean newLine = false;
-  
+  private boolean      newLine = false;
+
   public SimpleElement() {
     this.language = Locale.ENGLISH.getLanguage();
   }
-  
+
   @Override
   public String getLanguage() {
     return language;
@@ -79,17 +78,16 @@ public class SimpleElement implements Element {
     this.template = template;
     return this;
   }
-  
+
   @Override
   public Element config(PluginConfig templateConfig) {
     this.pluginConfig = templateConfig;
     return this;
   }
-  
-  
+
   @Override
   public String toString() {
-    return "[language = " + this.language +"; template = " + this.template + "]";
+    return "[language = " + this.language + "; template = " + this.template + "]";
   }
 
   @Override

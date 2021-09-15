@@ -13,6 +13,10 @@
     <exo.test.coverage.ratio>0.28</exo.test.coverage.ratio>
   </properties>
   <dependencies>
+    <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>commons-api</artifactId>
+    </dependency>
     <!-- Required by exo.kernel.container for tests purpose -->
     <dependency>
       <groupId>javax.servlet</groupId>

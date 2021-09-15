@@ -55,139 +55,139 @@
       </dependency>
       <!-- Declare our own artifacts -->
       <dependency>
-        <groupId>org.exoplatform.commons</groupId>
+        <groupId>${project.groupId}</groupId>
         <artifactId>commons</artifactId>
         <version>${project.version}</version>
         <type>zip</type>
         <classifier>source-release</classifier>
       </dependency>
       <dependency>
-        <groupId>org.exoplatform.commons</groupId>
+        <groupId>${project.groupId}</groupId>
         <artifactId>commons-api</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.exoplatform.commons</groupId>
+        <groupId>${project.groupId}</groupId>
         <artifactId>commons-comet-ext-service</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.exoplatform.commons</groupId>
+        <groupId>${project.groupId}</groupId>
         <artifactId>commons-comet-ext-webapp-cometd</artifactId>
         <version>${project.version}</version>
         <type>war</type>
       </dependency>
       <dependency>
-        <groupId>org.exoplatform.commons</groupId>
+        <groupId>${project.groupId}</groupId>
         <artifactId>commons-comet-ext-webapp-cometd</artifactId>
         <version>${project.version}</version>
         <type>pom</type>
       </dependency>
       <dependency>
-        <groupId>org.exoplatform.commons</groupId>
+        <groupId>${project.groupId}</groupId>
         <artifactId>commons-comet-ext-webapp-rest</artifactId>
         <version>${project.version}</version>
         <type>war</type>
       </dependency>
       <dependency>
-        <groupId>org.exoplatform.commons</groupId>
+        <groupId>${project.groupId}</groupId>
         <artifactId>commons-comet-ext-webapp-rest</artifactId>
         <version>${project.version}</version>
         <type>pom</type>
       </dependency>
       <dependency>
-        <groupId>org.exoplatform.commons</groupId>
+        <groupId>${project.groupId}</groupId>
         <artifactId>commons-comet-service</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.exoplatform.commons</groupId>
+        <groupId>${project.groupId}</groupId>
         <artifactId>commons-comet-webapp</artifactId>
         <version>${project.version}</version>
         <type>war</type>
       </dependency>
       <dependency>
-        <groupId>org.exoplatform.commons</groupId>
+        <groupId>${project.groupId}</groupId>
         <artifactId>commons-comet-webapp</artifactId>
         <version>${project.version}</version>
         <type>pom</type>
       </dependency>
       <dependency>
-        <groupId>org.exoplatform.commons</groupId>
+        <groupId>${project.groupId}</groupId>
         <artifactId>commons-component-common</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.exoplatform.commons</groupId>
+        <groupId>${project.groupId}</groupId>
         <artifactId>commons-component-common</artifactId>
         <version>${project.version}</version>
         <type>test-jar</type>
       </dependency>
       <dependency>
-        <groupId>org.exoplatform.commons</groupId>
+        <groupId>${project.groupId}</groupId>
         <artifactId>commons-component-product</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.exoplatform.commons</groupId>
+        <groupId>${project.groupId}</groupId>
         <artifactId>commons-component-upgrade</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.exoplatform.commons</groupId>
+        <groupId>${project.groupId}</groupId>
         <artifactId>commons-registration</artifactId>
         <version>${project.version}</version>
         <type>war</type>
       </dependency>
       <dependency>
-        <groupId>org.exoplatform.commons</groupId>
+        <groupId>${project.groupId}</groupId>
         <artifactId>commons-extension-webapp</artifactId>
         <version>${project.version}</version>
         <type>war</type>
       </dependency>
       <dependency>
-        <groupId>org.exoplatform.commons</groupId>
+        <groupId>${project.groupId}</groupId>
         <artifactId>commons-extension-webapp</artifactId>
         <version>${project.version}</version>
         <type>pom</type>
       </dependency>
       <dependency>
-        <groupId>org.exoplatform.commons</groupId>
+        <groupId>${project.groupId}</groupId>
         <artifactId>commons-gifbackport</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.exoplatform.commons</groupId>
+        <groupId>${project.groupId}</groupId>
         <artifactId>commons-juzu</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.exoplatform.commons</groupId>
+        <groupId>${project.groupId}</groupId>
         <artifactId>commons-testing</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.exoplatform.commons</groupId>
+        <groupId>${project.groupId}</groupId>
         <artifactId>commons-webui-component</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.exoplatform.commons</groupId>
+        <groupId>${project.groupId}</groupId>
         <artifactId>commons-webui-ext</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.exoplatform.commons</groupId>
+        <groupId>${project.groupId}</groupId>
         <artifactId>commons-search</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.exoplatform.commons</groupId>
+        <groupId>${project.groupId}</groupId>
         <artifactId>commons-dlp</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.exoplatform.commons</groupId>
+        <groupId>${project.groupId}</groupId>
         <artifactId>commons-file-storage</artifactId>
         <version>${project.version}</version>
       </dependency>

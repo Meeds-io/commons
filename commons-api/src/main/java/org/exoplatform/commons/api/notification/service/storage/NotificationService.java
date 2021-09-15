@@ -43,5 +43,11 @@ public interface NotificationService {
    * @param notifications The list of notification messages.
    */
   void process(Collection<NotificationInfo> notifications) throws Exception;
-  
+
+  /**
+   * @return an instance implementing {@link NotificationContext}
+   */
+  default NotificationContext createNotificationContextInstance() {
+    throw new UnsupportedOperationException();
+  }
 }
