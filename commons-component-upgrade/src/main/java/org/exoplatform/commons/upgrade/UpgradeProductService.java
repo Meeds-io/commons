@@ -198,32 +198,17 @@ public class UpgradeProductService implements StartableClusterAware {
             final UpgradePluginExecutionContext previousUpgradePluginExecutionContextFinal =
                                                                                            previousUpgradePluginExecutionContext;
             if (portalContainer.isStarted()) {
-              Runnable task = () -> {
-                ExoContainerContext.setCurrentContainer(portalContainer);
-                RequestLifeCycle.begin(portalContainer);
-                try {
-                  proceedToUpgrade(upgradeProductPlugin,
-                                   currentVersion,
-                                   previousVersion,
-                                   previousUpgradePluginExecutionContextFinal);
-                } finally {
-                  RequestLifeCycle.end();
-                }
-              };
-              executorService.execute(task);
+              proceedToUpgradeAsync(upgradeProductPlugin,
+                                    previousVersion,
+                                    currentVersion,
+                                    previousUpgradePluginExecutionContextFinal);
             } else {
               PortalContainer.addInitTask(portalContainer.getPortalContext(), new PortalContainerPostInitTask() {
                 public void execute(ServletContext context, PortalContainer portalContainer) {
-                  ExoContainerContext.setCurrentContainer(portalContainer);
-                  RequestLifeCycle.begin(portalContainer);
-                  try {
-                    proceedToUpgrade(upgradeProductPlugin,
-                                     currentVersion,
-                                     previousVersion,
-                                     previousUpgradePluginExecutionContextFinal);
-                  } finally {
-                    RequestLifeCycle.end();
-                  }
+                  proceedToUpgradeAsync(upgradeProductPlugin,
+                                        previousVersion,
+                                        currentVersion,
+                                        previousUpgradePluginExecutionContextFinal);
                 }
               });
             }
@@ -345,6 +330,24 @@ public class UpgradeProductService implements StartableClusterAware {
 
   private Scope getUpgradePluginScope(UpgradeProductPlugin upgradeProductPlugin) {
     return Scope.APPLICATION.id(upgradeProductPlugin.getName());
+  }
+
+  private void proceedToUpgradeAsync(UpgradeProductPlugin upgradeProductPlugin,
+                                     String previousVersion,
+                                     String currentVersion,
+                                     final UpgradePluginExecutionContext previousUpgradePluginExecutionContextFinal) {
+    executorService.execute(() -> {
+      ExoContainerContext.setCurrentContainer(portalContainer);
+      RequestLifeCycle.begin(portalContainer);
+      try {
+        proceedToUpgrade(upgradeProductPlugin,
+                         currentVersion,
+                         previousVersion,
+                         previousUpgradePluginExecutionContextFinal);
+      } finally {
+        RequestLifeCycle.end();
+      }
+    });
   }
 
 }
