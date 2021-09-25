@@ -161,7 +161,11 @@ public class Document {
   }
 
   public String toJSON() {
-    String json;
+    JSONObject json = toJsonObject();
+    return json.toJSONString();
+  }
+
+  public JSONObject toJsonObject() {
     JSONObject obj = new JSONObject();
     if (getPermissions() != null) {
       JSONArray permissionsJSON = new JSONArray();
@@ -190,8 +194,7 @@ public class Document {
         obj.put(listFieldEntry.getKey(), new org.json.JSONArray(listFieldEntry.getValue()));
       }
     }
-    json = obj.toJSONString();
-    return json;
+    return obj;
   }
 
   public Document addListField(String key, Collection<String> values) {

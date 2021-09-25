@@ -163,6 +163,7 @@ public class ElasticContentRequestBuilderTest {
     fields.put("author", "Michael Jordan");
     when(document.getFields()).thenReturn(fields);
     when(document.toJSON()).thenCallRealMethod();
+    when(document.toJsonObject()).thenCallRealMethod();
   }
 
 }
