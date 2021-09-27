@@ -135,16 +135,17 @@ PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
               if (errorData != null) {
 						if (org.exoplatform.web.login.LoginError.DISABLED_USER_ERROR == errorData.getCode()) {
         	 %>
-          <div class="signinFail"><i class="uiIconError"></i><%=res.getString("UILoginForm.label.DisabledUserSignin")%></div>
+          <div class="signinFail" role="alert"><i class="uiIconError"></i><%=res.getString("UILoginForm.label.DisabledUserSignin")
+          %></div>
           <%
         				}
         		  } else {%>          
-          <div class="signinFail"><i class="uiIconError"></i><%=res.getString("portal.login.SigninFail")%></div>          
+          <div class="signinFail" role="alert"><i class="uiIconError"></i><%=res.getString("portal.login.SigninFail")%></div>
           <%  }
              }%>
 			 
 		  <% if (manyUsersWithSameEmailError) {%>          
-			   <div class="signinFail"><i class="uiIconError"></i><%=res.getString("portal.login.ManyUsersWithSameEmail")%></div>          
+			   <div class="signinFail" role="alert"><i class="uiIconError"></i><%=res.getString("portal.login.ManyUsersWithSameEmail")%></div>
           <% } %>
 			 
 				</div>
@@ -158,10 +159,19 @@ PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
 
                 <div class="userCredentials">
                   <span class="iconUser"></span>
-                  <input  tabindex="1" id="username" name="username" type="text" value="<%=StringEscapeUtils.escapeHtml(email)%>" placeholder="<%=res.getString("portal.login.Username")%>">                </div>
+                  <input  tabindex="1" id="username" name="username"
+                    type="text"
+                    value="<%=StringEscapeUtils.escapeHtml(email)%>"
+                    placeholder="<%=res.getString("portal.login.Username")%> *"
+                    aria-required="true">
+                </div>
                 <div class="userCredentials">
                   <span class="iconPswrd"></span>
-                  <input  tabindex="2"  type="password" id="password" name="password" placeholder="<%=res.getString("portal.login.Password")%>">
+                  <input  tabindex="2"
+                    type="password" id="password"
+                    name="password"
+                    placeholder="<%=res.getString("portal.login.Password")%> *"
+                    aria-required="true">
                 </div>
 
                 <div class="rememberContent">
