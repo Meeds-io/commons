@@ -31,6 +31,7 @@ CKEDITOR.editorConfig = function( config ) {
     CKEDITOR.plugins.addExternal('confirmBeforeReload','/commons-extension/eXoPlugins/confirmBeforeReload/','plugin.js');
     CKEDITOR.plugins.addExternal('autoembed','/commons-extension/eXoPlugins/autoembed/','plugin.js');
     CKEDITOR.plugins.addExternal('embedsemantic','/commons-extension/eXoPlugins/embedsemantic/','plugin.js');
+    CKEDITOR.plugins.addExternal('tagSuggester','/commons-extension/eXoPlugins/tagSuggester/','plugin.js');
 
     config.extraPlugins = 'simpleLink,selectImage,suggester,hideBottomToolbar';
     config.skin = 'moono-exo,/commons-extension/ckeditor/skins/moono-exo/';
