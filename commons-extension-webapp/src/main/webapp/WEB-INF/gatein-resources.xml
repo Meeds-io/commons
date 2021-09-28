@@ -181,6 +181,12 @@
 			<module>jquery</module>
 			<as>$</as>
 		</depends>
+		<depends>
+			<module>suggester</module>
+		</depends>
+		<depends>
+			<module>tagSuggester</module>
+		</depends>
 	</module>
 
 	<module>
@@ -238,6 +244,19 @@
         </depends>
     </module>
 
+  <module>
+    <name>tagSuggester</name>
+    <script>
+      <path>/javascript/eXo/suggester/tag.suggester.js</path>
+    </script>
+    <depends>
+      <module>jquery</module>
+    </depends>
+    <depends>
+      <module>jqueryAtWho</module>
+    </depends>
+  </module>
+
 	<module>
 		<name>suggester</name>
 		<script>
@@ -253,6 +272,7 @@
 			<module>jqueryAtWho</module>
 		</depends>
 	</module>
+
 	<module>
 		<name>selectize2</name>
 		<script>
