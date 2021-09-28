@@ -201,10 +201,6 @@
     $editable = $input;
 
     settings = $.extend(true, {}, defaultAtConfig, settings);
-    if (settings.iframe) {
-      $editable.atwho('setIframe', settings.iframe);
-    }
-
     var source = settings.source;
     if (!(source && source.length) && settings.sourceProviders && settings.sourceProviders.length) {
       settings.source = function(query, callback) {
