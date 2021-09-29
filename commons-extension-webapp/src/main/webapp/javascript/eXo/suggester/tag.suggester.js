@@ -2,126 +2,79 @@
   const atWhoCallback = $.fn.atwho["default"].callbacks;
   const providers = {};
 
-  var $input, $editable, lastNoResultQuery;
+  let tagSearchCached = {};
+  let lastNoResultQuery;
 
-  function loadFromProvider(term, response) {
-    var p = [];
-    var _this = this;
-
-    var sourceProviders = this.settings && this.settings.sourceProviders;
-    sourceProviders = sourceProviders || (this.options && this.options.sourceProviders);
-    $.each(providers, function(name, provider) {
-      if ($.inArray(name, sourceProviders) != -1) {
-        if (!p[name]) {
-          p[p.length] = provider;
-        }
-      }
-    });
-
-    var items = [];
-    var count = 0;
-    var finish = function(results) {
-      if (results && results.length) {
-        $.each(results, function(idx, elm) {
-          items[items.length] = elm;
-        });
-      }
-
-      if (++count == p.length) {
-        response.call(this, items);
-      }
-    };
-
-    //
-    for (let provider of p) {
-      if ($.isFunction(provider)) {
-        provider.call(_this, term, function(results) {
-          finish(results);
-        });
-      }
-    }
-
-  }
-
-  var App = (function() {
-    function App(input) {
+  class TagSuggesterApp {
+    constructor(input) {
       this.$input = input;
     }
-    return App;
-  })();
+  }
 
-  var API = {
-    getTags: function() {
-      var at = this.settings.at;
-      var tags = [];
-      $('<div>' + this.$input.html() + '</div>').find('[a.metadata-tag]').each(function() {
-        const value = $(this).text().trim().replace(at, '');
-        tags.push(value);
+  function loadFromProvider(query, callback) {
+    if (lastNoResultQuery && query && query.includes(lastNoResultQuery)) {
+      return callback.call(this, [{
+        name: query,
+      }]);
+    }
+    if (tagSearchCached[query]) {
+      return callback.call(this, tagSearchCached[query]);
+    } else {
+      tagSearchCached[query] = [{
+        name: query,
+      }];
+      callback.call(this, tagSearchCached[query]);
+      return fetch(`${eXo.env.portal.context}/${eXo.env.portal.rest}/v1/social/tags?q=${query || ''}&limit=5`, {
+        method: 'GET',
+        credentials: 'include',
+      }).then(resp => {
+        if (!resp || !resp.ok) {
+          throw new Error('Response code indicates a server error', resp);
+        } else {
+          return resp.json();
+        }
+      }).then(data => {
+        let result = tagSearchCached[query];
+        for (let d of data) {
+          if (query !== d.name) {
+            result.push({
+              name: d.name,
+            });
+          }
+        }
+        if (data.length == 0) {
+          lastNoResultQuery = query;
+        } else {
+          lastNoResultQuery = false;
+        }
+        return callback.call(this, result);
+      }).catch(() => {
+        const result = [{
+          name: query,
+        }];
+        lastNoResultQuery = query;
+        tagSearchCached[query] = result;
+        callback.call(this, result);
       });
-      return tags;
-    },
-  };
+    }
+  }
 
-  var defaultAtConfig = {
+  let defaultAtConfig = {
     at: "#",
     suffix: '\u00A0',
     searchKey: 'name',
     acceptSpaceBar: true,
     minLen: 0,
-    // TODO For test only
-    source: [
-      { name: 'test1' },
-      { name: 'test2' }
-    ],
-    sourceProviders: ['exo:tag'],
-    providers: {
-      'exo:tag': function(query, callback) {
-        if (lastNoResultQuery && query.length > lastNoResultQuery.length) {
-          if (query.substr(0, lastNoResultQuery.length) === lastNoResultQuery) {
-            callback.call(this, []);
-            return;
-          }
-        }
-        if (tagSearchCached[query]) {
-          callback.call(this, tagSearchCached[query]);
-        } else {
-          const url = window.location.protocol + '//' + window.location.host + eXo.social.portal.context + '/' + eXo.social.portal.rest + '/v1/social/tags?q=' + query;
-          $.getJSON(url, function(responseData) {
-            var result = [];
-            for (let d of responseData) {
-              result.push({
-                name: d.name,
-                value: d.name,
-              });
-            }
-
-            tagSearchCached[query] = result;
-            if (tagSearchCached[query].length == 0) {
-              lastNoResultQuery = query;
-            } else {
-              lastNoResultQuery = false;
-            }
-            callback.call(this, tagSearchCached[query]);
-          });
-        }
-      }
-    },
     callbacks: {
-      matcher: function(flag, subtext, should_startWithSpace, acceptSpaceBar) {
-        subtext = subtext.trim();
-        var _a, _y, match, regexp, space;
+      matcher: function(flag, subtext) {
+        let _a, _y, match, regexp;
         flag = flag.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&");
-        if (should_startWithSpace) {
-          flag = '(?:^|\\s)' + flag;
-        }
         _a = decodeURI("%C3%80");
         _y = decodeURI("%C3%BF");
-        space = acceptSpaceBar ? "\ " : "";
-        regexp = new RegExp(flag + "([A-Za-z" + _a + "-" + _y + "0-9_" + space + "\'\.\+\-]*)$|" + flag + "([^\\x00-\\xff]*)$", 'gi');
+        regexp = new RegExp(flag + "([A-Za-z" + _a + "-" + _y + "0-9_\'\.\+\-]*)$|" + flag + "([^\\x00-\\xff]*)$", 'gi');
         match = regexp.exec(subtext);
         if (match) {
-          var a = match[2] || match[1];
-          return a;
+          return match[2] || match[1];
         } else {
           return null;
         }
@@ -132,8 +85,7 @@
       }
     },
     functionOverrides: {
-      // This method just copy from AtWho library to add some more customization
-      insert: function(content, $li) {
+      insert: function(content) {
         let element = this.query.el;
         element
           .removeClass('atwho-query')
@@ -144,7 +96,8 @@
           parentElement.html(element.html());
           element = parentElement;
         }
-        if (range = this._getRange()) {
+        let range = this._getRange();
+        if (range) {
           if (element.length) {
             range.setEndAfter(element[0]);
           }
@@ -166,9 +119,8 @@
   };
 
   $.fn.tagSuggester = function(settings) {
-    var _args = arguments;
-    var $this = $(this);
-    var app = $this.data("tagSuggester");
+    let $this = $(this);
+    let app = $this.data("tagSuggester");
     const resetExistingEditor = app && (typeof settings === 'object');
     if (resetExistingEditor && settings.avoidReset) {
       // The editor is already initialized,
@@ -176,16 +128,12 @@
       return;
     }
     if (!app) {
-      $this.data('tagSuggester', (app = new App(this)));
-    }
-    var $input = $this, $editable;
+      app = new TagSuggesterApp(this);
+      $this.data('tagSuggester', app);
 
-    if (!(typeof settings === 'object' || !settings)) {
-      if (API[settings]) {
-        return API[settings].apply(app, Array.prototype.slice.call(_args, 1));
-      } else {
-        return $.error("Method " + method + " does not exist on eXo Tag suggester");
-      }
+      // Clear cache for new CKEDitor instances
+      tagSearchCached = {};
+      lastNoResultQuery = null;
     }
 
     if (!settings) settings = {};
@@ -198,19 +146,8 @@
       settings.callbacks = {};
     }
 
-    $editable = $input;
-
     settings = $.extend(true, {}, defaultAtConfig, settings);
-    var source = settings.source;
-    if (!(source && source.length) && settings.sourceProviders && settings.sourceProviders.length) {
-      settings.source = function(query, callback) {
-        loadFromProvider.call(app, query, callback);
-      };
-    } else if ($.isArray(settings.source)) {
-      settings.data = source;
-      settings.source = null;
-    }
-    settings.callbacks.remoteFilter = settings.source;
+    settings.callbacks.remoteFilter = (query, callback) => loadFromProvider.call(app, query, callback);
     settings.callbacks.tplEval = function(tpl, item, phase) {
       if (phase === "onDisplay") {
         return $(`<li class="option"><span>#${item.name}<span></li>`);
@@ -221,7 +158,7 @@
       }
     };
     app.settings = settings;
-    app.atWho = $editable.atwho(app.settings);
+    app.atWho = $this.atwho(app.settings);
   };
 
   return $;
