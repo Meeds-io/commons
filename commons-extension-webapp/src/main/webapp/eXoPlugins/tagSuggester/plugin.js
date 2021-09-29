@@ -32,9 +32,6 @@ require(['SHARED/jquery', 'SHARED/tagSuggester'],function($) {
     init : function( editor ) {
       var config = editor.config.tagSuggester;
       if (config == undefined) config = {};
-      config = $.extend(true, {
-        avoidReset: true,
-      }, config);
       editor.on('mode', function(e) {
         initTagSuggester(this, config);
       });
