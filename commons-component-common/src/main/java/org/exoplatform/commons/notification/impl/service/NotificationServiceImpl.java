@@ -20,7 +20,9 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
+import org.apache.commons.lang.StringUtils;
 import org.exoplatform.commons.api.notification.NotificationContext;
 import org.exoplatform.commons.api.notification.channel.AbstractChannel;
 import org.exoplatform.commons.api.notification.channel.ChannelManager;
@@ -47,6 +49,9 @@ import org.exoplatform.commons.notification.impl.NotificationContextImpl;
 import org.exoplatform.commons.utils.CommonsUtils;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
+import org.exoplatform.services.organization.OrganizationService;
+import org.exoplatform.services.organization.UserProfile;
+import org.exoplatform.services.organization.UserProfileHandler;
 
 public class NotificationServiceImpl extends AbstractService implements NotificationService {
   private static final Log                 LOG = ExoLogger.getLogger(NotificationServiceImpl.class);
@@ -66,13 +71,18 @@ public class NotificationServiceImpl extends AbstractService implements Notifica
   /** */
   private final ChannelManager             channelManager;
 
+  /** */
+  private final OrganizationService          organizationService;
+
   public NotificationServiceImpl(ChannelManager channelManager,
                                  UserSettingService userService,
+                                 OrganizationService organizationService,
                                  DigestorService digestorService,
                                  MailNotificationStorage storage,
                                  NotificationContextFactory notificationContextFactory) {
     this.userService = userService;
     this.digestorService = digestorService;
+    this.organizationService = organizationService;
     this.storage = storage;
     this.notificationContextFactory = notificationContextFactory;
     this.channelManager = channelManager;
@@ -102,13 +112,29 @@ public class NotificationServiceImpl extends AbstractService implements Notifica
       }
 
       AbstractNotificationLifecycle lifecycle = channelManager.getLifecycle(ChannelKey.key(channel.getId()));
-      if (notification.isSendAll()) {
+      if (notification.isSendAll() || notification.isSendAllInternals()) {
         SettingService settingService = CommonsUtils.getService(SettingService.class);
         long usersCount = settingService.countContextsByType(Context.USER.getName());
         int maxResults = 100;
         for (int i = 0; i < usersCount; i += maxResults) {
           List<String> users = settingService.getContextNamesByType(Context.USER.getName(), i, maxResults);
-          lifecycle.process(ctx, users.toArray(new String[users.size()]));
+          if (notification.isSendAllInternals()) {
+            users = users.stream().filter(userId -> {
+              // Filter on external users
+              try {
+                UserProfile userProfile = organizationService.getUserProfileHandler().findUserProfileByName(userId);
+                return userProfile != null && !StringUtils.equals(userProfile.getAttribute("external"), "true");
+              } catch (Exception e) {
+                return false;
+              }
+            }).collect(Collectors.toList());
+          }
+          if (!notification.getExcludeToUserIds().isEmpty()) {
+            users = users.stream().filter(notification::isExcluded).collect(Collectors.toList());
+          }
+          if (!users.isEmpty()) {
+            lifecycle.process(ctx, users.toArray(new String[users.size()]));
+          }
         }
       } else {
         if (notification.getSendToUserIds() == null || notification.getSendToUserIds().isEmpty()) {

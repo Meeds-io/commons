@@ -29,6 +29,8 @@ public class NotificationInfo {
 
   public static final String        FOR_ALL_USER   = "&forAllUser";
 
+  public static final String        FOR_ALL_INTERNAL_USER   = "&forAllInternalUsers";
+
   private static IDGeneratorService idGeneratorService;
 
   private String                    id;
@@ -44,6 +46,8 @@ public class NotificationInfo {
   private Map<String, String>       ownerParameter = new HashMap<>();
 
   private List<String>              sendToUserIds  = new ArrayList<>();
+
+  private List<String>              excludeToUserIds  = new ArrayList<>();
 
   // list users send by frequency
   private String[]                  sendToDaily;
@@ -101,6 +105,22 @@ public class NotificationInfo {
   public boolean isSendAll() {
     return ArrayUtils.contains(sendToDaily, FOR_ALL_USER) ||
         ArrayUtils.contains(sendToWeekly, FOR_ALL_USER);
+  }
+
+  public boolean isSendAllInternals() {
+    return ArrayUtils.contains(sendToDaily, FOR_ALL_INTERNAL_USER) ||
+        ArrayUtils.contains(sendToWeekly, FOR_ALL_INTERNAL_USER);
+  }
+
+  public NotificationInfo setSendAllInternals(boolean isSendAllInternals) {
+    if (isSendAllInternals) {
+      setSendToDaily(new String[] { FOR_ALL_INTERNAL_USER });
+      setSendToWeekly(new String[] { FOR_ALL_INTERNAL_USER });
+    } else {
+      removeOnSendToDaily(FOR_ALL_INTERNAL_USER);
+      removeOnSendToWeekly(FOR_ALL_INTERNAL_USER);
+    }
+    return this;
   }
 
   public boolean isUpdate() {
@@ -211,12 +231,30 @@ public class NotificationInfo {
     return this;
   }
 
+  public List<String> getExcludeToUserIds() {
+    return excludeToUserIds;
+  }
+
   public NotificationInfo to(String sendToUserId) {
     this.sendToUserIds.add(sendToUserId);
     if (to == null) {
       to = sendToUserId;
     }
     return this;
+  }
+
+  public NotificationInfo exclude(List<String> excludeToUserIds) {
+    this.excludeToUserIds = excludeToUserIds;
+    return this;
+  }
+
+  public NotificationInfo exclude(String excludeToUserId) {
+    this.excludeToUserIds.add(excludeToUserId);
+    return this;
+  }
+
+  public boolean isExcluded(String userId) {
+    return !excludeToUserIds.contains(userId);
   }
 
   /**
