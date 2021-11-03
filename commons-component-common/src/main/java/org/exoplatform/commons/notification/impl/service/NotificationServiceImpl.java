@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang.StringUtils;
+
 import org.exoplatform.commons.api.notification.NotificationContext;
 import org.exoplatform.commons.api.notification.channel.AbstractChannel;
 import org.exoplatform.commons.api.notification.channel.ChannelManager;
@@ -51,7 +52,6 @@ import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 import org.exoplatform.services.organization.OrganizationService;
 import org.exoplatform.services.organization.UserProfile;
-import org.exoplatform.services.organization.UserProfileHandler;
 
 public class NotificationServiceImpl extends AbstractService implements NotificationService {
   private static final Log                 LOG = ExoLogger.getLogger(NotificationServiceImpl.class);
@@ -130,7 +130,7 @@ public class NotificationServiceImpl extends AbstractService implements Notifica
             }).collect(Collectors.toList());
           }
           if (!notification.getExcludedUsersIds().isEmpty()) {
-            users = users.stream().filter(userId -> {return !notification.isExcluded(userId);}).collect(Collectors.toList());
+            users = users.stream().filter(userId -> !notification.isExcluded(userId)).collect(Collectors.toList());
           }
           if (!users.isEmpty()) {
             lifecycle.process(ctx, users.toArray(new String[users.size()]));
