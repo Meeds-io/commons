@@ -129,8 +129,8 @@ public class NotificationServiceImpl extends AbstractService implements Notifica
               }
             }).collect(Collectors.toList());
           }
-          if (!notification.getExcludeToUserIds().isEmpty()) {
-            users = users.stream().filter(notification::isExcluded).collect(Collectors.toList());
+          if (!notification.getExcludedUsersIds().isEmpty()) {
+            users = users.stream().filter(userId -> {return !notification.isExcluded(userId);}).collect(Collectors.toList());
           }
           if (!users.isEmpty()) {
             lifecycle.process(ctx, users.toArray(new String[users.size()]));

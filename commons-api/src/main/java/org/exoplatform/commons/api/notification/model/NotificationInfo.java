@@ -47,7 +47,7 @@ public class NotificationInfo {
 
   private List<String>              sendToUserIds  = new ArrayList<>();
 
-  private List<String>              excludeToUserIds  = new ArrayList<>();
+  private List<String>              excludedUsersIds  = new ArrayList<>();
 
   // list users send by frequency
   private String[]                  sendToDaily;
@@ -231,8 +231,8 @@ public class NotificationInfo {
     return this;
   }
 
-  public List<String> getExcludeToUserIds() {
-    return excludeToUserIds;
+  public List<String> getExcludedUsersIds() {
+    return excludedUsersIds;
   }
 
   public NotificationInfo to(String sendToUserId) {
@@ -243,18 +243,18 @@ public class NotificationInfo {
     return this;
   }
 
-  public NotificationInfo exclude(List<String> excludeToUserIds) {
-    this.excludeToUserIds = excludeToUserIds;
+  public NotificationInfo exclude(List<String> excludedUsersIds) {
+    this.excludedUsersIds = excludedUsersIds;
     return this;
   }
 
-  public NotificationInfo exclude(String excludeToUserId) {
-    this.excludeToUserIds.add(excludeToUserId);
+  public NotificationInfo exclude(String excludedUserId) {
+    this.excludedUsersIds.add(excludedUserId);
     return this;
   }
 
   public boolean isExcluded(String userId) {
-    return !excludeToUserIds.contains(userId);
+    return excludedUsersIds.contains(userId);
   }
 
   /**
