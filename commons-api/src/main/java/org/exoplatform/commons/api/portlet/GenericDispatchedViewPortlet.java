@@ -1,6 +1,7 @@
 package org.exoplatform.commons.api.portlet;
 
 import java.io.IOException;
+import java.util.Enumeration;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -71,4 +72,20 @@ public class GenericDispatchedViewPortlet extends GenericPortlet {
       javascriptManager.require(jsModule, alias).addScripts(jsToAppend);
     }
   }
+
+  @Override
+  public void processAction(ActionRequest request, ActionResponse response) throws PortletException, IOException {
+    PortletPreferences preferences = request.getPreferences();
+    Enumeration<String> parameterNames = request.getParameterNames();
+    while (parameterNames.hasMoreElements()) {
+      String name = parameterNames.nextElement();
+      if (StringUtils.equals(name, "action") || StringUtils.contains(name, "portal:")) {
+        continue;
+      }
+      String value = request.getParameter(name);
+      preferences.setValue(name, value);
+    }
+    preferences.store();
+  }
+
 }
