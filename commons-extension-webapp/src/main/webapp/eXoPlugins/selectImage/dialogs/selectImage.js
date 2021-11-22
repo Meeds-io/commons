@@ -168,6 +168,7 @@ CKEDITOR.dialog.add( 'selectImage', function( editor ) {
                       require(["SHARED/jquery"], function($) {
                         var $imageElement = $(dialog.getElement().$).find(".selectedImagePreview img");
                         widget.setData( 'src', $imageElement.attr("src") );
+                        widget.setData( 'alt', $imageElement.attr("alt") );
 
                         if ($imageElement.hasClass("left")) {
                           widget.setData( 'align', 'left' );

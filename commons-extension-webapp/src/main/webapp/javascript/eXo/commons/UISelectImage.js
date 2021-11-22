@@ -83,6 +83,20 @@
             '${CKEditor.image.RemoveImage}' +
           '</a>' +
         '</div>' +
+        '<div class="altArea hidden">' +
+         '<div class="altLabelInput ">' +
+        '<label for="composerImageAlt">${CKEditor.image.imageAltTextTitle}</label>' +
+        '<div class="inputAlt ">' +
+          '<input type="text" name="composerImageAlt" class="imageAlt" />' +
+                  '<p class="alt-description">'+
+                  '<span class="accessibility-icon">'+
+                  '<i class="mdi mdi-human"></i>'+
+                  '</span>'+
+                  '<span class="caption text-light-color">${CKEditor.image.imageAltTextDescription}</span>'+
+                  '</p>' +
+        '</div>' +
+        '</div>' +
+        '</div>' +
         '<div class="selectImageAlign clearfix">' +
           '<span class="selectImageAlignLabel">' +
             '${CKEditor.image.Alignment}:' +
@@ -114,6 +128,7 @@
         self.showBlock(self.uploadLinksCnt, false);
         self.showBlock(self.imagePreviewCnt, true);
         self.showBlock(self.deleteFile, true);
+        self.showBlock(self.altImageContainer, true);
         self.enableOKButton(true);
         self.triggerResizeEvent();
       }).on("error", function (data) {
@@ -129,6 +144,7 @@
         self.showBlock(self.warningMessageCnt, false);
         self.showBlock(self.imagePreviewCnt, false);
         self.showBlock(self.deleteFile, false);
+        self.showBlock(self.altImageContainer, false);
         self.displayWarning("${CKEditor.image.error.badURL}");
       });
 
@@ -145,6 +161,8 @@
       var $selectURLBtn = this.$parentDialog.find(".selectImageURL");
       var $selectExistingUpload = this.$parentDialog.find(".selectFromExistingUpload");
       this.deleteFile = this.$parentDialog.find(".removeFile");
+      this.altImageContainer = this.$parentDialog.find(".altArea");
+      var altValue = this.altImageContainer.find("input[type='text']").val();
       this.abortFile.find("a").click(function() {
         self.aborted = true;
         if(self.status && self.status.jqXHR) {
@@ -156,6 +174,8 @@
         self.deleteUpload((self.status && self.status.uploadId)? self.status.uploadId : null);
         self.displayImage();
         self.imageURLCnt.find("input").val("");
+        self.altImageContainer.find("input[type='text']").val("");
+        self.imageElement.attr("alt", "");
       });
       if (base.Browser.isIE()) {
         $uploadBtn.find("label").attr("for", $input.attr("id"));
@@ -174,11 +194,13 @@
         }
         var $textField = self.imageURLCnt.find("input[type='text']");
         $textField.val("");
+        self.altImageContainer.find("input[type='text']").val("");
 
         self.showBlock(self.uploadLinksCnt, false);
         self.showBlock(self.warningMessageCnt, false);
         self.showBlock(self.imagePreviewCnt, false);
         self.showBlock(self.deleteFile, false);
+        self.showBlock(self.altImageContainer, false);
         self.showBlock(self.imageURLCnt, true);
         self.showBlock(self.backBtn, true);
 
@@ -207,6 +229,7 @@
         self.showBlock(self.warningMessageCnt, false);
         self.showBlock(self.imagePreviewCnt, false);
         self.showBlock(self.deleteFile, false);
+        self.showBlock(self.altImageContainer, false);
         self.showBlock(self.imageURLCnt, false);
         self.showBlock(self.backBtn, false);
       });
@@ -221,6 +244,12 @@
           }
         }
       });
+
+      self.altImageContainer.find("input[type='text']").on("blur", function() {
+        self.altValue = self.altImageContainer.find("input[type='text']").val();
+        self.imageElement.attr("alt", self.altValue);
+      });
+
       $input.on("change", function() {
         self.handleFileUpload(this.files, self.$parentDialog);
       });
@@ -258,8 +287,16 @@
         self.handleFileUpload(files, self.$parentDialog);
       });
       this.$parentDialog.find(".selectImageAlign .btn-group .btn[data-align=Left]").addClass("active");
+      console.warn('widget', widgetData);
       if(widgetData  && widgetData.src ) {
         this.displayImage(widgetData.src);
+        if( widgetData.alt ) {
+            self.altImageContainer.find("input[type='text']").val(widgetData.alt);
+            self.imageElement.attr("alt", widgetData.alt);
+        } else {
+            self.altImageContainer.find("input[type='text']").val("");
+            self.imageElement.attr("alt", "");
+        }
         if (widgetData.align == "center") {
           this.$parentDialog.find(".selectImageAlign .btn-group .btn[data-align=Middle]").trigger("click");
         } else if (widgetData.align == "right") {
@@ -372,6 +409,7 @@
       this.showBlock(this.uploadLinksCnt, false);
       this.showBlock(this.imagePreviewCnt, false);
       this.showBlock(this.deleteFile, false);
+      this.showBlock(this.altImageContainer, false);
       this.showBlock(this.uploadCnt, true);
 
       this.sendFileToServer(this.status);
@@ -436,12 +474,14 @@
       this.showBlock(this.imagePreviewCnt, false);
       this.showBlock(this.uploadCnt, false);
       this.showBlock(this.deleteFile, false);
+      this.showBlock(this.altImageContainer, false);
       this.showBlock(this.uploadLinksCnt, true);
     },
     abortUpload : function(uploadId) {
       this.showBlock(this.imagePreviewCnt, false);
       this.showBlock(this.uploadCnt, false);
       this.showBlock(this.deleteFile, false);
+      this.showBlock(this.altImageContainer, false);
       this.showBlock(this.uploadLinksCnt, true);
 
       if(this.abortedComplete) {
