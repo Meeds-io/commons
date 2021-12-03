@@ -188,7 +188,7 @@ PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
 
                 </script>
 				<div id="UIPortalLoginFormAction" class="loginButton">
-					<button class="button" tabindex="4"  onclick="login();"><%=res.getString("portal.login.Signin")%></button>
+					<button class="button" tabindex="4" aria-label="<%=res.getString("portal.login.Signin")%>" onclick="login();"><%=res.getString("portal.login.Signin")%></button>
 				</div>
                 <div class="forgotPasswordClass">
                     <a href="<%= contextPath + forgotPasswordPath %>" title="<%=res.getString("gatein.forgotPassword.loginLinkTitle")%>"><%=res.getString("gatein.forgotPassword.loginLinkTitle")%></a>
