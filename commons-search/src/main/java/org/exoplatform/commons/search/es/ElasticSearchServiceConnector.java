@@ -343,7 +343,12 @@ public class ElasticSearchServiceConnector extends SearchServiceConnector {
       esQuery.append("                }\n");
       esQuery.append("            },\n");
     }
-    esQuery.append("            \"filter\" : {\n");
+    esQuery.append("            \"filter\" : [\n");
+    String metadataQuery = getMetadataQuery(filters);
+    if(StringUtils.isNotBlank(metadataQuery)) {
+      esQuery.append(metadataQuery);
+    }
+    esQuery.append("            {\n");
     esQuery.append("              \"bool\" : {\n");
     esQuery.append("                \"must\" : [\n");
     esQuery.append("                  {\n");
@@ -374,7 +379,8 @@ public class ElasticSearchServiceConnector extends SearchServiceConnector {
     esQuery.append("                  \n");
     esQuery.append("                ]\n");
     esQuery.append("              }\n");
-    esQuery.append("            }");
+    esQuery.append("             }\n");
+    esQuery.append("            ]");
     esQuery.append("        }\n");
     esQuery.append("     },\n");
     esQuery.append("     \"highlight\" : {\n");
@@ -538,6 +544,16 @@ public class ElasticSearchServiceConnector extends SearchServiceConnector {
 
     return filterJSON.toString();
 
+  }
+  protected String getMetadataQuery(List<ElasticSearchFilter> filters) {
+
+    if (filters == null) return "";
+    for (ElasticSearchFilter filter: filters) {
+      if (filter.getType().equals(ElasticSearchFilterType.FILTER_MATADATAS)) {
+        return filter.getValue();
+      }
+    }
+    return "";
   }
 
   private String getFilter(ElasticSearchFilter filter) {
