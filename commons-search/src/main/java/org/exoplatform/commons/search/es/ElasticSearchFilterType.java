@@ -26,7 +26,8 @@ public enum  ElasticSearchFilterType {
   FILTER_EXIST("exist"),
   FILTER_NOT_EXIST("notExist"),
   FILTER_CUSTOM("custom"),
-  FILTER_MY_WORK_DOCS("myWork");
+  FILTER_MY_WORK_DOCS("myWork"),
+  FILTER_MATADATAS("metaDatas");
 
   private final String filterType;
 
