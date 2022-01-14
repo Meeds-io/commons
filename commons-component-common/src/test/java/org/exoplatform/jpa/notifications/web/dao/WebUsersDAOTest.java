@@ -33,6 +33,7 @@ public class WebUsersDAOTest extends CommonsDAOJPAImplTest {
   public void testFindWebNotifsByFilter() {
     WebNotifEntity webNotifEntity1 = new WebNotifEntity();
     webNotifEntity1.setType("plugin1");
+    webNotifEntity1.setCreationDate(Calendar.getInstance());
     webNotifEntity1 = webNotifDAO.create(webNotifEntity1);
 
     WebUsersEntity webUsersEntity1 = new WebUsersEntity();
@@ -40,6 +41,7 @@ public class WebUsersDAOTest extends CommonsDAOJPAImplTest {
     webUsersEntity1.setRead(false);
     webUsersEntity1.setReceiver("user1");
     webUsersEntity1.setNotification(webNotifEntity1);
+    webUsersEntity1.setUpdateDate(Calendar.getInstance());
     webUsersEntity1 = webUsersDAO.create(webUsersEntity1);
 
     EntityManagerHolder.get().clear();
@@ -50,6 +52,7 @@ public class WebUsersDAOTest extends CommonsDAOJPAImplTest {
 
     WebNotifEntity webNotifEntity2 = new WebNotifEntity();
     webNotifEntity2.setType("plugin2");
+    webNotifEntity2.setCreationDate(Calendar.getInstance());
     webNotifEntity2 = webNotifDAO.create(webNotifEntity2);
 
     WebUsersEntity webUsersEntity2 = new WebUsersEntity();
@@ -57,6 +60,7 @@ public class WebUsersDAOTest extends CommonsDAOJPAImplTest {
     webUsersEntity2.setRead(true);
     webUsersEntity2.setReceiver("user1");
     webUsersEntity2.setNotification(webNotifEntity2);
+    webUsersEntity2.setUpdateDate(Calendar.getInstance());
     webUsersEntity2 = webUsersDAO.create(webUsersEntity2);
 
     EntityManagerHolder.get().clear();
@@ -79,11 +83,13 @@ public class WebUsersDAOTest extends CommonsDAOJPAImplTest {
   public void testgetNotificationsByTypeAndParams() {
     WebNotifEntity webNotifEntity1 = new WebNotifEntity();
     webNotifEntity1.setType("plugin1");
+    webNotifEntity1.setCreationDate(Calendar.getInstance());
     webNotifEntity1 = webNotifDAO.create(webNotifEntity1);
 
     WebUsersEntity webUsersEntity1 = new WebUsersEntity();
     webUsersEntity1.setReceiver("user1");
     webUsersEntity1.setNotification(webNotifEntity1);
+    webUsersEntity1.setUpdateDate(Calendar.getInstance());
     webUsersDAO.create(webUsersEntity1);
     WebParamsEntity webParamsEntity1 = new WebParamsEntity();
     webParamsEntity1.setName("toto");
@@ -118,14 +124,17 @@ public class WebUsersDAOTest extends CommonsDAOJPAImplTest {
 
     //today
     WebNotifEntity webNotifEntity1 = new WebNotifEntity();
+    webNotifEntity1.setType("");
     webNotifEntity1.setCreationDate(today);
     webNotifEntity1 = webNotifDAO.create(webNotifEntity1);
     
     WebNotifEntity webNotifEntity2 = new WebNotifEntity();
+    webNotifEntity2.setType("");
     webNotifEntity2.setCreationDate(yesterday);
     webNotifEntity2 = webNotifDAO.create(webNotifEntity2);
     
     WebNotifEntity webNotifEntity3 = new WebNotifEntity();
+    webNotifEntity3.setType("");
     webNotifEntity3.setCreationDate(fourDaysAgo);
     webNotifEntity3 = webNotifDAO.create(webNotifEntity3);
 

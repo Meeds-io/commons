@@ -91,4 +91,11 @@
                       tableName="DLP_POSITIVE_ITEMS"/>
     </rollback>
   </changeSet>
+
+  <changeSet author="exo-dlp" id="1.0.0-9" dbms="hsqldb">
+    <createSequence sequenceName="SEQ_DLP_QUEUE_ID" startValue="1" />
+    <createSequence sequenceName="SEQ_DLP_POSITIVE_ITEMS_ID" startValue="1" />
+    <createSequence sequenceName="SEQ_RESTORED_DLP_ITEMS_ID" startValue="1" />
+  </changeSet>
+
 </databaseChangeLog>

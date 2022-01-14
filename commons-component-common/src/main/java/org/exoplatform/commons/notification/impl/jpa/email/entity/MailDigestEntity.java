@@ -34,7 +34,7 @@ import org.exoplatform.commons.api.persistence.ExoEntity;
 public class MailDigestEntity {
   @Id
   @Column(name = "EMAIL_NOTIF_DIGEST_ID")
-  @SequenceGenerator(name="SEQ_NTF_EMAIL_DIGEST", sequenceName="SEQ_NTF_EMAIL_DIGEST")
+  @SequenceGenerator(name="SEQ_NTF_EMAIL_DIGEST", sequenceName="SEQ_NTF_EMAIL_DIGEST", allocationSize = 1)
   @GeneratedValue(strategy=GenerationType.AUTO, generator="SEQ_NTF_EMAIL_DIGEST")
   private long id;
 

@@ -15,7 +15,7 @@ import java.util.Calendar;
 public class MailQueueEntity {
   @Id
   @Column(name = "EMAIL_ID")
-  @SequenceGenerator(name="SEQ_NTF_EMAIL_QUEUE", sequenceName="SEQ_NTF_EMAIL_QUEUE")
+  @SequenceGenerator(name="SEQ_NTF_EMAIL_QUEUE", sequenceName="SEQ_NTF_EMAIL_QUEUE", allocationSize = 1)
   @GeneratedValue(strategy= GenerationType.AUTO, generator="SEQ_NTF_EMAIL_QUEUE")
   private long id;
 

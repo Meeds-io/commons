@@ -20,7 +20,7 @@ import java.util.Calendar;
 public class RestoredDlpItemEntity {
 
     @Id
-    @SequenceGenerator(name = "SEQ_RESTORED_DLP_ITEMS_ID", sequenceName = "SEQ_RESTORED_DLP_ITEMS_ID")
+    @SequenceGenerator(name = "SEQ_RESTORED_DLP_ITEMS_ID", sequenceName = "SEQ_RESTORED_DLP_ITEMS_ID", allocationSize = 1)
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "SEQ_RESTORED_DLP_ITEMS_ID")
     @Column(name = "RESTORED_ITEM_ID")
     private Long id;

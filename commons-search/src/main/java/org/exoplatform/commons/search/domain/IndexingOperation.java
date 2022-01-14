@@ -44,7 +44,7 @@ public class IndexingOperation implements Serializable {
   private static final long serialVersionUID = -2647286678124583999L;
 
   @Id
-  @SequenceGenerator(name="SEQ_ES_INDEXING_QUEUE_ID", sequenceName="SEQ_ES_INDEXING_QUEUE_ID")
+  @SequenceGenerator(name="SEQ_ES_INDEXING_QUEUE_ID", sequenceName="SEQ_ES_INDEXING_QUEUE_ID", allocationSize = 1)
   @GeneratedValue(strategy=GenerationType.AUTO, generator="SEQ_ES_INDEXING_QUEUE_ID")
   @Column(name = "OPERATION_ID")
   private Long id;

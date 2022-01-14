@@ -50,7 +50,7 @@ import org.exoplatform.commons.api.persistence.ExoEntity;
 public class MailNotifEntity {
   @Id
   @Column(name = "EMAIL_NOTIF_ID")
-  @SequenceGenerator(name = "SEQ_NTF_EMAIL_NOTIF", sequenceName = "SEQ_NTF_EMAIL_NOTIF")
+  @SequenceGenerator(name = "SEQ_NTF_EMAIL_NOTIF", sequenceName = "SEQ_NTF_EMAIL_NOTIF", allocationSize = 1)
   @GeneratedValue(strategy = GenerationType.AUTO, generator = "SEQ_NTF_EMAIL_NOTIF")
   private long                  id;
 
