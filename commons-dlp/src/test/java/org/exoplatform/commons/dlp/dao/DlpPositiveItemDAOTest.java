@@ -20,6 +20,7 @@ public class DlpPositiveItemDAOTest extends AbstractDAOTest {
     public void setUp() {
         PortalContainer container = PortalContainer.getInstance();
         dlpPositiveItemDAO = container.getComponentInstanceOfType(DlpPositiveItemDAO.class);
+        dlpPositiveItemDAO.deleteAll();
     }
 
     @After
