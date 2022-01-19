@@ -19,6 +19,7 @@ public class RestoredDlpItemDAOTest extends AbstractDAOTest {
   public void setUp() {
     PortalContainer container = PortalContainer.getInstance();
     restoredDlpItemDAO = container.getComponentInstanceOfType(RestoredDlpItemDAO.class);
+    restoredDlpItemDAO.deleteAll();
   }
 
   @After

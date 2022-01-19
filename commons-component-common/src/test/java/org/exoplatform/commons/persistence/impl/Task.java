@@ -6,16 +6,19 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
+import javax.persistence.Table;
 
-@Entity
 @ExoEntity
+@Entity(name = "Task")
+@Table(name = "TASK")
 public class Task {
   @Id
   @GeneratedValue
+  @Column(name = "TASK_ID")
   private Long id;
 
   // uniqueness constraint to test failures and rollbacks on transaction commits
-  @Column(unique = true)
+  @Column(name = "TASK_NAME", unique = true)
   private String name;
 
   public Long getId() {

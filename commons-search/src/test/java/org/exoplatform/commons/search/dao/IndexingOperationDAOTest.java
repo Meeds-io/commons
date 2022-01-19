@@ -16,21 +16,18 @@
 */
 package org.exoplatform.commons.search.dao;
 
-import org.exoplatform.commons.search.domain.IndexingOperation;
-import org.exoplatform.commons.search.domain.OperationType;
-import org.exoplatform.commons.persistence.impl.EntityManagerService;
-import org.exoplatform.container.PortalContainer;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-
 import java.lang.reflect.Field;
 import java.util.Date;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+
+import org.exoplatform.commons.search.domain.IndexingOperation;
+import org.exoplatform.commons.search.domain.OperationType;
+import org.exoplatform.commons.testing.BaseCommonsTestCase;
+import org.exoplatform.container.PortalContainer;
 
 /**
  * Created by The eXo Platform SAS
@@ -38,7 +35,7 @@ import static org.junit.Assert.assertNull;
  * tclement@exoplatform.com
  * 8/20/15
  */
-public class IndexingOperationDAOTest extends AbstractDAOTest {
+public class IndexingOperationDAOTest extends BaseCommonsTestCase {
 
   private IndexingOperationDAO indexingOperationDAO;
 
@@ -46,11 +43,13 @@ public class IndexingOperationDAOTest extends AbstractDAOTest {
   public void setUp() {
     PortalContainer container = PortalContainer.getInstance();
     indexingOperationDAO = container.getComponentInstanceOfType(IndexingOperationDAO.class);
+    begin();
   }
 
   @After
   public void tearDown() {
     indexingOperationDAO.deleteAll();
+    end();
   }
 
   @Test
@@ -75,16 +74,13 @@ public class IndexingOperationDAOTest extends AbstractDAOTest {
   }
 
   @Test
-  public void testDatabaseAutoGeneratingTimestamp () throws NoSuchFieldException, IllegalAccessException {
+  public void testDatabaseAutoGeneratingTimestamp() throws NoSuchFieldException, IllegalAccessException {
     //Given
     IndexingOperation indexingOperation1 = new IndexingOperation();
     indexingOperation1.setEntityIndex("blog");
     indexingOperation1.setOperation(OperationType.INIT);
     indexingOperationDAO.create(indexingOperation1);
-    PortalContainer container = PortalContainer.getInstance();
-    entityMgrService = container.getComponentInstanceOfType(EntityManagerService.class);
-    entityMgrService.getEntityManager().flush();
-    entityMgrService.getEntityManager().refresh(indexingOperation1);
+    restartTransaction();
     //When
     indexingOperation1 = indexingOperationDAO.find(indexingOperation1.getId());
     //Then

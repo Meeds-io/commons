@@ -32,7 +32,7 @@ import javax.persistence.*;
 public class WebParamsEntity {
   @Id
   @Column(name = "WEB_NOTIF_PARAMS_ID")
-  @SequenceGenerator(name="SEQ_NTF_WEB_PARAMS", sequenceName="SEQ_NTF_WEB_PARAMS")
+  @SequenceGenerator(name="SEQ_NTF_WEB_PARAMS", sequenceName="SEQ_NTF_WEB_PARAMS", allocationSize = 1)
   @GeneratedValue(strategy=GenerationType.AUTO, generator="SEQ_NTF_WEB_PARAMS")
   private long id;
 

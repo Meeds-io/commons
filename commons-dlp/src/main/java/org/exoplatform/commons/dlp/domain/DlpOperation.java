@@ -31,7 +31,7 @@ import org.exoplatform.commons.api.persistence.ExoEntity;
 public class DlpOperation implements Serializable {
 
   @Id
-  @SequenceGenerator(name="SEQ_DLP_QUEUE_ID", sequenceName="SEQ_DLP_QUEUE_ID")
+  @SequenceGenerator(name="SEQ_DLP_QUEUE_ID", sequenceName="SEQ_DLP_QUEUE_ID", allocationSize = 1)
   @GeneratedValue(strategy=GenerationType.AUTO, generator="SEQ_DLP_QUEUE_ID")
   @Column(name = "OPERATION_ID")
   private Long id;

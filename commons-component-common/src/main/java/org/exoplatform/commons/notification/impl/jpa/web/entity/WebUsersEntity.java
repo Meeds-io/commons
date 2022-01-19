@@ -66,7 +66,7 @@ import java.util.Calendar;
 public class WebUsersEntity {
   @Id
   @Column(name = "WEB_NOTIFS_USERS_ID")
-  @SequenceGenerator(name="SEQ_NTF_WEB_USERS", sequenceName="SEQ_NTF_WEB_USERS")
+  @SequenceGenerator(name="SEQ_NTF_WEB_USERS", sequenceName="SEQ_NTF_WEB_USERS", allocationSize = 1)
   @GeneratedValue(strategy=GenerationType.AUTO, generator="SEQ_NTF_WEB_USERS")
   private long id;
 

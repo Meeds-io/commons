@@ -39,4 +39,8 @@
     <createSequence sequenceName="SEQ_ES_INDEXING_QUEUE_ID" startValue="1"/>
   </changeSet>
 
+  <changeSet author="exo-es-search" id="1.0.0-3" dbms="hsqldb">
+    <createSequence sequenceName="SEQ_ES_INDEXING_QUEUE_ID" startValue="1"/>
+  </changeSet>
+
 </databaseChangeLog>

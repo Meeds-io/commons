@@ -223,4 +223,15 @@
             utf8mb4_unicode_ci;
         </sql>
     </changeSet>
+
+    <changeSet author="notifications" id="1.0.0-21" dbms="hsqldb">
+      <createSequence sequenceName="SEQ_NTF_EMAIL_NOTIF" startValue="1" />
+      <createSequence sequenceName="SEQ_NTF_EMAIL_PARAMS" startValue="1" />
+      <createSequence sequenceName="SEQ_NTF_EMAIL_DIGEST" startValue="1" />
+      <createSequence sequenceName="SEQ_NTF_WEB_NOTIFS" startValue="1" />
+      <createSequence sequenceName="SEQ_NTF_WEB_PARAMS" startValue="1" />
+      <createSequence sequenceName="SEQ_NTF_WEB_USERS" startValue="1" />
+      <createSequence sequenceName="SEQ_NTF_EMAIL_QUEUE" startValue="1" />
+    </changeSet>
+
 </databaseChangeLog>
