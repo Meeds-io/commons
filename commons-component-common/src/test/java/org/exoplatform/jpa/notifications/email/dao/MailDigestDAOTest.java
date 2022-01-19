@@ -1,5 +1,7 @@
 package org.exoplatform.jpa.notifications.email.dao;
 
+import java.util.Calendar;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -30,7 +32,14 @@ public class MailDigestDAOTest extends CommonsDAOJPAImplTest {
   @Test
   public void testIsDigestSent() throws Exception {
     MailNotifEntity mailNotifEntity1 = new MailNotifEntity();
+    mailNotifEntity1.setType("type");
+    mailNotifEntity1.setCreationDate(Calendar.getInstance());
+    mailNotifEntity1.setOrder(0);
+
     MailNotifEntity mailNotifEntity2 = new MailNotifEntity();
+    mailNotifEntity2.setType("type2");
+    mailNotifEntity2.setCreationDate(Calendar.getInstance());
+    mailNotifEntity2.setOrder(1);
 
     //Given
     mailNotifEntity1 = mailNotifDAO.create(mailNotifEntity1);
@@ -82,7 +91,14 @@ public class MailDigestDAOTest extends CommonsDAOJPAImplTest {
   @Test
   public void testDeleteAll() throws Exception {
     MailNotifEntity mailNotifEntity1 = new MailNotifEntity();
+    mailNotifEntity1.setType("type");
+    mailNotifEntity1.setCreationDate(Calendar.getInstance());
+    mailNotifEntity1.setOrder(0);
+
     MailNotifEntity mailNotifEntity2 = new MailNotifEntity();
+    mailNotifEntity2.setType("type2");
+    mailNotifEntity2.setCreationDate(Calendar.getInstance());
+    mailNotifEntity2.setOrder(1);
 
     //Given
     mailNotifEntity1 = mailNotifDAO.create(mailNotifEntity1);

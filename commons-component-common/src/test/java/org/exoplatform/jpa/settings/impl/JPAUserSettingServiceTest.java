@@ -27,7 +27,7 @@ public class JPAUserSettingServiceTest extends BaseTest {
   protected void tearDown() {
     for (int i = 0; i < 10; i++) {
       try {
-        organizationService.getUserHandler().removeUser("user_" + i, false);
+        organizationService.getUserHandler().removeUser("userTest_" + i, false);
       } catch (Exception e) {
         e.printStackTrace();
       }
@@ -36,18 +36,19 @@ public class JPAUserSettingServiceTest extends BaseTest {
   }
 
   public void test_1_GetDefautSetting() throws Exception {
+    List<UserSetting> list = userSettingService.getDigestDefaultSettingForAllUser(0, 0);
+    int originalSize = list.size();
+
     for (int i = 0; i < 10; i++) {
-      User user = new UserImpl("user_" + i);
+      User user = new UserImpl("userTest_" + i);
       organizationService.getUserHandler().createUser(user, false);
       userSettingService.initDefaultSettings(user.getUserName());
     }
-    List<UserSetting> list = userSettingService.getDigestDefaultSettingForAllUser(0, 5);
-
+    list = userSettingService.getDigestDefaultSettingForAllUser(0, 5);
     assertEquals(5, list.size());
 
     list = userSettingService.getDigestDefaultSettingForAllUser(0, 0);
-
-    assertEquals(10, list.size());
+    assertEquals(10 + originalSize, list.size());
   }
 
   public void testDisabledUser() throws Exception {

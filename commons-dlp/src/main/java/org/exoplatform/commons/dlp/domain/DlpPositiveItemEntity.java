@@ -22,7 +22,7 @@ import java.util.Calendar;
 public class DlpPositiveItemEntity {
 
     @Id
-    @SequenceGenerator(name = "SEQ_DLP_POSITIVE_ITEMS_ID", sequenceName = "SEQ_DLP_POSITIVE_ITEMS_ID")
+    @SequenceGenerator(name = "SEQ_DLP_POSITIVE_ITEMS_ID", sequenceName = "SEQ_DLP_POSITIVE_ITEMS_ID", allocationSize = 1)
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "SEQ_DLP_POSITIVE_ITEMS_ID")
     @Column(name = "ITEM_ID")
     private Long id;

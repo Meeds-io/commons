@@ -11,12 +11,8 @@ import org.exoplatform.commons.notification.plugin.PluginTest;
 
 public class WebNotificationStorageTest extends BaseNotificationTestCase {
 
-  public WebNotificationStorageTest() {
-    setForceContainerReload(true);
-  }
-
   public void testSaveWebNotification() throws Exception {
-    String userId = "root";
+    String userId = "root1";
     userIds.add(userId);
     NotificationInfo info = makeWebNotificationInfo(userId);
     storage.save(info);
@@ -25,7 +21,7 @@ public class WebNotificationStorageTest extends BaseNotificationTestCase {
   }
 
   public void testMarkRead() throws Exception {
-    String userId = "root";
+    String userId = "root2";
     userIds.add(userId);
     NotificationInfo info = makeWebNotificationInfo(userId);
     storage.save(info);
@@ -41,7 +37,7 @@ public class WebNotificationStorageTest extends BaseNotificationTestCase {
   }
 
   public void testMarkReadAll() throws Exception {
-    String userId = "demo";
+    String userId = "demo18";
     userIds.add(userId);
     for (int i = 0; i < 10; i++) {
       NotificationInfo info = makeWebNotificationInfo(userId);
@@ -64,7 +60,7 @@ public class WebNotificationStorageTest extends BaseNotificationTestCase {
   }
   
   public void testUpdateNotification() throws Exception {
-    String userId = "john";
+    String userId = "john5";
     NotificationInfo info = makeWebNotificationInfo(userId);
     storage.save(info);
     String notifId = info.getId();
@@ -99,7 +95,7 @@ public class WebNotificationStorageTest extends BaseNotificationTestCase {
   public void testGetNewMessage() throws Exception  {
     assertEquals(8, NotificationMessageUtils.getMaxItemsInPopover());
     //
-    String userId = "root";
+    String userId = "root16";
     userIds.add(userId);
     storage.save(makeWebNotificationInfo(userId));
     //

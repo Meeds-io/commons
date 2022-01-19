@@ -23,10 +23,6 @@ public class CachedWebNotificationStorageTest extends BaseNotificationTestCase {
   private ExoCache<WebNotifInfoCacheKey, WebNotifInfoData> exoWebNotificationCache;
   private ExoCache<WebNotifInfoCacheKey, IntegerData> exoWebNotificationCountCache;
 
-  public CachedWebNotificationStorageTest() {
-    setForceContainerReload(true);
-  }
-
   @Override
   public void setUp() throws Exception {
     super.setUp();
@@ -50,7 +46,7 @@ public class CachedWebNotificationStorageTest extends BaseNotificationTestCase {
   }
   
   public void testSave() throws Exception {
-    String userId = "demo";
+    String userId = "demo3";
     userIds.add(userId);
     NotificationInfo info = makeWebNotificationInfo(userId);
     cachedStorage.save(info);
@@ -61,7 +57,7 @@ public class CachedWebNotificationStorageTest extends BaseNotificationTestCase {
   }
 
   public void testGetNotifications() {
-    String userId = "demo";
+    String userId = "demo6";
     userIds.add(userId);
     //
     List<NotificationInfo> onPopoverInfos = cachedStorage.get(new WebNotificationFilter(userId, true), 0 , 10);
@@ -105,7 +101,7 @@ public class CachedWebNotificationStorageTest extends BaseNotificationTestCase {
   }
   
   public void testRemove() throws Exception {
-    String userId = "demo";
+    String userId = "demo7";
     userIds.add(userId);
     NotificationInfo info = makeWebNotificationInfo(userId);
     cachedStorage.save(info);
@@ -129,7 +125,7 @@ public class CachedWebNotificationStorageTest extends BaseNotificationTestCase {
   }
   
   public void testRead() throws Exception {
-    String userId = "demo";
+    String userId = "demo9";
     userIds.add(userId);
     NotificationInfo info = makeWebNotificationInfo(userId);
     cachedStorage.save(info);
@@ -144,7 +140,7 @@ public class CachedWebNotificationStorageTest extends BaseNotificationTestCase {
   }
 
   public void testMarkAllRead() throws Exception {
-    String userId = "demo";
+    String userId = "demo8";
     userIds.add(userId);
     for (int i = 0; i < 10; i++) {
       cachedStorage.save(makeWebNotificationInfo(userId));
@@ -183,7 +179,7 @@ public class CachedWebNotificationStorageTest extends BaseNotificationTestCase {
   }
 
   public void testHidePopover() {
-    String userId = "demo";
+    String userId = "demo10";
     userIds.add(userId);
     NotificationInfo info = makeWebNotificationInfo(userId);
     try {
@@ -219,7 +215,7 @@ public class CachedWebNotificationStorageTest extends BaseNotificationTestCase {
   }
   
   public void testUpdate() throws Exception {
-    String userId = "mary";
+    String userId = "mary9";
     userIds.add(userId);
     NotificationInfo info = makeWebNotificationInfo(userId);
     cachedStorage.save(info);
@@ -302,7 +298,7 @@ public class CachedWebNotificationStorageTest extends BaseNotificationTestCase {
      *  Expected: remaining is 0 notification
     */
     int daySeconds = 86400;
-    String userId = "demo";
+    String userId = "demo4";
     Calendar cal = Calendar.getInstance();
     long t = daySeconds * 1000l;
     long current = cal.getTimeInMillis();
@@ -332,7 +328,7 @@ public class CachedWebNotificationStorageTest extends BaseNotificationTestCase {
   
   public void testGetNewMessage() throws Exception  {
     assertEquals(8, NotificationMessageUtils.getMaxItemsInPopover());
-    String userId = "root";
+    String userId = "root82";
     userIds.add(userId);
     assertEquals(0, cachedStorage.getNumberOnBadge(userId));
     //

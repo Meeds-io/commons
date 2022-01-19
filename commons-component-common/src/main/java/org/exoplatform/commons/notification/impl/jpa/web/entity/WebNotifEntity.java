@@ -30,7 +30,7 @@ import org.exoplatform.commons.api.persistence.ExoEntity;
 public class WebNotifEntity {
   @Id
   @Column(name = "WEB_NOTIF_ID")
-  @SequenceGenerator(name="SEQ_NTF_WEB_NOTIFS", sequenceName="SEQ_NTF_WEB_NOTIFS")
+  @SequenceGenerator(name="SEQ_NTF_WEB_NOTIFS", sequenceName="SEQ_NTF_WEB_NOTIFS", allocationSize = 1)
   @GeneratedValue(strategy=GenerationType.AUTO, generator="SEQ_NTF_WEB_NOTIFS")
   private long id;
 
