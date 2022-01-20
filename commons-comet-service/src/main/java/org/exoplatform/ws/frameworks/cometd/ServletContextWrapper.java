@@ -331,5 +331,40 @@ public class ServletContextWrapper implements ServletContext {
   @Override
   public String getVirtualServerName() {
     return delegate.getVirtualServerName();
-  } 
+  }
+
+  @Override
+  public javax.servlet.ServletRegistration.Dynamic addJspFile(String servletName, String jspFile) {
+    return delegate.addJspFile(servletName, jspFile);
+  }
+
+  @Override
+  public int getSessionTimeout() {
+    return delegate.getSessionTimeout();
+  }
+
+  @Override
+  public void setSessionTimeout(int sessionTimeout) {
+    delegate.setSessionTimeout(sessionTimeout);
+  }
+
+  @Override
+  public String getRequestCharacterEncoding() {
+    return delegate.getRequestCharacterEncoding();
+  }
+
+  @Override
+  public void setRequestCharacterEncoding(String encoding) {
+    delegate.setRequestCharacterEncoding(encoding);
+  }
+
+  @Override
+  public String getResponseCharacterEncoding() {
+    return delegate.getResponseCharacterEncoding();
+  }
+
+  @Override
+  public void setResponseCharacterEncoding(String encoding) {
+    delegate.setResponseCharacterEncoding(encoding);
+  }
 }
