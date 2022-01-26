@@ -5,6 +5,7 @@ import liquibase.database.Database;
 import liquibase.database.DatabaseFactory;
 import liquibase.database.jvm.JdbcConnection;
 import liquibase.exception.LiquibaseException;
+import liquibase.resource.ClassLoaderResourceAccessor;
 import liquibase.resource.FileSystemResourceAccessor;
 
 import org.exoplatform.commons.persistence.impl.EntityManagerService;
@@ -42,8 +43,8 @@ public abstract class AbstractDAOTest {
         .findCorrectDatabaseImplementation(new JdbcConnection(conn));
 
     //Create Table
-    liquibase = new Liquibase("./src/main/resources/db/changelog/exo-dlp.db.changelog-1.0.0.xml",
-        new FileSystemResourceAccessor(), database);
+    liquibase = new Liquibase("db/changelog/exo-dlp.db.changelog-1.0.0.xml",
+        new ClassLoaderResourceAccessor(), database);
     liquibase.update((String) null);
 
   }
