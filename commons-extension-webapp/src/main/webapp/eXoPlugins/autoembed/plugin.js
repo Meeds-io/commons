@@ -132,7 +132,7 @@
 					var last = editable.getLast();
 					insertRange.setEndAfter( last );
 					// add three lines break and add close preview button
-					wrapper.$.innerHTML = "<br><br><br><div style="+"'display:flex; background-color:#e1e8ee;'"+"><div style="+"width:100%"+"><br></div><div><button style="+"'cursor:pointer; border:none; background:none; color:#A8B3C5; padding:5px 8px 7px'"+">X</button></div></div>"+wrapper.$.innerHTML;
+					wrapper.$.innerHTML = "<br><div style="+"'display:flex; background-color:#e1e8ee;'"+"><div style="+"width:100%"+"><br></div><div><button style="+"'cursor:pointer; border:none; background:none; color:#A8B3C5; padding:5px 8px 7px'"+">X</button></div></div>"+wrapper.$.innerHTML;
 					editable.insertElement( wrapper, insertRange );
 					// eXo customization - end
 
@@ -161,7 +161,7 @@
 						lastElement.remove();
 						// add event of close preview button
 						editor.editable().findOne( 'button' ).on( 'click', function( ev ) {
-							editor.editable().findOne( 'div' ).remove();
+							editor.editable().findOne( 'div.cke_widget_wrapper' ).remove();
 						});
 
 					}
