@@ -232,7 +232,7 @@ PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
     	</div>
     </div>
     <div class="brandingImageContent">
-         <img src="<%=logo%>" class="brandingImage">
+         <img src="<%=logo%>" class="brandingImage" role="presentation">
     </div>
   </body>
 </html>
