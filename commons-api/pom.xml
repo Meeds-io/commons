@@ -23,7 +23,7 @@
   <parent>
     <artifactId>commons</artifactId>
     <groupId>org.exoplatform.commons</groupId>
-    <version>7.0.x-meed-SNAPSHOT</version>
+    <version>7.0.x-meedsv2-SNAPSHOT</version>
   </parent>
   <artifactId>commons-api</artifactId>
   <packaging>jar</packaging>
