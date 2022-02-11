@@ -47,4 +47,16 @@ public class VersionComparatorTest extends TestCase {
     assertFalse(VersionComparator.isSame("2.1", ""));
     assertFalse(VersionComparator.isSame("", "2.2"));
   }
+
+  public void testSnapshots() {
+    assertTrue(VersionComparator.isAfter("6.3.x-SNAPSHOT", "6.3.x-SNAPSHOT"));
+    assertFalse(VersionComparator.isBefore("6.3.x-SNAPSHOT", "6.3.x-SNAPSHOT"));
+    assertFalse(VersionComparator.isAfter("6.2.x-SNAPSHOT", "6.3.x-SNAPSHOT"));
+    assertTrue(VersionComparator.isBefore("6.2.x-SNAPSHOT", "6.3.x-SNAPSHOT"));
+    assertTrue(VersionComparator.isAfter("6.3.x-maintenance-SNAPSHOT", "6.3.x-maintenance-SNAPSHOT"));
+    assertFalse(VersionComparator.isAfter("6.2.x-maintenance-SNAPSHOT", "6.3.x-maintenance-SNAPSHOT"));
+
+    assertTrue(VersionComparator.isBefore("6.3.0", "6.3.x-SNAPSHOT"));
+    assertTrue(VersionComparator.isBefore("6.3.1", "6.3.x-SNAPSHOT"));
+  }
 }
