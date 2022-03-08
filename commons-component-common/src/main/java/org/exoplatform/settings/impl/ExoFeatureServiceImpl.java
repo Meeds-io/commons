@@ -24,6 +24,7 @@ import org.apache.commons.lang.StringUtils;
 import org.exoplatform.commons.api.settings.*;
 import org.exoplatform.commons.api.settings.data.Context;
 import org.exoplatform.commons.api.settings.data.Scope;
+import org.exoplatform.container.component.ComponentPlugin;
 import org.exoplatform.management.annotations.*;
 import org.exoplatform.management.jmx.annotations.NameTemplate;
 import org.exoplatform.management.jmx.annotations.Property;
@@ -31,6 +32,7 @@ import org.exoplatform.management.rest.annotations.RESTEndpoint;
 import org.exoplatform.services.organization.Membership;
 import org.exoplatform.services.organization.OrganizationService;
 import org.exoplatform.services.security.IdentityRegistry;
+import org.picocontainer.Startable;
 
 @Managed
 @ManagedDescription("eXo Feature Service")
@@ -41,7 +43,7 @@ import org.exoplatform.services.security.IdentityRegistry;
   }
 )
 @RESTEndpoint(path = "featureservice")
-public class ExoFeatureServiceImpl implements ExoFeatureService {
+public class ExoFeatureServiceImpl implements ExoFeatureService, Startable {
 
   private static final String        NAME_SPACES        = "exo:";
 
@@ -179,4 +181,15 @@ public class ExoFeatureServiceImpl implements ExoFeatureService {
     }
   }
 
+  @Override
+  public void start() {
+    for (Map.Entry<String, FeaturePlugin> entry : plugins.entrySet()) {
+      entry.getValue().init();
+    }
+  }
+
+  @Override
+  public void stop() {
+    // Nothing to stop
+  }
 }
