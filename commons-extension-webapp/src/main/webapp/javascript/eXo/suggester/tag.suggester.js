@@ -64,6 +64,7 @@
     suffix: '\u00A0',
     searchKey: 'name',
     acceptSpaceBar: true,
+    maxLen: 25,
     minLen: 0,
     callbacks: {
       matcher: function(flag, subtext) {
