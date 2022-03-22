@@ -16,9 +16,18 @@
  */
 package org.exoplatform.commons.notification.template;
 
+import java.io.Writer;
+
 import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.StringUtils;
+
+import org.exoplatform.commons.api.notification.service.template.TemplateContext;
 import org.exoplatform.commons.notification.NotificationUtils;
+
+import groovy.lang.Writable;
+import groovy.text.GStringTemplateEngine;
+import groovy.text.Template;
+
 
 
 /**
@@ -47,4 +56,14 @@ public class GroovyElement extends SimpleElement {
   public String escapeHTML(String str) {
     return StringEscapeUtils.escapeHtml(str);
   }
+
+  public final void include(String templatePath, TemplateContext ctx) throws Exception {
+    String template = TemplateUtils.loadGroovyTemplate(templatePath);
+    Template engine = new GStringTemplateEngine().createTemplate(template);
+    Writer writer = (Writer) ctx.get("_writer");
+
+    Writable writable = engine.make(ctx);
+    writable.writeTo(writer);
+  }
+
 }

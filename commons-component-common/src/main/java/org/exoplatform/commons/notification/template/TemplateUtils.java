@@ -108,24 +108,24 @@ public class TemplateUtils {
    * @throws Exception
    */
   public static String loadGroovyTemplate(String templatePath) throws Exception {
-    StringWriter templateText = new StringWriter();
     Reader reader = null;
     try {
+      StringWriter stringWriter = new StringWriter();
       reader = new InputStreamReader(getTemplateInputStream(templatePath));
-      IOTools.copy(reader, templateText);
+      IOTools.copy(reader, stringWriter);
+      return stringWriter.toString();
     } catch (Exception e) {
       if (StringUtils.startsWith(templatePath, TemplateConfig.DEFAULT_SRC_RESOURCE_TEMPLATE_KEY)) {
         LOG.info("Failed to read default template file: {}. An empty message will be used", templatePath);
       } else {
         LOG.warn("Failed to read template file: {}. An empty message will be used", templatePath, e);
       }
+      return "";
     } finally {
       if (reader != null) {
         reader.close();
       }
     }
-
-    return templateText.toString();
   }
 
   /**
