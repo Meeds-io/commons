@@ -46,20 +46,24 @@ public class SimpleTemplateTransformer implements TemplateTransformer {
     String newKey = "";
     Locale locale = new Locale(context.getLanguage());
     ResourceBundleService resourceBundleService = CommonsUtils.getService(ResourceBundleService.class);
-    ResourceBundle resourceBundle = resourceBundleService.getResourceBundle("locale.extension.SocialIntegration",
-        locale);
+    ResourceBundle resourceBundle = null;
     //
     for (String key : context.keySet()) {
-      newKey = key.indexOf("$") == 0 ? key : "$" + key;
       Object value = context.get(key);
       if (value == null) {
         value = "";
+      } else if (!(value instanceof String) && !value.getClass().isPrimitive()) {
+        continue;
       }
+      newKey = key.indexOf("$") == 0 ? key : "$" + key;
       if (value.toString().startsWith("$UIShareDocuments")) {
         String localized = value.toString().replace("$", "");
+        if (resourceBundle == null) {
+          resourceBundle = resourceBundleService.getResourceBundle("locale.extension.SocialIntegration", locale);
+        }
         got = got.replace(newKey, resourceBundle.getString(localized));
       } else {
-        got = got.replace(newKey, (String) value);
+        got = got.replace(newKey, value.toString());
       }
     }
     return got;

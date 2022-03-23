@@ -53,7 +53,6 @@ public class GroovyElementVisitor implements ElementVisitor {
   
   @Override
   public ElementVisitor visit(Element element) {
-    this.ctx.put("_ctx", element);
     //
     try {
       Template engine = null;
@@ -71,6 +70,10 @@ public class GroovyElementVisitor implements ElementVisitor {
         }
       }
       if (engine != null) {
+        this.ctx.put("_ctx", element);
+        this.ctx.put("_writer", writer);
+        this.ctx.put("_templateContext", ctx);
+
         Writable writable = engine.make(getTemplateContext());
         writable.writeTo(writer);
       }
