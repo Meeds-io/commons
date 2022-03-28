@@ -107,17 +107,17 @@ public class EmbedderTest extends BaseCommonsTestCase {
   }
 
   public void testVimeoShare() {
-    String dailyMotion = "http://vimeo.com/72407771";
+    String dailyMotion = "http://vimeo.com/33031367";
     // Vimeo oembed response
     embedder = EmbedderFactory.getInstance(dailyMotion);
     ExoMedia vimeoObj = embedder.getExoMedia();
     if(vimeoObj == null) {
       LOG.warn("Can't connect to vimeo"); 
     }
-    assertRetrurnedData("http://vimeo.com/72407771");
-    assertRetrurnedData("https://vimeo.com/72407771");
-    assertRetrurnedData("http://player.vimeo.com/video/72407771");
-    assertRetrurnedData("https://player.vimeo.com/video/72407771");
+    assertRetrurnedData("http://vimeo.com/33031367");
+    assertRetrurnedData("https://vimeo.com/33031367");
+    assertRetrurnedData("http://player.vimeo.com/video/33031367");
+    assertRetrurnedData("https://player.vimeo.com/video/33031367");
   }
 
   /**
