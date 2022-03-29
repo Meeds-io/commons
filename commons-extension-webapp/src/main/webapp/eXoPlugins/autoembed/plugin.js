@@ -132,7 +132,7 @@
 					var last = editable.getLast();
 					insertRange.setEndAfter( last );
 					
-					wrapper.$.innerHTML = "<br><div style="+"'display:flex; background-color:#e1e8ee;'"+"><div style="+"width:100%"+"><br></div><div><button style="+"'cursor:pointer; border:none; background:none; color:#A8B3C5; padding:5px 8px 7px'"+">X</button></div></div>"+wrapper.$.innerHTML;
+					wrapper.$.innerHTML = "<br><div style="+"'display:flex; background-color:#e1e8ee;'"+"><div style="+"width:100%"+"><br></div><div><button style="+"'cursor:pointer; border:none; background:none; color:#5f708a; padding:5px 8px 7px'"+">X</button></div></div>"+wrapper.$.innerHTML;
 					editable.insertElement( wrapper, insertRange );
 					// eXo customization - end
 
