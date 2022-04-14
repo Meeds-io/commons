@@ -123,7 +123,7 @@ public class NotificationServiceImpl extends AbstractService implements Notifica
               // Filter on external users
               try {
                 UserProfile userProfile = organizationService.getUserProfileHandler().findUserProfileByName(userId);
-                return userProfile != null && !StringUtils.equals(userProfile.getAttribute("external"), "true");
+                return userProfile == null || !StringUtils.equals(userProfile.getAttribute(UserProfile.OTHER_KEYS[2]), "true");
               } catch (Exception e) {
                 return false;
               }
