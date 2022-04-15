@@ -16,8 +16,12 @@
  */
 package org.exoplatform.commons.api.notification.model;
 
+import org.exoplatform.services.mail.Attachment;
 import org.exoplatform.services.mail.Message;
 import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class MessageInfo {
   private String id;
@@ -31,6 +35,8 @@ public class MessageInfo {
   private String subject  = "";
 
   private String footer;
+
+  private List<Attachment> attachments;
 
   private String pluginId = "digest";
   
@@ -153,6 +159,23 @@ public class MessageInfo {
     this.footer = footer;
     return this;
   }
+
+  /**
+   * @param attachment to add
+   */
+  public void addAttachment(Attachment attachment) {
+    if (attachments == null) {
+      attachments = new ArrayList<>();
+    }
+    attachments.add(attachment);
+  }
+
+  /**
+   * @return attachments
+   */
+  public List<Attachment> getAttachment() {
+    return attachments;
+  }
   
   /**
    * Finishes to assign states to current MessageInfo instance
@@ -170,6 +193,7 @@ public class MessageInfo {
     message.setTo(to);
     message.setSubject(subject);
     message.setBody(body + ((footer != null && footer.length() > 0) ? footer : ""));
+    this.attachments.stream().forEach(message::addAttachment);
     return message;
   }
 
