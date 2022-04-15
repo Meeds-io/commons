@@ -165,7 +165,7 @@ public class MessageInfo {
    */
   public void addAttachment(Attachment attachment) {
     if (attachments == null)
-      attachments = new ArrayList();
+      attachments = new ArrayList<Attachment>();
     attachments.add(attachment);
   }
 
