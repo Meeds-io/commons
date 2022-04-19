@@ -4,7 +4,7 @@
   <parent>
     <artifactId>commons</artifactId>
     <groupId>org.exoplatform.commons</groupId>
-    <version>6.4.x-SNAPSHOT</version>
+    <version>6.4.x-maintenance-SNAPSHOT</version>
   </parent>
   <artifactId>commons-comet-service</artifactId>
   <packaging>jar</packaging>

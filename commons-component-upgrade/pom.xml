@@ -4,7 +4,7 @@
   <parent>
     <artifactId>commons</artifactId>
     <groupId>org.exoplatform.commons</groupId>
-    <version>6.4.x-SNAPSHOT</version>
+    <version>6.4.x-maintenance-SNAPSHOT</version>
   </parent>
   <artifactId>commons-component-upgrade</artifactId>
   <name>eXo PLF:: Commons - Transparent Upgrade Framework</name>
