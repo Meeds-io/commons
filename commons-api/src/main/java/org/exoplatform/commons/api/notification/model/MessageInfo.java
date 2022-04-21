@@ -193,7 +193,9 @@ public class MessageInfo {
     message.setTo(to);
     message.setSubject(subject);
     message.setBody(body + ((footer != null && footer.length() > 0) ? footer : ""));
-    this.attachments.stream().forEach(message::addAttachment);
+    if (attachments != null) {
+      this.attachments.stream().forEach(message::addAttachment);
+    }
     return message;
   }
 
