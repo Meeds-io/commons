@@ -169,6 +169,7 @@
 				<include>/ckeditor/ckeditor.js</include>
 				// force compatible version in any case to make sure the editor will initialize
 				CKEDITOR.env.isCompatible = true;
+        CKEDITOR.disableAutoInline = true;
         // Force to update plugin resources each eXo version
         CKEDITOR.timestamp = eXo.env.client.assetsVersion;
 				<include>/ckeditor/adapters/jquery.js</include>
