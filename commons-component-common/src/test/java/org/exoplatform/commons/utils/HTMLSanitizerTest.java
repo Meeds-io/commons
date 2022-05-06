@@ -19,6 +19,7 @@
 package org.exoplatform.commons.utils;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 import org.junit.Test;
 
@@ -104,5 +105,16 @@ public class HTMLSanitizerTest {
     String input = "<a class=\"class\" href=\"url\" target=\"_blank\">link</a>";
     String sanitized = HTMLSanitizer.sanitize(input);
     assertEquals("<a class=\"class\" href=\"url\" target=\"_blank\" rel=\"nofollow noopener noreferrer\">link</a>", sanitized);
+  }
+  @Test
+  public void testAllowedSpecialCharactersLinks(){
+    String input = "https://www.economie.gouv.fr/entreprises/changement-janvier-2022?xtor=ES-29-[BIE_292_20220106]-20220106-[https://www.economie.gouv.fr/entreprises/changement-janvier-2022]";
+    String sanitized = null;
+    try {
+      sanitized = HTMLSanitizer.sanitize(input);
+    } catch (Exception e) {
+      fail();
+    }
+    assertEquals("https://www.economie.gouv.fr/entreprises/changement-janvier-2022?xtor&#61;ES-29-[BIE_292_20220106]-20220106-[https://www.economie.gouv.fr/entreprises/changement-janvier-2022]", sanitized);
   }
 }
