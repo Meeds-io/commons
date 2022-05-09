@@ -26,7 +26,6 @@
     <module>commons-webui-component</module>
     <module>commons-webui-ext</module>
     <module>commons-search</module>
-    <module>commons-dlp</module>
   </modules>
   <scm>
     <connection>scm:git:git://github.com/meeds-io/commons.git</connection>
@@ -179,11 +178,6 @@
       <dependency>
         <groupId>org.exoplatform.commons</groupId>
         <artifactId>commons-search</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.exoplatform.commons</groupId>
-        <artifactId>commons-dlp</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>

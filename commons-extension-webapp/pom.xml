@@ -38,11 +38,6 @@
     </dependency>
     <dependency>
       <groupId>${project.groupId}</groupId>
-      <artifactId>commons-dlp</artifactId>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>${project.groupId}</groupId>
       <artifactId>commons-comet-service</artifactId>
       <scope>provided</scope>
     </dependency>
