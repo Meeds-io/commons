@@ -342,6 +342,8 @@ abstract public class HTMLSanitizer {
                                                                                                                                 .onElements("iframe")
                                                                                                                                 .allowAttributes("frameborder")
                                                                                                                                 .onElements("iframe")
+                                                                                                                                .allowAttributes("contenteditable")
+                                                                                                                                .globally()
                                                                                                                                 .toFactory();
 
   /**
