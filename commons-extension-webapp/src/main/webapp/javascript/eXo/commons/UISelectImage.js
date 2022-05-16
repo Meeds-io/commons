@@ -434,8 +434,8 @@
     getProgressURL: function(uploadId) {
       return this.getContext() + "/upload?action=progress&uploadId=" + (uploadId ? uploadId : "");
     },
-    getThumbnailURL: function(uploadId) {
-      return this.getRestContext() + "/composer/image/thumbnail?uploadId=" + (uploadId ? uploadId : "");
+    getImageURL: function(uuid) {
+      return this.getRestContext() + "/images/repository/collaboration/" + (uuid ? uuid : "");
     },
     getDeleteURL: function(uploadId) {
       return this.getContext() + "/upload?action=delete&uploadId=" + (uploadId ? uploadId : "");
@@ -517,43 +517,48 @@
         processData : false,
         cache : false,
         data : status.formData,
-        success : function(data) {
-          if(self.aborted) {
+        success: function (data) {
+          if (self.aborted) {
             return;
           }
           var uploadFinished = false;
           var uploadError = false;
-          var nbAttempts = 0;
-          var url = self.getProgressURL(status.uploadId);
-
-          do {
-            var responseText = ajaxAsyncGetRequest(url, false);
-            try {
-              eval("var response = " + responseText);
-            } catch (err) {
-              console.log(err);
-              continue;
-            }
-            if(!response || !response.upload[status.uploadId] || !response.upload[status.uploadId].percent) {
-              uploadError = true;
+          var downloadFolder = "Activity Stream Documents"
+          var spaceGroupId = CKEDITOR.currentInstance.config.spaceGroupId.replace("/", ".");
+          var restURL = self.getRestContext() + "/"
+              + "managedocument/uploadFile/control?workspaceName=collaboration&driveName=" + spaceGroupId
+              + "&currentPortal=" + eXo.env.portal.portalName + "&currentFolder=" + downloadFolder
+              + "&uploadId=" + status.uploadId + "&fileName=" + status.name + "&action=save";
+          fetch(restURL, {
+            credentials: 'include',
+            method: 'GET',
+          }).then(response => {
+            if (response.ok) {
               uploadFinished = true;
+              return response.text();
             } else {
-              if(response.upload[status.uploadId].percent == 100) {
-                uploadError = false;
-                uploadFinished = true;
-              }
+              return response.text().then(error => {
+                log(`Error uploading image: ${error}`);
+                uploadError = true;
+                throw new Error(error);
+              });
             }
-            nbAttempts ++;
-          } while(!uploadFinished && nbAttempts < 3);
-
-          if(uploadFinished && !uploadError) {
-            self.displayImage(self.getThumbnailURL(status.uploadId), 1000);
-          }
-          if(uploadError) {
-            self.displayWarning(self.getUploadingImageErrorMessage());
-            self.abortUpload(status.uploadId);
-          }
-          self.triggerResizeEvent();
+          })
+              .then(xmlStr => (new window.DOMParser()).parseFromString(xmlStr, 'text/xml'))
+              .then(xml => {
+                if (xml) {
+                  return xml.childNodes[0].attributes[0].value;
+                }
+              }).then(uuid => {
+            if (uploadFinished && !uploadError) {
+              self.displayImage(self.getImageURL(uuid));
+            }
+            if (uploadError) {
+              self.displayWarning(self.getUploadingImageErrorMessage());
+              self.abortUpload(status.uploadId);
+            }
+            self.triggerResizeEvent();
+          });
         },
         error : function(data) {
           if(self.aborted) {
