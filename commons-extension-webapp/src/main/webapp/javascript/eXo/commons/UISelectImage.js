@@ -523,11 +523,12 @@
           }
           var uploadFinished = false;
           var uploadError = false;
-          var downloadFolder = "Activity Stream Documents"
-          var spaceGroupId = CKEDITOR.currentInstance.config.spaceGroupId.replace("/", ".");
+          var spaceGroupId = CKEDITOR.currentInstance.config.spaceGroupId.replaceAll("/", ".");
+          var imagesDownloadFolder = CKEDITOR.currentInstance.config.imagesDownloadFolder;
           var restURL = self.getRestContext() + "/"
               + "managedocument/uploadFile/control?workspaceName=collaboration&driveName=" + spaceGroupId
-              + "&currentPortal=" + eXo.env.portal.portalName + "&currentFolder=" + downloadFolder
+              + "&currentPortal=" + eXo.env.portal.portalName + "&language="
+              + eXo.env.portal.language + "&currentFolder=" + imagesDownloadFolder
               + "&uploadId=" + status.uploadId + "&fileName=" + status.name + "&action=save";
           fetch(restURL, {
             credentials: 'include',
