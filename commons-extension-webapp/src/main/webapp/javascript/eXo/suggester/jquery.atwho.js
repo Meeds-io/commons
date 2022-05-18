@@ -374,7 +374,7 @@ var Controller,
 
 Controller = (function() {
   Controller.prototype.uid = function() {
-    return (Math.random().toString(16) + "000000000").substr(2, 8) + (new Date().getTime());
+    return Math.random().toString(16).substr(2);
   };
 
   function Controller(app, at1) {
