@@ -159,7 +159,9 @@
       }
     };
     app.settings = settings;
-    app.atWho = $this.atwho(app.settings);
+    window.setTimeout(() => {
+      app.atWho = $this.atwho(app.settings);
+    }, 200);
   };
 
   return $;
