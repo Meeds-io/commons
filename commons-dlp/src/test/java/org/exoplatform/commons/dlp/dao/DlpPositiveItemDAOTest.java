@@ -6,13 +6,15 @@ import static org.junit.Assert.assertNotNull;
 import java.util.List;
 
 import org.exoplatform.commons.dlp.domain.DlpPositiveItemEntity;
+import org.exoplatform.container.ExoContainerContext;
+import org.exoplatform.container.component.RequestLifeCycle;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 import org.exoplatform.container.PortalContainer;
 
-public class DlpPositiveItemDAOTest extends AbstractDAOTest {
+public class DlpPositiveItemDAOTest {
 
     private DlpPositiveItemDAO dlpPositiveItemDAO;
 
@@ -20,12 +22,15 @@ public class DlpPositiveItemDAOTest extends AbstractDAOTest {
     public void setUp() {
         PortalContainer container = PortalContainer.getInstance();
         dlpPositiveItemDAO = container.getComponentInstanceOfType(DlpPositiveItemDAO.class);
+        ExoContainerContext.setCurrentContainer(container);
+        RequestLifeCycle.begin(container);
         dlpPositiveItemDAO.deleteAll();
     }
 
     @After
     public void tearDown() {
-        dlpPositiveItemDAO.deleteAll();
+      dlpPositiveItemDAO.deleteAll();
+      RequestLifeCycle.end();
     }
 
     @Test
