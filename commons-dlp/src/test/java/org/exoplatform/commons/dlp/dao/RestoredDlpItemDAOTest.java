@@ -1,7 +1,9 @@
 package org.exoplatform.commons.dlp.dao;
 
 import org.exoplatform.commons.dlp.domain.RestoredDlpItemEntity;
+import org.exoplatform.container.ExoContainerContext;
 import org.exoplatform.container.PortalContainer;
+import org.exoplatform.container.component.RequestLifeCycle;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -11,7 +13,7 @@ import java.util.Calendar;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-public class RestoredDlpItemDAOTest extends AbstractDAOTest {
+public class RestoredDlpItemDAOTest {
 
   private RestoredDlpItemDAO restoredDlpItemDAO;
 
@@ -19,12 +21,15 @@ public class RestoredDlpItemDAOTest extends AbstractDAOTest {
   public void setUp() {
     PortalContainer container = PortalContainer.getInstance();
     restoredDlpItemDAO = container.getComponentInstanceOfType(RestoredDlpItemDAO.class);
+    ExoContainerContext.setCurrentContainer(container);
+    RequestLifeCycle.begin(container);
     restoredDlpItemDAO.deleteAll();
   }
 
   @After
   public void tearDown() {
     restoredDlpItemDAO.deleteAll();
+    RequestLifeCycle.end();
   }
 
   @Test
