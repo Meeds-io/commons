@@ -98,4 +98,10 @@
     <createSequence sequenceName="SEQ_RESTORED_DLP_ITEMS_ID" startValue="1" />
   </changeSet>
 
+  <changeSet author="exo-dlp" id="1.0.0-10">
+    <modifyDataType columnName="KEYWORDS"
+                    newDataType="LONGTEXT"
+                    tableName="DLP_POSITIVE_ITEMS"/>
+  </changeSet>
+
 </databaseChangeLog>

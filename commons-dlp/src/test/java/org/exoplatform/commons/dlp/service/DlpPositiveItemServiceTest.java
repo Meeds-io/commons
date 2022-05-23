@@ -1,14 +1,15 @@
 package org.exoplatform.commons.dlp.service;
 
 import org.exoplatform.commons.dlp.connector.DlpServiceConnector;
-import org.exoplatform.commons.dlp.dao.AbstractDAOTest;
 import org.exoplatform.commons.dlp.dao.DlpOperationDAO;
 import org.exoplatform.commons.dlp.dao.DlpPositiveItemDAO;
 import org.exoplatform.commons.dlp.domain.DlpPositiveItemEntity;
 import org.exoplatform.commons.dlp.dto.DlpPositiveItem;
 import org.exoplatform.commons.dlp.processor.impl.DlpOperationProcessorImpl;
 import org.exoplatform.commons.dlp.service.impl.DlpPositiveItemServiceImpl;
+import org.exoplatform.container.ExoContainerContext;
 import org.exoplatform.container.PortalContainer;
+import org.exoplatform.container.component.RequestLifeCycle;
 import org.exoplatform.services.listener.ListenerService;
 import org.exoplatform.services.organization.OrganizationService;
 import org.exoplatform.services.organization.UserHandler;
@@ -19,10 +20,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-import org.mockito.junit.MockitoJUnit;
-import org.mockito.junit.MockitoRule;
-import org.mockito.quality.Strictness;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.Calendar;
 import java.util.List;
@@ -32,7 +30,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
-public class DlpPositiveItemServiceTest extends AbstractDAOTest {
+public class DlpPositiveItemServiceTest {
 
   @Mock
   private DlpOperationDAO dlpOperationDAO;
@@ -61,7 +59,10 @@ public class DlpPositiveItemServiceTest extends AbstractDAOTest {
   @After
   public void clean() {
     dlpOperationProcessor.getConnectors().clear();
+    dlpPositiveItemDAO.deleteAll();
+    RequestLifeCycle.end();
   }
+
 
   @Before
   public void setUp() throws Exception {
@@ -77,6 +78,8 @@ public class DlpPositiveItemServiceTest extends AbstractDAOTest {
     Mockito.when(userHandler.findUserByName(Mockito.eq("root"))).thenReturn(user);
     PortalContainer container = PortalContainer.getInstance();
     dlpPositiveItemDAO = container.getComponentInstanceOfType(DlpPositiveItemDAO.class);
+    ExoContainerContext.setCurrentContainer(container);
+    RequestLifeCycle.begin(container);
     initDlpServiceConnector();
     dlpOperationProcessor = new DlpOperationProcessorImpl(dlpOperationDAO);
     dlpPositiveItemService =

@@ -7,6 +7,8 @@ import java.lang.reflect.Field;
 import java.util.Date;
 import java.util.List;
 
+import org.exoplatform.container.ExoContainerContext;
+import org.exoplatform.container.component.RequestLifeCycle;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -14,7 +16,7 @@ import org.junit.Test;
 import org.exoplatform.commons.dlp.domain.DlpOperation;
 import org.exoplatform.container.PortalContainer;
 
-public class DlpOperationDAOTest extends AbstractDAOTest {
+public class DlpOperationDAOTest {
 
   private DlpOperationDAO dlpOperationDAO;
 
@@ -22,11 +24,14 @@ public class DlpOperationDAOTest extends AbstractDAOTest {
   public void setUp() {
     PortalContainer container = PortalContainer.getInstance();
     dlpOperationDAO = container.getComponentInstanceOfType(DlpOperationDAO.class);
+    ExoContainerContext.setCurrentContainer(container);
+    RequestLifeCycle.begin(container);
   }
 
   @After
   public void tearDown() {
     dlpOperationDAO.deleteAll();
+    RequestLifeCycle.end();
   }
 
   @Test
