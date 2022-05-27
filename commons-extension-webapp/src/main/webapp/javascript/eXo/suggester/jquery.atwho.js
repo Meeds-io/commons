@@ -491,6 +491,9 @@ Controller = (function() {
       this.expectedQueryCBId = null;
       return query;
     }
+    if (query.el.attr('class') !== 'atwho-query') {
+      return;
+    }
     this.app.setContextFor(this.at);
     if (wait = this.getOpt('delay')) {
       this._delayLookUp(query, wait);
