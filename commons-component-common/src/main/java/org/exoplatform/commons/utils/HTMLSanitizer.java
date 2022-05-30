@@ -344,6 +344,8 @@ abstract public class HTMLSanitizer {
                                                                                                                                 .onElements("iframe")
                                                                                                                                 .allowAttributes("contenteditable")
                                                                                                                                 .globally()
+                                                                                                                                .allowAttributes("v-identity-popover")
+                                                                                                                                .globally()
                                                                                                                                 .toFactory();
 
   /**
