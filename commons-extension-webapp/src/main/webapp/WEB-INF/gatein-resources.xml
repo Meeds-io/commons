@@ -418,36 +418,44 @@
     </depends>
   </module>
   <module>
-    <name>purifyVue</name>
+    <name>purify</name>
     <script>
       <minify>false</minify>
       <adapter>
         (function() {
-          <include>/javascript/purify.min.js</include>
-          Vue.directive('sanitized-html',function(el, binding) {
-          el.innerHTML = DOMPurify.sanitize(Autolinker.link(binding.value, {newWindow: true}),
-                         {USE_PROFILES: {html: true}, ADD_TAGS: ["iframe"], ADD_ATTR: ['target','allow', 'allowfullscreen', 'frameborder', 'scrolling']});
-            DOMPurify.addHook('afterSanitizeAttributes', function (node) {
-            // add noopener attribute to external links to eliminate vulnerabilities
-             if ('target' in node) {
-               node.setAttribute('rel', 'noopener');
-             }
-            });
-            DOMPurify.addHook('uponSanitizeElement', function (node) {
-             if (node.tagName === 'iframe') {
-               const src = node.getAttribute('src') || '';
-               if (!src.startsWith('https://www.youtube.com/embed/')
-                           || !src.startsWith('https://player.vimeo.com/video/') || !src.startsWith('https://www.dailymotion.com/embed/video/')) {
-                 return node.parentNode?.removeChild(node);
-               }
-            }
-            });
+        <include>/javascript/purify.min.js</include>
+        return DOMPurify;
+        })();
+      </adapter>
+      </script>
+  </module>
+  <module>
+    <name>ExtendedDomPurify</name>
+    <script>
+      <minify>false</minify>
+      <path>/javascript/eXo/commons/ExtendedDomPurify.js</path>
+    </script>
+    <depends>
+      <module>autoLinker</module>
+    </depends>
+    <depends>
+      <module>purify</module>
+    </depends>
+  </module>
+  <module>
+    <name>purifyVue</name>
+    <script>
+      <minify>false</minify>
+      <adapter>
+          (function() {
+          Vue.directive('sanitized-html', function (el, binding) {
+          el.innerHTML = ExtendedDomPurify.purify(binding.value);
           })
           })();
       </adapter>
     </script>
     <depends>
-      <module>autoLinker</module>
+      <module>ExtendedDomPurify</module>
     </depends>
     <depends>
       <module>vue</module>
