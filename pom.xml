@@ -9,7 +9,7 @@
   </parent>
   <groupId>org.exoplatform.commons</groupId>
   <artifactId>commons</artifactId>
-  <version>6.2.5</version>
+  <version>6.2.5-patched</version>
   <packaging>pom</packaging>
   <name>eXo PLF:: Commons</name>
   <modules>
