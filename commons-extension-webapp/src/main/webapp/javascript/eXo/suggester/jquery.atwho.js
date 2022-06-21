@@ -1009,6 +1009,15 @@ View = (function() {
     if (rect.left > (overflowOffset = $(_window).width() - this.$el.width() - 5)) {
       rect.left = overflowOffset;
     }
+    const scrollingElement = window.CKEDITOR
+                             && window.CKEDITOR.currentInstance
+                             && window.CKEDITOR.currentInstance.document
+                             && window.CKEDITOR.currentInstance.document.$
+                             && window.CKEDITOR.currentInstance.document.$.scrollingElement;
+    if (scrollingElement) {
+      rect.bottom -= scrollingElement.scrollTop;
+      rect.left -= scrollingElement.scrollLeft;
+    }
     offset = {
       left: rect.left,
       top: rect.bottom
