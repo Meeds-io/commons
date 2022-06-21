@@ -188,7 +188,7 @@ public class ElasticSearchServiceConnector extends SearchServiceConnector {
 
   /**
    *
-   * Search on ES for dlp
+   * Search on ES with entity id
    * Search keyword in query with an OR
    * And search only for the entity in parameter
    *
@@ -196,8 +196,8 @@ public class ElasticSearchServiceConnector extends SearchServiceConnector {
    * @param entityId
    * @return a collection of SearchResult
    */
-  public Collection<SearchResult> dlpSearch(SearchContext context, String query, String entityId) {
-    String esQuery = buildDlpQuery(query,entityId);
+  public Collection<SearchResult> searchByEntityId(SearchContext context, String query, String entityId) {
+    String esQuery = builQueryWithEntityId(query, entityId);
     String jsonResponse = this.client.sendRequest(esQuery, this.index);
     return buildResult(jsonResponse, context);
   }
@@ -208,7 +208,7 @@ public class ElasticSearchServiceConnector extends SearchServiceConnector {
     return buildFilteredQuery(query, sites, null, offset, limit, sort, order);
   }
 
-  protected String buildDlpQuery(String query, String id) {
+  protected String builQueryWithEntityId(String query, String id) {
     List<String> composedKeywords = new ArrayList<>();
     List<String> keywords = Arrays.asList(query.split(","));
     keywords = keywords.stream().filter(key -> {
