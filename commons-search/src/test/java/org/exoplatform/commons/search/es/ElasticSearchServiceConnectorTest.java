@@ -40,19 +40,19 @@ public class ElasticSearchServiceConnectorTest {
   }
   
   @Test
-  public void testBuildDlpQuery() {
+  public void testBuilQueryWithEntityId() {
   
     //Given
     setCurrentIdentity();
     ElasticSearchServiceConnector connector = new ElasticSearchServiceConnector(getInitParams(), elasticSearchingClient);
     //When
     String id = "123456789";
-    String query = connector.buildDlpQuery("keyword1,keyword2", id);
+    String query = connector.builQueryWithEntityId("keyword1,keyword2", id);
   
     assertThat(query, containsString("\"term\" : { \"_id\" : \""+id+"\" }"));
     assertThat(query, containsString("\"query\" : \"keyword1~1 OR keyword2~1\""));
 
-    query = connector.buildDlpQuery("keyword1,keyword2,composed keyword", id);
+    query = connector.builQueryWithEntityId("keyword1,keyword2,composed keyword", id);
 
     assertThat(query, containsString("\"type\" : \"phrase\""));
     assertThat(query, containsString("\"query\" : \"composed keyword\""));
