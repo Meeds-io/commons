@@ -248,22 +248,8 @@ public class UpgradeProductService implements StartableClusterAware {
     return false;
   }
 
-  /**
-   * Re-import all upgrade-plugins for service
-   */
-  public void resetService()
-  {
-    //Reset product information
-    productInformations.start();
-
-    //Reload list Upgrade-Plugins
-    upgradePlugins.clear();
-    Iterator<UpgradeProductPlugin> iterator= allUpgradePlugins.iterator();
-    while(iterator.hasNext())
-    {
-      UpgradeProductPlugin upgradeProductPlugin= iterator.next();
-      upgradePlugins.add(upgradeProductPlugin);
-    }
+  public List<UpgradeProductPlugin> getUpgradePlugins() {
+    return upgradePlugins;
   }
 
   private void proceedToUpgrade(UpgradeProductPlugin upgradeProductPlugin, String currentVersion, String previousVersion, UpgradePluginExecutionContext upgradePluginExecutionContext) {
@@ -286,10 +272,10 @@ public class UpgradeProductService implements StartableClusterAware {
   private String getCurrentVersion(UpgradeProductPlugin upgradeProductPlugin) {
     String currentUpgradePluginVersion = null;
     try {
-      currentUpgradePluginVersion = productInformations.getVersion(upgradeProductPlugin.getName());
+      currentUpgradePluginVersion = productInformations.getVersion(upgradeProductPlugin.getName()) + "-rev" + productInformations.getBuildNumber();
     } catch (MissingProductInformationException e) {
       try {
-        currentUpgradePluginVersion = productInformations.getVersion(upgradeProductPlugin.getProductGroupId());
+        currentUpgradePluginVersion = productInformations.getVersion(upgradeProductPlugin.getProductGroupId()) + "-rev" + productInformations.getBuildNumber();
       } catch (MissingProductInformationException e1) {
         currentUpgradePluginVersion = PRODUCT_VERSION_ZERO;
       }
@@ -300,10 +286,10 @@ public class UpgradeProductService implements StartableClusterAware {
   private String getPreviousVersionByGroupId(UpgradeProductPlugin upgradeProductPlugin) {
     String previousUpgradePluginVersion;
     try {
-      previousUpgradePluginVersion = productInformations.getPreviousVersion(upgradeProductPlugin.getName());
+      previousUpgradePluginVersion = productInformations.getPreviousVersion(upgradeProductPlugin.getName()) + "-rev" + productInformations.getBuildNumber();
     } catch (MissingProductInformationException e) {
       try {
-        previousUpgradePluginVersion = productInformations.getPreviousVersion(upgradeProductPlugin.getProductGroupId());
+        previousUpgradePluginVersion = productInformations.getPreviousVersion(upgradeProductPlugin.getProductGroupId()) + "-rev" + productInformations.getBuildNumber();
       } catch (MissingProductInformationException e1) {
         previousUpgradePluginVersion = PRODUCT_VERSION_ZERO;
       }

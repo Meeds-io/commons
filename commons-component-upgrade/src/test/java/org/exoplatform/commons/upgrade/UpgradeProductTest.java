@@ -73,6 +73,7 @@ public class UpgradeProductTest extends BaseCommonsTestCase {
     versions = new ArrayList<String>();
   }
 
+
   public void testProcessUpgrade() throws MissingProductInformationException {
     PropertyManager.setProperty("commons.upgrade.portalPlugin.enable", "true");
     PropertyManager.setProperty("commons.upgrade.dummyPlugin.enable", "false");
@@ -88,6 +89,11 @@ public class UpgradeProductTest extends BaseCommonsTestCase {
     params.addParameter(param);
 
     param = new ValueParam();
+    param.setName("product.buildNumber");
+    param.setValue("20220630");
+    params.addParameter(param);
+
+    param = new ValueParam();
     param.setName("plugin.execution.order");
     param.setValue("1");
     params.addParameter(param);
@@ -100,6 +106,11 @@ public class UpgradeProductTest extends BaseCommonsTestCase {
     param = new ValueParam();
     param.setName("product.group.id");
     param.setValue("org.exoplatform.social");
+    params.addParameter(param);
+
+    param = new ValueParam();
+    param.setName("product.buildNumber");
+    param.setValue("20220630");
     params.addParameter(param);
 
     param = new ValueParam();
@@ -160,6 +171,11 @@ public class UpgradeProductTest extends BaseCommonsTestCase {
     params.addParameter(param);
 
     param = new ValueParam();
+    param.setName("product.buildNumber");
+    param.setValue("20220630");
+    params.addParameter(param);
+
+    param = new ValueParam();
     param.setName("plugin.execution.order");
     param.setValue("1");
     params.addParameter(param);
@@ -171,6 +187,11 @@ public class UpgradeProductTest extends BaseCommonsTestCase {
     param = new ValueParam();
     param.setName("product.group.id");
     param.setValue("org.exoplatform.social");
+    params.addParameter(param);
+
+    param = new ValueParam();
+    param.setName("product.buildNumber");
+    param.setValue("20220630");
     params.addParameter(param);
 
     param = new ValueParam();
@@ -210,6 +231,11 @@ public class UpgradeProductTest extends BaseCommonsTestCase {
     ValueParam param = new ValueParam();
     param.setName("product.group.id");
     param.setValue("org.exoplatform.social");
+    params.addParameter(param);
+
+    param = new ValueParam();
+    param.setName("product.buildNumber");
+    param.setValue("20220630");
     params.addParameter(param);
 
     param = new ValueParam();
@@ -259,6 +285,11 @@ public class UpgradeProductTest extends BaseCommonsTestCase {
     ValueParam param = new ValueParam();
     param.setName("product.group.id");
     param.setValue("org.exoplatform.social");
+    params.addParameter(param);
+
+    param = new ValueParam();
+    param.setName("product.buildNumber");
+    param.setValue("20220630");
     params.addParameter(param);
 
     param = new ValueParam();
@@ -350,6 +381,11 @@ public class UpgradeProductTest extends BaseCommonsTestCase {
     params.addParameter(param);
 
     param = new ValueParam();
+    param.setName("product.buildNumber");
+    param.setValue("20220630");
+    params.addParameter(param);
+
+    param = new ValueParam();
     param.setName("plugin.execution.order");
     param.setValue("2");
     params.addParameter(param);
@@ -397,6 +433,11 @@ public class UpgradeProductTest extends BaseCommonsTestCase {
     ValueParam param = new ValueParam();
     param.setName("product.group.id");
     param.setValue("org.exoplatform.social");
+    params.addParameter(param);
+
+    param = new ValueParam();
+    param.setName("product.buildNumber");
+    param.setValue("20220630");
     params.addParameter(param);
 
     param = new ValueParam();
@@ -453,6 +494,11 @@ public class UpgradeProductTest extends BaseCommonsTestCase {
     params.addParameter(param);
 
     param = new ValueParam();
+    param.setName("product.buildNumber");
+    param.setValue("20220630");
+    params.addParameter(param);
+
+    param = new ValueParam();
     param.setName("plugin.execution.order");
     param.setValue("2");
     params.addParameter(param);
@@ -502,6 +548,11 @@ public class UpgradeProductTest extends BaseCommonsTestCase {
     params.addParameter(param);
 
     param = new ValueParam();
+    param.setName("product.buildNumber");
+    param.setValue("20220630");
+    params.addParameter(param);
+
+    param = new ValueParam();
     param.setName("plugin.execution.order");
     param.setValue("1");
     params.addParameter(param);
@@ -533,13 +584,15 @@ public class UpgradeProductTest extends BaseCommonsTestCase {
   }
 
   @Override
-  public void tearDown() {
+  public void tearDown() throws Exception {
+    upgradeService.getUpgradePlugins().clear();
     try {
       updateNewProductionInformations(NEW_PRODUCT_INFORMATIONS_FILE);
       settingService.remove(UpgradeProductService.UPGRADE_PRODUCT_CONTEXT);
     } catch (Exception e) {
       fail(e);
     }
+    super.tearDown();
   }
 
   public static class UpgradePluginAsynchronous extends UpgradeProductPlugin {
