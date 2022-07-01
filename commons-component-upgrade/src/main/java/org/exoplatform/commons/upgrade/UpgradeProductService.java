@@ -281,7 +281,7 @@ public class UpgradeProductService implements StartableClusterAware {
       }
     }
     if (isDevelopmentVersion(currentUpgradePluginVersion)) {
-      currentUpgradePluginVersion = addDevelopmentVersionSuffix(currentUpgradePluginVersion);
+      currentUpgradePluginVersion = addDevelopmentVersionSuffix(currentUpgradePluginVersion, false);
     }
     return currentUpgradePluginVersion;
   }
@@ -300,7 +300,7 @@ public class UpgradeProductService implements StartableClusterAware {
     if (StringUtils.isBlank(previousUpgradePluginVersion)) {
       previousUpgradePluginVersion = PRODUCT_VERSION_ZERO;
     } else if (isDevelopmentVersion(previousUpgradePluginVersion)) {
-      previousUpgradePluginVersion = addDevelopmentVersionSuffix(previousUpgradePluginVersion);
+      previousUpgradePluginVersion = addDevelopmentVersionSuffix(previousUpgradePluginVersion, true);
     }
     return previousUpgradePluginVersion;
   }
@@ -309,9 +309,10 @@ public class UpgradeProductService implements StartableClusterAware {
     return version.contains("SNAPSHOT");
   }
 
-  private String addDevelopmentVersionSuffix(String version) {
+  private String addDevelopmentVersionSuffix(String version, boolean previous) {
     try {
-      version += "-rev" + productInformations.getBuildNumber();
+      version += "-rev" + (previous ? productInformations.getPreviousBuildNumber()
+                                    : productInformations.getBuildNumber());
     } catch (MissingProductInformationException e) {
       LOG.debug("Can't get build number from product information service", e);
     }
