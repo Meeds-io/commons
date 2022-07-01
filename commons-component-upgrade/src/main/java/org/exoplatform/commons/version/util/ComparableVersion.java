@@ -162,7 +162,7 @@ public class ComparableVersion
     {
         private static final Log LOG = ExoLogger.getLogger(StringItem.class);
         
-        private static final String[] QUALIFIERS = { "snapshot", "alpha", "beta", "cicd", "milestone", "rc", "", "sp" };
+        private static final String[] QUALIFIERS = { "snapshot", "alpha", "beta", "cicd", "milestone", "rev", "rc", "", "sp" };
 
         private static final List<String> _QUALIFIERS = Arrays.asList( QUALIFIERS );
 

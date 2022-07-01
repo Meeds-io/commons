@@ -147,8 +147,10 @@ public class UpgradeProductTest extends BaseCommonsTestCase {
     assertEquals(socialPrevVersion.equals("0"), versions.contains(socialVersion + "-X-Version"));
   }
 
-  public void testProcessDevelopmentVersionUpgrade() throws MissingProductInformationException {
+  public void testProcessDevelopmentVersionUpgrade() throws Exception {
     PropertyManager.setProperty("commons.upgrade.developmentUpgrade.enable", "true");
+    upgradeService.start();
+    restartTransaction();
 
     // Create upgrade plugin for portal
     InitParams params = new InitParams();
@@ -170,10 +172,18 @@ public class UpgradeProductTest extends BaseCommonsTestCase {
     assertTrue(developmentUpgradePlugin.isEnabled());
 
     UpgradePluginExecutedOnce.PROCESSED = false;
-
-    // invoke productInformations() explicitly to store the new version in DB
     upgradeService.start();
+    assertTrue(UpgradePluginExecutedOnce.PROCESSED);
+    restartTransaction();
 
+    resetPreviousProductInformation(NEW_PRODUCT_INFORMATIONS_FILE);
+    UpgradePluginExecutedOnce.PROCESSED = false;
+    upgradeService.start();
+    assertFalse(UpgradePluginExecutedOnce.PROCESSED);
+
+    updateNewProductionInformations(NEWER_PRODUCT_INFORMATIONS_FILE);
+
+    upgradeService.start();
     assertTrue(UpgradePluginExecutedOnce.PROCESSED);
   }
 
