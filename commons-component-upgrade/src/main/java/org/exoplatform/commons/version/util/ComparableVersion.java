@@ -134,9 +134,6 @@ public class ComparableVersion
                     return value.compareTo( ( (IntegerItem) item ).value );
 
                 case STRING_ITEM:
-                  if (((StringItem) item).value.equals("x")) {
-                    return -1; // 1.1 < 1.x
-                  }
                     return 1; // 1.1 > 1-sp
 
                 case LIST_ITEM:
@@ -242,16 +239,9 @@ public class ComparableVersion
             switch ( item.getType() )
             {
                 case INTEGER_ITEM:
-                  if (value.equals("x")) {
-                    return 1; // 1.x > 1.1
-                  }
-                  return -1; // 1.any < 1.1
+                    return -1; // 1.any < 1.1 ?
+
                 case STRING_ITEM:
-                  if (comparableQualifier(value).equals(String.valueOf(_QUALIFIERS.indexOf("snapshot")))
-                      && comparableQualifier(((StringItem) item).value).equals(String.valueOf(_QUALIFIERS.indexOf("snapshot")))) {
-                    // if both are snapshot return that second is greater than first
-                    return 1;
-                  }
                     return comparableQualifier( value ).compareTo( comparableQualifier( ( (StringItem) item ).value ) );
 
                 case LIST_ITEM:
@@ -339,7 +329,7 @@ public class ComparableVersion
                         if ( result != 0 )
                         {
                             return result;
-                          }
+                        }
                     }
 
                     return 0;
