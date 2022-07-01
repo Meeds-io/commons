@@ -228,7 +228,7 @@ public abstract class UpgradeProductPlugin extends BaseComponentPlugin {
    * {@inheritDoc}
    */
   public final boolean equals(Object obj) {
-    if (obj != null && obj instanceof UpgradeProductPlugin) {
+    if (obj instanceof UpgradeProductPlugin) {
       return this.getName().equals(((UpgradeProductPlugin) obj).getName());
     }
     return false;
