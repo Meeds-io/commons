@@ -224,10 +224,6 @@ public abstract class UpgradeProductPlugin extends BaseComponentPlugin {
     return shouldProceedToUpgrade(newVersion, previousVersion);
   }
 
-  public static void main(String[] args) {
-    System.out.println(VersionComparator.isSame("1.4.x-SNAPSHOT-rev01", "1.4.x-SNAPSHOT-rev01"));
-  }
-
   /**
    * {@inheritDoc}
    */
