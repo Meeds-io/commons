@@ -1,16 +1,13 @@
 /*
  * Copyright (C) 2003-2012 eXo Platform SAS.
- *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
- *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
@@ -18,11 +15,11 @@ package org.exoplatform.commons.upgrade;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Properties;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.commons.lang.StringUtils;
-
 import org.exoplatform.commons.api.settings.SettingService;
 import org.exoplatform.commons.info.MissingProductInformationException;
 import org.exoplatform.commons.info.ProductInformations;
@@ -39,8 +36,10 @@ import org.exoplatform.container.xml.ValueParam;
  * Created by The eXo Platform SAS Author : eXoPlatform exo@exoplatform.com May
  * 31, 2012
  */
-@ConfiguredBy({ @ConfigurationUnit(scope = ContainerScope.PORTAL, path = "conf/configuration.xml"),
-    @ConfigurationUnit(scope = ContainerScope.PORTAL, path = "conf/portal/test-configuration.xml") })
+@ConfiguredBy(
+  { @ConfigurationUnit(scope = ContainerScope.PORTAL, path = "conf/configuration.xml"),
+      @ConfigurationUnit(scope = ContainerScope.PORTAL, path = "conf/portal/test-configuration.xml") }
+)
 
 public class UpgradeProductTest extends BaseCommonsTestCase {
   private static final String      OLD_PRODUCT_INFORMATIONS_FILE   = "classpath:/conf/data/product_old.properties";
@@ -73,7 +72,6 @@ public class UpgradeProductTest extends BaseCommonsTestCase {
     versions = new ArrayList<String>();
   }
 
-
   public void testProcessUpgrade() throws MissingProductInformationException {
     PropertyManager.setProperty("commons.upgrade.portalPlugin.enable", "true");
     PropertyManager.setProperty("commons.upgrade.dummyPlugin.enable", "false");
@@ -89,11 +87,6 @@ public class UpgradeProductTest extends BaseCommonsTestCase {
     params.addParameter(param);
 
     param = new ValueParam();
-    param.setName("product.buildNumber");
-    param.setValue("20220630");
-    params.addParameter(param);
-
-    param = new ValueParam();
     param.setName("plugin.execution.order");
     param.setValue("1");
     params.addParameter(param);
@@ -106,11 +99,6 @@ public class UpgradeProductTest extends BaseCommonsTestCase {
     param = new ValueParam();
     param.setName("product.group.id");
     param.setValue("org.exoplatform.social");
-    params.addParameter(param);
-
-    param = new ValueParam();
-    param.setName("product.buildNumber");
-    param.setValue("20220630");
     params.addParameter(param);
 
     param = new ValueParam();
@@ -159,6 +147,36 @@ public class UpgradeProductTest extends BaseCommonsTestCase {
     assertEquals(socialPrevVersion.equals("0"), versions.contains(socialVersion + "-X-Version"));
   }
 
+  public void testProcessDevelopmentVersionUpgrade() throws MissingProductInformationException {
+    PropertyManager.setProperty("commons.upgrade.developmentUpgrade.enable", "true");
+
+    // Create upgrade plugin for portal
+    InitParams params = new InitParams();
+    ValueParam param = new ValueParam();
+    param.setName("product.group.id");
+    param.setValue("org.meeds");
+    params.addParameter(param);
+
+    param = new ValueParam();
+    param.setName("plugin.execution.order");
+    param.setValue("1");
+    params.addParameter(param);
+
+    UpgradePluginExecutedOnce developmentUpgradePlugin = new UpgradePluginExecutedOnce(params);
+    developmentUpgradePlugin.setName("developmentUpgrade");
+    upgradeService.addUpgradePlugin(developmentUpgradePlugin);
+
+    // Property enable = true
+    assertTrue(developmentUpgradePlugin.isEnabled());
+
+    UpgradePluginExecutedOnce.PROCESSED = false;
+
+    // invoke productInformations() explicitly to store the new version in DB
+    upgradeService.start();
+
+    assertTrue(UpgradePluginExecutedOnce.PROCESSED);
+  }
+
   public void testUpgradeWithDisabledPlugin() {
     InitParams params;
     ValueParam param;
@@ -168,11 +186,6 @@ public class UpgradeProductTest extends BaseCommonsTestCase {
     param = new ValueParam();
     param.setName("product.group.id");
     param.setValue("org.exoplatform.portal");
-    params.addParameter(param);
-
-    param = new ValueParam();
-    param.setName("product.buildNumber");
-    param.setValue("20220630");
     params.addParameter(param);
 
     param = new ValueParam();
@@ -187,11 +200,6 @@ public class UpgradeProductTest extends BaseCommonsTestCase {
     param = new ValueParam();
     param.setName("product.group.id");
     param.setValue("org.exoplatform.social");
-    params.addParameter(param);
-
-    param = new ValueParam();
-    param.setName("product.buildNumber");
-    param.setValue("20220630");
     params.addParameter(param);
 
     param = new ValueParam();
@@ -231,11 +239,6 @@ public class UpgradeProductTest extends BaseCommonsTestCase {
     ValueParam param = new ValueParam();
     param.setName("product.group.id");
     param.setValue("org.exoplatform.social");
-    params.addParameter(param);
-
-    param = new ValueParam();
-    param.setName("product.buildNumber");
-    param.setValue("20220630");
     params.addParameter(param);
 
     param = new ValueParam();
@@ -285,11 +288,6 @@ public class UpgradeProductTest extends BaseCommonsTestCase {
     ValueParam param = new ValueParam();
     param.setName("product.group.id");
     param.setValue("org.exoplatform.social");
-    params.addParameter(param);
-
-    param = new ValueParam();
-    param.setName("product.buildNumber");
-    param.setValue("20220630");
     params.addParameter(param);
 
     param = new ValueParam();
@@ -381,11 +379,6 @@ public class UpgradeProductTest extends BaseCommonsTestCase {
     params.addParameter(param);
 
     param = new ValueParam();
-    param.setName("product.buildNumber");
-    param.setValue("20220630");
-    params.addParameter(param);
-
-    param = new ValueParam();
     param.setName("plugin.execution.order");
     param.setValue("2");
     params.addParameter(param);
@@ -433,11 +426,6 @@ public class UpgradeProductTest extends BaseCommonsTestCase {
     ValueParam param = new ValueParam();
     param.setName("product.group.id");
     param.setValue("org.exoplatform.social");
-    params.addParameter(param);
-
-    param = new ValueParam();
-    param.setName("product.buildNumber");
-    param.setValue("20220630");
     params.addParameter(param);
 
     param = new ValueParam();
@@ -494,11 +482,6 @@ public class UpgradeProductTest extends BaseCommonsTestCase {
     params.addParameter(param);
 
     param = new ValueParam();
-    param.setName("product.buildNumber");
-    param.setValue("20220630");
-    params.addParameter(param);
-
-    param = new ValueParam();
     param.setName("plugin.execution.order");
     param.setValue("2");
     params.addParameter(param);
@@ -545,11 +528,6 @@ public class UpgradeProductTest extends BaseCommonsTestCase {
     param = new ValueParam();
     param.setName("product.group.id");
     param.setValue("org.exoplatform.portal");
-    params.addParameter(param);
-
-    param = new ValueParam();
-    param.setName("product.buildNumber");
-    param.setValue("20220630");
     params.addParameter(param);
 
     param = new ValueParam();
