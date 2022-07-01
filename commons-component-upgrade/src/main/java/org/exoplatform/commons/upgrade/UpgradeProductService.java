@@ -248,22 +248,8 @@ public class UpgradeProductService implements StartableClusterAware {
     return false;
   }
 
-  /**
-   * Re-import all upgrade-plugins for service
-   */
-  public void resetService()
-  {
-    //Reset product information
-    productInformations.start();
-
-    //Reload list Upgrade-Plugins
-    upgradePlugins.clear();
-    Iterator<UpgradeProductPlugin> iterator= allUpgradePlugins.iterator();
-    while(iterator.hasNext())
-    {
-      UpgradeProductPlugin upgradeProductPlugin= iterator.next();
-      upgradePlugins.add(upgradeProductPlugin);
-    }
+  public List<UpgradeProductPlugin> getUpgradePlugins() {
+    return upgradePlugins;
   }
 
   private void proceedToUpgrade(UpgradeProductPlugin upgradeProductPlugin, String currentVersion, String previousVersion, UpgradePluginExecutionContext upgradePluginExecutionContext) {
@@ -294,6 +280,9 @@ public class UpgradeProductService implements StartableClusterAware {
         currentUpgradePluginVersion = PRODUCT_VERSION_ZERO;
       }
     }
+    if (isDevelopmentVersion(currentUpgradePluginVersion)) {
+      currentUpgradePluginVersion = addDevelopmentVersionSuffix(currentUpgradePluginVersion, false);
+    }
     return currentUpgradePluginVersion;
   }
 
@@ -310,8 +299,24 @@ public class UpgradeProductService implements StartableClusterAware {
     }
     if (StringUtils.isBlank(previousUpgradePluginVersion)) {
       previousUpgradePluginVersion = PRODUCT_VERSION_ZERO;
+    } else if (isDevelopmentVersion(previousUpgradePluginVersion)) {
+      previousUpgradePluginVersion = addDevelopmentVersionSuffix(previousUpgradePluginVersion, true);
     }
     return previousUpgradePluginVersion;
+  }
+
+  private boolean isDevelopmentVersion(String version) {
+    return version.contains("SNAPSHOT");
+  }
+
+  private String addDevelopmentVersionSuffix(String version, boolean previous) {
+    try {
+      version += "-rev" + (previous ? productInformations.getPreviousBuildNumber()
+                                    : productInformations.getBuildNumber());
+    } catch (MissingProductInformationException e) {
+      LOG.debug("Can't get build number from product information service", e);
+    }
+    return version;
   }
 
   private void storeUpgradePluginVersion(UpgradeProductPlugin upgradeProductPlugin, UpgradePluginExecutionContext upgradePluginExecution) {
