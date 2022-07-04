@@ -118,7 +118,7 @@ public class ComparableVersion
         }
         public boolean isNull()
         {
-            return BigInteger_ZERO.equals( value );
+            return value == null;
         }
 
         public int compareTo( Item item )
