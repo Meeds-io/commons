@@ -10,6 +10,9 @@
   <packaging>jar</packaging>
   <name>eXo PLF:: Commons - Common Services</name>
   <properties>
+    <rest.api.doc.title>Commons common-component Rest Api</rest.api.doc.title>
+    <rest.api.doc.version>1.0.x</rest.api.doc.version>
+
     <exo.test.coverage.ratio>0.54</exo.test.coverage.ratio>
   </properties>
   <dependencies>
@@ -188,40 +191,29 @@
     </resources>
     <plugins>
       <plugin>
-        <groupId>com.jcabi</groupId>
-        <artifactId>jcabi-maven-plugin</artifactId>
+        <groupId>io.openapitools.swagger</groupId>
+        <artifactId>swagger-maven-plugin</artifactId>
+        <configuration>
+          <resourcePackages>
+            <locations>org.exoplatform.services.user</locations>
+            <locations>org.exoplatform.settings.rest</locations>
+          </resourcePackages>
+          <swaggerConfig>
+            <info>
+              <title>${rest.api.doc.title}</title>
+              <version>${rest.api.doc.version}</version>
+              <description>Commons common-component Rest endpoints</description>
+              <license>
+                <url>https://www.gnu.org/licenses/lgpl-3.0.en.html</url>
+                <name>LGPL</name>
+              </license>
+            </info>
+          </swaggerConfig>
+        </configuration>
       </plugin>
       <plugin>
-        <groupId>com.github.kongchen</groupId>
-        <artifactId>swagger-maven-plugin</artifactId>
-        <version>3.1.0</version>
-        <configuration>
-          <apiSources>
-            <apiSource>
-              <springmvc>false</springmvc>
-              <locations>org.exoplatform.settings.rest</locations>
-              <schemes>http,https</schemes>
-              <host>localhost:8080</host>
-              <basePath>/rest</basePath>
-              <info>
-                <title>eXo Settings REST API</title>
-                <version>1</version>
-                <description>The Settings REST API provides methods for managing settings. Here are the descriptions of a full representation of each of the settings resources available.</description>
-              </info>
-              <templatePath>${basedir}/src/main/resources/swagger-doc-template/strapdown.html.hbs</templatePath>
-              <outputPath>${basedir}/target/generated/document.html</outputPath>
-              <swaggerDirectory>${basedir}/target/generated-sources/annotations/generated</swaggerDirectory>
-            </apiSource>
-          </apiSources>
-        </configuration>
-        <executions>
-          <execution>
-            <phase>compile</phase>
-            <goals>
-              <goal>generate</goal>
-            </goals>
-          </execution>
-        </executions>
+        <groupId>com.jcabi</groupId>
+        <artifactId>jcabi-maven-plugin</artifactId>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
