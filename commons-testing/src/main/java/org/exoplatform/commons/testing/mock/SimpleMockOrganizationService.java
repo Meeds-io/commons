@@ -3,6 +3,7 @@
  */
 package org.exoplatform.commons.testing.mock;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -170,6 +171,11 @@ public class SimpleMockOrganizationService implements OrganizationService {
         }
       }
       return groups;
+    }
+
+    @Override
+    public Collection<Group> findGroupsOfUserByKeyword(String s, String s1, String s2) throws IOException {
+      return null;
     }
 
     @Override
