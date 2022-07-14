@@ -54,6 +54,11 @@
   </component>
 
   <component>
+    <key>org.exoplatform.services.thumbnail.ImageResizeService</key>
+    <type>org.exoplatform.services.thumbnail.ImageResizeServiceImpl</type>
+  </component>
+
+  <component>
     <key>org.exoplatform.commons.embedder.OembedEmbedder</key>
     <type>org.exoplatform.commons.embedder.OembedEmbedder</type>
     <init-params>
