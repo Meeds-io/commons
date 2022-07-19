@@ -106,7 +106,7 @@
     <!-- New Cometd -->
     <dependency>
       <groupId>org.cometd.java</groupId>
-      <artifactId>bayeux-api</artifactId>
+      <artifactId>cometd-java-api-common</artifactId>
     </dependency>
     <dependency>
       <groupId>org.cometd.java</groupId>
@@ -114,15 +114,15 @@
     </dependency>
     <dependency>
       <groupId>org.cometd.java</groupId>
-      <artifactId>cometd-java-websocket-javax-server</artifactId>
+      <artifactId>cometd-java-server-websocket-javax</artifactId>
     </dependency>
     <dependency>
       <groupId>org.cometd.java</groupId>
-      <artifactId>cometd-java-websocket-common-server</artifactId>
+      <artifactId>cometd-java-server-websocket-common</artifactId>
     </dependency>
     <dependency>
       <groupId>org.cometd.java</groupId>
-      <artifactId>cometd-java-annotations</artifactId>
+      <artifactId>cometd-java-annotation-server</artifactId>
     </dependency>
     <dependency>
       <groupId>org.cometd.java</groupId>
@@ -130,7 +130,12 @@
     </dependency>
     <dependency>
       <groupId>org.cometd.java</groupId>
-      <artifactId>cometd-java-server</artifactId>
+      <artifactId>cometd-java-server-common</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.jetty</groupId>
+      <artifactId>jetty-util-ajax</artifactId>
+      <scope>runtime</scope>
     </dependency>
   </dependencies>
 </project>

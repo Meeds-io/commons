@@ -2,6 +2,7 @@ package org.mortbay.cometd.continuation;
 
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
 
 /*
  * Copyright (C) 2003-2014 eXo Platform SAS.
@@ -22,11 +23,11 @@ import java.util.Map.Entry;
 import javax.servlet.ServletConfig;
 
 import org.cometd.bayeux.ChannelId;
+import org.cometd.bayeux.Promise;
 import org.cometd.bayeux.server.*;
 import org.cometd.oort.Oort;
 import org.cometd.oort.Seti;
 import org.cometd.server.*;
-import org.eclipse.jetty.util.ConcurrentHashSet;
 import org.picocontainer.Disposable;
 
 import org.exoplatform.container.ExoContainerContext;
@@ -171,7 +172,7 @@ public class EXoContinuationBayeux extends BayeuxServerImpl implements Disposabl
     ServerSessionImpl fromClient = getSystemClient();
     ServerChannel ch = getChannel(channel);
     if (ch != null) {
-      ch.publish(fromClient, data);
+      ch.publish(fromClient, data, Promise.noop());
       if (LOG.isDebugEnabled())
         LOG.debug("Send broadcast message " + data.toString() + " on channel " + channel);
     } else {
@@ -235,7 +236,7 @@ public class EXoContinuationBayeux extends BayeuxServerImpl implements Disposabl
   @Override
   public void dispose() {
     for (ServerSession session : getSessions()) {
-      ((ServerSessionImpl) session).cancelSchedule();
+      ((ServerSessionImpl) session).destroyScheduler();
     }
 
     if (seti != null && oort != null) {
@@ -249,7 +250,7 @@ public class EXoContinuationBayeux extends BayeuxServerImpl implements Disposabl
     }
   }
 
-  public static class EXoSecurityPolicy implements SecurityPolicy, ServerSession.RemoveListener {
+  public static class EXoSecurityPolicy implements SecurityPolicy, ServerSession.RemovedListener {
 
     private EXoContinuationBayeux bayeux;
 
@@ -290,7 +291,7 @@ public class EXoContinuationBayeux extends BayeuxServerImpl implements Disposabl
         String eXoID = (String) message.get("exoId");
         Set<String> cIds = clientIDs.get(eXoID);
         if (cIds == null) {
-          cIds = new ConcurrentHashSet<String>();
+          cIds = ConcurrentHashMap.newKeySet();
           clientIDs.put(eXoID, cIds);
         }
         bayeux.seti.associate(eXoID, client);
@@ -319,7 +320,7 @@ public class EXoContinuationBayeux extends BayeuxServerImpl implements Disposabl
     }
 
     @Override
-    public void removed(ServerSession session, boolean timeout) {
+    public void removed(ServerSession session, ServerMessage message, boolean timeout) {
       Iterator<Entry<String, Set<String>>> iter = clientIDs.entrySet().iterator();
 
       while (iter.hasNext()) {
