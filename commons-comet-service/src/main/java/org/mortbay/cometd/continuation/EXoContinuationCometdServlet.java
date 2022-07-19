@@ -36,7 +36,7 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 import org.cometd.bayeux.server.BayeuxServer;
-import org.cometd.client.transport.LongPollingTransport;
+import org.cometd.client.http.jetty.JettyHttpClientTransport;
 import org.cometd.oort.Oort;
 import org.cometd.oort.OortConfigServlet;
 import org.cometd.oort.OortMulticastConfigServlet;
@@ -44,7 +44,7 @@ import org.cometd.oort.OortStaticConfigServlet;
 import org.cometd.oort.Seti;
 import org.cometd.oort.SetiServlet;
 import org.cometd.server.CometDServlet;
-import org.cometd.websocket.client.WebSocketTransport;
+import org.cometd.client.websocket.javax.WebSocketTransport;
 import org.eclipse.jetty.client.HttpClient;
 import org.exoplatform.commons.utils.PrivilegedSystemHelper;
 import org.exoplatform.commons.utils.PropertyManager;
@@ -266,7 +266,7 @@ public class EXoContinuationCometdServlet extends CometDServlet {
     ServletConfig config = getServletConfig();
     String transport = config.getInitParameter("transports");
     if (transport == null || !transport.contains(WebSocketTransport.class.getName())) {
-      oort.getClientTransportFactories().add(new LongPollingTransport.Factory(new HttpClient()));
+      oort.getClientTransportFactories().add(new JettyHttpClientTransport.Factory(new HttpClient()));
     }
     return oort;
   }
