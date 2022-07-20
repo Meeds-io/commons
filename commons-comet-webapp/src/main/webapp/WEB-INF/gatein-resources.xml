@@ -35,7 +35,7 @@
 		<script>
 			<adapter>
 				(function() {
-				<include>/org/cometd.js</include>
+				<include>/js/cometd/cometd.min.js</include>
 				return org.cometd;
 				})();
 			</adapter>
@@ -45,7 +45,7 @@
 	<module>
 		<name>jquery_cometd</name>
 		<script>
-			<path>/jquery/jquery.cometd.js</path>
+			<path>/js/jquery/jquery.cometd.js</path>
 		</script>
 		<depends>
 			<module>jquery</module>
