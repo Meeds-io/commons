@@ -202,6 +202,18 @@ App = (function() {
     return this;
   };
 
+  App.prototype.waitForEndTyping = function (_this) {
+    const _self = _this;
+    setTimeout(() => {
+      if (Date.now() > _self.startTypingKeywordTimeout) {
+        _self.typing = false;
+        _self.onKeyup(_this.preventEvent)
+      } else {
+        _self.waitForEndTyping(_this);
+      }
+    }, 50);
+  };
+
   App.prototype.listen = function() {
     return this.$inputor.on('compositionstart', (function(_this) {
       return function(e) {
@@ -220,9 +232,14 @@ App = (function() {
         });
         return null;
       };
-    })(this)).on('keyup.atwhoInner', (function(_this) {
-      return function(e) {
-        return _this.onKeyup(e);
+    })(this)).on('keyup.atwhoInner', (function (_this) {
+      return function (e) {
+        _this.preventEvent = e;
+        _this.startTypingKeywordTimeout = Date.now() + 300;
+        if (!_this.typing) {
+          _this.typing = true;
+          _this.waitForEndTyping(_this);
+        }
       };
     })(this)).on('keydown.atwhoInner', (function(_this) {
       return function(e) {
