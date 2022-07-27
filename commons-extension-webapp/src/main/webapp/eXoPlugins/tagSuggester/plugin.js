@@ -29,7 +29,24 @@ require(['SHARED/jquery', 'SHARED/tagSuggester'],function($) {
   }
 
   CKEDITOR.plugins.add( 'tagSuggester', {
+    // Register the icons. They must match command names.
+    icons: 'tagSuggester',
+    lang : ['en','fr'],
     init : function( editor ) {
+      editor.addCommand( 'tagSuggester', {
+      // Define the function that will be fired when the command is executed.
+        exec: function( editor ) {
+          document.dispatchEvent(new CustomEvent('test-custom-plugins'));
+        }
+      });
+
+      // Create the toolbar button that executes the above command.
+      editor.ui.addButton( 'tagSuggester', {
+        label: editor.lang.tagSuggester.buttonTooltip,
+        command: 'tagSuggester',
+        toolbar: 'insert'
+      });
+
       var config = editor.config.tagSuggester;
       if (config == undefined) config = {};
       editor.on('mode', function(e) {
