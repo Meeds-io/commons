@@ -27,6 +27,13 @@
                "lowercase",
                "asciifolding"
             ]
+         },
+         "keyword_html_strip":{
+            "type":"custom",
+            "tokenizer": "keyword",
+            "char_filter": [
+               "html_strip"
+            ]
          }
       }
    }
