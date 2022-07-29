@@ -27,6 +27,17 @@
                "lowercase",
                "asciifolding"
             ]
+         },
+         "whitespace_lowercase_asciifolding_html_strip":{
+            "type":"custom",
+            "tokenizer":"whitespace",
+            "filter":[
+               "lowercase",
+               "asciifolding"
+            ],
+            "char_filter": [
+               "html_strip"
+            ]
          }
       }
    }
