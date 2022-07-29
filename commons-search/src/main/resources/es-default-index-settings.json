@@ -28,9 +28,13 @@
                "asciifolding"
             ]
          },
-         "keyword_html_strip":{
+         "whitespace_lowercase_asciifolding_html_strip":{
             "type":"custom",
-            "tokenizer": "keyword",
+            "tokenizer":"whitespace",
+            "filter":[
+               "lowercase",
+               "asciifolding"
+            ],
             "char_filter": [
                "html_strip"
             ]
