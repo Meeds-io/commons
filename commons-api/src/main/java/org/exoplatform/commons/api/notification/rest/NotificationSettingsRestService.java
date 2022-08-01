@@ -29,7 +29,7 @@ import org.exoplatform.services.rest.resource.ResourceContainer;
 import org.exoplatform.services.security.ConversationState;
 
 import io.swagger.annotations.*;
-import io.swagger.jaxrs.PATCH;
+import org.exoplatform.services.rest.http.PATCH;
 
 @Path("notifications/settings")
 @Api(tags = "notifications/settings", value = "notifications/settings", description = "Managing users notifications settings") // NOSONAR
