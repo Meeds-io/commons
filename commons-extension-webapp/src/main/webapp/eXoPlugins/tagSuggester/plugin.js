@@ -36,7 +36,7 @@ require(['SHARED/jquery', 'SHARED/tagSuggester'],function($) {
       editor.addCommand( 'tagSuggester', {
       // Define the function that will be fired when the command is executed.
         exec: function( editor ) {
-          document.dispatchEvent(new CustomEvent('test-custom-plugins'));
+          editor.insertText('#');
         }
       });
 
