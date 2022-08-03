@@ -43,8 +43,8 @@ public class ComparableVersionTest
     };
 
     private static final String[] VERSIONS_NUMBER = {
-        "2.0", "2-1", "2.0.a", "2.0.0.a", "2.0.2", "2.0.123", "2.0.x", "2.1.0", "2.1-a", "2.1b", "2.1-c", "2.1-1", "2.1.0.1",
-        "2.2", "2.123", "11.a2", "11.a11", "11.b2", "11.b11", "11.m2", "11.m11", "11", "11.a", "11b", "11c", "11m"
+        "2.0.0", "2.0.0.a", "2.0.2", "2.0.123", "2.1.0", "2.1.0-a", "2.1.0b", "2.1.0-c", "2.1.0-1", "2.1.0.1",
+        "2.2.0", "2.123", "11.a2", "11.a11", "11.b2", "11.b11", "11.m2", "11.m11", "11", "11.a", "11b", "11c", "11m"
     };
 
     private void checkVersionsOrder( String[] versions )
@@ -99,16 +99,8 @@ public class ComparableVersionTest
     public void testVersionsEqual()
     {
         checkVersionsEqual( "1", "1" );
-        checkVersionsEqual( "1", "1.0" );
-        checkVersionsEqual( "1", "1.0.0" );
-        checkVersionsEqual( "1.0", "1.0.0" );
-        checkVersionsEqual( "1", "1-0" );
-        checkVersionsEqual( "1", "1.0-0" );
-        checkVersionsEqual( "1.0", "1.0-0" );
         checkVersionsEqual( "1a", "1.a" );
         checkVersionsEqual( "1a", "1-a" );
-        checkVersionsEqual( "1a", "1.0-a" );
-        checkVersionsEqual( "1a", "1.0.0-a" );
         checkVersionsEqual( "1.0a", "1.0.a" );
         checkVersionsEqual( "1.0.0a", "1.0.0.a" );
 
@@ -144,7 +136,7 @@ public class ComparableVersionTest
 
         checkVersionsOrder( "1.0", "1.0-1" );
         checkVersionsOrder( "1.0-1", "1.0-2" );
-        checkVersionsOrder( "1.0.0", "1.0-1" );
+        checkVersionsOrder( "1.0.0", "1.0.0-1" );
 
         checkVersionsOrder( "2.0-1", "2.0.1" );
         checkVersionsOrder( "2.0.1-klm", "2.0.1-lmn" );
