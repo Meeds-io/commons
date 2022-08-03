@@ -5,19 +5,21 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.apache.commons.lang.StringUtils;
-
-import org.exoplatform.common.http.HTTPStatus;
 import org.exoplatform.commons.api.settings.ExoFeatureService;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 import org.exoplatform.services.rest.resource.ResourceContainer;
 import org.exoplatform.services.security.ConversationState;
 
-import io.swagger.annotations.*;
 
 @Path("/v1/features")
-@Api(value = "/v1/features", description = "Manages product experimental features") // NOSONAR
+@Tag(name = "/v1/features", description = "Manages product experimental features")
 public class ExoFeatureRest implements ResourceContainer {
 
   private static final Log  LOG = ExoLogger.getLogger(ExoFeatureRest.class);
@@ -32,18 +34,19 @@ public class ExoFeatureRest implements ResourceContainer {
   @GET
   @Produces(MediaType.TEXT_PLAIN)
   @RolesAllowed("users")
-  @ApiOperation(
-      value = "Check if a feature is enabled for a user.",
-      httpMethod = "GET", response = Response.class, produces = "text/plain"
+  @Operation(
+      summary = "Check if a feature is enabled for a user",
+      description = "Check if a feature is enabled for a user",
+      method = "GET"
   )
   @ApiResponses(
-      value = { @ApiResponse(code = HTTPStatus.OK, message = "Request fulfilled"),
-          @ApiResponse(code = HTTPStatus.BAD_REQUEST, message = "Invalid query input"),
-          @ApiResponse(code = HTTPStatus.UNAUTHORIZED, message = "Unauthorized operation"),
-          @ApiResponse(code = HTTPStatus.INTERNAL_ERROR, message = "Internal server error"), }
+      value = { @ApiResponse(responseCode = "200", description = "Request fulfilled"),
+          @ApiResponse(responseCode = "400", description = "Invalid query input"),
+          @ApiResponse(responseCode = "401", description = "Unauthorized operation"),
+          @ApiResponse(responseCode = "500", description = "Internal server error"), }
   )
   public Response isFeatureActiveForUser(
-                                         @ApiParam(value = "Feature name identifier", required = true) @PathParam(
+                                         @Parameter(description = "Feature name identifier", required = true) @PathParam(
                                            "featureName"
                                          ) String featureName) {
     if (StringUtils.isBlank(featureName)) {
