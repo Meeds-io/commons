@@ -4,8 +4,7 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
-import io.swagger.jaxrs.PATCH;
-
+import org.exoplatform.services.rest.http.PATCH;
 import java.util.List;
 
 import javax.annotation.security.RolesAllowed;
