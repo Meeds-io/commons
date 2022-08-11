@@ -9,6 +9,10 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.ArrayUtils;
 
@@ -27,13 +31,12 @@ import org.exoplatform.services.log.Log;
 import org.exoplatform.services.resources.ResourceBundleService;
 import org.exoplatform.services.rest.resource.ResourceContainer;
 import org.exoplatform.services.security.ConversationState;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
-import io.swagger.annotations.*;
 import org.exoplatform.services.rest.http.PATCH;
 
 @Path("notifications/settings")
-@Api(tags = "notifications/settings", value = "notifications/settings", description = "Managing users notifications settings") // NOSONAR
-@RolesAllowed("users")
+@Tag(name = "notifications/settings", description = "Managing users notifications settings")
 public class NotificationSettingsRestService implements ResourceContainer {
 
   private static final String   MAIN_RESOURCE_BUNDLE_NAME = "locale.portlet.notification.UserNotificationPortlet";
@@ -72,22 +75,19 @@ public class NotificationSettingsRestService implements ResourceContainer {
   @Path("{id}")
   @Produces(MediaType.APPLICATION_JSON)
   @RolesAllowed("users")
-  @ApiOperation(
-      value = "Gets all notification settings of a user",
-      httpMethod = "GET",
-      produces = MediaType.APPLICATION_JSON,
-      response = Response.class,
-      notes = "This returns the list of notification settings of a user"
-  )
+  @Operation(
+      summary = "Gets all notification settings of a user",
+      description = "Gets all notification settings of a user",
+      method = "GET")
   @ApiResponses(
       value = {
-          @ApiResponse(code = 200, message = "Request fulfilled"),
-          @ApiResponse(code = 500, message = "Internal server error")
+          @ApiResponse(responseCode = "200", description = "Request fulfilled"),
+          @ApiResponse(responseCode = "500", description = "Internal server error")
       }
   )
   public Response getSettings(
-                              @ApiParam(
-                                  value = "User name that will be used to retrieve its settings. "
+                              @Parameter(
+                                  description = "User name that will be used to retrieve its settings. "
                                       + "If current user is and administrator, it will be able to retrieve settings of all users",
                                   required = true
                               ) @PathParam("id") String username) {
@@ -194,32 +194,31 @@ public class NotificationSettingsRestService implements ResourceContainer {
   @PATCH
   @Path("{id}/plugin/{pluginId}")
   @RolesAllowed("users")
-  @ApiOperation(
-      value = "Change enablement status of Channel for a user",
-      httpMethod = "PATCH",
-      response = Response.class
-  )
+  @Operation(
+      summary = "Change enablement status of Channel for a user",
+      description = "Change enablement status of Channel for a user",
+      method = "PATCH")
   @ApiResponses(
       value = {
-          @ApiResponse(code = 200, message = "Request fulfilled"),
-          @ApiResponse(code = 500, message = "Internal server error")
+          @ApiResponse(responseCode = "200", description = "Request fulfilled"),
+          @ApiResponse(responseCode = "500", description = "Internal server error")
       }
   )
   public Response saveSetting(
-                              @ApiParam(
-                                  value = "User name that will be used to save its settings.",
+                              @Parameter(
+                                  description = "User name that will be used to save its settings.",
                                   required = true
                               ) @PathParam("id") String username,
-                              @ApiParam(
-                                  value = "Notification plugin Id",
+                              @Parameter(
+                                  description = "Notification plugin Id",
                                   required = true
                               ) @PathParam("pluginId") String pluginId,
-                              @ApiParam(
-                                  value = "Notification digest to use for corresponding plugin Id",
+                              @Parameter(
+                                  description = "Notification digest to use for corresponding plugin Id",
                                   required = true
                               ) @FormParam("channels") String channels,
-                              @ApiParam(
-                                  value = "Notification digest to use for corresponding plugin Id",
+                              @Parameter(
+                                  description = "Notification digest to use for corresponding plugin Id",
                                   required = true
                               ) @FormParam("digest") String digest) {
 
@@ -266,28 +265,27 @@ public class NotificationSettingsRestService implements ResourceContainer {
   @PATCH
   @Path("{id}/channel/{channelId}")
   @RolesAllowed("users")
-  @ApiOperation(
-      value = "Change enablement status of Channel for a user",
-      httpMethod = "PATCH",
-      response = Response.class
-  )
+  @Operation(
+      summary = "Change enablement status of Channel for a user",
+      description = "Change enablement status of Channel for a user",
+      method = "PATCH")
   @ApiResponses(
       value = {
-          @ApiResponse(code = 200, message = "Request fulfilled"),
-          @ApiResponse(code = 500, message = "Internal server error")
+          @ApiResponse(responseCode = "200", description = "Request fulfilled"),
+          @ApiResponse(responseCode = "500", description = "Internal server error")
       }
   )
   public Response saveActiveStatus(
-                                   @ApiParam(
-                                       value = "User name that will be used to save its settings.",
+                                   @Parameter(
+                                       description = "User name that will be used to save its settings.",
                                        required = true
                                    ) @PathParam("id") String username,
-                                   @ApiParam(
-                                       value = "Channel Id like MAIL_CHANNEL, WEB_CHANNEL...",
+                                   @Parameter(
+                                       description = "Channel Id like MAIL_CHANNEL, WEB_CHANNEL...",
                                        required = true
                                    ) @PathParam("channelId") String channelId,
-                                   @ApiParam(
-                                       value = "Enable/disable a channel",
+                                   @Parameter(
+                                       description = "Enable/disable a channel",
                                        required = true
                                    ) @FormParam("enable") boolean enable) {
 

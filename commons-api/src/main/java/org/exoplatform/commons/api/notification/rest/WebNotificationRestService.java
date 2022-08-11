@@ -1,9 +1,10 @@
 package org.exoplatform.commons.api.notification.rest;
 
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.exoplatform.services.rest.http.PATCH;
 import java.util.List;
 
@@ -34,6 +35,7 @@ import org.exoplatform.services.security.ConversationState;
  */
 
 @Path("notifications/webNotifications")
+@Tag(name = "notifications/webNotifications", description = "Manage web notifications")
 public class WebNotificationRestService implements ResourceContainer {
 
   private static final Log       LOG         = ExoLogger.getLogger(WebNotificationRestService.class);
@@ -47,10 +49,13 @@ public class WebNotificationRestService implements ResourceContainer {
   @GET
   @RolesAllowed("users")
   @Produces(MediaType.APPLICATION_JSON)
-  @ApiOperation(value = "Get notifications list", httpMethod = "GET", response = Response.class, notes = "This gets the list of the notifications.")
-  @ApiResponses(value = { @ApiResponse(code = 200, message = "Notifications list returned"),
-      @ApiResponse(code = 404, message = "Notifications list not found"),
-      @ApiResponse(code = 500, message = "Internal server error") })
+  @Operation(
+          summary = "Get notifications list",
+          description = "This gets the list of the notifications",
+          method = "GET")
+  @ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Notifications list returned"),
+      @ApiResponse(responseCode = "404", description = "Notifications list not found"),
+      @ApiResponse(responseCode = "500", description = "Internal server error") })
   public Response getNotifications() throws Exception {
     int maxItemsInPopover = NotificationMessageUtils.getMaxItemsInPopover();
     JSONArray notificationsJsonArray = new JSONArray();
@@ -75,11 +80,16 @@ public class WebNotificationRestService implements ResourceContainer {
   @Path("{id}")
   @Consumes(MediaType.TEXT_PLAIN)
   @RolesAllowed("users")
-  @ApiOperation(value = "Update notification", httpMethod = "PATCH", response = Response.class, notes = "Perform some patch operations on notifications")
-  @ApiResponses(value = { @ApiResponse(code = 200, message = "Notification updated"),
-      @ApiResponse(code = 400, message = "Invalid query input"), @ApiResponse(code = 500, message = "Internal server error") })
-  public Response updateNotifications(@ApiParam(value = "operation", required = true) String operation,
-                                     @ApiParam(value = "id", required = true) @PathParam("id") String notificationId) {
+  @Operation(
+          summary = "Update notification",
+          description = "Perform some patch operations on notifications",
+          method = "PATCH")
+  @ApiResponses(value = {
+          @ApiResponse(responseCode = "200", description = "Notification updated"),
+          @ApiResponse(responseCode = "400", description = "Invalid query input"),
+          @ApiResponse(responseCode = "500", description = "Internal server error") })
+  public Response updateNotifications(@Parameter(description = "notification operation", required = true) String operation,
+                                      @Parameter(description = "notification id", required = true) @PathParam("id") String notificationId) {
 
     String currentUser = ConversationState.getCurrent().getIdentity().getUserId();
     try {
