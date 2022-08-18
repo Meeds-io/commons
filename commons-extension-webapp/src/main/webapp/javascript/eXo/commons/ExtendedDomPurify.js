@@ -20,7 +20,7 @@
   let ExtendedDomPurify = function() {
   };
   ExtendedDomPurify.prototype.purify = function(content) {
-    const pureHtml = DOMPurify.sanitize(Autolinker.link(content, { newWindow: true }), {
+    const pureHtml = DOMPurify.sanitize(Autolinker.link(content, { newWindow: true, email: false }), {
       USE_PROFILES: {
         html: true,
         SAFE_FOR_TEMPLATES: true,
