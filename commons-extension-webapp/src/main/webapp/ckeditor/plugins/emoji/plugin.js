@@ -565,7 +565,7 @@
 
 
 	CKEDITOR.plugins.add( 'emoji', {
-		requires: 'textmatch,ajax,panelbutton,floatpanel',
+		requires: 'autocomplete,textmatch,ajax,panelbutton,floatpanel',
 		lang: 'cs,da,de,de-ch,el,en,en-au,et,fa,fr,gl,hr,hu,it,nl,pl,pt-br,sk,sr,sr-latn,sv,tr,uk,zh,zh-cn', // %REMOVE_LINE_CORE%
 		icons: 'emoji',
 		hidpi: true,
@@ -608,7 +608,23 @@
 				var emojiList = editor._.emoji.list,
 					charactersToStart = editor.config.emoji_minChars === undefined ? 2 : editor.config.emoji_minChars;
 
-			
+				if ( editor.status !== 'ready' ) {
+					editor.once( 'instanceReady', initPlugin );
+				} else {
+					initPlugin();
+				}
+
+				// HELPER FUNCTIONS:
+
+				function initPlugin() {
+					editor._.emoji.autocomplete = new CKEDITOR.plugins.autocomplete( editor, {
+						textTestCallback: getTextTestCallback(),
+						dataCallback: dataCallback,
+						itemTemplate: '<li data-id="{id}" class="cke_emoji-suggestion_item"><span>{symbol}</span> {name}</li>',
+						outputTemplate: '{symbol}'
+					} );
+				}
+
 				function getTextTestCallback() {
 					return function( range ) {
 						if ( !range.collapsed ) {
