@@ -556,6 +556,7 @@ Controller = (function() {
   };
 
   Controller.prototype._lookUp = function(query) {
+    this.view.showLabel('InProgress');
     var _callback;
     _callback = function(queryCBId, data) {
       if (queryCBId !== this.expectedQueryCBId) {
@@ -564,7 +565,7 @@ Controller = (function() {
       if (data && data.length > 0) {
         return this.renderView(this.constructor.arrayToDefaultHash(data));
       } else {
-        return this.view.hide();
+        return this.view.showLabel('NotFound');
       }
     };
     this.expectedQueryCBId = this._generateQueryCBId();
@@ -1117,6 +1118,14 @@ View = (function() {
       clearTimeout(this.timeoutID);
       return this.timeoutID = setTimeout(callback, time);
     }
+  };
+
+  View.prototype.showLabel = function (key) {
+    const label = eXo.i18n.I18NMessage[key];
+    const data = `<div style='padding: 5px 10px;'>${label}</div>`;
+    this.$el.find('ul').empty();
+    this.$el.find('ul').append(data);
+    this.show();
   };
 
   View.prototype.render = function(list) {
