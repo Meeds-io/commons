@@ -9,7 +9,11 @@ CKEDITOR.plugins.add( 'formatOption', {
       exec: function() {
         const toolbarWrapper = document.getElementsByClassName("cke_toolgroup");
         toolbarWrapper[0].classList.toggle("fullToolbar");
-        document.dispatchEvent(new CustomEvent('editors-options-opened'));
+        if (toolbarWrapper[0].classList.contains('fullToolbar')) {
+          document.dispatchEvent(new CustomEvent('editors-options-opened', {detail: 'displayFormatOptions'} ));
+        } else {
+          document.dispatchEvent(new CustomEvent('editors-options-opened', {detail: 'displayRichOptions'} ));
+        }
       }
     });
 
