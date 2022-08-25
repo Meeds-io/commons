@@ -670,6 +670,7 @@
 			editor.addCommand( 'insertEmoji', {
 				exec: function( editor, data ) {
 					editor.insertHtml( data.emojiText );
+					document.dispatchEvent(new CustomEvent('editor-option-added', {detail: 'useEmoji'}));
 				}
 			} );
 
