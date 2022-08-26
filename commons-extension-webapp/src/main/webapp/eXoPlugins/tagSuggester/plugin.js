@@ -37,6 +37,7 @@ require(['SHARED/jquery', 'SHARED/tagSuggester'],function($) {
       // Define the function that will be fired when the command is executed.
         exec: function( editor ) {
           editor.insertText('#');
+          document.dispatchEvent(new CustomEvent('editor-option-added', {detail: 'useHash'}));
         }
       });
 
