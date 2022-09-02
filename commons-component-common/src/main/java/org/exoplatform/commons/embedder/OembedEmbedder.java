@@ -141,10 +141,10 @@ public class OembedEmbedder extends AbstractEmbedder {
         mediaObject.setThumbnailUrl(jsonObject.getString(EMBED_THUMBNAIL));
       }
       if (jsonObject.has(EMBED_THUMBNAIL_HEIGHT)) {
-        mediaObject.setThumbnailHeight(jsonObject.getString(EMBED_THUMBNAIL_HEIGHT));
+        mediaObject.setThumbnailHeight(String.valueOf(jsonObject.getInt(EMBED_THUMBNAIL_HEIGHT)));
       }
       if (jsonObject.has(EMBED_THUMBNAIL_WIDTH)) {
-        mediaObject.setThumbnailWidth(jsonObject.getString(EMBED_THUMBNAIL_WIDTH));
+        mediaObject.setThumbnailWidth(String.valueOf(jsonObject.getInt(EMBED_THUMBNAIL_WIDTH)));
       }
 
       if ("Flickr".equals(mediaObject.getProvider())) {
