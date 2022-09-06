@@ -9,7 +9,7 @@
   </parent>
   <groupId>org.exoplatform.commons</groupId>
   <artifactId>commons</artifactId>
-  <version>6.3.x-SNAPSHOT</version>
+  <version>6.3.1-RC02</version>
   <packaging>pom</packaging>
   <name>eXo PLF:: Commons</name>
   <modules>
@@ -32,7 +32,7 @@
     <connection>scm:git:git://github.com/meeds-io/commons.git</connection>
     <developerConnection>scm:git:git@github.com:meeds-io/commons.git</developerConnection>
     <url>https://github.com/meeds-io/commons</url>
-    <tag>HEAD</tag>
+    <tag>6.3.1-RC02</tag>
   </scm>
   <properties>
     <!-- **************************************** -->
