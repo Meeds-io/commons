@@ -67,28 +67,6 @@ CKEDITOR.editorConfig = function( config ){
   		['Styles','Format','Font','FontSize','-','Maximize']
   	] ;
 	
-	config.toolbar_CompleteWCM = [
-		['Source','Templates'],
-		['Cut','Copy','Paste','PasteText','PasteFromWord','-','Find','Replace','SelectAll','-','Undo','Redo'],
-		['Flash','Table','SpecialChar', 'content.btn', 'Image'], 		['Bold','Italic','Underline','Strike','-','JustifyLeft','JustifyCenter','JustifyRight','JustifyBlock','-','NumberedList','BulletedList','-','TextColor','BGColor','-','RemoveFormat'],
-		['Link','insertPortalLink.btn','Unlink','Anchor'],		
-		['Styles','Format','Font','FontSize', '-' ,'Maximize']
-	] ;
-	
-	config.toolbar_BasicWCM = [
-		['Source','-','Bold','Italic','Underline','Strike'],
-    ['-','NumberedList','BulletedList','Outdent','Indent'],
-		['JustifyLeft','JustifyCenter','JustifyRight','JustifyBlock','Blockquote'],
-		['-','Link','Unlink','insertPortalLink.btn','content.btn', 'Image'],
-    ['-','Maximize','ShowBlocks','Styles','Format','Font','FontSize']
-	] ;
-
-	config.toolbar_SuperBasicWCM = [
-		   ['Source','-','Bold','Italic','Underline'],
-		   ['-','JustifyLeft','JustifyCenter','JustifyRight','JustifyBlock'],
-		   ['-','Link','Unlink','insertPortalLink.btn','content.btn', 'Image'],
-	] ;
-
 	config.toolbar_InlineEdit = [
 		['Cut','Copy','Paste','PasteText','PasteFromWord','-','Find','Replace','SelectAll','-','Undo','Redo'],
 		['Flash','Table','SpecialChar', 'content.btn', 'Image'],
