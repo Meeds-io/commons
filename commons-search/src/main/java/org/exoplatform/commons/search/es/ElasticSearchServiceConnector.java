@@ -548,12 +548,13 @@ public class ElasticSearchServiceConnector extends SearchServiceConnector {
   protected String getMetadataQuery(List<ElasticSearchFilter> filters) {
 
     if (filters == null) return "";
+    StringBuilder metaQuery= new StringBuilder();
     for (ElasticSearchFilter filter: filters) {
       if (filter.getType().equals(ElasticSearchFilterType.FILTER_MATADATAS)) {
-        return filter.getValue();
+        metaQuery.append(filter.getValue());
       }
     }
-    return "";
+    return metaQuery.toString();
   }
 
   private String getFilter(ElasticSearchFilter filter) {
