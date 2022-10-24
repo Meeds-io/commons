@@ -77,6 +77,19 @@
   </component>
 
   <component>
+    <key>DigestMailNotificationFeatureProperties</key>
+    <type>org.exoplatform.container.ExtendedPropertyConfigurator</type>
+    <init-params>
+      <properties-param>
+        <name>DigestMailNotificationFeatureProperties</name>
+        <description>Mail Digest Feature enablement flag</description>
+        <property name="exo.feature.digestMailNotification.enabled"
+                  value="${exo.feature.digestMailNotification.enabled:false}"/>
+      </properties-param>
+    </init-params>
+  </component>
+
+  <component>
     <key>org.exoplatform.commons.embedder.YoutubeEmbedder</key>
     <type>org.exoplatform.commons.embedder.YoutubeEmbedder</type>
     <init-params>
