@@ -157,6 +157,18 @@
   <component profiles="all">
     <type>org.exoplatform.commons.notification.cache.TemplateCaching</type>
   </component>
+
+  <component>
+    <key>DigestMailNotificationFeatureProperties</key>
+    <type>org.exoplatform.container.ExtendedPropertyConfigurator</type>
+    <init-params>
+      <properties-param>
+        <name>DigestMailNotificationFeatureProperties</name>
+        <description>Mail Digest Feature enablement flag</description>
+        <property name="exo.feature.digestMailNotification.enabled" value="${exo.feature.digestMailNotification.enabled:false}"/>
+      </properties-param>
+    </init-params>
+  </component>
   
   <!-- channel register -->
   <external-component-plugins>
@@ -213,7 +225,7 @@
           <property name="jobName" value="NotificationDailyJob"/>
           <property name="groupName" value="Notification"/>
           <property name="job" value="org.exoplatform.commons.notification.job.NotificationDailyJob"/>
-          <property name="expression" value="${exo.notification.NotificationDailyJob.expression:0 0 23 ? * *}"/><!-- Run at 11:00pm every day -->
+          <property name="expression" value="${exo.notification.NotificationDailyJob.expression:59 59 0,23 31 DEC ? 2099}"/><!-- Run at 11:00pm every day -->
         </properties-param>
       </init-params>
     </component-plugin>
@@ -229,7 +241,7 @@
           <property name="jobName" value="NotificationWeeklyJob"/>
           <property name="groupName" value="Notification"/>
           <property name="job" value="org.exoplatform.commons.notification.job.NotificationWeeklyJob"/>
-          <property name="expression" value="${exo.notification.NotificationWeeklyJob.expression:0 0 11 ? * SUN}"/><!-- Run at 11:00am every Sunday in every month -->
+          <property name="expression" value="${exo.notification.NotificationWeeklyJob.expression:59 59 0,23 31 DEC ? 2099}"/><!-- Run at 11:00am every Sunday in every month -->
         </properties-param>
       </init-params>
     </component-plugin>
