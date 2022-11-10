@@ -121,10 +121,7 @@ public class NotificationPluginUtils {
   }
   
   public static String getTo(String to) {
-    if (to.indexOf("@") < 0) {
-      return getEmailFormat(to);
-    }
-    return to;
+    return getEmailFormat(to);
   }
 
   /**
