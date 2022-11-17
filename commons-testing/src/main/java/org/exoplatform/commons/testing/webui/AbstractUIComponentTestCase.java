@@ -23,7 +23,7 @@ import org.exoplatform.webui.core.UIComponent;
 /**
  * Convenience TestCase made to test UIComponent classes.
  * Creates a new UIComponent for each call to {@link #setUp()}
- * @param T type of the UIComponent
+ * @param <T> type of the UIComponent
  * @author <a href="mailto:patrice.lamarque@exoplatform.com">Patrice Lamarque</a>
  * @version $Revision$
  */
