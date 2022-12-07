@@ -17,6 +17,15 @@ public class ImageResizeServiceImpl implements ImageResizeService {
     }
     Scalr.Method resizeMethod = ultraQuality ? Scalr.Method.ULTRA_QUALITY : Scalr.Method.QUALITY;
     BufferedImage bufferedImage = toBufferedImage(image);
+    int originWidth = bufferedImage.getWidth();
+    int originHeight = bufferedImage.getHeight();
+
+    if (width>originWidth || height>originHeight) {
+      //we don't want to increase image size, so return original image
+      return image;
+    }
+
+
     if (width == 0) {
       bufferedImage = Scalr.resize(bufferedImage, resizeMethod, Scalr.Mode.FIT_TO_HEIGHT, width, height, Scalr.OP_ANTIALIAS);
     } else if (height == 0) {
@@ -24,14 +33,18 @@ public class ImageResizeServiceImpl implements ImageResizeService {
     } else if (fitExact) {
       bufferedImage = Scalr.resize(bufferedImage, resizeMethod, Scalr.Mode.FIT_EXACT, width, height, Scalr.OP_ANTIALIAS);
     } else {
-      int originWidth = bufferedImage.getWidth();
-      int originHeight = bufferedImage.getHeight();
-      Scalr.Mode fitMode =
-                         originWidth > originHeight ? Scalr.Mode.FIT_TO_HEIGHT
-                                                    : originHeight > originWidth ? Scalr.Mode.FIT_TO_WIDTH : Scalr.Mode.AUTOMATIC;
+
+      Scalr.Mode fitMode = width > height ? Scalr.Mode.FIT_TO_WIDTH : Scalr.Mode.FIT_TO_HEIGHT;
       bufferedImage = Scalr.resize(bufferedImage, resizeMethod, fitMode, width, height, Scalr.OP_ANTIALIAS);
     }
-    return toByteArray(bufferedImage);
+
+    byte[] response = toByteArray(bufferedImage);
+    if (response.length > image.length) {
+      //if the original image is smaller in weight from the resized image, we must keep the original image
+      return image;
+    } else {
+      return response;
+    }
   }
 
   private BufferedImage toBufferedImage(byte[] imageBytes) throws IOException {
