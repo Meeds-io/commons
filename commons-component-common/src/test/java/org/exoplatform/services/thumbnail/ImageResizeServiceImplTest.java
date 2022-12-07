@@ -17,16 +17,20 @@ public class ImageResizeServiceImplTest {
   private ImageResizeService imageResizeService;
 
   private byte[]             testImageContent;
+  private byte[]             testVerticalImageContent;
 
   @Before
   public void setUp() throws Exception {
     this.imageResizeService = new ImageResizeServiceImpl();
     File file = new File(getClass().getClassLoader().getResource("images/testresize.jpg").getFile());
     testImageContent = Files.readAllBytes(file.toPath());
+
+    File fileVertical = new File(getClass().getClassLoader().getResource("images/testVerticalresize.jpg").getFile());
+    testVerticalImageContent = Files.readAllBytes(fileVertical.toPath());
   }
 
   @Test
-  public void scaleImage() throws Exception {
+  public void scaleHorizontaleImage() throws Exception {
     byte[] resizedImage = imageResizeService.scaleImage(testImageContent, 0, 0, false, false);
     BufferedImage bufferedImage = toBufferedImage(resizedImage);
     assertTrue(resizedImage.length > 0);
@@ -67,6 +71,74 @@ public class ImageResizeServiceImplTest {
     assertNotEquals(15, bufferedImage.getHeight());
   }
 
+  @Test
+  public void scaleLandscapeToLandscapeSizeImage() throws Exception {
+
+    //original image is landscape
+    //target size is landscape
+    //We must fit in width
+    byte[] resizedImage = imageResizeService.scaleImage(testImageContent, 150, 80, false, true);
+    assertTrue(resizedImage.length > 0);
+    BufferedImage bufferedImage = toBufferedImage(resizedImage);
+    assertNotEquals(80, bufferedImage.getHeight());
+    assertEquals(150, bufferedImage.getWidth());
+
+  }
+
+  @Test
+  public void scaleLandscapeToPortraitSizeImage() throws Exception {
+
+    //original image is landscape
+    //target size is portrait
+    //We must fit in height
+    byte[] resizedImage = imageResizeService.scaleImage(testImageContent, 10, 50, false, true);
+    assertTrue(resizedImage.length > 0);
+    BufferedImage bufferedImage = toBufferedImage(resizedImage);
+    assertEquals(50, bufferedImage.getHeight());
+    assertNotEquals(10, bufferedImage.getWidth());
+
+  }
+
+  @Test
+  public void scalePortraitToLandscapeSizeImage() throws Exception {
+
+    //original image is portrait
+    //target size is landscape
+    //We must fit in width
+    byte[] resizedImage = imageResizeService.scaleImage(testVerticalImageContent, 150, 80, false, true);
+    assertTrue(resizedImage.length > 0);
+    BufferedImage bufferedImage = toBufferedImage(resizedImage);
+    assertNotEquals(80, bufferedImage.getHeight());
+    assertEquals(150, bufferedImage.getWidth());
+
+  }
+
+  @Test
+  public void scalePortraitToPortraitSizeImage() throws Exception {
+
+    //original image is portrait
+    //target size is portrait
+    //We must fit in height
+    byte[] resizedImage = imageResizeService.scaleImage(testVerticalImageContent, 10, 50, false, true);
+    assertTrue(resizedImage.length > 0);
+    BufferedImage bufferedImage = toBufferedImage(resizedImage);
+    assertEquals(50, bufferedImage.getHeight());
+    assertNotEquals(10, bufferedImage.getWidth());
+
+  }
+
+  @Test
+  public void testShouldNotIncreaseSizeImage() throws Exception {
+
+
+    byte[] resizedImage = imageResizeService.scaleImage(testImageContent, 2000, 1000, false, true);
+    assertTrue(resizedImage.length > 0);
+    BufferedImage bufferedImage = toBufferedImage(resizedImage);
+    assertEquals(resizedImage.length, testImageContent.length);
+    assertEquals(427, bufferedImage.getHeight());
+    assertEquals(640, bufferedImage.getWidth());
+
+  }
   private BufferedImage toBufferedImage(byte[] content) throws IOException {
     ByteArrayInputStream bis = new ByteArrayInputStream(content);
     return ImageIO.read(bis);
