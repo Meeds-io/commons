@@ -24,37 +24,39 @@ import java.util.Map;
 public class PluginConfig {
   public static final String  DEFAULT_SRC_RESOURCE_BUNDLE_KEY = "locale.notification.template.Notification";
 
-  public static final String SUBJECT_KEY      = "subject";
+  public static final String  SUBJECT_KEY                     = "subject";
 
-  public static final String DIGEST_KEY       = "digest";
+  public static final String  DIGEST_KEY                      = "digest";
 
-  public static final String DIGEST_ONE_KEY   = "digest.one";
+  public static final String  DIGEST_ONE_KEY                  = "digest.one";
 
-  public static final String DIGEST_THREE_KEY = "digest.three";
+  public static final String  DIGEST_THREE_KEY                = "digest.three";
 
-  public static final String DIGEST_MORE_KEY  = "digest.more";
+  public static final String  DIGEST_MORE_KEY                 = "digest.more";
 
-  public static final String FOOTER_KEY       = "footer";
+  public static final String  FOOTER_KEY                      = "footer";
 
-  private boolean      isChildPlugin = false;
+  private boolean             isChildPlugin                   = false;
 
-  private String       pluginId;
+  private String              pluginId;
 
-  private String       resourceBundleKey;
+  private String              resourceBundleKey;
 
-  private String       order         = "0";
+  private String              order                           = "0";
 
-  private String       groupId       = "other";
+  private String              groupId                         = "other";
 
-  private List<String> defaultConfig = new ArrayList<String>();
+  private List<String>        defaultConfig                   = new ArrayList<String>();
 
-  private GroupConfig  groupConfig;
-  
-  private TemplateConfig templateConfig;
+  private GroupConfig         groupConfig;
 
-  private String       bundlePath;
-  
-  private Map<String, String> keyMapping = new HashMap<String, String>();
+  private TemplateConfig      templateConfig;
+
+  private String              bundlePath;
+
+  private List<String>        additionalChannels              = new ArrayList<>();
+
+  private Map<String, String> keyMapping                      = new HashMap<String, String>();
 
   public PluginConfig() {
     templateConfig = new TemplateConfig();
@@ -131,21 +133,21 @@ public class PluginConfig {
   }
 
   /**
-    * @return the isChildPlugin
-    */
-   public boolean isChildPlugin() {
-     return isChildPlugin;
-   }
-  
-   /**
+   * @return the isChildPlugin
+   */
+  public boolean isChildPlugin() {
+    return isChildPlugin;
+  }
+
+  /**
     * @param isChildPlugin the isChildPlugin to set
     * return the PluginConfig
-    */
-   public PluginConfig isChildPlugin(boolean isChildPlugin) {
-     this.isChildPlugin = isChildPlugin;
-     return this;
+   */
+  public PluginConfig isChildPlugin(boolean isChildPlugin) {
+    this.isChildPlugin = isChildPlugin;
+    return this;
   }
-  
+
   /**
    * @return the groupConfig
    */
@@ -176,7 +178,7 @@ public class PluginConfig {
   public void setBundlePath(String bundlePath) {
     this.bundlePath = bundlePath;
   }
-  
+
   /**
    * @return the keyMapping
    */
@@ -202,7 +204,7 @@ public class PluginConfig {
     }
     return defaultValue;
   }
-  
+
   /**
    * @return the templateConfig
    */
@@ -215,6 +217,18 @@ public class PluginConfig {
    */
   public void setTemplateConfig(TemplateConfig templateConfig) {
     this.templateConfig = templateConfig;
+  }
+
+  public List<String> getAdditionalChannels() {
+    return additionalChannels;
+  }
+
+  public void setAdditionalChannels(List<String> additionalChannels) {
+    this.additionalChannels = additionalChannels;
+  }
+
+  public void addAdditionalChannel(String channel) {
+    this.additionalChannels.add(channel);
   }
 
 }

@@ -29,6 +29,7 @@ import org.exoplatform.container.ExoContainerContext;
  * Jan 19, 2015  
  */
 public final class DefaultLifecycle extends AbstractNotificationLifecycle {
+
   @Override
   public void process(NotificationContext ctx, String userId) {
     getChannel().dispatch(ctx, userId);
@@ -37,24 +38,23 @@ public final class DefaultLifecycle extends AbstractNotificationLifecycle {
   @Override
   public void process(NotificationContext ctx, String... userIds) {
     NotificationInfo notification = ctx.getNotificationInfo();
+    String channelId = getChannel().getId();
     String pluginId = notification.getKey().getId();
-    UserSettingService userService = (UserSettingService) ExoContainerContext.getCurrentContainer()
-                                                                             .getComponentInstanceOfType(UserSettingService.class);
-    
+    UserSettingService userService = ExoContainerContext.getService(UserSettingService.class);
     for (String userId : userIds) {
       UserSetting userSetting = userService.get(userId);
-      //check channel active for user & user enabled
-      if (!userSetting.isEnabled() || !userSetting.isChannelActive(getChannel().getId())) {
+      if (!userSetting.isEnabled()
+          || !userSetting.isChannelGloballyActive(channelId)
+          || !userSetting.isActive(channelId, pluginId)) {
         continue;
       }
-      
-      if (userSetting.isActive(getChannel().getId(), pluginId)) {
-        process(ctx.setNotificationInfo(notification.clone(true).setTo(userId)), userId);
-      }
+      process(ctx.setNotificationInfo(notification.clone(true).setTo(userId)), userId);
     }
   }
-  
+
   @Override
   public void send(NotificationContext ctx) {
+    // Default empty implementation
   }
+
 }
