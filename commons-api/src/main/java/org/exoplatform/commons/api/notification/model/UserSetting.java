@@ -23,7 +23,7 @@ import java.util.Map.Entry;
  * User setting notification
  */
 public class UserSetting {
-  public static String EMAIL_CHANNEL = "MAIL_CHANNEL";
+  public static final String EMAIL_CHANNEL = "MAIL_CHANNEL";
 
   public enum FREQUENCY {
     INSTANTLY, DAILY, WEEKLY;
@@ -38,164 +38,113 @@ public class UserSetting {
     }
   }
 
-  private List<String> channelActives;
+  private Set<String>               channelActives;
 
-  private Calendar     lastUpdateTime;
+  private Calendar                  lastUpdateTime;
 
-  private String       userId;
+  private String                    userId;
 
   private Map<String, List<String>> channelPlugins;
 
-  private List<String> dailyPlugins;
+  private List<String>              dailyPlugins;
 
-  private List<String> weeklyPlugins;
+  private List<String>              weeklyPlugins;
 
-  private long lastReadDate = 0;
-  
-  private boolean isEnabled = true;
+  private long                      lastReadDate = 0;
+
+  private boolean                   isEnabled    = true;
 
   public UserSetting() {
-    this.channelActives = new ArrayList<String>();
-    this.channelPlugins = new HashMap<String, List<String>>();
+    this.channelActives = new HashSet<>();
+    this.channelPlugins = new HashMap<>();
     //
-    this.dailyPlugins = new ArrayList<String>();
-    this.weeklyPlugins = new ArrayList<String>();
+    this.dailyPlugins = new ArrayList<>();
+    this.weeklyPlugins = new ArrayList<>();
     this.lastUpdateTime = Calendar.getInstance();
     this.isEnabled = true;
   }
-  
+
   public static UserSetting getInstance() {
     return new UserSetting();
   }
 
-  /**
-   * Get the last read date
-   * @return
-   */
   public long getLastReadDate() {
     return lastReadDate;
   }
 
-  /**
-   * Set last read date
-   * @param lastReadDate
-   */
   public void setLastReadDate(long lastReadDate) {
     this.lastReadDate = lastReadDate;
   }
 
-  /**
-   * @return
-   */
-  public List<String> getChannelActives() {
-    return channelActives == null ? channelActives = new ArrayList<String>() : channelActives;
-  }
-  
-  /**
-   * @return
-   */
-  public boolean isChannelActive(String channelId) {
-    return channelActives != null && channelActives.contains(channelId);
+  public Set<String> getChannelActives() {
+    if (channelActives == null) {
+      channelActives = new HashSet<>();
+    }
+    return channelActives;
   }
 
-  /**
-   * @param channelId
-   */
+  public boolean isChannelGloballyActive(String channelId) {
+    return isEnabled && channelActives != null && channelActives.contains(channelId);
+  }
+
+  public boolean isChannelActive(String channelId, String pluginId) {
+    return isEnabled && channelPlugins != null && channelPlugins.containsKey(channelId) && channelPlugins.get(channelId).contains(pluginId);
+  }
+
   public void setChannelActive(String channelId) {
-    if (!isChannelActive(channelId)) {
-      if (channelActives == null) {
-        channelActives = new ArrayList<String>();
-        channelActives.add(channelId);
-      } else if (!channelActives.contains(channelId)) {
-        channelActives.add(channelId);
-      }
+    if (channelActives == null) {
+      channelActives = new HashSet<>();
     }
+    channelActives.add(channelId);
   }
 
-  /**
-   * @param channelId
-   */
   public void removeChannelActive(String channelId) {
-    if(isChannelActive(channelId)) {
-      channelActives.remove(channelId);
-    }
+    channelActives.remove(channelId);
   }
-  
-  /**
-   * @param channelActives
-   */
-  public void setChannelActives(List<String> channelActives) {
+
+  public void setChannelActives(Set<String> channelActives) {
     this.channelActives = channelActives;
   }
 
-  /**
-   * @return the userId
-   */
   public String getUserId() {
     return userId;
   }
 
-  /**
-   * @param userId the userId to set
-   */
   public UserSetting setUserId(String userId) {
     this.userId = userId;
     return this;
   }
 
-  /**
-   * @return the lastUpdateTime
-   */
   public Calendar getLastUpdateTime() {
     return lastUpdateTime;
   }
 
-  /**
-   * @param lastUpdateTime the lastUpdateTime to set
-   */
   public UserSetting setLastUpdateTime(Calendar lastUpdateTime) {
     this.lastUpdateTime = lastUpdateTime;
     return this;
   }
 
-  /**
-   * @param channelPlugins the channelPlugins to set
-   */
   public void setAllChannelPlugins(Map<String, List<String>> channelPlugins) {
     this.channelPlugins = channelPlugins;
   }
-  
-  /**
-   * @return the all channelPlugins
-   */
+
   public Map<String, List<String>> getAllChannelPlugins() {
     return channelPlugins;
   }
 
-  /**
-   * @return the channelPlugins
-   */
   public List<String> getPlugins(String channelId) {
-    List<String> channelPlugins = this.channelPlugins.get(channelId);
-    if (channelPlugins == null) {
-      channelPlugins = new ArrayList<String>();
-      this.channelPlugins.put(channelId, channelPlugins);
-    }
-    return channelPlugins;
+    return channelPlugins.computeIfAbsent(channelId, key -> new ArrayList<>());
   }
 
-  /**
-   * @param channelId
-   * @param pluginIds
-   */
   public void setChannelPlugins(String channelId, List<String> pluginIds) {
     this.channelPlugins.put(channelId, pluginIds);
   }
 
   /**
    * Add the pluginId by channel
-   * @param channelId
-   * @param pluginId
+   * 
+   * @param channelId Channel identifier
+   * @param  pluginId Plugin identifier
    */
   public void addChannelPlugin(String channelId, String pluginId) {
     List<String> plugins = getPlugins(channelId);
@@ -203,11 +152,12 @@ public class UserSetting {
       plugins.add(pluginId);
     }
   }
-  
+
   /**
    * remove the pluginId on channel
-   * @param channelId
-   * @param pluginId
+   * 
+   * @param channelId Channel identifier
+   * @param pluginId  Plugin identifier
    */
   public void removeChannelPlugin(String channelId, String pluginId) {
     List<String> plugins = getPlugins(channelId);
@@ -244,9 +194,9 @@ public class UserSetting {
     this.weeklyPlugins = weeklyPlugins;
   }
 
-
   /**
    * @param pluginId the provider's id to add
+   * @param frequencyType {@link FREQUENCY} of notification plugin
    */
   public void addPlugin(String pluginId, FREQUENCY frequencyType) {
     if (frequencyType.equals(FREQUENCY.DAILY)) {
@@ -271,44 +221,37 @@ public class UserSetting {
   }
 
   /**
-   * Checks the user's setting for the channel and the plugin
-   * if it's active, it's instantly including the email channel.
+   * Checks the user's setting for the channel and the plugin if it's active,
+   * it's instantly including the email channel.
    * 
-   * @param pluginId
-   * @return
+   * @param channelId Channel identifier
+   * @param  pluginId Plugin identifier
+   * @return true if active, else false
    */
   public boolean isActive(String channelId, String pluginId) {
-    return (getPlugins(channelId).contains(pluginId));
-  }
-  
-  /**
-   * @param pluginId
-   * @return
-   */
-  public boolean isInDaily(String pluginId) {
-    return (dailyPlugins.contains(pluginId)) ? true : false;
+    return isEnabled && getPlugins(channelId).contains(pluginId);
   }
 
-  /**
-   * @param pluginId
-   * @return
-   */
+  public boolean isInDaily(String pluginId) {
+    return isEnabled && dailyPlugins.contains(pluginId);
+  }
+
   public boolean isInWeekly(String pluginId) {
-    return (weeklyPlugins.contains(pluginId)) ? true : false;
+    return isEnabled && weeklyPlugins.contains(pluginId);
   }
 
   private void addProperty(List<String> providers, String pluginId) {
-    if (providers.contains(pluginId) == false) {
+    if (!providers.contains(pluginId)) {
       providers.add(pluginId);
     }
   }
-  
+
   @Override
-  public UserSetting clone() {
+  public UserSetting clone() { // NOSONAR
     UserSetting setting = getInstance();
-    setting.setChannelActives(new ArrayList<String>(channelActives));
-    setting.setDailyPlugins(new ArrayList<String>(dailyPlugins));
-    setting.setWeeklyPlugins(new ArrayList<String>(weeklyPlugins));
+    setting.setChannelActives(new HashSet<>(channelActives));
+    setting.setDailyPlugins(new ArrayList<>(dailyPlugins));
+    setting.setWeeklyPlugins(new ArrayList<>(weeklyPlugins));
     //
     for (Entry<String, List<String>> entry : channelPlugins.entrySet()) {
       setting.getPlugins(entry.getKey()).addAll(entry.getValue());
@@ -316,7 +259,7 @@ public class UserSetting {
     setting.setUserId(userId);
     return setting;
   }
-  
+
   @Override
   public String toString() {
     return "UserSetting : {userId : " + userId + "}";
@@ -332,21 +275,30 @@ public class UserSetting {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
     UserSetting that = (UserSetting) o;
     return lastReadDate == that.lastReadDate &&
-            isEnabled == that.isEnabled &&
-            Objects.equals(channelActives, that.channelActives) &&
-            Objects.equals(lastUpdateTime, that.lastUpdateTime) &&
-            Objects.equals(userId, that.userId) &&
-            Objects.equals(channelPlugins, that.channelPlugins) &&
-            Objects.equals(dailyPlugins, that.dailyPlugins) &&
-            Objects.equals(weeklyPlugins, that.weeklyPlugins);
+        isEnabled == that.isEnabled &&
+        Objects.equals(channelActives, that.channelActives) &&
+        Objects.equals(lastUpdateTime, that.lastUpdateTime) &&
+        Objects.equals(userId, that.userId) &&
+        Objects.equals(channelPlugins, that.channelPlugins) &&
+        Objects.equals(dailyPlugins, that.dailyPlugins) &&
+        Objects.equals(weeklyPlugins, that.weeklyPlugins);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(channelActives, lastUpdateTime, userId, channelPlugins, dailyPlugins, weeklyPlugins, lastReadDate, isEnabled);
+    return Objects.hash(channelActives,
+                        lastUpdateTime,
+                        userId,
+                        channelPlugins,
+                        dailyPlugins,
+                        weeklyPlugins,
+                        lastReadDate,
+                        isEnabled);
   }
 }
