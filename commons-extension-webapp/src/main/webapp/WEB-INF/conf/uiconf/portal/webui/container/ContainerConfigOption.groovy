@@ -155,5 +155,10 @@ import org.exoplatform.webui.core.model.SelectItemOption ;
         "</container>",
         "OneRow2Column1RowContainerLayout")) ;
   templates.add(mixed);
+  SelectItemCategory table = new SelectItemCategory("table");
+    table.addSelectItemOption(new SelectItemOption("simpleTable",
+        "<container template=\"system:/groovy/portal/webui/container/UISimpleTableContainer.gtmpl\"></container>",
+        "SimpleTableContainerLayout"));
+  templates.add(table)
 
 return templates;
