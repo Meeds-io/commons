@@ -16,6 +16,9 @@
  */
 package org.exoplatform.commons.notification.lifecycle;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.exoplatform.commons.api.notification.NotificationContext;
 import org.exoplatform.commons.api.notification.channel.template.AbstractTemplateBuilder;
 import org.exoplatform.commons.api.notification.lifecycle.AbstractNotificationLifecycle;
@@ -31,9 +34,6 @@ import org.exoplatform.commons.notification.channel.MailChannel;
 import org.exoplatform.commons.utils.CommonsUtils;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Created by The eXo Platform SAS
@@ -56,25 +56,25 @@ public class MailLifecycle extends AbstractNotificationLifecycle {
     String pluginId = notification.getKey().getId();
     UserSettingService userService = CommonsUtils.getService(UserSettingService.class);
     
-    List<String> userIdPendings = new ArrayList<String>();
+    List<String> userIdPendings = new ArrayList<>();
     for (String userId : userIds) {
       UserSetting userSetting = userService.get(userId);
-      //check channel active for user & user enabled
-      if (!userSetting.isEnabled() || !userSetting.isChannelActive(MailChannel.ID)) {
+      if (!userSetting.isEnabled()
+          || !userSetting.isChannelGloballyActive(MailChannel.ID)) {
         continue;
       }
       // check plugin active for user
       if (userSetting.isActive(MailChannel.ID, pluginId)) {
         send(ctx.setNotificationInfo(notification.clone().setTo(userId)));
       }
-      //handles the daily or weekly
+      // handles the daily or weekly
       if (userSetting.isInDaily(pluginId) || userSetting.isInWeekly(pluginId)) {
         userIdPendings.add(userId);
         setValueSendbyFrequency(notification, userSetting, userId);
       }
     }
 
-    if (userIdPendings.size() > 0 || notification.isSendAll()) {
+    if (!userIdPendings.isEmpty() || notification.isSendAll()) {
       store(notification);
     }
   }
@@ -125,7 +125,7 @@ public class MailLifecycle extends AbstractNotificationLifecycle {
     if (builder != null) {
       MessageInfo msg = builder.buildMessage(ctx);
       if (msg != null) {
-        if (NotificationUtils.isValidEmailAddresses(msg.getTo()) == true) {
+        if (NotificationUtils.isValidEmailAddresses(msg.getTo())) {
           try {
             CommonsUtils.getService(QueueMessage.class).sendMessage(msg);
           } catch (Exception e) {

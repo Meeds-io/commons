@@ -54,6 +54,7 @@ import org.exoplatform.services.organization.OrganizationService;
 import org.exoplatform.services.organization.UserProfile;
 
 public class NotificationServiceImpl extends AbstractService implements NotificationService {
+
   private static final Log                 LOG = ExoLogger.getLogger(NotificationServiceImpl.class);
 
   /** */
@@ -72,7 +73,7 @@ public class NotificationServiceImpl extends AbstractService implements Notifica
   private final ChannelManager             channelManager;
 
   /** */
-  private final OrganizationService          organizationService;
+  private final OrganizationService        organizationService;
 
   public NotificationServiceImpl(ChannelManager channelManager,
                                  UserSettingService userService,
@@ -103,11 +104,11 @@ public class NotificationServiceImpl extends AbstractService implements Notifica
     NotificationContext ctx = NotificationContextImpl.cloneInstance();
     ctx.setNotificationInfo(notification);
     //
-    List<String> userIds = null;
 
     List<AbstractChannel> channels = channelManager.getChannels();
     for (AbstractChannel channel : channels) {
-      if (!CommonsUtils.getService(PluginSettingService.class).isActive(channel.getId(), pluginId)) {
+      PluginSettingService pluginSettingService = CommonsUtils.getService(PluginSettingService.class);
+      if (!pluginSettingService.isActive(channel.getId(), pluginId)) {
         continue;
       }
 
@@ -137,6 +138,7 @@ public class NotificationServiceImpl extends AbstractService implements Notifica
           }
         }
       } else {
+        List<String> userIds;
         if (notification.getSendToUserIds() == null || notification.getSendToUserIds().isEmpty()) {
           LOG.debug("Notification with id '{}' and parameters = '{}' not sent because receivers are empty",
                     notification.getId(),
@@ -200,9 +202,10 @@ public class NotificationServiceImpl extends AbstractService implements Notifica
 
   private void send(NotificationContext context, List<UserSetting> userSettings) {
     final boolean stats = notificationContextFactory.getStatistics().isStatisticsEnabled();
+    String pluginId = context.getNotificationInfo().getKey().getId();
 
     for (UserSetting userSetting : userSettings) {
-      if (!userSetting.isChannelActive(MailChannel.ID) || !userSetting.isEnabled()
+      if (!userSetting.isChannelActive(MailChannel.ID, pluginId) || !userSetting.isEnabled()
           || NotificationUtils.isDeletedMember(userSetting.getUserId())) {
         continue;
       }

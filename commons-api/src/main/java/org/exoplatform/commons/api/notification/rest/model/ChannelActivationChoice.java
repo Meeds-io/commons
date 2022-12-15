@@ -6,13 +6,20 @@ public class ChannelActivationChoice {
 
   private String  pluginId;
 
+  private boolean allowed;
+
   private boolean active;
 
   private boolean channelActive;
 
-  public ChannelActivationChoice(String channelId, String pluginId, boolean active, boolean channelActive) {
+  public ChannelActivationChoice(String channelId,
+                                 String pluginId,
+                                 boolean allowed,
+                                 boolean active,
+                                 boolean channelActive) {
     this.channelId = channelId;
     this.pluginId = pluginId;
+    this.allowed = allowed;
     this.active = active;
     this.channelActive = channelActive;
   }
@@ -39,6 +46,14 @@ public class ChannelActivationChoice {
 
   public void setActive(boolean active) {
     this.active = active;
+  }
+
+  public boolean isAllowed() {
+    return allowed;
+  }
+
+  public void setAllowed(boolean allowed) {
+    this.allowed = allowed;
   }
 
   public boolean isChannelActive() {
