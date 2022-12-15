@@ -30,13 +30,7 @@ public class PluginInfo {
   
   private String       bundlePath;
 
-  private List<String> channelActives;
-
   private List<String> defaultConfig = new ArrayList<String>();
-
-  public PluginInfo() {
-    channelActives = new ArrayList<String>();
-  }
 
   /**
    * @return the type
@@ -109,36 +103,6 @@ public class PluginInfo {
    */
   public PluginInfo setBundlePath(String bundlePath) {
     this.bundlePath = bundlePath;
-    return this;
-  }
-
-  /**
-   * @return
-   */
-  public List<String> getAllChannelActive() {
-    return channelActives;
-  }
-
-  /**
-   * @return
-   */
-  public boolean isChannelActive(String channelId) {
-    return channelActives.contains(channelId);
-  }
-
-  /**
-   * @param channelId
-   */
-  public PluginInfo setChannelActive(String channelId) {
-    channelActives.add(channelId);
-    return this;
-  }
-  
-  /**
-   * @param channelActives
-   */
-  public PluginInfo setChannelActives(List<String> channelActives) {
-    this.channelActives = new ArrayList<String>(channelActives);
     return this;
   }
 

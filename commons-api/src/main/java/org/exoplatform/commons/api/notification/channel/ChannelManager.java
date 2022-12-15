@@ -1,5 +1,6 @@
 package org.exoplatform.commons.api.notification.channel;
 
+import java.util.Collections;
 import java.util.List;
 
 import org.exoplatform.commons.api.notification.channel.template.TemplateProvider;
@@ -50,6 +51,26 @@ public interface ChannelManager {
   List<AbstractChannel> getChannels();
 
   /**
+   * This will use {@link AbstractChannel#isDefaultChannel()} to determine
+   * whether the channel will be enabled for plugins by default or not
+   * 
+   * @return {@link List} of active channels for all plugins by default.
+   */
+  default List<AbstractChannel> getDefaultChannels() {
+    return getChannels();
+  }
+
+  /**
+   * This will use {@link AbstractChannel#isDefaultChannel()} to determine
+   * whether the channel is specific for some plugins or not
+   * 
+   * @return {@link List} of active channels for specific plugins only.
+   */
+  default List<AbstractChannel> getSpecificChannels() {
+    return Collections.emptyList();
+  }
+
+  /**
    * Gets the lifecycle by the ChannelKey
    * @param key
    * @return
@@ -62,4 +83,5 @@ public interface ChannelManager {
    * @return
    */
   int sizeChannels();
+
 }

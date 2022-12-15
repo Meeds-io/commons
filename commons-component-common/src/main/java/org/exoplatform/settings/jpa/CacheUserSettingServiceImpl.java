@@ -51,7 +51,7 @@ public class CacheUserSettingServiceImpl implements UserSettingService {
         return service.get(userId);
       }
     };
-    userSettingFutureCache = new FutureExoCache<String, UserSetting, UserSettingService>(loader, userSettingCache);
+    userSettingFutureCache = new FutureExoCache<>(loader, userSettingCache);
   }
 
   @Override
@@ -105,4 +105,9 @@ public class CacheUserSettingServiceImpl implements UserSettingService {
     userSettingService.setUserEnabled(username, enabled);
   }
 
+  @Override
+  public void clearDefaultSetting() {
+    userSettingCache.clearCache();
+    userSettingService.clearDefaultSetting();
+  }
 }
