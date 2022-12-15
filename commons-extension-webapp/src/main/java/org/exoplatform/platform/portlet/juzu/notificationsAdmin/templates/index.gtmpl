@@ -3,6 +3,9 @@
 #{param name=_ctx/}
 #{param name=groups/}
 #{param name=channels/}
+<%
+  def pluginService = org.exoplatform.container.ExoContainerContext.getService(org.exoplatform.commons.api.notification.service.setting.PluginSettingService.class);
+%>
 <div id="notificationAdmin" class="uiNotificationAdmin">
 	<h3 class="mgB20">${_ctx.appRes("NotificationAdmin.title")}</h3>
 
@@ -48,7 +51,11 @@
 								for(channelId in channels) {
 								  String channelKey = _ctx.getChannelKey(channelId);
 								  String status = "";
-								  if(!pluginInfo.isChannelActive(channelId)) {
+								  if(!pluginService.isAllowed(channelId, pluginId)) {
+								    ++i;
+                    continue;
+								  }
+								  if(!pluginService.isActive(channelId, pluginId)) {
 								    status = "hide";
 								    ++i;
 								  }
@@ -67,10 +74,13 @@
 		            for(channelId in channels) {
 		              String channelKey = _ctx.getChannelKey(channelId);
 		              String checkboxName = channelId + pluginId;
+                  if(!pluginService.isAllowed(channelId, pluginId)) {
+                    continue;
+                  }
 		          %>
 			          <div>
 			            <label class="uiCheckbox">
-			          <% if (pluginInfo.isChannelActive(channelId))  { %>
+			          <% if (pluginService.isActive(channelId, pluginId))  { %>
 			              <input type="checkbox" class="checkbox" data-channel="${channelId}" checked="checked" name="${checkboxName}" id="${checkboxName}"/>
 			          <% } else { %>
 			              <input type="checkbox" class="checkbox" data-channel="${channelId}" name="${checkboxName}" id="${checkboxName}"/>

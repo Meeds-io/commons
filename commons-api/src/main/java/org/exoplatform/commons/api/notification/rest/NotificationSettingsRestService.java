@@ -39,6 +39,8 @@ import org.exoplatform.services.rest.http.PATCH;
 @Tag(name = "notifications/settings", description = "Managing users notifications settings")
 public class NotificationSettingsRestService implements ResourceContainer {
 
+  private static final String NOTIFICATION_LABEL_CHANNEL_DEFAULT = "UINotification.label.channel.default";
+
   private static final String   MAIN_RESOURCE_BUNDLE_NAME = "locale.portlet.notification.UserNotificationPortlet";
 
   private static final Log      LOG                       = ExoLogger.getLogger(NotificationSettingsRestService.class);
@@ -104,7 +106,7 @@ public class NotificationSettingsRestService implements ResourceContainer {
 
     try {
       String[] sharedResourceBundles = resourceBundleService.getSharedResourceBundleNames();
-      String[] resourceBundles = ArrayUtils.add(sharedResourceBundles, 0, MAIN_RESOURCE_BUNDLE_NAME);
+      String[] resourceBundles = ArrayUtils.insert(0, sharedResourceBundles, MAIN_RESOURCE_BUNDLE_NAME);
       ResourceBundle resourceBundle = resourceBundleService.getResourceBundle(resourceBundles,
                                                                               userLocale);
       Context context = new Context(resourceBundle, userLocale);
@@ -134,8 +136,8 @@ public class NotificationSettingsRestService implements ResourceContainer {
                                                                                   && resourceBundle.containsKey(key)) {
                                                                                 return resourceBundle.getString(key);
                                                                               } else if (resourceBundle != null
-                                                                                  && resourceBundle.containsKey("UINotification.label.channel.default")) {
-                                                                                return resourceBundle.getString("UINotification.label.channel.default")
+                                                                                  && resourceBundle.containsKey(NOTIFICATION_LABEL_CHANNEL_DEFAULT)) {
+                                                                                return resourceBundle.getString(NOTIFICATION_LABEL_CHANNEL_DEFAULT)
                                                                                                      .replace("{0}", channelKey);
                                                                               }
                                                                               return channelKey;
@@ -335,12 +337,12 @@ public class NotificationSettingsRestService implements ResourceContainer {
   private Map<String, Boolean> computeChannelStatuses(UserSetting setting, List<String> channels) {
     Map<String, Boolean> channelStatus = new HashMap<>();
     for (String channelId : channels) {
-      channelStatus.put(channelId, setting != null && setting.isChannelActive(channelId));
+      channelStatus.put(channelId, setting != null && setting.isChannelGloballyActive(channelId));
     }
     return channelStatus;
   }
 
-  private boolean computeChoices(UserSetting setting,
+  private boolean computeChoices(UserSetting userSetting, // NOSONAR
                                  List<String> channels,
                                  List<GroupProvider> groups,
                                  Map<String, Boolean> channelStatus,
@@ -348,22 +350,23 @@ public class NotificationSettingsRestService implements ResourceContainer {
                                  List<ChannelActivationChoice> channelCheckBoxList) {
     boolean hasActivePlugin = false;
     for (GroupProvider groupProvider : groups) {
-      for (PluginInfo info : groupProvider.getPluginInfos()) {
-        String pluginId = info.getType();
+      for (PluginInfo pluginInfo : groupProvider.getPluginInfos()) {
+        String pluginId = pluginInfo.getType();
         for (String channelId : channels) {
-          if (info.isChannelActive(channelId)) {
-            hasActivePlugin = true;
-            boolean isChannelActive = channelStatus.get(channelId);
-            channelCheckBoxList.add(new ChannelActivationChoice(channelId,
-                                                                pluginId,
-                                                                setting != null && setting.isActive(channelId, pluginId),
-                                                                isChannelActive));
-            if (UserSetting.EMAIL_CHANNEL.equals(channelId)) {
-              emailDigestChoices.add(new EmailDigestChoice(channelId,
-                                                           pluginId,
-                                                           getValue(setting, pluginId),
-                                                           isChannelActive));
-            }
+          hasActivePlugin = true;
+          boolean isChannelActive = channelStatus.get(channelId)
+              && pluginSettingService.isActive(channelId, pluginId)
+              && userSetting.isChannelGloballyActive(channelId);
+          channelCheckBoxList.add(new ChannelActivationChoice(channelId,
+                                                              pluginId,
+                                                              pluginSettingService.isAllowed(channelId, pluginId),
+                                                              isChannelActive && userSetting.isActive(channelId, pluginId),
+                                                              isChannelActive));
+          if (UserSetting.EMAIL_CHANNEL.equals(channelId)) {
+            emailDigestChoices.add(new EmailDigestChoice(channelId,
+                                                         pluginId,
+                                                         getValue(userSetting, pluginId),
+                                                         isChannelActive));
           }
         }
       }
@@ -393,13 +396,13 @@ public class NotificationSettingsRestService implements ResourceContainer {
 
     public String appRes(String key) {
       try {
-        return resourceBundle.getString(key).replaceAll("'", "&#39;").replaceAll("\"", "&#34;");
+        return resourceBundle.getString(key).replace("'", "&#39;").replace("\"", "&#34;");
       } catch (java.util.MissingResourceException e) {
         if (key.indexOf("checkbox-") > -1) {
           return appRes("UINotification.label.checkbox.default").replace("{0}", capitalizeFirstLetter(key.split("-")[1]));
         }
         if (key.indexOf("channel-") > -1) {
-          return appRes("UINotification.label.channel.default").replace("{0}", capitalizeFirstLetter(key.split("-")[1]));
+          return appRes(NOTIFICATION_LABEL_CHANNEL_DEFAULT).replace("{0}", capitalizeFirstLetter(key.split("-")[1]));
         }
       } catch (Exception e) {
         LOG.debug("Error when get resource bundle key " + key, e);

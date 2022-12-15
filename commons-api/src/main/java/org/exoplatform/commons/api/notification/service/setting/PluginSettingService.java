@@ -16,8 +16,11 @@
  */
 package org.exoplatform.commons.api.notification.service.setting;
 
+import java.util.Collections;
 import java.util.List;
 
+import org.exoplatform.commons.api.notification.channel.AbstractChannel;
+import org.exoplatform.commons.api.notification.model.ChannelKey;
 import org.exoplatform.commons.api.notification.model.GroupProvider;
 import org.exoplatform.commons.api.notification.model.PluginInfo;
 import org.exoplatform.commons.api.notification.plugin.GroupProviderPlugin;
@@ -61,28 +64,23 @@ public interface PluginSettingService {
   void saveActivePlugin(String channelId, String pluginId, boolean isActive);
 
   /**
-   * the channelId is email channel.
-   * @param pluginId
-   * @param isActive
-   * @deprecated user isActive(String channelId, String pluginId);
-   */
-  void saveActive(String pluginId, boolean isActive);
-
-  /**
    * Checks if a plugin is active or inactive.
    * 
+   * @param channelId  {@link ChannelKey} identifier
    * @param pluginId Id of the plugin.
    * @return The returned value is "true" if the plugin is active or "false" if the plugin is inactive.
    */
   boolean isActive(String channelId, String pluginId);
 
   /**
-   * the channelId is email channel.
-   * @param pluginId
-   * @return
-   * @deprecated user isActive(String channelId, String pluginId);
+   * Checks whether the channel is allowed on designated plugin or not
+   * 
+   * @param  channelId {@link ChannelKey} identifier
+   * @param  pluginId  Id of the plugin.
+   * @return           true if {@link AbstractChannel} is default channel or if
+   *                   the channel is configured to be used in pluginId
    */
-  boolean isActive(String pluginId);
+  boolean isAllowed(String channelId, String pluginId);
 
   /**
    * Gets all Ids of active plugins by channel.
@@ -90,6 +88,14 @@ public interface PluginSettingService {
    * @return Ids of the active plugins.
    */
   List<String> getActivePluginIds(String channelId);
+
+  /**
+   * @param  pluginId {@link PluginConfig} type
+   * @return          {@link List} of active channels of Plugin
+   */
+  default List<String> getPluginChannels(String pluginId) {
+    return Collections.emptyList();
+  }
 
   /**
    * Gets information of all active plugins by channel.

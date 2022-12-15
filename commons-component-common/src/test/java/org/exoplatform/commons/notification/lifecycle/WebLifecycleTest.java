@@ -19,9 +19,6 @@ import org.exoplatform.commons.notification.impl.jpa.web.dao.WebNotifDAO;
 import org.exoplatform.commons.notification.impl.jpa.web.dao.WebParamsDAO;
 import org.exoplatform.commons.notification.impl.jpa.web.dao.WebUsersDAO;
 import org.exoplatform.commons.testing.BaseCommonsTestCase;
-import org.exoplatform.component.test.ConfigurationUnit;
-import org.exoplatform.component.test.ConfiguredBy;
-import org.exoplatform.component.test.ContainerScope;
 
 public class WebLifecycleTest extends BaseCommonsTestCase {
 
@@ -61,17 +58,17 @@ public class WebLifecycleTest extends BaseCommonsTestCase {
     WebLifecycle webLifecycle = (WebLifecycle) webChannel.getLifecycle();
 
     // When
-    webLifecycle.process(ctx, "john", "mary");
+    webLifecycle.process(ctx, "john", "demo");
 
     // Then
     WebNotificationFilter filterJohn = new WebNotificationFilter("john", true);
     List<NotificationInfo> webNotificationsJohn = webNotificationService.getNotificationInfos(filterJohn, 0, 10);
     assertNotNull(webNotificationsJohn);
     assertEquals(1, webNotificationsJohn.size());
-    WebNotificationFilter filterMary = new WebNotificationFilter("mary", true);
-    List<NotificationInfo> webNotificationsMary = webNotificationService.getNotificationInfos(filterMary, 0, 10);
-    assertNotNull(webNotificationsMary);
-    assertEquals(1, webNotificationsMary.size());
+    WebNotificationFilter filterDemo = new WebNotificationFilter("demo", true);
+    List<NotificationInfo> webNotificationsDemo = webNotificationService.getNotificationInfos(filterDemo, 0, 10);
+    assertNotNull(webNotificationsDemo);
+    assertEquals(1, webNotificationsDemo.size());
   }
 
   public void testReceiveOneNotificationWhenUsersHaveChannelDisabled() {
@@ -88,17 +85,17 @@ public class WebLifecycleTest extends BaseCommonsTestCase {
     WebLifecycle webLifecycle = (WebLifecycle) webChannel.getLifecycle();
 
     // When
-    webLifecycle.process(ctx, "john", "mary");
+    webLifecycle.process(ctx, "john", "demo");
 
     // Then
     WebNotificationFilter filterJohn = new WebNotificationFilter("john");
     List<NotificationInfo> webNotificationsJohn = webNotificationService.getNotificationInfos(filterJohn, 0, 10);
     assertNotNull(webNotificationsJohn);
     assertEquals(0, webNotificationsJohn.size());
-    WebNotificationFilter filterMary = new WebNotificationFilter("mary");
-    List<NotificationInfo> webNotificationsMary = webNotificationService.getNotificationInfos(filterMary, 0, 10);
-    assertNotNull(webNotificationsMary);
-    assertEquals(1, webNotificationsMary.size());
+    WebNotificationFilter filterDemo = new WebNotificationFilter("demo");
+    List<NotificationInfo> webNotificationsDemo = webNotificationService.getNotificationInfos(filterDemo, 0, 10);
+    assertNotNull(webNotificationsDemo);
+    assertEquals(1, webNotificationsDemo.size());
   }
 
   public void testReceiveOneNotificationWhenUsersHavePluginDisabled() {
@@ -156,7 +153,7 @@ public class WebLifecycleTest extends BaseCommonsTestCase {
     notificationInfoJohn.setOnPopOver(false);
     webNotificationService.save(notificationInfoJohn);
 
-    Mockito.when(webChannel.getTemplateBuilder(Mockito.eq(PluginKey.key("TestPlugin")))).thenReturn(new TemplateBuilderUpdate());
+    Mockito.when(webChannel.getTemplateBuilder(PluginKey.key("TestPlugin"))).thenReturn(new TemplateBuilderUpdate());
 
     NotificationContext ctxUpdate = NotificationContextImpl.cloneInstance();
     notificationInfoJohn.getOwnerParameter().put("ID_FOR_TEST", notificationInfoJohn.getId());
