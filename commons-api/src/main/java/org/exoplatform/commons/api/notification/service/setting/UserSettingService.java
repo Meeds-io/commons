@@ -16,11 +16,11 @@
  */
 package org.exoplatform.commons.api.notification.service.setting;
 
+import java.util.List;
+
 import org.exoplatform.commons.api.notification.NotificationContext;
 import org.exoplatform.commons.api.notification.model.UserSetting;
 import org.exoplatform.services.organization.User;
-
-import java.util.List;
 
 public interface UserSettingService {
 
@@ -74,7 +74,7 @@ public interface UserSettingService {
 
   /**
    * Returns the default settings of an user
-   * @return
+   * @return {@link UserSetting}
    */
   UserSetting getDefaultSettings();
 
@@ -97,5 +97,10 @@ public interface UserSettingService {
    * @param enabled true/false
    */
   void setUserEnabled(String username, boolean enabled);
+
+  /**
+   * Reset computed default setting for users
+   */
+  default void clearDefaultSetting() {}
 
 }
