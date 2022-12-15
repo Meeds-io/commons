@@ -1,7 +1,12 @@
 package org.exoplatform.commons.api.notification.rest;
 
-import static org.mockito.Matchers.*;
-import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.util.Collections;
 import java.util.List;
@@ -9,8 +14,6 @@ import java.util.List;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.MultivaluedMap;
 
-import org.hamcrest.BaseMatcher;
-import org.hamcrest.Description;
 import org.mockito.ArgumentMatcher;
 
 import org.exoplatform.commons.api.notification.NotificationContext;
@@ -18,7 +21,11 @@ import org.exoplatform.commons.api.notification.channel.AbstractChannel;
 import org.exoplatform.commons.api.notification.channel.ChannelManager;
 import org.exoplatform.commons.api.notification.channel.template.AbstractTemplateBuilder;
 import org.exoplatform.commons.api.notification.channel.template.TemplateProvider;
-import org.exoplatform.commons.api.notification.model.*;
+import org.exoplatform.commons.api.notification.model.ChannelKey;
+import org.exoplatform.commons.api.notification.model.GroupProvider;
+import org.exoplatform.commons.api.notification.model.PluginInfo;
+import org.exoplatform.commons.api.notification.model.PluginKey;
+import org.exoplatform.commons.api.notification.model.UserSetting;
 import org.exoplatform.commons.api.notification.plugin.config.PluginConfig;
 import org.exoplatform.commons.api.notification.rest.model.UserNotificationSettings;
 import org.exoplatform.commons.api.notification.service.setting.PluginSettingService;
@@ -26,7 +33,9 @@ import org.exoplatform.commons.api.notification.service.setting.UserSettingServi
 import org.exoplatform.portal.config.UserACL;
 import org.exoplatform.portal.rest.services.BaseRestServicesTestCase;
 import org.exoplatform.services.resources.ResourceBundleService;
-import org.exoplatform.services.rest.impl.*;
+import org.exoplatform.services.rest.impl.ContainerResponse;
+import org.exoplatform.services.rest.impl.EnvironmentContext;
+import org.exoplatform.services.rest.impl.MultivaluedMapImpl;
 import org.exoplatform.services.security.ConversationState;
 import org.exoplatform.services.security.Identity;
 import org.exoplatform.services.test.mock.MockHttpServletRequest;
@@ -48,7 +57,6 @@ public class NotificationSettingsRestServiceTest extends BaseRestServicesTestCas
   private static final PluginConfig PLUGIN_CONFIG     = new PluginConfig();
   static {
     PLUGIN_PROVIDER.setType(PLUGIN_ID);
-    PLUGIN_PROVIDER.setChannelActive(CHANNEL_ID);
     PLUGIN_CONFIG.setPluginId(PLUGIN_ID);
     PLUGIN_CONFIG.setGroupId(GROUP_PROVIDER_ID);
   }
@@ -281,7 +289,7 @@ public class NotificationSettingsRestServiceTest extends BaseRestServicesTestCas
     verify(userSettingService, times(1)).save(argThat(new ArgumentMatcher<UserSetting>() {
       @Override
       public boolean matches(UserSetting userSetting) {
-        return userSetting.isActive(CHANNEL_ID, PLUGIN_ID) && userSetting.isChannelActive(CHANNEL_ID)
+        return userSetting.isActive(CHANNEL_ID, PLUGIN_ID) && userSetting.isChannelGloballyActive(CHANNEL_ID)
             && userSetting.isInWeekly(PLUGIN_ID);
       }
     }));

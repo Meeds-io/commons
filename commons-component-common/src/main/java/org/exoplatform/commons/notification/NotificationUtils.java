@@ -142,11 +142,11 @@ public class NotificationUtils {
     return values.toString();
   }
 
-  public static String listToString(List<String> list, String pattern) {
-    if (list == null || list.size() == 0) {
+  public static String listToString(Collection<String> list, String pattern) {
+    if (list == null || list.isEmpty()) {
       return "";
     }
-    StringBuffer values = new StringBuffer();
+    StringBuilder values = new StringBuilder();
     for (String str : list) {
       if (values.length() > 0) {
         values.append(",");
@@ -155,12 +155,24 @@ public class NotificationUtils {
     }
     return values.toString();
   }
-  
+
   public static List<String> stringToList(String value) {
-    List<String> result = new ArrayList<String>();
-    if (value == null || value.isEmpty()) {
-      return result;
+    if (StringUtils.isBlank(value)) {
+      return Collections.emptyList();
     }
+    List<String> result = new ArrayList<>();
+    StringTokenizer tokenizer = new StringTokenizer(value, ",");
+    while (tokenizer.hasMoreTokens()) {
+      result.add(tokenizer.nextToken());
+    }
+    return result;
+  }
+
+  public static Set<String> stringToSet(String value) {
+    if (StringUtils.isBlank(value)) {
+      return Collections.emptySet();
+    }
+    Set<String> result = new HashSet<>();
     StringTokenizer tokenizer = new StringTokenizer(value, ",");
     while (tokenizer.hasMoreTokens()) {
       result.add(tokenizer.nextToken());

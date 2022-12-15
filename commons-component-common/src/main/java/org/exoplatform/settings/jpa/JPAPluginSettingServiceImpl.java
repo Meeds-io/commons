@@ -16,34 +16,55 @@
  */
 package org.exoplatform.settings.jpa;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import org.exoplatform.commons.api.notification.channel.AbstractChannel;
 import org.exoplatform.commons.api.notification.channel.ChannelManager;
-import org.exoplatform.commons.api.notification.model.*;
+import org.exoplatform.commons.api.notification.model.ChannelKey;
+import org.exoplatform.commons.api.notification.model.GroupProvider;
+import org.exoplatform.commons.api.notification.model.OrderComparatorASC;
+import org.exoplatform.commons.api.notification.model.PluginInfo;
 import org.exoplatform.commons.api.notification.plugin.GroupProviderPlugin;
 import org.exoplatform.commons.api.notification.plugin.config.GroupConfig;
 import org.exoplatform.commons.api.notification.plugin.config.PluginConfig;
 import org.exoplatform.commons.api.notification.service.setting.PluginSettingService;
+import org.exoplatform.commons.api.notification.service.setting.UserSettingService;
 import org.exoplatform.commons.api.settings.SettingService;
 import org.exoplatform.commons.api.settings.SettingValue;
 import org.exoplatform.commons.api.settings.data.Context;
 import org.exoplatform.commons.api.settings.data.Scope;
 import org.exoplatform.commons.notification.NotificationUtils;
 import org.exoplatform.commons.notification.impl.AbstractService;
+import org.exoplatform.container.ExoContainerContext;
 
 public class JPAPluginSettingServiceImpl extends AbstractService implements PluginSettingService {
-  private static final String NAME_SPACES        = "exo:";
 
-  private List<PluginConfig> pluginConfigs = new ArrayList<PluginConfig>();
+  private static final long             SPECIFIC_CHANNEL_VERSION = 1;
 
-  private Map<String, GroupProvider> groupPluginMap = new ConcurrentHashMap<String, GroupProvider>();
+  private static final Scope            NOTIFICATION_SCOPE = Scope.APPLICATION.id("NotificationSettings");
 
-  private SettingService settingService;
-  private ChannelManager channelManager;
+  private static final String           NAME_SPACES    = "exo:";
 
-  public JPAPluginSettingServiceImpl(SettingService settingService, ChannelManager channelManager) { 
+  private List<PluginConfig>            pluginConfigs  = new ArrayList<>();
+
+  private Map<String, GroupProvider>    groupPluginMap = new ConcurrentHashMap<>();
+
+  private SettingService                settingService;
+
+  private ChannelManager                channelManager;
+
+  public JPAPluginSettingServiceImpl(SettingService settingService,
+                                     ChannelManager channelManager) {
     this.settingService = settingService;
     this.channelManager = channelManager;
   }
@@ -52,20 +73,14 @@ public class JPAPluginSettingServiceImpl extends AbstractService implements Plug
   public void registerPluginConfig(PluginConfig pluginConfig) {
     pluginConfigs.add(pluginConfig);
     Collections.sort(pluginConfigs, new OrderComparatorASC());
-    if (pluginConfig.isChildPlugin() == false) {
+    if (!pluginConfig.isChildPlugin()) {
       PluginInfo pluginInfo = new PluginInfo();
       pluginInfo.setType(pluginConfig.getPluginId())
-                  .setOrder(Integer.valueOf(pluginConfig.getOrder()))
-                  .setResourceBundleKey(pluginConfig.getResourceBundleKey())
-                  .setBundlePath(pluginConfig.getBundlePath())
-                  .setDefaultConfig(pluginConfig.getDefaultConfig());
-      //all channels
-      List<String> channels = new ArrayList<String>();
-      for (AbstractChannel channel : channelManager.getChannels()) {
-        channels.add(channel.getId());
-      }
-      pluginInfo.setChannelActives(getSettingPlugins(pluginConfig.getPluginId(), channels));
-      
+                .setOrder(Integer.valueOf(pluginConfig.getOrder()))
+                .setResourceBundleKey(pluginConfig.getResourceBundleKey())
+                .setBundlePath(pluginConfig.getBundlePath())
+                .setDefaultConfig(pluginConfig.getDefaultConfig());
+      // all channels
       String groupId = pluginConfig.getGroupId();
       GroupConfig gConfig = pluginConfig.getGroupConfig();
       if (gConfig != null) {
@@ -83,6 +98,18 @@ public class JPAPluginSettingServiceImpl extends AbstractService implements Plug
         }
         groupPluginMap.put(groupId, groupProvider);
       }
+    }
+  }
+
+  public void unregisterPluginConfig(PluginConfig pluginConfig) {
+    pluginConfigs.remove(pluginConfig);
+    List<PluginInfo> pluginInfos = groupPluginMap.get(pluginConfig.getGroupId()).getPluginInfos();
+    PluginInfo pluginInfo = pluginInfos.stream()
+                                       .filter(info -> StringUtils.equals(info.getType(), pluginConfig.getPluginId()))
+                                       .findFirst()
+                                       .orElse(null);
+    if (pluginInfo != null) {
+      pluginInfos.remove(pluginInfo);
     }
   }
 
@@ -111,11 +138,8 @@ public class JPAPluginSettingServiceImpl extends AbstractService implements Plug
 
   @Override
   public List<GroupProvider> getGroupPlugins() {
-    List<GroupProvider> groupProviders = new ArrayList<GroupProvider>();
+    List<GroupProvider> groupProviders = new ArrayList<>();
     for (GroupProvider groupPlugin : groupPluginMap.values()) {
-      for (PluginInfo pluginInfo : groupPlugin.getPluginInfos()) {
-        pluginInfo.setChannelActives(getSettingPlugins(pluginInfo.getType()));
-      }
       groupProviders.add(groupPlugin);
     }
     Collections.sort(groupProviders, new OrderComparatorASC());
@@ -124,7 +148,7 @@ public class JPAPluginSettingServiceImpl extends AbstractService implements Plug
 
   @Override
   public void saveActivePlugin(String channelId, String pluginId, boolean isActive) {
-    List<String> current = getSettingPlugins(pluginId);
+    List<String> current = getPluginChannels(pluginId);
     if (isActive) {
       if (!current.contains(channelId)) {
         current.add(channelId);
@@ -136,57 +160,63 @@ public class JPAPluginSettingServiceImpl extends AbstractService implements Plug
     }
   }
 
-  private void saveActivePlugins(String pluginId, List<String> channels) {
-    saveActivePlugins(pluginId, NotificationUtils.listToString(channels, VALUE_PATTERN));
-  }
-
-  private void saveActivePlugins(String pluginId, String channelIds) {
-    settingService.set(Context.GLOBAL, Scope.GLOBAL.id(null), (NAME_SPACES + pluginId), SettingValue.create(channelIds));
-  }
-
-  private List<String> getSettingPlugins(String pluginId, List<String> defaultValue) {
-    return NotificationUtils.stringToList(getSetting(pluginId, NotificationUtils.listToString(defaultValue)));
-  }
-
-  private List<String> getSettingPlugins(String pluginId) {
-    return getSettingPlugins(pluginId, null);
-  }
-
-  private String getSetting(String pluginId, String defaultValues) {
-    SettingValue<?> sValue = settingService.get(Context.GLOBAL, Scope.GLOBAL.id(null), (NAME_SPACES + pluginId));
-    String channels = defaultValues;
-    String values = "";
-    if (sValue != null) {
-      values = String.valueOf(sValue.getValue());
-      if ("false".equals(values)) {
-        channels = defaultValues.replace(UserSetting.EMAIL_CHANNEL, "");
-      } else if (!"true".equals(values)) {
-        channels = getValues(values);
-      }
-    }
-    // Upgrade old data
-    if (!defaultValues.isEmpty() && (sValue == null || values.equals("true") || values.equals("false"))) {
-      saveActivePlugins(pluginId, NotificationUtils.stringToList(channels));
-    }
-    return channels;
-  }
-
-  private boolean isActive(String channelId, String pluginId, boolean defaultValue) {
-    List<String> current = getSettingPlugins(pluginId);
-    if(current.contains(channelId)) {
-      return true;
-    }
-    return defaultValue;
+  @Override
+  public boolean isActive(String channelId, String pluginId) {
+    return isAllowed(channelId, pluginId) && getPluginChannels(pluginId).contains(channelId);
   }
 
   @Override
-  public boolean isActive(String channelId, String pluginId) {
-    return isActive(channelId, pluginId, false);
+  public boolean isAllowed(String channelId, String pluginId) {
+    AbstractChannel channel = channelManager.getChannel(ChannelKey.key(channelId));
+    PluginConfig pluginConfig = getPluginConfig(pluginId);
+    return channel != null && pluginConfig != null
+        && (channel.isDefaultChannel() || pluginConfig.getAdditionalChannels().contains(channelId));
+  }
+
+  @Override
+  public List<String> getPluginChannels(String pluginId) {
+    List<String> defaultChannels = new ArrayList<>();
+    for (AbstractChannel channel : channelManager.getDefaultChannels()) {
+      defaultChannels.add(channel.getId());
+    }
+    List<AbstractChannel> specificChannels = channelManager.getSpecificChannels();
+    for (AbstractChannel channel : specificChannels) {
+      defaultChannels.remove(channel.getId());
+    }
+
+    List<String> activeChannels;
+    SettingValue<?> pluginActiveChannelsSetting = settingService.get(Context.GLOBAL,
+                                                                     Scope.GLOBAL.id(null),
+                                                                     (NAME_SPACES + pluginId));
+    if (pluginActiveChannelsSetting == null || pluginActiveChannelsSetting.getValue() == null) {
+      activeChannels = defaultChannels;
+    } else {
+      String values = String.valueOf(pluginActiveChannelsSetting.getValue());
+      activeChannels = NotificationUtils.stringToList(getValues(values));
+    }
+    PluginConfig pluginConfig = pluginConfigs.stream()
+                                             .filter(config -> StringUtils.equals(config.getPluginId(), pluginId))
+                                             .findFirst()
+                                             .orElse(null);
+    if (pluginConfig != null) {
+      List<String> additionalChannels = pluginConfig.getAdditionalChannels();
+      if (CollectionUtils.isNotEmpty(additionalChannels)) {
+        defaultChannels.addAll(additionalChannels);
+        if (!isPluginSettingVersion(pluginId, SPECIFIC_CHANNEL_VERSION)) {
+          activeChannels.addAll(additionalChannels);
+        }
+      }
+    }
+
+    @SuppressWarnings("unchecked")
+    List<String> allowedDefaultChannels = (List<String>) CollectionUtils.intersection(defaultChannels, activeChannels);
+    Set<String> pluginChannels = new HashSet<>(allowedDefaultChannels);
+    return new ArrayList<>(pluginChannels);
   }
 
   @Override
   public List<String> getActivePluginIds(String channelId) {
-    Set<String> activePluginIds = new HashSet<String>();
+    Set<String> activePluginIds = new HashSet<>();
     Iterator<PluginConfig> pluginsIterator = pluginConfigs.iterator();
     while (pluginsIterator.hasNext()) {
       PluginConfig pluginConfig = pluginsIterator.next();
@@ -199,7 +229,7 @@ public class JPAPluginSettingServiceImpl extends AbstractService implements Plug
 
   @Override
   public List<PluginInfo> getActivePlugins(String channelId) {
-    Set<PluginInfo> activePlugins = new HashSet<PluginInfo>();
+    Set<PluginInfo> activePlugins = new HashSet<>();
     for (GroupProvider groupPlugin : groupPluginMap.values()) {
       for (PluginInfo pluginInfo : groupPlugin.getPluginInfos()) {
         if (isActive(channelId, pluginInfo.getType())) {
@@ -207,12 +237,12 @@ public class JPAPluginSettingServiceImpl extends AbstractService implements Plug
         }
       }
     }
-    return Collections.unmodifiableList(new ArrayList<PluginInfo>(activePlugins));
+    return Collections.unmodifiableList(new ArrayList<>(activePlugins));
   }
 
   @Override
   public List<PluginInfo> getAllPlugins() {
-    Set<PluginInfo> activePlugins = new HashSet<PluginInfo>();
+    Set<PluginInfo> activePlugins = new HashSet<>();
     for (GroupProvider groupPlugin : groupPluginMap.values()) {
       for (PluginInfo pluginInfo : groupPlugin.getPluginInfos()) {
         activePlugins.add(pluginInfo);
@@ -221,14 +251,33 @@ public class JPAPluginSettingServiceImpl extends AbstractService implements Plug
     return Collections.unmodifiableList(new ArrayList<PluginInfo>(activePlugins));
   }
 
-  @Override
-  public void saveActive(String pluginId, boolean isActive) {
-    saveActivePlugin(UserSetting.EMAIL_CHANNEL, pluginId, isActive);
+  private void saveActivePlugins(String pluginId, List<String> channels) {
+    String activeChannelsString = NotificationUtils.listToString(channels, VALUE_PATTERN);
+    settingService.set(Context.GLOBAL,
+                       Scope.GLOBAL.id(null),
+                       (NAME_SPACES + pluginId),
+                       SettingValue.create(activeChannelsString));
+    savePluginSettingVersion(pluginId);
+    clearCache();
   }
 
-  @Override
-  public boolean isActive(String pluginId) {
-    return isActive(UserSetting.EMAIL_CHANNEL, pluginId);
+  private void savePluginSettingVersion(String pluginId) {
+    settingService.set(Context.GLOBAL,
+                       NOTIFICATION_SCOPE,
+                       (NAME_SPACES + pluginId),
+                       SettingValue.create(String.valueOf(SPECIFIC_CHANNEL_VERSION)));
+  }
+
+  private boolean isPluginSettingVersion(String pluginId, long settingVersion) {
+    SettingValue<?> settingValue = settingService.get(Context.GLOBAL,
+                                                      NOTIFICATION_SCOPE,
+                                                      (NAME_SPACES + pluginId));
+    return settingValue != null && settingValue.getValue() != null
+        && Long.parseLong(settingValue.getValue().toString()) >= settingVersion;
+  }
+
+  private void clearCache() {
+    ExoContainerContext.getService(UserSettingService.class).clearDefaultSetting();
   }
 
 }
