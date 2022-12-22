@@ -46,27 +46,26 @@ public class WebLifecycle extends AbstractNotificationLifecycle {
     NotificationInfo notification = ctx.getNotificationInfo();
     String pluginId = notification.getKey().getId();
     UserSettingService userService = CommonsUtils.getService(UserSettingService.class);
-    
+
     for (String userId : userIds) {
       UserSetting userSetting = userService.get(userId);
-      //check channel active for user & user enabled
-      if (!userSetting.isEnabled() || !userSetting.isChannelActive(WebChannel.ID)) {
+      if (!userSetting.isEnabled()
+          || !userSetting.isChannelGloballyActive(WebChannel.ID)
+          || !userSetting.isActive(WebChannel.ID, pluginId)) {
         continue;
       }
-      if (userSetting.isActive(WebChannel.ID, pluginId)) {
-        NotificationInfo notif = notification.clone(true).setTo(userId).setLastModifiedDate(Calendar.getInstance());
-        ctx.setNotificationInfo(notif);
-        //store before building message to get notification id (for actions in messages using notif ID)
-        store(ctx.getNotificationInfo());
-        //build message
-        MessageInfo msg = buildMessageInfo(ctx);
+      NotificationInfo notif = notification.clone(true).setTo(userId).setLastModifiedDate(Calendar.getInstance());
+      ctx.setNotificationInfo(notif);
+      //store before building message to get notification id (for actions in messages using notif ID)
+      store(ctx.getNotificationInfo());
+      //build message
+      MessageInfo msg = buildMessageInfo(ctx);
 
-        String notificationId = ctx.getNotificationInfo().getId();
-        ctx.append(WebChannel.MESSAGE_INFO, msg);
-        ctx.value(WebChannel.MESSAGE_INFO).setId(notificationId);
-        //send
-        getChannel().dispatch(ctx, userId);
-      }
+      String notificationId = ctx.getNotificationInfo().getId();
+      ctx.append(WebChannel.MESSAGE_INFO, msg);
+      ctx.value(WebChannel.MESSAGE_INFO).setId(notificationId);
+      //send
+      getChannel().dispatch(ctx, userId);
     }
   }
   

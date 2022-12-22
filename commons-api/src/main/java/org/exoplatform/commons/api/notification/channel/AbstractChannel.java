@@ -128,6 +128,10 @@ public abstract class AbstractChannel extends BaseComponentPlugin {
     }
     return getTemplateBuilderInChannel(key);
   }
-  
+
+  public boolean isDefaultChannel() {
+    return true;
+  }
+
   protected abstract AbstractTemplateBuilder getTemplateBuilderInChannel(PluginKey key);
 }
