@@ -119,7 +119,6 @@
     <dependency>
       <groupId>org.imgscalr</groupId>
       <artifactId>imgscalr-lib</artifactId>
-      <scope>provided</scope>
     </dependency>
 
     <!-- Test -->
