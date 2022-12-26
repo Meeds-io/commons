@@ -56,6 +56,14 @@
     </dependency>
     <dependency>
       <groupId>org.exoplatform.gatein.portal</groupId>
+      <artifactId>exo.portal.component.application-registry</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.exoplatform.gatein.portal</groupId>
+      <artifactId>exo.portal.component.web.security</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.exoplatform.gatein.portal</groupId>
       <artifactId>exo.portal.component.identity</artifactId>
     </dependency>
     <dependency>
@@ -71,6 +79,36 @@
       <artifactId>exo.ws.rest.core</artifactId>
     </dependency>
     <dependency>
+      <groupId>org.exoplatform.kernel</groupId>
+      <artifactId>exo.kernel.container</artifactId>
+      <type>test-jar</type>
+    </dependency>
+    <dependency>
+      <groupId>org.exoplatform.gatein.portal</groupId>
+      <artifactId>exo.portal.component.common</artifactId>
+      <type>test-jar</type>
+    </dependency>
+    <dependency>
+      <groupId>org.exoplatform.gatein.portal</groupId>
+      <artifactId>exo.portal.component.identity</artifactId>
+      <type>test-jar</type>
+    </dependency>
+    <dependency>
+      <groupId>org.exoplatform.gatein.portal</groupId>
+      <artifactId>exo.portal.component.portal</artifactId>
+      <type>test-jar</type>
+    </dependency>
+    <dependency>
+      <groupId>org.exoplatform.gatein.portal</groupId>
+      <artifactId>exo.portal.component.application-registry</artifactId>
+      <type>test-jar</type>
+    </dependency>
+    <dependency>
+      <groupId>org.exoplatform.gatein.portal</groupId>
+      <artifactId>exo.portal.component.resources</artifactId>
+      <type>test-jar</type>
+    </dependency>
+    <dependency>
       <groupId>org.mockito</groupId>
       <artifactId>mockito-core</artifactId>
     </dependency>
@@ -83,11 +121,6 @@
     <dependency>
       <groupId>org.hsqldb</groupId>
       <artifactId>hsqldb</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.exoplatform.kernel</groupId>
-      <artifactId>exo.kernel.container</artifactId>
-      <type>test-jar</type>
     </dependency>
   </dependencies>
 </project>
