@@ -38,7 +38,7 @@ import org.exoplatform.webui.core.model.SelectItemOption ;
     column.addSelectItemOption(new SelectItemOption("simpleColumn",
         "<container template=\"system:/groovy/portal/webui/container/UIResponsiveColumnGroupContainer.gtmpl\">" +
         "  <container template=\"system:/groovy/portal/webui/container/UISimpleColumnContainer.gtmpl\">" +
-        "  <factory-id>ColumnContainer</factory-id>" +
+        "  <factory-id>SimpleColumnContainer</factory-id>" +
         "  </container>" +
         "</container>",
         "SimpleColumnContainerLayout")) ;
