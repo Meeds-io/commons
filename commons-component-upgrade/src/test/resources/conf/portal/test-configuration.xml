@@ -78,15 +78,6 @@
   </component>
 
   <component>
-    <type>org.exoplatform.settings.jpa.dao.SettingContextDAO</type>
-  </component>
-  <component>
-    <type>org.exoplatform.settings.jpa.dao.SettingScopeDAO</type>
-  </component>
-  <component>
-    <type>org.exoplatform.settings.jpa.dao.SettingsDAO</type>
-  </component>
-  <component>
     <key>org.exoplatform.commons.api.persistence.DataInitializer</key>
     <type>org.exoplatform.commons.persistence.impl.LiquibaseDataInitializer</type>
     <init-params>
@@ -227,4 +218,5 @@
     </component-plugin>
   </external-component-plugins>
 
+  <import>jar:/conf/exo.portal.component.settings-configuration.xml</import>
 </configuration>

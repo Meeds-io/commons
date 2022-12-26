@@ -50,30 +50,6 @@
   </component>
 
     <component>
-        <type>org.exoplatform.settings.jpa.dao.SettingContextDAO</type>
-    </component>
-    <component>
-        <type>org.exoplatform.settings.jpa.dao.SettingScopeDAO</type>
-    </component>
-    <component>
-        <type>org.exoplatform.settings.jpa.dao.SettingsDAO</type>
-    </component>
-
-    <component>
-        <key>org.exoplatform.commons.api.event.EventManager</key>
-        <type>org.exoplatform.commons.event.impl.EventManagerImpl</type>
-    </component>
-
-    <component>
-        <key>org.exoplatform.commons.api.settings.SettingService</key>
-        <type>org.exoplatform.settings.cache.CacheSettingServiceImpl</type>
-    </component>
-
-    <component>
-        <type>org.exoplatform.settings.jpa.JPASettingServiceImpl</type>
-    </component>
-
-    <component>
         <type>org.exoplatform.commons.notification.impl.jpa.email.JPAMailNotificationStorage</type>
     </component>
 
@@ -178,5 +154,6 @@
     </external-component-plugins>
   <import>jar:/conf/portal/test-commons-jpa-configuration.xml</import>
   <import>jar:/conf/portal/test-notifications-configuration.xml</import>
+  <import>jar:/conf/exo.portal.component.settings-configuration.xml</import>
 
 </configuration>
