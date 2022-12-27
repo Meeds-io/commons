@@ -54,53 +54,6 @@ import javax.imageio.spi.ImageWriterSpi;
  * version: openjdk-7-ea-src-b35-11_sep_2008
  */
 public class ImageUtil {
-    /* XXX testing only
-    public static void main(String[] args) {
-        ImageTypeSpecifier bilevel =
-            ImageTypeSpecifier.createIndexed(new byte[] {(byte)0, (byte)255},
-                                             new byte[] {(byte)0, (byte)255},
-                                             new byte[] {(byte)0, (byte)255},
-                                             null, 1,
-                                             DataBuffer.TYPE_BYTE);
-        ImageTypeSpecifier gray =
-            ImageTypeSpecifier.createGrayscale(8, DataBuffer.TYPE_BYTE, false);
-        ImageTypeSpecifier grayAlpha =
-            ImageTypeSpecifier.createGrayscale(8, DataBuffer.TYPE_BYTE, false,
-                                               false);
-        ImageTypeSpecifier rgb =
-            ImageTypeSpecifier.createInterleaved(ColorSpace.getInstance(ColorSpace.CS_sRGB),
-                                                 new int[] {0, 1, 2},
-                                                 DataBuffer.TYPE_BYTE,
-                                                 false,
-                                                 false);
-        ImageTypeSpecifier rgba =
-            ImageTypeSpecifier.createInterleaved(ColorSpace.getInstance(ColorSpace.CS_sRGB),
-                                                 new int[] {0, 1, 2, 3},
-                                                 DataBuffer.TYPE_BYTE,
-                                                 true,
-                                                 false);
-        ImageTypeSpecifier packed =
-            ImageTypeSpecifier.createPacked(ColorSpace.getInstance(ColorSpace.CS_sRGB),
-                                            0xff000000,
-                                            0x00ff0000,
-                                            0x0000ff00,
-                                            0x000000ff,
-                                            DataBuffer.TYPE_BYTE,
-                                            false);
-
-        SampleModel bandedSM =
-            new java.awt.image.BandedSampleModel(DataBuffer.TYPE_BYTE,
-                                                 1, 1, 15);
-
-        System.out.println(createColorModel(bilevel.getSampleModel()));
-        System.out.println(createColorModel(gray.getSampleModel()));
-        System.out.println(createColorModel(grayAlpha.getSampleModel()));
-        System.out.println(createColorModel(rgb.getSampleModel()));
-        System.out.println(createColorModel(rgba.getSampleModel()));
-        System.out.println(createColorModel(packed.getSampleModel()));
-        System.out.println(createColorModel(bandedSM));
-    }
-    */
 
     /**
      * Creates a <code>ColorModel</code> that may be used with the
