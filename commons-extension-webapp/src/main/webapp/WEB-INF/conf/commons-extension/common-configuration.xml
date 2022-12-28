@@ -41,6 +41,29 @@
   </component>
 
   <external-component-plugins>
+    <target-component>org.exoplatform.services.scheduler.JobSchedulerService</target-component>
+    <component-plugin>
+      <name>BulkIndexingJob</name>
+      <set-method>addPeriodJob</set-method>
+      <type>org.exoplatform.services.scheduler.PeriodJob</type>
+      <description>Init job for bulk indexing to Elastic search</description>
+      <init-params>
+        <properties-param>
+          <name>job.info</name>
+          <description>details of the execution of the bulk indexing job</description>
+          <property name="jobName" value="ESBulkIndexer"/>
+          <property name="groupName" value="ElasticSearch"/>
+          <property name="job" value="org.exoplatform.commons.search.job.BulkIndexingJob"/>
+          <property name="repeatCount" value="0"/>
+          <property name="period" value="${exo.es.bulk.job.period:5000}"/><!-- default 5 seconds -->
+          <property name="startTime" value="+60000"/><!-- start after 1 minute delay -->
+          <property name="endTime" value=""/>
+        </properties-param>
+      </init-params>
+    </component-plugin>
+  </external-component-plugins>
+
+  <external-component-plugins>
     <target-component>org.exoplatform.services.organization.OrganizationService</target-component>
     <component-plugin>
       <name>commons.user.setting.event.listener</name>
