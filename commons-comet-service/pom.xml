@@ -50,16 +50,6 @@
       <artifactId>exo.ws.rest.core</artifactId>
     </dependency>
     <dependency>
-      <groupId>picocontainer</groupId>
-      <artifactId>picocontainer</artifactId>
-      <exclusions>
-        <exclusion>
-          <artifactId>jmock</artifactId>
-          <groupId>jmock</groupId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    <dependency>
       <groupId>javax.servlet</groupId>
       <artifactId>javax.servlet-api</artifactId>
       <scope>provided</scope>

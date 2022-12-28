@@ -85,16 +85,6 @@
       </exclusions>
     </dependency>
     <dependency>
-      <groupId>picocontainer</groupId>
-      <artifactId>picocontainer</artifactId>
-      <exclusions>
-        <exclusion>
-          <artifactId>jmock</artifactId>
-          <groupId>jmock</groupId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    <dependency>
       <groupId>com.googlecode.owasp-java-html-sanitizer</groupId>
       <artifactId>owasp-java-html-sanitizer</artifactId>
     </dependency>
