@@ -141,12 +141,10 @@ public class CommonsUtils {
       ExoContainer container = ExoContainerContext.getCurrentContainer();
       if (containerName != null) {
         container = RootContainer.getInstance().getPortalContainer(containerName);
+      } else if (container instanceof RootContainer) {
+        container = PortalContainer.getInstance();
       }
-      if (container.getComponentInstanceOfType(clazz)==null) {
-        containerName = PortalContainer.getCurrentPortalContainerName();
-        container = RootContainer.getInstance().getPortalContainer(containerName);
-      }
-      return clazz.cast(container.getComponentInstanceOfType(clazz));
+      return container.getComponentInstanceOfType(clazz);
     }
     
     public static String getRestContextName() {
