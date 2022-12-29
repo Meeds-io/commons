@@ -33,5 +33,15 @@ import org.exoplatform.webui.core.model.SelectItemOption ;
         "<container template=\"system:/groovy/portal/webui/container/UISimpleRowContainer.gtmpl\"></container>",
         "SimpleRowContainerLayout"));
   templates.add(row);
+  
+  SelectItemCategory column = new SelectItemCategory("column") ;
+    column.addSelectItemOption(new SelectItemOption("simpleColumn",
+        "<container template=\"system:/groovy/portal/webui/container/UIResponsiveColumnGroupContainer.gtmpl\">" +
+        "  <container template=\"system:/groovy/portal/webui/container/UISimpleColumnContainer.gtmpl\">" +
+        "  <factory-id>SimpleColumnContainer</factory-id>" +
+        "  </container>" +
+        "</container>",
+        "SimpleColumnContainerLayout")) ;
+  templates.add(column);
 
 return templates;
