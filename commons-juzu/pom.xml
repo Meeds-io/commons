@@ -39,6 +39,12 @@
       <artifactId>commons-api</artifactId>
     </dependency>
 
+    <dependency>
+      <groupId>javax.servlet</groupId>
+      <artifactId>javax.servlet-api</artifactId>
+      <scope>provided</scope>
+    </dependency>
+
     <!-- Juzu -->
     <dependency>
       <groupId>org.juzu</groupId>
@@ -67,12 +73,6 @@
     <dependency>
       <groupId>org.juzu</groupId>
       <artifactId>juzu-plugins-upload</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>javax.servlet</groupId>
-      <artifactId>javax.servlet-api</artifactId>
-      <scope>provided</scope>
     </dependency>
   </dependencies>
 </project>

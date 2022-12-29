@@ -38,7 +38,6 @@
       <groupId>org.exoplatform.commons</groupId>
       <artifactId>commons-component-common</artifactId>
     </dependency>
-
     <dependency>
       <groupId>javax.servlet</groupId>
       <artifactId>javax.servlet-api</artifactId>
