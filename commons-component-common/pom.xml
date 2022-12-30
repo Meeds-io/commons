@@ -44,37 +44,6 @@
       <groupId>${project.groupId}</groupId>
       <artifactId>commons-comet-service</artifactId>
     </dependency>
-
-    <dependency>
-      <groupId>com.googlecode.owasp-java-html-sanitizer</groupId>
-      <artifactId>owasp-java-html-sanitizer</artifactId>
-    </dependency>
-    <!-- Diff engine - http://www.suigeneris.org/kb/display/jrcs/JRCS+Home -->
-    <dependency>
-      <groupId>org.suigeneris</groupId>
-      <artifactId>jrcs.diff</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>ecs</groupId>
-      <artifactId>ecs</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.imgscalr</groupId>
-      <artifactId>imgscalr-lib</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>javax.servlet</groupId>
-      <artifactId>javax.servlet-api</artifactId>
-      <scope>provided</scope>
-    </dependency>
-
-    <!-- REST API Doc generation -->
-    <dependency>
-      <groupId>io.swagger.core.v3</groupId>
-      <artifactId>swagger-annotations</artifactId>
-      <scope>provided</scope>
-    </dependency>
   </dependencies>
   <build>
     <resources>

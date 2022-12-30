@@ -39,12 +39,6 @@
       <artifactId>commons-api</artifactId>
     </dependency>
 
-    <dependency>
-      <groupId>javax.servlet</groupId>
-      <artifactId>javax.servlet-api</artifactId>
-      <scope>provided</scope>
-    </dependency>
-
     <!-- New Cometd -->
     <dependency>
       <groupId>org.cometd.java</groupId>

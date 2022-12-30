@@ -38,11 +38,9 @@
       <groupId>${project.groupId}</groupId>
       <artifactId>commons-api</artifactId>
     </dependency>
-
     <dependency>
-      <groupId>javax.servlet</groupId>
-      <artifactId>javax.servlet-api</artifactId>
-      <scope>provided</scope>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>commons-component-common</artifactId>
     </dependency>
 
     <!-- Juzu -->
@@ -73,6 +71,10 @@
     <dependency>
       <groupId>org.juzu</groupId>
       <artifactId>juzu-plugins-upload</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.google.inject</groupId>
+      <artifactId>guice</artifactId>
     </dependency>
   </dependencies>
 </project>

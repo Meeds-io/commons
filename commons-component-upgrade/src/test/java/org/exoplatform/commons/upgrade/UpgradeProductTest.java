@@ -37,8 +37,7 @@ import org.exoplatform.container.xml.ValueParam;
  * 31, 2012
  */
 @ConfiguredBy({
-  @ConfigurationUnit(scope = ContainerScope.PORTAL, path = "conf/configuration.xml"),
-  @ConfigurationUnit(scope = ContainerScope.PORTAL, path = "conf/portal/test-configuration.xml"),
+  @ConfigurationUnit(scope = ContainerScope.PORTAL, path = "conf/exo.commons.component.upgrade-local-configuration.xml"),
 })
 public class UpgradeProductTest extends BaseCommonsTestCase {
   private static final String      OLD_PRODUCT_INFORMATIONS_FILE   = "classpath:/conf/data/product_old.properties";
