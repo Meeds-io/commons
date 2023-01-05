@@ -19,37 +19,53 @@
 
 package org.exoplatform.commons.utils;
 
+import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.when;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.MockedStatic;
+import org.mockito.junit.MockitoJUnitRunner;
+
 import org.exoplatform.portal.application.PortalRequestContext;
 import org.exoplatform.portal.config.UserPortalConfigService;
 import org.exoplatform.portal.mop.SiteKey;
 import org.exoplatform.portal.mop.SiteType;
 import org.exoplatform.portal.webui.util.Util;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PowerMockIgnore;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
-import static org.mockito.Mockito.*;
-import static org.junit.Assert.*;
 
 /**
  * Test class for {@link CommonsUtils}
  * @author <a href="mailto:tuyennt@exoplatform.com">Tuyen Nguyen The</a>.
  */
-@RunWith(PowerMockRunner.class)
-@PrepareForTest({CommonsUtils.class, Util.class})
-@PowerMockIgnore({ "com.sun.org.apache.xerces.*", "javax.xml.*", "org.xml.*", "javax.management.*" })
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class CommonsUtilsMockingTest {
+
+  private MockedStatic<CommonsUtils> COMMONS_UTILS;
+  private MockedStatic<Util> UTIL;
+
+  @Before
+  public void beforeTest() {
+    COMMONS_UTILS = mockStatic(CommonsUtils.class);
+    UTIL = mockStatic(Util.class);
+  }
+
+  @After
+  public void afterTest() {
+    COMMONS_UTILS.close();
+    UTIL.close();
+  }
 
   @Test
   public void testShouldReturnDefaultPortalSite() {
-    UserPortalConfigService userPortalConfig = mock(UserPortalConfigService.class);
-    when(userPortalConfig.getDefaultPortal()).thenReturn("intranet");
+    UserPortalConfigService userPortalConfigService = mock(UserPortalConfigService.class);
+    when(userPortalConfigService.getDefaultPortal()).thenReturn("intranet");
 
-    PowerMockito.mockStatic(CommonsUtils.class);
-    when(CommonsUtils.getService(UserPortalConfigService.class)).thenReturn(userPortalConfig);
-    when(CommonsUtils.getCurrentSite()).thenCallRealMethod();
+    COMMONS_UTILS.when(() -> CommonsUtils.getService(UserPortalConfigService.class)).thenReturn(userPortalConfigService);
+    COMMONS_UTILS.when(() -> CommonsUtils.getCurrentSite()).thenCallRealMethod();
 
     SiteKey site = CommonsUtils.getCurrentSite();
     assertEquals("intranet", site.getName());
@@ -63,12 +79,10 @@ public class CommonsUtilsMockingTest {
 
     PortalRequestContext requestContext = mock(PortalRequestContext.class);
 
-    PowerMockito.mockStatic(Util.class);
-    when(Util.getPortalRequestContext()).thenReturn(requestContext);
+    UTIL.when(() -> Util.getPortalRequestContext()).thenReturn(requestContext);
 
-    PowerMockito.mockStatic(CommonsUtils.class);
-    when(CommonsUtils.getService(UserPortalConfigService.class)).thenReturn(userPortalConfig);
-    when(CommonsUtils.getCurrentSite()).thenCallRealMethod();
+    COMMONS_UTILS.when(() -> CommonsUtils.getService(UserPortalConfigService.class)).thenReturn(userPortalConfig);
+    COMMONS_UTILS.when(() -> CommonsUtils.getCurrentSite()).thenCallRealMethod();
 
     when(requestContext.getSiteKey()).thenReturn(SiteKey.portal("test_site"));
     SiteKey site = CommonsUtils.getCurrentSite();
@@ -90,9 +104,8 @@ public class CommonsUtilsMockingTest {
     UserPortalConfigService userPortalConfig = mock(UserPortalConfigService.class);
     when(userPortalConfig.getDefaultPortal()).thenReturn("intranet");
 
-    PowerMockito.mockStatic(CommonsUtils.class);
-    when(CommonsUtils.getService(UserPortalConfigService.class)).thenReturn(userPortalConfig);
-    when(CommonsUtils.getCurrentSite()).thenCallRealMethod();
+    COMMONS_UTILS.when(() -> CommonsUtils.getService(UserPortalConfigService.class)).thenReturn(userPortalConfig);
+    COMMONS_UTILS.when(() -> CommonsUtils.getCurrentSite()).thenCallRealMethod();
 
     String portalOwner = CommonsUtils.getCurrentPortalOwner();
     assertEquals("intranet", portalOwner);
@@ -104,12 +117,10 @@ public class CommonsUtilsMockingTest {
 
     PortalRequestContext requestContext = mock(PortalRequestContext.class);
 
-    PowerMockito.mockStatic(Util.class);
-    when(Util.getPortalRequestContext()).thenReturn(requestContext);
+    UTIL.when(() -> Util.getPortalRequestContext()).thenReturn(requestContext);
 
-    PowerMockito.mockStatic(CommonsUtils.class);
-    when(CommonsUtils.getService(UserPortalConfigService.class)).thenReturn(userPortalConfig);
-    when(CommonsUtils.getCurrentSite()).thenCallRealMethod();
+    COMMONS_UTILS.when(() -> CommonsUtils.getService(UserPortalConfigService.class)).thenReturn(userPortalConfig);
+    COMMONS_UTILS.when(() -> CommonsUtils.getCurrentSite()).thenCallRealMethod();
 
     when(requestContext.getPortalOwner()).thenReturn("current_portal_owner");
     String portalOwner = CommonsUtils.getCurrentPortalOwner();

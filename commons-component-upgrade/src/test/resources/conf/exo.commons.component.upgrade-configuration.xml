@@ -3,7 +3,7 @@
 
   This file is part of the Meeds project (https://meeds.io/).
 
-  Copyright (C) 2022 Meeds Association contact@meeds.io
+  Copyright (C) 2021 Meeds Association contact@meeds.io
 
   This program is free software; you can redistribute it and/or
   modify it under the terms of the GNU Lesser General Public
@@ -20,7 +20,26 @@
 -->
 <configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.exoplatform.org/xml/ns/kernel_1_2.xsd http://www.exoplatform.org/xml/ns/kernel_1_2.xsd" xmlns="http://www.exoplatform.org/xml/ns/kernel_1_2.xsd">
 
-  <import>jar:/conf/portal/test-commons-mock-configuration.xml</import>
-  <import>jar:/conf/portal/test-commons-rest-configuration.xml</import>
+  <!-- Register UpgradeProductService -->
+  <component>
+    <type>org.exoplatform.commons.upgrade.UpgradeProductService</type>
+    <init-params>
+      <!-- Proceed to the upgrade if it's first time you run this service -->
+      <value-param>
+        <name>proceedUpgradeWhenFirstRun</name>
+        <value>false</value>
+      </value-param>
+    </init-params>
+  </component>
+
+  <component>
+    <type>org.exoplatform.commons.info.ProductInformations</type>
+    <init-params>
+      <value-param>
+        <name>product.versions.declaration.file</name>
+        <value>classpath:/conf/data/product_new.properties</value>
+      </value-param>
+    </init-params>
+  </component>
 
 </configuration>

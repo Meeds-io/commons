@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+  This file is part of the Meeds project (https://meeds.io/).
+
+  Copyright (C) 2021 Meeds Association contact@meeds.io
+
+  This program is free software; you can redistribute it and/or
+  modify it under the terms of the GNU Lesser General Public
+  License as published by the Free Software Foundation; either
+  version 3 of the License, or (at your option) any later version.
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+  Lesser General Public License for more details.
+  You should have received a copy of the GNU Lesser General Public License
+  along with this program; if not, write to the Free Software Foundation,
+  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
+-->
+<configuration
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.exoplatform.org/xml/ns/kernel_1_2.xsd http://www.exoplatform.org/xml/ns/kernel_1_2.xsd"
+   xmlns="http://www.exoplatform.org/xml/ns/kernel_1_2.xsd">
+
+  <external-component-plugins>
+    <target-component>org.exoplatform.services.cache.CacheService</target-component>
+    <component-plugin>
+      <name>addExoCacheConfig</name>
+      <set-method>addExoCacheConfig</set-method>
+      <type>org.exoplatform.services.cache.ExoCacheConfigPlugin</type>
+      <description>The Cache configuration for the setting service</description>
+      <init-params>
+        <!-- WebNotificationCache -->
+        <object-param>
+          <name>commons.WebNotificationCache</name>
+          <description>The Cache configuration for the Web Notification Cache</description>
+          <object type="org.exoplatform.services.cache.impl.infinispan.generic.GenericExoCacheConfig">
+            <field name="name"><string>commons.WebNotificationCache</string></field>
+            <field name="strategy" profiles="cluster"><string>${exo.cache.commons.WebNotificationCache.strategy:LIRS}</string></field>
+            <field name="liveTime"><long>${exo.cache.commons.WebNotificationCache.TimeToLive:86400}</long></field>
+            <field name="maxSize"><int>${exo.cache.commons.WebNotificationCache.MaxNodes:100000}</int></field>
+            <field name="cacheMode" profiles="cluster"><string>${exo.cache.commons.WebNotificationCache.cacheMode:replication}</string></field>
+          </object>
+        </object-param>
+        <!-- WebNotificationsCache -->
+        <object-param>
+          <name>commons.WebNotificationsCache</name>
+          <description>The Cache configuration for the Web Notification List Cache</description>
+          <object type="org.exoplatform.services.cache.impl.infinispan.generic.GenericExoCacheConfig">
+            <field name="name"><string>commons.WebNotificationsCache</string></field>
+            <field name="strategy" profiles="cluster"><string>${exo.cache.commons.WebNotificationsCache.strategy:LIRS}</string></field>
+            <field name="liveTime"><long>${exo.cache.commons.WebNotificationsCache.TimeToLive:86400}</long></field>
+            <field name="maxSize"><int>${exo.cache.commons.WebNotificationsCache.MaxNodes:1000}</int></field>
+            <field name="cacheMode" profiles="cluster"><string>${exo.cache.commons.WebNotificationsCache.cacheMode:replication}</string></field>
+          </object>
+        </object-param>
+        <!-- WebNotificationCountCache -->
+        <object-param>
+          <name>commons.WebNotificationCountCache</name>
+          <description>The Cache configuration for the Web Notification Count Cache</description>
+          <object type="org.exoplatform.services.cache.impl.infinispan.generic.GenericExoCacheConfig">
+            <field name="name"><string>commons.WebNotificationCountCache</string></field>
+            <field name="strategy" profiles="cluster"><string>${exo.cache.commons.WebNotificationCountCache.strategy:LIRS}</string></field>
+            <field name="liveTime"><long>${exo.cache.commons.WebNotificationCountCache.TimeToLive:86400}</long></field>
+            <field name="maxSize"><int>${exo.cache.commons.WebNotificationCountCache.MaxNodes:1000}</int></field>
+            <field name="cacheMode" profiles="cluster"><string>${exo.cache.commons.WebNotificationCountCache.cacheMode:replication}</string></field>
+          </object>
+        </object-param>
+        <!-- UserSettingService -->
+        <object-param>
+          <name>commons.UserSettingService</name>
+          <description>The Cache configuration for the UserSettingService</description>
+          <object type="org.exoplatform.services.cache.impl.infinispan.generic.GenericExoCacheConfig">
+            <field name="name"><string>commons.UserSettingService</string></field>
+            <field name="strategy" profiles="cluster"><string>${exo.cache.commons.UserSettingService.strategy:LIRS}</string></field>
+            <field name="maxSize"><int>${exo.cache.commons.UserSettingService.MaxNodes:500}</int></field>
+            <field name="liveTime"><long>${exo.cache.commons.UserSettingService.TimeToLive:86400}</long></field>
+            <field name="cacheMode" profiles="cluster"><string>${exo.cache.commons.UserSettingService.cacheMode:asyncInvalidation}</string></field>
+          </object>
+        </object-param>
+        <!-- UserStateService -->
+        <object-param>
+          <name>commons.UserStateService</name>
+          <description>The Cache configuration for the UserStateService</description>
+          <object type="org.exoplatform.services.cache.impl.infinispan.generic.GenericExoCacheConfig">
+            <field name="name"><string>commons.UserStateService</string></field>
+            <field name="strategy" profiles="cluster"><string>${exo.cache.commons.UserStateService.strategy:LIRS}</string></field>
+            <field name="maxSize"><int>${exo.cache.commons.UserStateService.MaxNodes:1000}</int></field>
+            <field name="liveTime"><long>${exo.cache.commons.UserStateService.TimeToLive:86400}</long></field>
+            <field name="cacheMode" profiles="cluster"><string>${exo.cache.commons.UserStateService.cacheMode:replication}</string></field>
+          </object>
+        </object-param>
+      </init-params>
+    </component-plugin>
+  </external-component-plugins>
+
+</configuration>
