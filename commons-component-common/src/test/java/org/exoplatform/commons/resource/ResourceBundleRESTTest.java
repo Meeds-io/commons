@@ -11,15 +11,11 @@ import org.exoplatform.services.rest.impl.ContainerResponse;
 import org.exoplatform.services.rest.wadl.research.HTTPMethods;
 import org.exoplatform.services.security.ConversationState;
 import org.exoplatform.services.security.Identity;
-import org.exoplatform.services.user.UserStateService;
-import org.exoplatform.services.user.UserStateServiceREST;
 
 @ConfiguredBy({
   @ConfigurationUnit(scope = ContainerScope.ROOT, path = "conf/configuration.xml"),
   @ConfigurationUnit(scope = ContainerScope.PORTAL, path = "conf/portal/configuration.xml"),
-  @ConfigurationUnit(scope = ContainerScope.PORTAL, path = "conf/exo.commons.component.core-dependencies-configuration.xml"),
-  @ConfigurationUnit(scope = ContainerScope.PORTAL, path = "conf/exo.commons.component.core-configuration.xml"),
-  @ConfigurationUnit(scope = ContainerScope.PORTAL, path = "conf/exo.commons.component.core-local-test-configuration.xml") 
+  @ConfigurationUnit(scope = ContainerScope.PORTAL, path = "conf/exo.commons.component.core-local-configuration.xml"),
 })
 public class ResourceBundleRESTTest extends BaseResourceTestCase {
 

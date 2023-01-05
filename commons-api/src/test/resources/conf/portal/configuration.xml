@@ -2,11 +2,6 @@
 <configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xmlns="http://www.exoplatform.org/xml/ns/kernel_1_2.xsd"
 	xsi:schemaLocation="http://www.exoplatform.org/xml/ns/kernel_1_2.xsd http://www.exoplatform.org/xml/ns/kernel_1_2.xsd">
-
-  <component>
-    <key>org.exoplatform.services.organization.OrganizationService</key>
-    <type>org.exoplatform.commons.test.MockOrganizationService</type>
-  </component>
   <component>
     <key>org.exoplatform.services.resources.LocalePolicy</key>
     <type>org.exoplatform.portal.application.localization.DefaultLocalePolicyService</type>
@@ -15,4 +10,38 @@
     <key>org.exoplatform.services.resources.LocaleConfigService</key>
     <type>org.exoplatform.commons.test.MockLocaleConfigService</type>
   </component>
+
+  <external-component-plugins>
+    <target-component>org.exoplatform.web.WebAppController</target-component>
+    <component-plugin>
+      <name>UploadHandler</name>
+      <set-method>register</set-method>
+      <type>org.exoplatform.web.handler.UploadHandler</type>
+    </component-plugin>
+    <component-plugin>
+      <name>DownloadHandler</name>
+      <set-method>register</set-method>
+      <type>org.exoplatform.web.handler.DownloadHandler</type>
+    </component-plugin>
+    <component-plugin>
+      <name>PortalRequestHandler</name>
+      <set-method>register</set-method>
+      <type>org.exoplatform.portal.application.PortalRequestHandler</type>
+    </component-plugin>
+    <component-plugin>
+      <name>LegacyRequestHandler</name>
+      <set-method>register</set-method>
+      <type>org.exoplatform.portal.application.LegacyRequestHandler</type>
+    </component-plugin>
+    <component-plugin>
+      <name>DefaultRequestHandler</name>
+      <set-method>register</set-method>
+      <type>org.exoplatform.portal.application.DefaultRequestHandler</type>
+    </component-plugin>
+    <component-plugin>
+      <name>StaticResourceRequestHandler</name>
+      <set-method>register</set-method>
+      <type>org.exoplatform.portal.application.StaticResourceRequestHandler</type>
+    </component-plugin>
+  </external-component-plugins>
 </configuration>
