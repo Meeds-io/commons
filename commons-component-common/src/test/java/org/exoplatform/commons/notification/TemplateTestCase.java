@@ -28,10 +28,6 @@ import org.exoplatform.jpa.BaseTest;
  */
 public class TemplateTestCase extends BaseTest {
 
-  public TemplateTestCase() {
-    setForceContainerReload(true);
-  }
-
   private Element makeSubject() {
     return new SimpleElement().template("$USER has joined $PORTAL_NAME");
   }

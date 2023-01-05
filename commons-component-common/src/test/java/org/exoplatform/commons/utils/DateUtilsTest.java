@@ -18,44 +18,42 @@
  */
 package org.exoplatform.commons.utils;
 
-import org.exoplatform.commons.testing.BaseCommonsTestCase;
-import org.exoplatform.container.ExoContainer;
-import org.exoplatform.container.ExoContainerContext;
-import org.junit.Test;
-
 import java.util.Locale;
 import java.util.TimeZone;
 
+import org.junit.Test;
+
+import org.exoplatform.commons.testing.BaseCommonsTestCase;
+import org.exoplatform.container.ExoContainerContext;
+
 /**
- * Created by The eXo Platform SAS
- * Author : Aymen Boughzela
- *          aboughzela@exoplatform.com
+ * Created by The eXo Platform SAS Author : Aymen Boughzela
+ * aboughzela@exoplatform.com
  */
 public class DateUtilsTest extends BaseCommonsTestCase {
-    ExoContainer container = new ExoContainer();
-    
-    public void testGetTimeZone() {
-        assertEquals(TimeZone.getTimeZone("GMT"), DateUtils.getTimeZone("GMT"));
-        assertEquals(TimeZone.getTimeZone("Africa/Tunis"), DateUtils.getTimeZone("Africa/Tunis"));
-        assertEquals(TimeZone.getTimeZone(""), DateUtils.getTimeZone(""));
-        try {
-            DateUtils.getTimeZone(null);
-            fail();
-        } catch (IllegalArgumentException exp) {
 
-        }
-    }
+  public void testGetTimeZone() {
+    assertEquals(TimeZone.getTimeZone("GMT"), DateUtils.getTimeZone("GMT"));
+    assertEquals(TimeZone.getTimeZone("Africa/Tunis"), DateUtils.getTimeZone("Africa/Tunis"));
+    assertEquals(TimeZone.getTimeZone(""), DateUtils.getTimeZone(""));
+    try {
+      DateUtils.getTimeZone(null);
+      fail();
+    } catch (IllegalArgumentException exp) {
 
-    @Test
-    public void testGetRelativeTimeLabel() {
-        ExoContainerContext.setCurrentContainer(container);
-        try {
-            assertEquals("less than a minute ago", DateUtils.getRelativeTimeLabel(Locale.ENGLISH, System.currentTimeMillis() - 30L));
-            assertEquals("about a month ago", DateUtils.getRelativeTimeLabel(Locale.ENGLISH, System.currentTimeMillis() - 3000000000L));
-            assertEquals("about 2 months ago", DateUtils.getRelativeTimeLabel(Locale.ENGLISH, System.currentTimeMillis() - 7000000000L));
-            assertEquals("about 3 months ago", DateUtils.getRelativeTimeLabel(Locale.ENGLISH, System.currentTimeMillis() - 10000000000L));
-        } catch (Exception e) {
-            fail(e.getMessage());
-        }
     }
+  }
+
+  @Test
+  public void testGetRelativeTimeLabel() {
+    ExoContainerContext.setCurrentContainer(getContainer());
+
+    assertEquals("less than a minute ago", DateUtils.getRelativeTimeLabel(Locale.ENGLISH, System.currentTimeMillis() - 30L));
+    assertEquals("about a month ago", DateUtils.getRelativeTimeLabel(Locale.ENGLISH, System.currentTimeMillis() - 3000000000L));
+    assertEquals("about 2 months ago",
+                 DateUtils.getRelativeTimeLabel(Locale.ENGLISH, System.currentTimeMillis() - 7000000000L));
+    assertEquals("about 3 months ago",
+                 DateUtils.getRelativeTimeLabel(Locale.ENGLISH, System.currentTimeMillis() - 10000000000L));
+  }
+
 }
