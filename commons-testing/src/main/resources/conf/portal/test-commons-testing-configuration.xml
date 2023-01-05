@@ -18,23 +18,6 @@
   Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
-  <parent>
-    <artifactId>commons</artifactId>
-    <groupId>org.exoplatform.commons</groupId>
-    <version>6.5.x-exo-SNAPSHOT</version>
-  </parent>
-  <artifactId>commons-webui-component</artifactId>
-  <packaging>jar</packaging>
-  <name>eXo PLF:: Commons - Commons WebUI</name>
-  <properties>
-    <exo.test.coverage.ratio>0.28</exo.test.coverage.ratio>
-  </properties>
-  <dependencies>
-    <dependency>
-      <groupId>${project.groupId}</groupId>
-      <artifactId>commons-component-common</artifactId>
-    </dependency>
-  </dependencies>
-</project>
+<configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.exoplatform.org/xml/ns/kernel_1_2.xsd http://www.exoplatform.org/xml/ns/kernel_1_2.xsd" xmlns="http://www.exoplatform.org/xml/ns/kernel_1_2.xsd">
+
+</configuration>
