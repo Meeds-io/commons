@@ -21,10 +21,6 @@ public class JPAWebNotificationStorageTest extends BaseNotificationTestCase {
   private WebParamsDAO webParamsDAO;
   protected List<String> userIds;
 
-  public JPAWebNotificationStorageTest() {
-    setForceContainerReload(true);
-  }
-
   @Override
   public void setUp() throws Exception  {
     super.setUp();

@@ -107,7 +107,7 @@ public class JPAUserSettingServiceTest extends BaseTest {
   protected void tearDown() {
     for (int i = 0; i < 10; i++) {
       try {
-        organizationService.getUserHandler().removeUser("userTest_" + i, false);
+        organizationService.getUserHandler().removeUser("userTestSetting_" + i, false);
       } catch (Exception e) {
         e.printStackTrace();
       }
@@ -122,9 +122,10 @@ public class JPAUserSettingServiceTest extends BaseTest {
     int originalSize = list.size();
 
     for (int i = 0; i < 10; i++) {
-      User user = new UserImpl("userTest_" + i);
+      User user = new UserImpl("userTestSetting_" + i);
       organizationService.getUserHandler().createUser(user, false);
       userSettingService.initDefaultSettings(user.getUserName());
+      restartTransaction();
     }
     list = userSettingService.getDigestDefaultSettingForAllUser(0, 5);
     assertEquals(5, list.size());
