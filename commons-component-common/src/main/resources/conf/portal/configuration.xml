@@ -58,40 +58,6 @@
     <type>org.exoplatform.services.thumbnail.ImageResizeServiceImpl</type>
   </component>
 
-  <component>
-    <key>org.exoplatform.commons.embedder.OembedEmbedder</key>
-    <type>org.exoplatform.commons.embedder.OembedEmbedder</type>
-    <init-params>
-      <value-param>
-        <name>http(s)?://(www\.dailymotion\.com\/(embed\/)?video|dai\.ly)/.*</name>
-        <value>https://www.dailymotion.com/services/oembed?format=json&amp;url=%s&amp;maxwidth=330&amp;maxheight=200</value>
-      </value-param>
-      <value-param>
-        <name>http(s)?://(player.)?vimeo\.com/.*</name>
-        <value>//vimeo.com/api/oembed.json?url=%s&amp;maxwidth=330&amp;maxheight=200</value>
-      </value-param>
-      <value-param>
-        <name>https?://www\.slideshare\.net/.*/.*</name>
-        <value>https://www.slideshare.net/api/oembed/2?url=%s&amp;format=json&amp;maxwidth=330&amp;maxheight=200</value>
-      </value-param>
-      <value-param>
-        <name>https?://www\.flickr\.com/photos/.*</name>
-        <value>https://www.flickr.com/services/oembed/?format=json&amp;url=%s</value>
-      </value-param>
-    </init-params>
-  </component>
-
-  <component>
-    <key>org.exoplatform.commons.embedder.YoutubeEmbedder</key>
-    <type>org.exoplatform.commons.embedder.YoutubeEmbedder</type>
-    <init-params>
-      <value-param>
-        <name>(?:https?:\/\/)?(?:www\.)?(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&amp;v=))((\w|-){11})(?:\S+)?$</name>
-        <value>https://www.googleapis.com/youtube/v3/videos?key=%s&amp;part=snippet&amp;id=%s</value>
-      </value-param>
-    </init-params>
-  </component>
-
     <component>
     <key>org.exoplatform.commons.api.persistence.DataInitializer</key>
     <type>org.exoplatform.commons.persistence.impl.LiquibaseDataInitializer</type>
@@ -116,77 +82,5 @@
       </value-param>
     </init-params>
   </component>
-
-  <external-component-plugins>
-    <target-component>org.exoplatform.services.cache.CacheService</target-component>
-    <component-plugin>
-      <name>addExoCacheConfig</name>
-      <set-method>addExoCacheConfig</set-method>
-      <type>org.exoplatform.services.cache.ExoCacheConfigPlugin</type>
-      <description>The Cache configuration for the setting service</description>
-      <init-params>
-        <!-- WebNotificationCache -->
-        <object-param>
-          <name>commons.WebNotificationCache</name>
-          <description>The Cache configuration for the Web Notification Cache</description>
-          <object type="org.exoplatform.services.cache.impl.infinispan.generic.GenericExoCacheConfig">
-            <field name="name"><string>commons.WebNotificationCache</string></field>
-            <field name="strategy" profiles="cluster"><string>${exo.cache.commons.WebNotificationCache.strategy:LIRS}</string></field>
-            <field name="liveTime"><long>${exo.cache.commons.WebNotificationCache.TimeToLive:86400}</long></field>
-            <field name="maxSize"><int>${exo.cache.commons.WebNotificationCache.MaxNodes:100000}</int></field>
-            <field name="cacheMode" profiles="cluster"><string>${exo.cache.commons.WebNotificationCache.cacheMode:replication}</string></field>
-          </object>
-        </object-param>
-        <!-- WebNotificationsCache -->
-        <object-param>
-          <name>commons.WebNotificationsCache</name>
-          <description>The Cache configuration for the Web Notification List Cache</description>
-          <object type="org.exoplatform.services.cache.impl.infinispan.generic.GenericExoCacheConfig">
-            <field name="name"><string>commons.WebNotificationsCache</string></field>
-            <field name="strategy" profiles="cluster"><string>${exo.cache.commons.WebNotificationsCache.strategy:LIRS}</string></field>
-            <field name="liveTime"><long>${exo.cache.commons.WebNotificationsCache.TimeToLive:86400}</long></field>
-            <field name="maxSize"><int>${exo.cache.commons.WebNotificationsCache.MaxNodes:1000}</int></field>
-            <field name="cacheMode" profiles="cluster"><string>${exo.cache.commons.WebNotificationsCache.cacheMode:replication}</string></field>
-          </object>
-        </object-param>
-        <!-- WebNotificationCountCache -->
-        <object-param>
-          <name>commons.WebNotificationCountCache</name>
-          <description>The Cache configuration for the Web Notification Count Cache</description>
-          <object type="org.exoplatform.services.cache.impl.infinispan.generic.GenericExoCacheConfig">
-            <field name="name"><string>commons.WebNotificationCountCache</string></field>
-            <field name="strategy" profiles="cluster"><string>${exo.cache.commons.WebNotificationCountCache.strategy:LIRS}</string></field>
-            <field name="liveTime"><long>${exo.cache.commons.WebNotificationCountCache.TimeToLive:86400}</long></field>
-            <field name="maxSize"><int>${exo.cache.commons.WebNotificationCountCache.MaxNodes:1000}</int></field>
-            <field name="cacheMode" profiles="cluster"><string>${exo.cache.commons.WebNotificationCountCache.cacheMode:replication}</string></field>
-          </object>
-        </object-param>
-        <!-- UserSettingService -->
-        <object-param>
-          <name>commons.UserSettingService</name>
-          <description>The Cache configuration for the UserSettingService</description>
-          <object type="org.exoplatform.services.cache.impl.infinispan.generic.GenericExoCacheConfig">
-            <field name="name"><string>commons.UserSettingService</string></field>
-            <field name="strategy" profiles="cluster"><string>${exo.cache.commons.UserSettingService.strategy:LIRS}</string></field>
-            <field name="maxSize"><int>${exo.cache.commons.UserSettingService.MaxNodes:500}</int></field>
-            <field name="liveTime"><long>${exo.cache.commons.UserSettingService.TimeToLive:86400}</long></field>
-            <field name="cacheMode" profiles="cluster"><string>${exo.cache.commons.UserSettingService.cacheMode:asyncInvalidation}</string></field>
-          </object>
-        </object-param>
-        <!-- UserStateService -->
-        <object-param>
-          <name>commons.UserStateService</name>
-          <description>The Cache configuration for the UserStateService</description>
-          <object type="org.exoplatform.services.cache.impl.infinispan.generic.GenericExoCacheConfig">
-            <field name="name"><string>commons.UserStateService</string></field>
-            <field name="strategy" profiles="cluster"><string>${exo.cache.commons.UserStateService.strategy:LIRS}</string></field>
-            <field name="maxSize"><int>${exo.cache.commons.UserStateService.MaxNodes:1000}</int></field>
-            <field name="liveTime"><long>${exo.cache.commons.UserStateService.TimeToLive:86400}</long></field>
-            <field name="cacheMode" profiles="cluster"><string>${exo.cache.commons.UserStateService.cacheMode:replication}</string></field>
-          </object>
-        </object-param>
-      </init-params>
-    </component-plugin>
-  </external-component-plugins>
 
 </configuration>
