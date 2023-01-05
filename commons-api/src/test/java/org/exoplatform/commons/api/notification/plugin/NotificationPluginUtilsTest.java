@@ -27,10 +27,6 @@ import org.exoplatform.services.organization.impl.UserProfileImpl;
 )
 public class NotificationPluginUtilsTest extends AbstractKernelTest {
 
-  public NotificationPluginUtilsTest() {
-    setForceContainerReload(true);
-  }
-
   public void testGetLanguage() throws Exception {
     OrganizationService organizationService = getContainer().getComponentInstanceOfType(OrganizationService.class);
     String userName = "john";
