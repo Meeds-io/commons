@@ -17,7 +17,6 @@
 
 package org.exoplatform.commons.notification.impl.service.storage.cache.model;
 
-import com.google.common.base.Objects;
 import org.exoplatform.commons.api.notification.NotificationMessageUtils;
 import org.exoplatform.commons.api.notification.model.ChannelKey;
 import org.exoplatform.commons.api.notification.model.NotificationInfo;
@@ -28,6 +27,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public class WebNotifInfoData implements Serializable {
   private static final long serialVersionUID = 1L;
@@ -129,20 +129,20 @@ public class WebNotifInfoData implements Serializable {
     WebNotifInfoData that = (WebNotifInfoData) o;
     return order == that.order &&
             lastModifiedDate == that.lastModifiedDate &&
-            Objects.equal(id, that.id) &&
-            Objects.equal(key, that.key) &&
-            Objects.equal(from, that.from) &&
-            Objects.equal(to, that.to) &&
-            Objects.equal(ownerParameter, that.ownerParameter) &&
-            Objects.equal(sendToUserIds, that.sendToUserIds) &&
-            Objects.equal(sendToDaily, that.sendToDaily) &&
-            Objects.equal(sendToWeekly, that.sendToWeekly) &&
-            Objects.equal(title, that.title) &&
-            Objects.equal(channelKey, that.channelKey);
+            Objects.equals(id, that.id) &&
+            Objects.equals(key, that.key) &&
+            Objects.equals(from, that.from) &&
+            Objects.equals(to, that.to) &&
+            Objects.equals(ownerParameter, that.ownerParameter) &&
+            Objects.equals(sendToUserIds, that.sendToUserIds) &&
+            Objects.equals(sendToDaily, that.sendToDaily) &&
+            Objects.equals(sendToWeekly, that.sendToWeekly) &&
+            Objects.equals(title, that.title) &&
+            Objects.equals(channelKey, that.channelKey);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(id, key, from, to, order, ownerParameter, sendToUserIds, sendToDaily, sendToWeekly, lastModifiedDate, title, channelKey);
+    return Objects.hash(id, key, from, to, order, ownerParameter, sendToUserIds, sendToDaily, sendToWeekly, lastModifiedDate, title, channelKey);
   }
 }
