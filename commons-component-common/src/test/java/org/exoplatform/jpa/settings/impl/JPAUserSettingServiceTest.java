@@ -3,8 +3,10 @@ package org.exoplatform.jpa.settings.impl;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.exoplatform.commons.api.notification.NotificationContext;
 import org.exoplatform.commons.api.notification.channel.AbstractChannel;
@@ -48,6 +50,8 @@ public class JPAUserSettingServiceTest extends BaseTest {
 
   OrganizationService         organizationService;
 
+  Set<String>                 teardownUsers;
+
   List<String>                dispatchedUsers;
 
   List<String>                dispatchedPlugins;
@@ -90,7 +94,7 @@ public class JPAUserSettingServiceTest extends BaseTest {
                                               };
 
   @Override
-  public void setUp() {
+  public void setUp() throws Exception {
     super.setUp();
     userSettingService = getService(JPAUserSettingServiceImpl.class);
     pluginSettingServiceImpl = getService(JPAPluginSettingServiceImpl.class);
@@ -101,16 +105,13 @@ public class JPAUserSettingServiceTest extends BaseTest {
     channelManager.register(specificChannel);
     dispatchedUsers = new ArrayList<>();
     dispatchedPlugins = new ArrayList<>();
+    teardownUsers = new HashSet<>();
   }
 
   @Override
-  protected void tearDown() {
-    for (int i = 0; i < 10; i++) {
-      try {
-        organizationService.getUserHandler().removeUser("userTest_" + i, false);
-      } catch (Exception e) {
-        e.printStackTrace();
-      }
+  protected void tearDown() throws Exception {
+    for (String username : teardownUsers) {
+      organizationService.getUserHandler().removeUser(username, false);
     }
     channelManager.unregister(specificChannel);
     pluginSettingServiceImpl.unregisterPluginConfig(PLUGIN_CONFIG);
@@ -118,19 +119,23 @@ public class JPAUserSettingServiceTest extends BaseTest {
   }
 
   public void test_1_GetDefautSetting() throws Exception {
-    List<UserSetting> list = userSettingService.getDigestDefaultSettingForAllUser(0, 0);
-    int originalSize = list.size();
-
     for (int i = 0; i < 10; i++) {
-      User user = new UserImpl("userTest_" + i);
-      organizationService.getUserHandler().createUser(user, false);
-      userSettingService.initDefaultSettings(user.getUserName());
+      User user = new UserImpl("userTestSetting_" + i);
+      organizationService.getUserHandler().createUser(user, true);
+      String userName = user.getUserName();
+      userSettingService.initDefaultSettings(userName);
+      teardownUsers.add(userName);
+      restartTransaction();
     }
-    list = userSettingService.getDigestDefaultSettingForAllUser(0, 5);
+    List<UserSetting> list = userSettingService.getDigestDefaultSettingForAllUser(0, 5);
     assertEquals(5, list.size());
 
     list = userSettingService.getDigestDefaultSettingForAllUser(0, 0);
-    assertEquals(10 + originalSize, list.size());
+    assertTrue(list.size() >= 10);
+    Set<String> defaultDigestUsers = list.stream().map(UserSetting::getUserId).collect(Collectors.toSet());
+    for (String username : teardownUsers) {
+      assertTrue(defaultDigestUsers.contains(username));
+    }
   }
 
   public void testNotAllowedChannel() throws Exception {

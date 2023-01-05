@@ -12,6 +12,11 @@ import org.exoplatform.commons.testing.BaseCommonsTestCase;
 import org.exoplatform.component.test.*;
 import org.exoplatform.container.ExoContainerContext;
 
+@ConfiguredBy({
+  @ConfigurationUnit(scope = ContainerScope.ROOT, path = "conf/configuration.xml"),
+  @ConfigurationUnit(scope = ContainerScope.PORTAL, path = "conf/portal/configuration.xml"),
+  @ConfigurationUnit(scope = ContainerScope.PORTAL, path = "conf/exo.commons.component.core-local-configuration.xml"),
+})
 public abstract class BaseNotificationTestCase extends BaseCommonsTestCase {
 
   protected static final String    NOTIFICATIONS = "notifications";

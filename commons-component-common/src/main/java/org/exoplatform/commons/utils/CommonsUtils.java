@@ -4,6 +4,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
+
 import org.exoplatform.commons.api.settings.ExoFeatureService;
 import org.exoplatform.container.ExoContainer;
 import org.exoplatform.container.ExoContainerContext;
@@ -29,11 +31,14 @@ import org.exoplatform.services.security.IdentityConstants;
 import org.exoplatform.services.security.StateKey;
 
 public class CommonsUtils {
-	
-	private static final Log LOG = ExoLogger.getLogger(CommonsUtils.class.getName());
 
-	public static final String CONFIGURED_TENANT_MASTER_HOST_KEY = "tenant.masterhost";
-	public static final String CONFIGURED_DOMAIN_URL_KEY = "gatein.email.domain.url";
+  private static final Log LOG = ExoLogger.getLogger(CommonsUtils.class.getName());
+
+  public static final String CONFIGURED_TENANT_MASTER_HOST_KEY = "tenant.masterhost";
+
+  public static final String CONFIGURED_DOMAIN_URL_KEY         = "gatein.email.domain.url";
+
+  public static final String DEFAULT_DOMAIN_URL                = "http://localhost:8080";
 
   public static OrganizationService getOrganizationService(){
     return (OrganizationService)ExoContainerContext.getCurrentContainer().getComponentInstance(OrganizationService.class) ;
@@ -136,12 +141,10 @@ public class CommonsUtils {
       ExoContainer container = ExoContainerContext.getCurrentContainer();
       if (containerName != null) {
         container = RootContainer.getInstance().getPortalContainer(containerName);
+      } else if (container instanceof RootContainer) {
+        container = PortalContainer.getInstance();
       }
-      if (container.getComponentInstanceOfType(clazz)==null) {
-        containerName = PortalContainer.getCurrentPortalContainerName();
-        container = RootContainer.getInstance().getPortalContainer(containerName);
-      }
-      return clazz.cast(container.getComponentInstanceOfType(clazz));
+      return container.getComponentInstanceOfType(clazz);
     }
     
     public static String getRestContextName() {
@@ -176,11 +179,13 @@ public class CommonsUtils {
      */
     public static String getCurrentDomain() {
       String sysDomain = System.getProperty(CONFIGURED_DOMAIN_URL_KEY);
-      if (sysDomain == null || sysDomain.length() == 0) {
-        throw new NullPointerException("Get the domain is unsuccessfully. Please, add configuration domain on configuration.properties file with key: " +
-                                         CONFIGURED_DOMAIN_URL_KEY);
+      if (StringUtils.isBlank(sysDomain)) {
+        sysDomain = DEFAULT_DOMAIN_URL;
+        System.setProperty(CONFIGURED_DOMAIN_URL_KEY, sysDomain);
+        LOG.warn("Please configure properly the property {} to get site's current domain. {} will be used as default site's domain",
+                 CONFIGURED_DOMAIN_URL_KEY,
+                 sysDomain);
       }
-      //
       return sysDomain;
     }
 

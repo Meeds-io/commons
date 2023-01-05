@@ -27,10 +27,6 @@ import static org.exoplatform.commons.api.notification.NotificationConstants.BRA
 )
 public class NotificationPluginUtilsTest extends AbstractKernelTest {
 
-  public NotificationPluginUtilsTest() {
-    setForceContainerReload(true);
-  }
-
   public void testGetLanguage() throws Exception {
     OrganizationService organizationService = getContainer().getComponentInstanceOfType(OrganizationService.class);
     String userName = "john";
