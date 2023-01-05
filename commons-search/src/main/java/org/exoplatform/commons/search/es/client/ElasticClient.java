@@ -18,6 +18,7 @@ package org.exoplatform.commons.search.es.client;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 
 import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.io.IOUtils;
@@ -35,8 +36,6 @@ import org.apache.http.impl.DefaultConnectionReuseStrategy;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
-
-import com.google.api.client.util.Charsets;
 
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
@@ -182,7 +181,7 @@ public abstract class ElasticClient {
     if (httpResponse.getEntity()!=null) {
       try {
         is = httpResponse.getEntity().getContent();
-        response = IOUtils.toString(is, Charsets.UTF_8);
+        response = IOUtils.toString(is, StandardCharsets.UTF_8);
       } finally {
         if (is != null) {
           is.close();
