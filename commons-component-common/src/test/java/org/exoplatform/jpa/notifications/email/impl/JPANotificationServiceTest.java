@@ -18,9 +18,6 @@ import org.exoplatform.commons.notification.impl.jpa.email.dao.MailParamDAO;
 import org.exoplatform.commons.notification.job.NotificationJob;
 import org.exoplatform.commons.notification.plugin.PluginTest;
 import org.exoplatform.commons.persistence.impl.EntityManagerHolder;
-import org.exoplatform.component.test.ConfigurationUnit;
-import org.exoplatform.component.test.ConfiguredBy;
-import org.exoplatform.component.test.ContainerScope;
 import org.exoplatform.jpa.BaseTest;
 
 public class JPANotificationServiceTest extends BaseTest {
@@ -32,7 +29,7 @@ public class JPANotificationServiceTest extends BaseTest {
   private MailParamDAO mailParamDAO;
 
   @Override
-  public void setUp() {
+  public void setUp() throws Exception {
     super.setUp();
     notificationService = getService(NotificationService.class);
     notificationDataStorage = getService(JPAMailNotificationStorage.class);
@@ -42,7 +39,7 @@ public class JPANotificationServiceTest extends BaseTest {
   }
 
   @Override
-  public void tearDown() {
+  public void tearDown() throws Exception {
     mailParamDAO.deleteAll();
     mailDigestDAO.deleteAll();
     mailNotifDAO.deleteAll();

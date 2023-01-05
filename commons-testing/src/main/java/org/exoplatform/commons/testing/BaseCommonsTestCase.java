@@ -31,8 +31,9 @@ import org.exoplatform.services.idgenerator.IDGeneratorService;
     @ConfigurationUnit(scope = ContainerScope.ROOT, path = "conf/configuration.xml"),
     @ConfigurationUnit(scope = ContainerScope.PORTAL, path = "conf/portal/configuration.xml"),
     @ConfigurationUnit(scope = ContainerScope.PORTAL, path = "conf/exo.commons.component.core-dependencies-configuration.xml"),
-    @ConfigurationUnit(scope = ContainerScope.PORTAL, path = "conf/exo.commons.component.core-configuration.xml") })
-public abstract class BaseCommonsTestCase extends AbstractKernelTest {
+    @ConfigurationUnit(scope = ContainerScope.PORTAL, path = "conf/exo.commons.component.core-configuration.xml"),
+})
+public abstract class BaseCommonsTestCase extends AbstractKernelTest { // NOSONAR
 
   protected static IDGeneratorService idGeneratorService;
 
