@@ -37,14 +37,10 @@ public class CommonsUtilsTest extends BaseCommonsTestCase {
   }
   
   public void testGetCurrentDomain() {
-    try {
-      CommonsUtils.getCurrentDomain();
-      assertFalse(true);
-    } catch (NullPointerException e) {
-      assertEquals("Get the domain is unsuccessfully. Please, add configuration domain on " +
-      "configuration.properties file with key: " + CommonsUtils.CONFIGURED_DOMAIN_URL_KEY, e.getMessage());
-    }
-    System.setProperty(CommonsUtils.CONFIGURED_DOMAIN_URL_KEY, "http://exoplatfom.com");
-    assertEquals("http://exoplatfom.com", CommonsUtils.getCurrentDomain());
+    assertEquals(CommonsUtils.DEFAULT_DOMAIN_URL, CommonsUtils.getCurrentDomain());
+
+    String siteName = "http://builders.meeds.io";
+    System.setProperty(CommonsUtils.CONFIGURED_DOMAIN_URL_KEY, siteName);
+    assertEquals(siteName, CommonsUtils.getCurrentDomain());
   }
 }
