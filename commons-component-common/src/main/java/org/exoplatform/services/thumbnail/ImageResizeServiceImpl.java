@@ -32,6 +32,10 @@ public class ImageResizeServiceImpl implements ImageResizeService {
     }
     Scalr.Method resizeMethod = ultraQuality ? Scalr.Method.ULTRA_QUALITY : Scalr.Method.QUALITY;
     BufferedImage bufferedImage = toBufferedImage(image);
+    // Image could not be loaded using ImageIO API
+    if(bufferedImage == null) {
+      return image;
+    }
     int originWidth = bufferedImage.getWidth();
     int originHeight = bufferedImage.getHeight();
 
