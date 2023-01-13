@@ -169,4 +169,16 @@ public class ImageResizeServiceImplTest {
       fail();
     }
   }
+
+  @Test
+  public void testShouldReturnOriginalImageIfImageHaveError() {
+    try {
+      File fileImage = new File(getClass().getClassLoader().getResource("images/image-with-error.png").getFile());
+      byte[] testFileImage = Files.readAllBytes(fileImage.toPath());
+      byte[] resizedImage = imageResizeService.scaleImage(testFileImage, 2000, 1000, false, true);
+      assertEquals(resizedImage.length, testFileImage.length);
+    }catch (Exception e) {
+      fail();
+    }
+  }
 }
