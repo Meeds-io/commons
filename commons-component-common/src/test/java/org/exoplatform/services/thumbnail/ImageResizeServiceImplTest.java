@@ -33,7 +33,6 @@ public class ImageResizeServiceImplTest {
 
   private byte[]             testImageContent;
   private byte[]             testVerticalImageContent;
-
   @Before
   public void setUp() throws Exception {
     this.imageResizeService = new ImageResizeServiceImpl();
@@ -157,5 +156,17 @@ public class ImageResizeServiceImplTest {
   private BufferedImage toBufferedImage(byte[] content) throws IOException {
     ByteArrayInputStream bis = new ByteArrayInputStream(content);
     return ImageIO.read(bis);
+  }
+
+  @Test
+  public void testShouldReturnOriginalImageIfImageTypeNotSupported() {
+    try {
+      File fileWebPImage = new File(getClass().getClassLoader().getResource("images/meeds.webp").getFile());
+      byte[] testFileWebPImage = Files.readAllBytes(fileWebPImage.toPath());
+      byte[] resizedImage = imageResizeService.scaleImage(testFileWebPImage, 2000, 1000, false, true);
+      assertEquals(resizedImage.length, testFileWebPImage.length);
+    }catch (Exception e) {
+      fail();
+    }
   }
 }
