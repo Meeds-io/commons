@@ -15,6 +15,8 @@
  */
 package org.exoplatform.services.thumbnail;
 
+import org.exoplatform.services.log.ExoLogger;
+import org.exoplatform.services.log.Log;
 import org.imgscalr.Scalr;
 
 import javax.imageio.ImageIO;
@@ -24,6 +26,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 public class ImageResizeServiceImpl implements ImageResizeService {
+
+  private static final Log LOG = ExoLogger.getLogger(ImageResizeServiceImpl.class);
+
 
   @Override
   public byte[] scaleImage(byte[] image, int width, int height, boolean fitExact, boolean ultraQuality) throws Exception {
@@ -66,9 +71,14 @@ public class ImageResizeServiceImpl implements ImageResizeService {
     }
   }
 
-  private BufferedImage toBufferedImage(byte[] imageBytes) throws IOException {
-    ByteArrayInputStream bis = new ByteArrayInputStream(imageBytes);
-    return ImageIO.read(bis);
+  private BufferedImage toBufferedImage(byte[] imageBytes) {
+    try {
+      ByteArrayInputStream bis = new ByteArrayInputStream(imageBytes);
+      return ImageIO.read(bis);
+    } catch (Exception e) {
+      LOG.error("Unable to read image",e);
+      return null;
+    }
   }
 
   private byte[] toByteArray(BufferedImage bufferedImage) throws IOException {
