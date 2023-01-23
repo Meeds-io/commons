@@ -181,4 +181,18 @@ public class ImageResizeServiceImplTest {
       fail();
     }
   }
+
+  @Test
+  public void testShouldFitHeight() {
+    try {
+      File fileImage = new File(getClass().getClassLoader().getResource("images/large-banner.png").getFile());
+      byte[] testFileImage = Files.readAllBytes(fileImage.toPath());
+      byte[] resizedImage = imageResizeService.scaleImage(testFileImage, 250, 150, false, true);
+      BufferedImage bufferedImage = toBufferedImage(resizedImage);
+      assertEquals(150, bufferedImage.getHeight());
+      assertTrue(bufferedImage.getWidth() > 250);
+    }catch (Exception e) {
+      fail();
+    }
+  }
 }

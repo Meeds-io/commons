@@ -57,8 +57,13 @@ public class ImageResizeServiceImpl implements ImageResizeService {
     } else if (fitExact) {
       bufferedImage = Scalr.resize(bufferedImage, resizeMethod, Scalr.Mode.FIT_EXACT, width, height, Scalr.OP_ANTIALIAS);
     } else {
+      float ratio = (float)originHeight / (float)originWidth;
+      int calculatedTargetHeight= Math.round(width * ratio);
 
       Scalr.Mode fitMode = width > height ? Scalr.Mode.FIT_TO_WIDTH : Scalr.Mode.FIT_TO_HEIGHT;
+      if (calculatedTargetHeight < height) {
+        fitMode=Scalr.Mode.FIT_TO_HEIGHT;
+      }
       bufferedImage = Scalr.resize(bufferedImage, resizeMethod, fitMode, width, height, Scalr.OP_ANTIALIAS);
     }
 
