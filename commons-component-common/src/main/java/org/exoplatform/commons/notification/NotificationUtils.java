@@ -19,7 +19,6 @@ package org.exoplatform.commons.notification;
 import java.text.MessageFormat;
 import java.util.*;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import javax.mail.internet.AddressException;
 import javax.mail.internet.InternetAddress;
@@ -38,33 +37,11 @@ import org.exoplatform.commons.utils.CommonsUtils;
 import org.exoplatform.container.xml.InitParams;
 import org.exoplatform.services.organization.OrganizationService;
 
+import static org.exoplatform.commons.api.notification.NotificationConstants.*;
+
 
 public class NotificationUtils {
 
-  public static final String EXO_IS_ACTIVE             = "exo:isActive";
-
-  public static final String DEFAULT_SUBJECT_KEY       = "Notification.subject.{0}";
-
-  public static final String DEFAULT_SIMPLE_DIGEST_KEY = "Notification.digest.{0}";
-
-  public static final String DEFAULT_DIGEST_ONE_KEY    = "Notification.digest.one.{0}";
-
-  public static final String DEFAULT_DIGEST_THREE_KEY  = "Notification.digest.three.{0}";
-  
-  public static final String DEFAULT_DIGEST_MORE_KEY   = "Notification.digest.more.{0}";
-
-  public static final String FEATURE_NAME              = "notification";
-  
-  private static final Pattern LINK_PATTERN = Pattern.compile("<a ([^>]+)>([^<]+)</a>");
-
-  private static final Pattern EMAIL_PATTERN = Pattern.compile("^[_a-zA-Z0-9-+]+(\\.[_a-zA-Z0-9-]+)*@[a-zA-Z0-9-]+(\\.[a-zA-Z0-9-]+)*(\\.[a-zA-Z]{2,})$");
-
-  private static final Pattern NOTIFICATION_SENDER_NAME_PATTERN = Pattern.compile("^[a-zA-Z]+[a-zA-Z ]*$");
-  
-  private static final String styleCSS = " style=\"color: #2f5e92; text-decoration: none;\"";
-  
-  /** This value must be the same with CalendarSpaceActivityPublisher.CALENDAR_APP_ID */
-  public static final String CALENDAR_ACTIVITY = "cs-calendar:spaces";
   
   public static String getDefaultKey(String key, String providerId) {
     return MessageFormat.format(key, providerId);

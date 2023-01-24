@@ -18,7 +18,6 @@ package org.exoplatform.commons.api.notification.plugin;
 
 import java.util.Locale;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
 import org.exoplatform.commons.api.settings.SettingService;
@@ -37,14 +36,9 @@ import org.exoplatform.portal.localization.LocaleContextInfoUtils;
 import org.exoplatform.services.resources.LocaleContextInfo;
 import org.exoplatform.services.resources.LocalePolicy;
 
+import static org.exoplatform.commons.api.notification.NotificationConstants.*;
+
 public class NotificationPluginUtils {
-
-  public static final String BRANDING_PORTAL_NAME = "exo:brandingPortalName";
-  
-  public static final String BRANDING_COMPANY_NAME_SETTING_KEY = "exo.branding.company.name";
-
-  private static final Pattern EMAIL_PATTERN = Pattern.compile("^[_a-zA-Z0-9-+]+(\\.[_a-zA-Z0-9-]+)*@[a-zA-Z0-9-]+(\\.[a-zA-Z0-9-]+)*(\\.[a-zA-Z]{2,})$");
-
 
   public static String getPortalName() {
     return getExoContainerContext().getPortalContainerName();

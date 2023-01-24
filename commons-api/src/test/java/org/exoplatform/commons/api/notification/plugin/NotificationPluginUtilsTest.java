@@ -1,7 +1,5 @@
 package org.exoplatform.commons.api.notification.plugin;
 
-import static org.exoplatform.commons.api.notification.plugin.NotificationPluginUtils.BRANDING_COMPANY_NAME_SETTING_KEY;
-
 import org.mockito.Mockito;
 
 import org.exoplatform.commons.api.settings.SettingService;
@@ -11,6 +9,8 @@ import org.exoplatform.commons.api.settings.data.Scope;
 import org.exoplatform.component.test.*;
 import org.exoplatform.services.organization.*;
 import org.exoplatform.services.organization.impl.UserProfileImpl;
+
+import static org.exoplatform.commons.api.notification.NotificationConstants.BRANDING_COMPANY_NAME_SETTING_KEY;
 
 /**
  * Created by eXo Platform SAS.
