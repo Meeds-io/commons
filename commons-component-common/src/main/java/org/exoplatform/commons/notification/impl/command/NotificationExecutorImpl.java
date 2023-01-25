@@ -26,13 +26,14 @@ import org.exoplatform.commons.api.notification.command.NotificationExecutor;
 import org.exoplatform.commons.api.notification.model.NotificationInfo;
 import org.exoplatform.commons.api.notification.service.NotificationCompletionService;
 import org.exoplatform.commons.api.notification.service.storage.NotificationService;
-import org.exoplatform.commons.notification.NotificationUtils;
 import org.exoplatform.commons.utils.CommonsUtils;
 import org.exoplatform.container.ExoContainerContext;
 import org.exoplatform.container.PortalContainer;
 import org.exoplatform.container.component.RequestLifeCycle;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
+
+import static org.exoplatform.commons.api.notification.NotificationConstants.FEATURE_NAME;
 
 public class NotificationExecutorImpl implements NotificationExecutor {
 
@@ -93,7 +94,7 @@ public class NotificationExecutorImpl implements NotificationExecutor {
     boolean result = true;
 
     // Notification will not be executed when the feature is off
-    if (CommonsUtils.isFeatureActive(NotificationUtils.FEATURE_NAME) == false) {
+    if (CommonsUtils.isFeatureActive(FEATURE_NAME) == false) {
       commands.clear();
       return result;
     }
