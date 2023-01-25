@@ -19,6 +19,8 @@ package org.exoplatform.commons.utils;
 import org.exoplatform.commons.notification.NotificationUtils;
 import org.exoplatform.commons.testing.BaseCommonsTestCase;
 
+import static org.exoplatform.commons.api.notification.NotificationConstants.CALENDAR_ACTIVITY;
+
 /**
  * Created by The eXo Platform SAS
  * Author : eXoPlatform
@@ -33,7 +35,7 @@ public class NotificationUtilsTest extends BaseCommonsTestCase {
     assertEquals(newTitle, NotificationUtils.removeLinkTitle(title));
     
     title = "MHM&amp;#39s B-day Party";
-    assertEquals("MHM&#39s B-day Party", NotificationUtils.getNotificationActivityTitle(title, NotificationUtils.CALENDAR_ACTIVITY));
+    assertEquals("MHM&#39s B-day Party", NotificationUtils.getNotificationActivityTitle(title, CALENDAR_ACTIVITY));
     
     title = "MHM&amp;#39s B-day Party";
     assertEquals("MHM&amp;#39s B-day Party", NotificationUtils.getNotificationActivityTitle(title, ""));
