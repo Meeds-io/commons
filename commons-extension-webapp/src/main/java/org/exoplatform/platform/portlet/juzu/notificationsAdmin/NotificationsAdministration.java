@@ -49,6 +49,8 @@ import juzu.request.ApplicationContext;
 import juzu.request.UserContext;
 import juzu.template.Template;
 
+import static org.exoplatform.commons.api.notification.NotificationConstants.FEATURE_NAME;
+
 public class NotificationsAdministration {
   private static final Log LOG    = ExoLogger.getLogger(NotificationsAdministration.class);
 
@@ -73,7 +75,7 @@ public class NotificationsAdministration {
   @View
   public Response index(ApplicationContext applicationContext, UserContext userContext) {
     // Redirect yo the home's page when the feature is off
-    if (!CommonsUtils.isFeatureActive(NotificationUtils.FEATURE_NAME)) {
+    if (!CommonsUtils.isFeatureActive(FEATURE_NAME)) {
       return redirectToHomePage();
     }
 
