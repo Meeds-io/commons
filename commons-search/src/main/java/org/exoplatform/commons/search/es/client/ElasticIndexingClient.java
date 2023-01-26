@@ -489,8 +489,9 @@ public class ElasticIndexingClient extends ElasticClient {
         maxPoolConnections = Integer.parseInt(maxConnectionsValue.trim());
       }
       if (maxPoolConnections <= 0) {
-        LOG.warn(ES_INDEX_CLIENT_PROPERTY_MAX_CONNECTIONS + " value is not a positive number : " + maxConnectionsValue +
-            ". Using default HTTP max connections (" + DEFAULT_MAX_HTTP_POOL_CONNECTIONS + ").");
+        LOG.info("Using default HTTP max connections for property {}={}.",
+                 ES_INDEX_CLIENT_PROPERTY_MAX_CONNECTIONS,
+                 DEFAULT_MAX_HTTP_POOL_CONNECTIONS);
         maxPoolConnections = DEFAULT_MAX_HTTP_POOL_CONNECTIONS;
       }
     }
