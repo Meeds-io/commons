@@ -4,12 +4,12 @@
   <parent>
     <artifactId>maven-parent-pom</artifactId>
     <groupId>io.meeds</groupId>
-    <version>27-M06</version>
+    <version>27-mips-SNAPSHOT</version>
     <relativePath />
   </parent>
   <groupId>io.meeds.commons</groupId>
   <artifactId>commons</artifactId>
-  <version>7.0.x-SNAPSHOT</version>
+  <version>7.0.x-mips-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>Meeds:: PLF:: Commons</name>
   <modules>
@@ -33,8 +33,8 @@
     <!-- **************************************** -->
     <!-- Project Dependencies                     -->
     <!-- **************************************** -->
-    <io.meeds.portal.version>7.0.x-SNAPSHOT</io.meeds.portal.version>
-    <io.meeds.platform-ui.version>7.0.x-SNAPSHOT</io.meeds.platform-ui.version>
+    <io.meeds.portal.version>7.0.x-mips-SNAPSHOT</io.meeds.portal.version>
+    <io.meeds.platform-ui.version>7.0.x-mips-SNAPSHOT</io.meeds.platform-ui.version>
 
     <!-- Sonar properties -->
     <sonar.organization>meeds-io</sonar.organization>
