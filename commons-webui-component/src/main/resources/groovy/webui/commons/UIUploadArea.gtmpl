@@ -1,3 +1,0 @@
-<div class="uiUploadArea" id="$uicomponent.id" >
- <%	uicomponent.renderChildren();	%>
-</div>

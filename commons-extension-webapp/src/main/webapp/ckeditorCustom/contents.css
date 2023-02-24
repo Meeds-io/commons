@@ -7,8 +7,8 @@ For licensing, see LICENSE.md or http://ckeditor.com/license
 
 @font-face {
 	font-family: 'PLF-FONT-ICONS';
-	src: url('/eXoSkin/skin/fonts/PLF-FONT-ICONS.eot?-m9uidt');
-	src: url('/eXoSkin/skin/fonts/PLF-FONT-ICONS.eot?#iefix-m9uidt') format('embedded-opentype'), url('/eXoSkin/skin/fonts/PLF-FONT-ICONS.ttf?-m9uidt') format('truetype'), url('/eXoSkin/skin/fonts/PLF-FONT-ICONS.woff?-m9uidt') format('woff'), url('/eXoSkin/skin/fonts/PLF-FONT-ICONS.svg?-m9uidt#PLF-FONT-ICONS') format('svg');
+	src: url('/platform-ui/skin/fonts/PLF-FONT-ICONS.eot?-m9uidt');
+	src: url('/platform-ui/skin/fonts/PLF-FONT-ICONS.eot?#iefix-m9uidt') format('embedded-opentype'), url('/platform-ui/skin/fonts/PLF-FONT-ICONS.ttf?-m9uidt') format('truetype'), url('/platform-ui/skin/fonts/PLF-FONT-ICONS.woff?-m9uidt') format('woff'), url('/platform-ui/skin/fonts/PLF-FONT-ICONS.svg?-m9uidt#PLF-FONT-ICONS') format('svg');
 	font-weight: normal;
 	font-style: normal;
 }
