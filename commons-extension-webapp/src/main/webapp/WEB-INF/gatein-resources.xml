@@ -187,9 +187,6 @@
     <depends>
       <module>vueI18n</module>
     </depends>
-    <depends>
-      <module>fetchPolyfill</module>
-    </depends>
   </module>
 
   <module>
