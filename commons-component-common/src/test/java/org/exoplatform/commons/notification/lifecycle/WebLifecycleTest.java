@@ -19,7 +19,15 @@ import org.exoplatform.commons.notification.impl.jpa.web.dao.WebNotifDAO;
 import org.exoplatform.commons.notification.impl.jpa.web.dao.WebParamsDAO;
 import org.exoplatform.commons.notification.impl.jpa.web.dao.WebUsersDAO;
 import org.exoplatform.commons.testing.BaseCommonsTestCase;
+import org.exoplatform.component.test.ConfigurationUnit;
+import org.exoplatform.component.test.ConfiguredBy;
+import org.exoplatform.component.test.ContainerScope;
 
+@ConfiguredBy({
+  @ConfigurationUnit(scope = ContainerScope.ROOT, path = "conf/configuration.xml"),
+  @ConfigurationUnit(scope = ContainerScope.PORTAL, path = "conf/portal/configuration.xml"),
+  @ConfigurationUnit(scope = ContainerScope.PORTAL, path = "conf/exo.commons.component.core-local-configuration.xml"),
+})
 public class WebLifecycleTest extends BaseCommonsTestCase {
 
   private WebNotificationService webNotificationService;
