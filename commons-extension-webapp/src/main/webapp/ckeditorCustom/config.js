@@ -69,8 +69,10 @@ CKEDITOR.editorConfig = function( config ) {
     config.colorButton_enableMore = false;
 
     // style inside the editor
-    config.contentsCss = '/commons-extension/ckeditorCustom/contents.css';
-    
+    config.contentsCss = [];
+    document.querySelectorAll('[skin-type=portal-skin]').forEach(link => config.contentsCss.push(link.href))
+    config.contentsCss.push('/commons-extension/ckeditorCustom/contents.css'); // load last
+
     //config.enterMode = CKEDITOR.ENTER_BR;
     
     config.toolbar = [
@@ -93,7 +95,6 @@ CKEDITOR.editorConfig = function( config ) {
     config.dialog_backgroundCoverColor = 'transparent';
     config.dialog_backgroundCoverOpacity = 1;
 
-
     // Here is configure for suggester
     var peopleSearchCached = {};
     var lastNoResultQuery = false;
@@ -114,11 +115,11 @@ CKEDITOR.editorConfig = function( config ) {
                     callback.call(this, peopleSearchCached[query]);
                 } else {
                     require(['SHARED/jquery'], function($) {
-                        var userName = eXo.social.portal.userName;
+                        var userName = eXo.env.portal.userName;
                         var activityId = CKEDITOR.currentInstance.config.activityId;
                         var typeOfRelation = CKEDITOR.currentInstance.config.typeOfRelation;
                         var spaceURL = CKEDITOR.currentInstance.config.spaceURL;
-                        var url = window.location.protocol + '//' + window.location.host + '/' + eXo.social.portal.rest + '/social/people/suggest.json?nameToSearch=' + query + '&currentUser=' + userName + '&typeOfRelation=' + typeOfRelation + '&spaceURL=' + spaceURL;
+                        var url = window.location.protocol + '//' + window.location.host + eXo.env.portal.context + '/' + eXo.env.portal.rest + '/social/people/suggest.json?nameToSearch=' + query + '&currentUser=' + userName + '&typeOfRelation=' + typeOfRelation + '&spaceURL=' + spaceURL;
                         if (CKEDITOR.currentInstance.config.activityId) {
                             url += '&activityId=' + activityId;
                         }
