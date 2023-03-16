@@ -18,6 +18,9 @@
 .simpleLinkDialog > .cke_dialog {
 	position: relative !important;
 }
+.cke_dialog {
+  width: auto;
+}
 input#cke_61_textInput {
 	width: 100%;
 }
@@ -29,6 +32,11 @@ textarea#cke_58_textarea {
 	height: 40px;
 	resize: none;
 	padding: 9px 0;
+}
+.uiActionBorder {
+  border-top: none;
+  text-align: center;
+  padding: 15px 0;
 }
 @media (min-width: 768px) and (max-width: 1024px) {
 	.btn.btn-primary, .btn-primary {

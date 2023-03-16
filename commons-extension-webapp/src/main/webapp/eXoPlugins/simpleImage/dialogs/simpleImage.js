@@ -116,7 +116,7 @@ CKEDITOR.dialog.add( 'simpleImageDialog', function( editor ) {
                             style: 'width:95%;',
                             html: '<div>' + CKEDITOR.tools.htmlEncode( editor.lang.common.preview ) + '<br>' +
                                 '<div id="' + 'imagePreviewLoaderId' + dialogId + '" class="ImagePreviewLoader" style="background-color: #8D8D8D; margin-left:20%;">' + 
-                                    '<div id="' + 'imagePreviewLoaderIconId' + dialogId + '" class="loading" style="background: url(\'/eXoSkin/skin/images/themes/default/Loading/loadingProgressBar.gif\') no-repeat center; display:none; width:100%;height:100%">&nbsp;</div>' +
+                                    '<div id="' + 'imagePreviewLoaderIconId' + dialogId + '" class="loading" style="background: url(\'/platform-ui/skin/images/themes/default/Loading/loadingProgressBar.gif\') no-repeat center; display:none; width:100%;height:100%">&nbsp;</div>' +
                                     '<span id="' + 'imagePreviewErrorId' + dialogId + '" class="error" style="display:none; color:red; position:absolute; top: 30%; left: 0; right: 0;text-align: center">Error: image url incorrect!</span>' +
                                 '</div>' +
                                 '<div style="width:230px;margin-left:20%"><table><tr><td>' +
