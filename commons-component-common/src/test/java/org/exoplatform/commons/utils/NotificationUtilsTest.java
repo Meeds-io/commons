@@ -16,10 +16,12 @@
  */
 package org.exoplatform.commons.utils;
 
+import static org.exoplatform.commons.api.notification.NotificationConstants.CALENDAR_ACTIVITY;
+
+import java.util.List;
+
 import org.exoplatform.commons.notification.NotificationUtils;
 import org.exoplatform.commons.testing.BaseCommonsTestCase;
-
-import static org.exoplatform.commons.api.notification.NotificationConstants.CALENDAR_ACTIVITY;
 
 /**
  * Created by The eXo Platform SAS
@@ -29,6 +31,15 @@ import static org.exoplatform.commons.api.notification.NotificationConstants.CAL
  */
 public class NotificationUtilsTest extends BaseCommonsTestCase {
 
+  public void testAddToListFromEmptyString() {
+    try {
+      List<String> emptyStringList = NotificationUtils.stringToList("");
+      assertTrue(emptyStringList.add("test"));
+    } catch (UnsupportedOperationException unsupportedOperationException) {
+      fail("Fail to add an item to the list due to UnsupportedOperationException of add operation");
+    }
+  }
+  
   public void testRemoveLinkTitle() {
     String title = "<a href=\"http://exoplatform.github.io/\" target=\"_blank\">http://exoplatform.github.io/</a>";
     String newTitle = "<span class=\"user-name text-bold\">http://exoplatform.github.io/</span>";
