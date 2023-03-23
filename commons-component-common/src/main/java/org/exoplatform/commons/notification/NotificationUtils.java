@@ -134,13 +134,12 @@ public class NotificationUtils {
   }
 
   public static List<String> stringToList(String value) {
-    if (StringUtils.isBlank(value)) {
-      return Collections.emptyList();
-    }
-    List<String> result = new ArrayList<>();
-    StringTokenizer tokenizer = new StringTokenizer(value, ",");
-    while (tokenizer.hasMoreTokens()) {
-      result.add(tokenizer.nextToken());
+    List<String> result = new ArrayList<>();    
+    if (!StringUtils.isBlank(value)) {
+      StringTokenizer tokenizer = new StringTokenizer(value, ",");
+      while (tokenizer.hasMoreTokens()) {
+        result.add(tokenizer.nextToken());
+      }
     }
     return result;
   }
