@@ -37,18 +37,6 @@
       <groupId>${project.groupId}</groupId>
       <artifactId>commons-component-common</artifactId>
     </dependency>
-
-    <!-- ES Test -->
-    <dependency>
-      <groupId>org.hamcrest</groupId>
-      <artifactId>hamcrest-all</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>net.java.dev.jna</groupId>
-      <artifactId>jna</artifactId>
-      <scope>test</scope>
-    </dependency>
   </dependencies>
   <build>
     <plugins>

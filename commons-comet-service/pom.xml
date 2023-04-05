@@ -28,11 +28,6 @@
   <artifactId>commons-comet-service</artifactId>
   <packaging>jar</packaging>
   <name>eXo PLF:: Commons - Comet Services</name>
-  <properties>
-    <!-- All tests are broken here :( -->
-    <!-- These are IT tests that must be reviewed -->
-    <skipTests>true</skipTests>
-  </properties>
   <dependencies>
     <dependency>
       <groupId>org.exoplatform.commons</groupId>
@@ -72,36 +67,6 @@
       <groupId>org.eclipse.jetty</groupId>
       <artifactId>jetty-util-ajax</artifactId>
       <scope>runtime</scope>
-    </dependency>
-
-    <!-- This dependency is used for tests execution but is erroneously reported 
-      as useless by mvn dependency:analyze -->
-    <dependency>
-      <groupId>org.codehaus.cargo</groupId>
-      <artifactId>cargo-core-api-container</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.codehaus.cargo</groupId>
-      <artifactId>cargo-core-api-generic</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.codehaus.cargo</groupId>
-      <artifactId>cargo-core-api-util</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.codehaus.cargo</groupId>
-      <artifactId>cargo-core-container-jetty</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <!-- This dependency is used for tests execution but is erroneously reported 
-      as useless by mvn dependency:analyze -->
-    <dependency>
-      <groupId>org.codehaus.cargo</groupId>
-      <artifactId>cargo-core-container-tomcat</artifactId>
-      <scope>test</scope>
     </dependency>
   </dependencies>
 </project>
