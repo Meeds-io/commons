@@ -23,7 +23,7 @@
   <parent>
     <artifactId>commons</artifactId>
     <groupId>org.exoplatform.commons</groupId>
-    <version>6.5.x-meed-SNAPSHOT</version>
+    <version>6.5.0-meed-20230416</version>
   </parent>
   <artifactId>commons-juzu</artifactId>
   <packaging>jar</packaging>
