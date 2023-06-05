@@ -7,9 +7,9 @@ CKEDITOR.plugins.add( 'formatOption', {
   init: function( editor ) {
     editor.addCommand('formatOption', {
       exec: function() {
-        const toolbarWrapper = document.getElementsByClassName("cke_toolgroup");
-        toolbarWrapper[0].classList.toggle("fullToolbar");
-        if (toolbarWrapper[0].classList.contains('fullToolbar')) {
+        const toolbarWrapper = document.querySelector(`.${editor.id} .cke_toolgroup`);
+        toolbarWrapper.classList.toggle("fullToolbar");
+        if (toolbarWrapper.classList.contains('fullToolbar')) {
           document.dispatchEvent(new CustomEvent('editors-options-opened', {detail: 'displayFormatOptions'} ));
         } else {
           document.dispatchEvent(new CustomEvent('editors-options-opened', {detail: 'displayRichOptions'} ));
