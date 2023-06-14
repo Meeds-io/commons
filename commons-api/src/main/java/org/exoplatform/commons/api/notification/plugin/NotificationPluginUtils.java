@@ -19,11 +19,6 @@ package org.exoplatform.commons.api.notification.plugin;
 import java.util.Locale;
 import java.util.regex.Matcher;
 
-import org.apache.commons.lang3.StringUtils;
-import org.exoplatform.commons.api.settings.SettingService;
-import org.exoplatform.commons.api.settings.SettingValue;
-import org.exoplatform.commons.api.settings.data.Context;
-import org.exoplatform.commons.api.settings.data.Scope;
 import org.exoplatform.commons.utils.MailUtils;
 import org.exoplatform.container.ExoContainerContext;
 import org.exoplatform.container.PortalContainer;
@@ -32,6 +27,7 @@ import org.exoplatform.container.component.RequestLifeCycle;
 import org.exoplatform.services.organization.OrganizationService;
 import org.exoplatform.services.organization.User;
 import org.exoplatform.services.organization.UserHandler;
+import org.exoplatform.portal.branding.BrandingService;
 import org.exoplatform.portal.localization.LocaleContextInfoUtils;
 import org.exoplatform.services.resources.LocaleContextInfo;
 import org.exoplatform.services.resources.LocalePolicy;
@@ -112,11 +108,7 @@ public class NotificationPluginUtils {
    * @return
    */
   public static String getBrandingPortalName() {
-    SettingValue<?> name = getSettingService().get(Context.GLOBAL, Scope.GLOBAL.id(null), BRANDING_PORTAL_NAME);
-    if (name == null) {
-      name = getSettingService().get(Context.GLOBAL, Scope.GLOBAL, BRANDING_COMPANY_NAME_SETTING_KEY);
-    }
-    return name != null && StringUtils.isNotBlank((CharSequence) name.getValue()) ? (String) name.getValue() : "eXo";
+    return getBrandingService().getCompanyName();
   }
   
   public static String getTo(String to) {
@@ -146,8 +138,8 @@ public class NotificationPluginUtils {
       return ExoContainerContext.getCurrentContainer().getComponentInstanceOfType(OrganizationService.class);
   }
   
-  public static SettingService getSettingService() {
-    return ExoContainerContext.getCurrentContainer().getComponentInstanceOfType(SettingService.class);
+  public static BrandingService getBrandingService() {
+    return ExoContainerContext.getCurrentContainer().getComponentInstanceOfType(BrandingService.class);
   }
 
   private static void startRequest(Object service) {
