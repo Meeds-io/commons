@@ -24,6 +24,8 @@ import org.exoplatform.services.organization.User;
 
 public interface UserSettingService {
 
+  String USER_NOTIFICATION_MODIFIED_EVENT = "notifications.userSettingModified";
+
   /**
    * Saves the notification settings of a user.
    * 
