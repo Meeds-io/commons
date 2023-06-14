@@ -1,30 +1,27 @@
 package org.exoplatform.commons.api.notification.plugin;
 
-import org.mockito.Mockito;
-
-import org.exoplatform.commons.api.settings.SettingService;
-import org.exoplatform.commons.api.settings.SettingValue;
-import org.exoplatform.commons.api.settings.data.Context;
-import org.exoplatform.commons.api.settings.data.Scope;
-import org.exoplatform.component.test.*;
-import org.exoplatform.services.organization.*;
+import org.exoplatform.component.test.AbstractKernelTest;
+import org.exoplatform.component.test.ConfigurationUnit;
+import org.exoplatform.component.test.ConfiguredBy;
+import org.exoplatform.component.test.ContainerScope;
+import org.exoplatform.container.ExoContainerContext;
+import org.exoplatform.portal.branding.BrandingService;
+import org.exoplatform.services.organization.OrganizationService;
+import org.exoplatform.services.organization.UserProfile;
+import org.exoplatform.services.organization.UserProfileHandler;
 import org.exoplatform.services.organization.impl.UserProfileImpl;
-
-import static org.exoplatform.commons.api.notification.NotificationConstants.BRANDING_COMPANY_NAME_SETTING_KEY;
 
 /**
  * Created by eXo Platform SAS.
  *
  * @author Ali Hamdi <ahamdi@exoplatform.com>
- * @since 15/02/18 10:23
+ * @since  15/02/18 10:23
  */
 
-@ConfiguredBy(
-  {
-      @ConfigurationUnit(scope = ContainerScope.ROOT, path = "conf/configuration.xml"),
-      @ConfigurationUnit(scope = ContainerScope.PORTAL, path = "conf/portal/configuration.xml"),
-  }
-)
+@ConfiguredBy({
+    @ConfigurationUnit(scope = ContainerScope.ROOT, path = "conf/configuration.xml"),
+    @ConfigurationUnit(scope = ContainerScope.PORTAL, path = "conf/portal/configuration.xml"),
+})
 public class NotificationPluginUtilsTest extends AbstractKernelTest {
 
   public void testGetLanguage() throws Exception {
@@ -58,16 +55,7 @@ public class NotificationPluginUtilsTest extends AbstractKernelTest {
   }
 
   public void testGetBrandingPortalName() throws Exception {
-    SettingService settingService = Mockito.mock(SettingService.class);
-    getContainer().unregisterComponent(SettingService.class);
-    getContainer().registerComponentInstance(SettingService.class, settingService);
-
-    String companyName = "ACME";
-    SettingValue value = new SettingValue(companyName);
-    Mockito.when(settingService.get(Context.GLOBAL, Scope.GLOBAL, BRANDING_COMPANY_NAME_SETTING_KEY)).thenReturn(value);
-
-    // Make sure that method getBrandingPortalName returns the changed company
-    // name.
-    assertEquals(companyName, NotificationPluginUtils.getBrandingPortalName());
+    assertEquals(ExoContainerContext.getService(BrandingService.class).getCompanyName(),
+                 NotificationPluginUtils.getBrandingPortalName());
   }
 }
