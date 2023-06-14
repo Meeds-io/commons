@@ -49,6 +49,7 @@ import org.exoplatform.commons.notification.NotificationUtils;
 import org.exoplatform.commons.notification.impl.AbstractService;
 import org.exoplatform.commons.notification.job.NotificationJob;
 import org.exoplatform.commons.utils.PropertyManager;
+import org.exoplatform.services.listener.ListenerService;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 import org.exoplatform.services.organization.OrganizationService;
@@ -72,6 +73,8 @@ public class JPAUserSettingServiceImpl extends AbstractService implements UserSe
 
   private UserSetting          defaultSetting;
 
+  private ListenerService      listenerService;
+
   /**
    * This service must depend on DataInitializer to make sure data
    * structure is created before initializing it
@@ -81,16 +84,19 @@ public class JPAUserSettingServiceImpl extends AbstractService implements UserSe
    * @param channelManager {@link ChannelManager}
    * @param pluginSettingService {@link PluginSettingService}
    * @param dataInitializer {@link DataInitializer}
+   * @param listenerService {@link ListenerService}
    */
   public JPAUserSettingServiceImpl(OrganizationService organizationService,
                                    SettingService settingService,
                                    ChannelManager channelManager,
                                    PluginSettingService pluginSettingService,
-                                   DataInitializer dataInitializer) {
+                                   DataInitializer dataInitializer,
+                                   ListenerService listenerService) {
     this.organizationService = organizationService;
     this.settingService = settingService;
     this.channelManager = channelManager;
     this.pluginSettingService = pluginSettingService;
+    this.listenerService = listenerService;
   }
 
   @Override
@@ -119,6 +125,8 @@ public class JPAUserSettingServiceImpl extends AbstractService implements UserSe
 
     // Global scope
     saveUserSetting(userId, Scope.GLOBAL, EXO_IS_ENABLED, "" + model.isEnabled());
+
+    broadcastEvent(USER_NOTIFICATION_MODIFIED_EVENT, model);
   }
 
   @Override
@@ -357,6 +365,14 @@ public class JPAUserSettingServiceImpl extends AbstractService implements UserSe
     } catch (Exception e) {
       LOG.warn("Error getting user status from IDM store. Consider it as enabled.", e);
       return true;
+    }
+  }
+
+  private void broadcastEvent(String eventName, UserSetting model) {
+    try {
+      listenerService.broadcast(eventName, model.getUserId(), model);
+    } catch (Exception e) {
+      LOG.warn("Error broadcasting modification on User Notification Settings '{}'", model, e);
     }
   }
 
