@@ -1,7 +1,7 @@
 <%
   org.exoplatform.portal.branding.BrandingService brandingService = org.exoplatform.container.PortalContainer.getInstance().getComponentInstanceOfType(org.exoplatform.portal.branding.BrandingService.class);
-  String companyLink = brandingService.getCompanyLink();
-  String siteName = brandingService.getSiteName();
+
+  String siteName = brandingService.getCompanyName();
 %>
 <tr>
     <td bgcolor="#456693" align="center"  style="border:1px solid #456693;">
@@ -9,7 +9,7 @@
             <tr>
                 <td align="left" valign="top" style="font-family: HelveticaNeue, Helvetica, Arial, sans-serif,serif;color:#ffffff;font-size:13px;" >
                     <h3 style="text-align: center; margin: 0; padding: 10px 0;">
-                        <a target="_blank" style="color: #ffffff; font-size: 13px;font-family:'HelveticaNeue Bold',arial,tahoma,serif; font-weight: bold; text-decoration: none;" href="<%=companyLink%>" title="<%=siteName%>"><%=siteName%></a>
+                        <a target="_blank" style="color: #ffffff; font-size: 13px;font-family:'HelveticaNeue Bold',arial,tahoma,serif; font-weight: bold; text-decoration: none;" href="$COMPANY_LINK" title="<%=siteName%>"><%=siteName%></a>
                     </h3>               
                 </td>
             </tr>
