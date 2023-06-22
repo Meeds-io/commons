@@ -20,24 +20,26 @@ import org.exoplatform.services.rest.resource.ResourceContainer;
 @Path("/i18n/bundle")
 public class ResourceBundleREST implements ResourceContainer {
 
-  private static final Log          LOG                         = ExoLogger.getLogger(ResourceBundleREST.class);
+  private static final Log          LOG                    = ExoLogger.getLogger(ResourceBundleREST.class);
 
-  private ResourceBundleService     resourceBundleService;
+  private static final Locale       DEFAULT_I18N_LOCALE    = Locale.ENGLISH;
 
-  private LocaleConfigService       localeConfigService;
+  private static final CacheControl CACHE_CONTROL          = new CacheControl();
 
-  private static final CacheControl CACHE_CONTROL               = new CacheControl();
-
-  private static final Date         DEFAULT_LAST_MODIFED        = new Date();
+  private static final Date         DEFAULT_LAST_MODIFED   = new Date();
 
   // 7 days
-  private static final int          CACHE_IN_SECONDS            = 604800;
+  private static final int          CACHE_IN_SECONDS       = 604800;
 
-  private static final int          CACHE_IN_MILLI_SECONDS      = CACHE_IN_SECONDS * 1000;
+  private static final int          CACHE_IN_MILLI_SECONDS = CACHE_IN_SECONDS * 1000;
 
   static {
     CACHE_CONTROL.setMaxAge(CACHE_IN_SECONDS);
   }
+
+  private ResourceBundleService resourceBundleService;
+
+  private LocaleConfigService   localeConfigService;
 
   public ResourceBundleREST(ResourceBundleService resourceBundleService, LocaleConfigService localeConfigService) {
     this.resourceBundleService = resourceBundleService;
@@ -48,7 +50,7 @@ public class ResourceBundleREST implements ResourceContainer {
   @Path("{name}-{lang}.json")
   @Produces(MediaType.APPLICATION_JSON)
   @SuppressWarnings("unchecked")
-  public Response getBundleContent(
+  public Response getBundleContent( // NOSONAR
                                    @Context
                                    Request request,
                                    @PathParam("name") String resourceBundleName,
@@ -68,9 +70,7 @@ public class ResourceBundleREST implements ResourceContainer {
         return Response.status(400).build();
       }
       ResourceBundle resourceBundle = resourceBundleService.getResourceBundle(resourceBundleName, localeConfig.getLocale());
-      ResourceBundle defaultResourceBundle = resourceBundleService.getResourceBundle(resourceBundleName,
-                                                                                     localeConfigService.getDefaultLocaleConfig()
-                                                                                                        .getLocale());
+      ResourceBundle defaultResourceBundle = resourceBundleService.getResourceBundle(resourceBundleName, DEFAULT_I18N_LOCALE);
       if (resourceBundle == null) {
         if (defaultResourceBundle == null) {
           LOG.warn("resourceBundleName '{}' wasn't found", resourceBundleName);
@@ -89,7 +89,7 @@ public class ResourceBundleREST implements ResourceContainer {
       keys = defaultResourceBundle.getKeys();
       while (keys.hasMoreElements()) {
         String key = keys.nextElement();
-        resultJSON.putIfAbsent(key, resourceBundle.getString(key));
+        resultJSON.putIfAbsent(key, defaultResourceBundle.getString(key));
       }
       builder = Response.ok(resultJSON.toJSONString(), MediaType.APPLICATION_JSON);
       builder.cacheControl(CACHE_CONTROL);
