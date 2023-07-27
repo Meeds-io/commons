@@ -58,13 +58,15 @@ public class WebLifecycle extends AbstractNotificationLifecycle {
       ctx.setNotificationInfo(notif);
       //store before building message to get notification id (for actions in messages using notif ID)
       store(ctx.getNotificationInfo());
+      String notificationId = ctx.getNotificationInfo().getId();
+
       //build message
       MessageInfo msg = buildMessageInfo(ctx);
       if (msg == null) {
+        CommonsUtils.getService(WebNotificationStorage.class).remove(notificationId);
         continue;
       }
 
-      String notificationId = ctx.getNotificationInfo().getId();
       ctx.append(WebChannel.MESSAGE_INFO, msg);
       ctx.value(WebChannel.MESSAGE_INFO).setId(notificationId);
       //send
