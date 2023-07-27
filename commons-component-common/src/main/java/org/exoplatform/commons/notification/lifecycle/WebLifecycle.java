@@ -60,6 +60,9 @@ public class WebLifecycle extends AbstractNotificationLifecycle {
       store(ctx.getNotificationInfo());
       //build message
       MessageInfo msg = buildMessageInfo(ctx);
+      if (msg == null) {
+        continue;
+      }
 
       String notificationId = ctx.getNotificationInfo().getId();
       ctx.append(WebChannel.MESSAGE_INFO, msg);
