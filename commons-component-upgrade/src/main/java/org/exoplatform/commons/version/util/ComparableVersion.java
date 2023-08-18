@@ -68,6 +68,7 @@ public class ComparableVersion
     implements Comparable<ComparableVersion>
 {
     private static final Pattern CICD_VERSION_PATTERN = Pattern.compile("(.*)-([0-9]{8})$");
+    private static final String[] MEMBERS = { "exo", "meed" };
 
     private String value;
 
@@ -160,7 +161,6 @@ public class ComparableVersion
         private static final Log LOG = ExoLogger.getLogger(StringItem.class);
         
         private static final String[] QUALIFIERS = { "snapshot", "alpha", "beta", "cicd", "milestone", "rev", "rc", "", "sp" };
-
         private static final List<String> _QUALIFIERS = Arrays.asList( QUALIFIERS );
 
         private static final Properties ALIASES = new Properties();
@@ -363,6 +363,11 @@ public class ComparableVersion
 
     public final void parseVersion( String version )
     {
+
+        for (String s : MEMBERS) {
+            version = version.replace("-"+s+"-","-");
+        }
+
         Matcher matcher = CICD_VERSION_PATTERN.matcher(version.trim());
         if (matcher.find()) {
           this.value = version = matcher.replaceFirst("$1-cicd$2");

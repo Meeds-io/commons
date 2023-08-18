@@ -113,6 +113,9 @@ public class ComparableVersionTest
         checkVersionsEqual( "1a1", "1alpha1" );
         checkVersionsEqual( "1b2", "1beta2" );
         checkVersionsEqual( "1m3", "1milestone3" );
+        checkVersionsEqual( "1.5.0-meed-20230818", "1.5.0-meed-20230818" );
+        checkVersionsEqual( "6.5.0-exo-20230818", "6.5.0-exo-20230818" );
+
     }
 
     public void testVersionComparing()
@@ -144,6 +147,13 @@ public class ComparableVersionTest
 
         checkVersionsOrder( "2.0.1", "2.0.1-123" );
         checkVersionsOrder( "2.0.1-xyz", "2.0.1-123" );
+
+
+        checkVersionsOrder( "1.5.0-meed-20230818","1.5.0" );
+        checkVersionsOrder( "1.5.0-meed-20230817", "1.5.0-meed-20230818" );
+
+        checkVersionsOrder( "6.5.0-exo-20230818", "6.5.0" );
+        checkVersionsOrder( "6.5.0-exo-20230817", "6.5.0-exo-20230818" );
     }
 
     public void testLocaleIndependent()
