@@ -22,17 +22,17 @@
   
 package org.exoplatform.ws.frameworks.cometd;
 
-import javax.servlet.Filter;
-import javax.servlet.FilterRegistration;
-import javax.servlet.FilterRegistration.Dynamic;
-import javax.servlet.RequestDispatcher;
-import javax.servlet.Servlet;
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRegistration;
-import javax.servlet.SessionCookieConfig;
-import javax.servlet.SessionTrackingMode;
-import javax.servlet.descriptor.JspConfigDescriptor;
+import jakarta.servlet.Filter;
+import jakarta.servlet.FilterRegistration;
+import jakarta.servlet.FilterRegistration.Dynamic;
+import jakarta.servlet.RequestDispatcher;
+import jakarta.servlet.Servlet;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletRegistration;
+import jakarta.servlet.SessionCookieConfig;
+import jakarta.servlet.SessionTrackingMode;
+import jakarta.servlet.descriptor.JspConfigDescriptor;
 
 import java.io.InputStream;
 import java.net.MalformedURLException;
@@ -87,17 +87,17 @@ public class ServletContextWrapper implements ServletContext {
   }
 
   @Override
-  public javax.servlet.ServletRegistration.Dynamic addServlet(String arg0, String arg1) {
+  public jakarta.servlet.ServletRegistration.Dynamic addServlet(String arg0, String arg1) {
     return delegate.addServlet(arg0, arg1);
   }
 
   @Override
-  public javax.servlet.ServletRegistration.Dynamic addServlet(String arg0, Servlet arg1) {
+  public jakarta.servlet.ServletRegistration.Dynamic addServlet(String arg0, Servlet arg1) {
     return delegate.addServlet(arg0, arg1);
   }
 
   @Override
-  public javax.servlet.ServletRegistration.Dynamic addServlet(String arg0,
+  public jakarta.servlet.ServletRegistration.Dynamic addServlet(String arg0,
                                                               Class<? extends Servlet> arg1) {
     return delegate.addServlet(arg0, arg1);
   }
@@ -251,18 +251,8 @@ public class ServletContextWrapper implements ServletContext {
   }
 
   @Override
-  public Servlet getServlet(String arg0) throws ServletException {
-    return delegate.getServlet(arg0);
-  }
-
-  @Override
   public String getServletContextName() {
     return delegate.getServletContextName();
-  }
-
-  @Override
-  public Enumeration<String> getServletNames() {
-    return delegate.getServletNames();
   }
 
   @Override
@@ -276,11 +266,6 @@ public class ServletContextWrapper implements ServletContext {
   }
 
   @Override
-  public Enumeration<Servlet> getServlets() {
-    return delegate.getServlets();
-  }
-
-  @Override
   public SessionCookieConfig getSessionCookieConfig() {
     return delegate.getSessionCookieConfig();
   }
@@ -288,11 +273,6 @@ public class ServletContextWrapper implements ServletContext {
   @Override
   public void log(String arg0) {
     delegate.log(arg0);
-  }
-
-  @Override
-  public void log(Exception arg0, String arg1) {
-    delegate.log(arg0, arg1);
   }
 
   @Override
@@ -334,7 +314,7 @@ public class ServletContextWrapper implements ServletContext {
   }
 
   @Override
-  public javax.servlet.ServletRegistration.Dynamic addJspFile(String servletName, String jspFile) {
+  public jakarta.servlet.ServletRegistration.Dynamic addJspFile(String servletName, String jspFile) {
     return delegate.addJspFile(servletName, jspFile);
   }
 
