@@ -39,7 +39,7 @@
       <artifactId>commons-api</artifactId>
     </dependency>
 
-    <!-- New Cometd -->
+    <!-- Cometd -->
     <dependency>
       <groupId>org.cometd.java</groupId>
       <artifactId>cometd-java-api-common</artifactId>
