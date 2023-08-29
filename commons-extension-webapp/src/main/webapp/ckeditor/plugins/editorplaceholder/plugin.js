@@ -85,11 +85,13 @@
 			editable = editor.editable(),
 			placeholder = editor.config.editorplaceholder;
 
-		if ( !isEditorEmpty( editor )) {
-			return editable.removeAttribute( ATTRIBUTE_NAME );
-		}
-
-		editable.setAttribute( ATTRIBUTE_NAME, placeholder );
+    window.setTimeout(() => {
+      if (isEditorEmpty(editor)) {
+        editable.setAttribute(ATTRIBUTE_NAME, placeholder);
+      } else {
+        editable.removeAttribute(ATTRIBUTE_NAME);
+      }
+    }, 50);
 	}
 
 	/**
