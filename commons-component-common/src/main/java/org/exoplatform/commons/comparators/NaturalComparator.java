@@ -1,5 +1,7 @@
 package org.exoplatform.commons.comparators;
 
+import org.apache.commons.lang.StringUtils;
+
 import java.util.Comparator;
 
 public class NaturalComparator implements Comparator<String> {
@@ -20,7 +22,7 @@ public class NaturalComparator implements Comparator<String> {
     String[] arr2 = s2.split("(?<=\\D)(?=\\d)|(?<=\\d)(?=\\D)");
     int i = 0;
     while (i < arr1.length && i < arr2.length) {
-      if (Character.isDigit(arr1[i].charAt(0)) && Character.isDigit(arr2[i].charAt(0))) {
+      if (StringUtils.isNotBlank(arr1[i]) && Character.isDigit(arr1[i].charAt(0)) && StringUtils.isNotBlank(arr2[i]) && Character.isDigit(arr2[i].charAt(0))) {
         int num1 = Integer.parseInt(arr1[i]);
         int num2 = Integer.parseInt(arr2[i]);
         if (num1 != num2) {
