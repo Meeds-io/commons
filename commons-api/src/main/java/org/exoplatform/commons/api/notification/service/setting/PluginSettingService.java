@@ -62,6 +62,32 @@ public interface PluginSettingService {
    * @param isActive If "true", the plugin is active. If "false", the plugin is inactive.
    */
   void saveActivePlugin(String channelId, String pluginId, boolean isActive);
+  
+  /**
+   * Saves a status for a given Channel
+   * 
+   * @param channelId Channel identifier
+   * @param enable status whether enabled or not
+   */
+  void saveChannelStatus(String channelId, boolean enable);
+
+  /**
+   * Saves email notification sender settings
+   * 
+   * @param name Company name
+   * @param email Company email
+   */
+  void saveEmailSender(String name, String email);
+
+  /**
+   * @return Mail notification sender name
+   */
+  String getEmailSenderName();
+
+  /**
+   * @return Mail notification sender email
+   */
+  String getEmailSenderEmail();
 
   /**
    * Checks if a plugin is active or inactive.
@@ -71,6 +97,14 @@ public interface PluginSettingService {
    * @return The returned value is "true" if the plugin is active or "false" if the plugin is inactive.
    */
   boolean isActive(String channelId, String pluginId);
+
+  /**
+   * Checks if a notification channel is active or inactive.
+   * 
+   * @param channelId Channel identifier
+   * @return true is active else inactive
+   */
+  boolean isChannelActive(String channelId);
 
   /**
    * Checks whether the channel is allowed on designated plugin or not

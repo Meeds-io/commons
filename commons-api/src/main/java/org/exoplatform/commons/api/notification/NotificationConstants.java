@@ -44,7 +44,7 @@ public class NotificationConstants {
 
   public static final Pattern LINK_PATTERN                      = Pattern.compile("<a ([^>]+)>([^<]+)</a>");
 
-  public static final Pattern NOTIFICATION_SENDER_NAME_PATTERN  = Pattern.compile("^[a-zA-Z]+[a-zA-Z ]*$");
+  public static final Pattern NOTIFICATION_SENDER_NAME_PATTERN  = Pattern.compile("\\s* *");
 
   public static final String  styleCSS                          = " style=\"color: #2f5e92; text-decoration: none;\"";
 

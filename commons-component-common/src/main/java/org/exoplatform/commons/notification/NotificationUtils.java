@@ -200,6 +200,9 @@ public class NotificationUtils {
     return true;
   }
 
+  public static void main(String[] args) {
+    System.out.println(NOTIFICATION_SENDER_NAME_PATTERN.matcher("We3 Hub").find());
+  }
   public static boolean isValidEmailAddresses(String addressList){
     if (addressList == null || addressList.length() < 0)
       return false;

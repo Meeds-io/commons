@@ -138,6 +138,37 @@ public class JPAUserSettingServiceTest extends BaseTest {
     }
   }
 
+  public void testChannelEnablement() throws Exception {
+    String username = "testChannelEnablement";
+    User user = new UserImpl(username);
+    organizationService.getUserHandler().createUser(user, false);
+    userSettingService.initDefaultSettings(username);
+
+    UserSetting userSetting = userSettingService.get(username);
+    assertNotNull(userSetting);
+
+    Set<String> channelActives = userSetting.getChannelActives();
+    assertTrue(channelActives.contains(CHANNEL_ID));
+    for (String channelId : channelActives) {
+      assertTrue(userSetting.isActive(channelId, PLUGIN_ID));
+      assertTrue(pluginSettingServiceImpl.isActive(channelId, PLUGIN_ID));
+    }
+
+    pluginSettingServiceImpl.saveChannelStatus(CHANNEL_ID, false);
+    assertFalse(pluginSettingServiceImpl.isActive(CHANNEL_ID, PLUGIN_ID));
+    assertFalse(pluginSettingServiceImpl.isChannelActive(CHANNEL_ID));
+    userSetting = userSettingService.get(username);
+    channelActives = userSetting.getChannelActives();
+    assertFalse(channelActives.contains(CHANNEL_ID));
+
+    pluginSettingServiceImpl.saveChannelStatus(CHANNEL_ID, true);
+    assertTrue(pluginSettingServiceImpl.isActive(CHANNEL_ID, PLUGIN_ID));
+    assertTrue(pluginSettingServiceImpl.isChannelActive(CHANNEL_ID));
+    userSetting = userSettingService.get(username);
+    channelActives = userSetting.getChannelActives();
+    assertTrue(channelActives.contains(CHANNEL_ID));
+  }
+
   public void testNotAllowedChannel() throws Exception {
     String username = "userAllowedTest";
     User user = new UserImpl(username);
