@@ -20,6 +20,7 @@
 package org.exoplatform.settings.jpa;
 
 import static org.exoplatform.commons.api.settings.data.Context.USER;
+import static org.exoplatform.settings.jpa.JPAPluginSettingServiceImpl.NOTIFICATION_CHANNEL_STATUS_MODIFIED;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -49,6 +50,8 @@ import org.exoplatform.commons.notification.NotificationUtils;
 import org.exoplatform.commons.notification.impl.AbstractService;
 import org.exoplatform.commons.notification.job.NotificationJob;
 import org.exoplatform.commons.utils.PropertyManager;
+import org.exoplatform.services.listener.Event;
+import org.exoplatform.services.listener.Listener;
 import org.exoplatform.services.listener.ListenerService;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
@@ -97,6 +100,12 @@ public class JPAUserSettingServiceImpl extends AbstractService implements UserSe
     this.channelManager = channelManager;
     this.pluginSettingService = pluginSettingService;
     this.listenerService = listenerService;
+    listenerService.addListener(NOTIFICATION_CHANNEL_STATUS_MODIFIED, new Listener<String, Object>() {
+      @Override
+      public void onEvent(Event<String, Object> event) throws Exception {
+        clearDefaultSetting();
+      }
+    });
   }
 
   @Override
@@ -229,7 +238,9 @@ public class JPAUserSettingServiceImpl extends AbstractService implements UserSe
       List<String> activeChannels = getDefaultSettingActiveChannels();
       if (CollectionUtils.isEmpty(activeChannels)) {
         for (AbstractChannel channel : channelManager.getChannels()) {
-          defaultSetting.setChannelActive(channel.getId());
+          if (pluginSettingService.isChannelActive(channel.getId())) {
+            defaultSetting.setChannelActive(channel.getId());
+          }
         }
       } else {
         defaultSetting.getChannelActives().addAll(activeChannels);
@@ -351,7 +362,8 @@ public class JPAUserSettingServiceImpl extends AbstractService implements UserSe
 
   private List<String> getDefaultSettingActiveChannels() {
     String activeChannels = System.getProperty("exo.notification.channels", "");
-    return activeChannels.isEmpty() ? new ArrayList<>() : Arrays.asList(activeChannels.split(","));
+    List<String> activeChannelsList = activeChannels.isEmpty() ? new ArrayList<>() : Arrays.asList(activeChannels.split(","));
+    return activeChannelsList.stream().filter(channelId -> pluginSettingService.isChannelActive(channelId)).toList();
   }
 
   private void fillDefaultSettingsOfUser(String username) {
@@ -361,7 +373,7 @@ public class JPAUserSettingServiceImpl extends AbstractService implements UserSe
   private boolean isUserEnabled(String userId) {
     try {
       User user = organizationService.getUserHandler().findUserByName(userId);
-      return user == null || user.isEnabled();
+      return user != null && user.isEnabled();
     } catch (Exception e) {
       LOG.warn("Error getting user status from IDM store. Consider it as enabled.", e);
       return true;

@@ -29,13 +29,6 @@
   <packaging>war</packaging>
   <name>eXo PLF:: Commons - Commons Extension Webapp</name>
 
-  <dependencies>
-    <dependency>
-      <groupId>${project.groupId}</groupId>
-      <artifactId>commons-juzu</artifactId>
-      <scope>provided</scope>
-    </dependency>
-  </dependencies>
   <build>
     <finalName>commons-extension</finalName>
     <plugins>
