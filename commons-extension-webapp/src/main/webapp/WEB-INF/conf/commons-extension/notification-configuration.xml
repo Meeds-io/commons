@@ -33,14 +33,6 @@
     </component-plugins>   
   </component>
 
-  <component>
-    <type>org.exoplatform.commons.api.notification.rest.WebNotificationRestService</type>
-  </component>
-
-  <component>
-    <type>org.exoplatform.commons.api.notification.rest.NotificationSettingsRestService</type>
-  </component>
-   
   <component profiles="all">
     <key>org.exoplatform.commons.api.notification.channel.ChannelManager</key>
     <type>org.exoplatform.commons.notification.channel.ChannelManagerImpl</type>
@@ -357,54 +349,6 @@
         </object-param>
 
         <object-param>
-          <name>group.documents</name>
-          <description>The information of group documents</description>
-          <object type="org.exoplatform.commons.api.notification.plugin.config.GroupConfig">
-            <field name="id">
-              <string>documents</string>
-            </field>
-            <field name="resourceBundleKey">
-              <string>UINotification.label.group.Documents</string>
-            </field>
-            <field name="order">
-              <string>5</string>
-            </field>
-          </object>
-        </object-param>
-
-        <object-param>
-          <name>group.security</name>
-          <description>The information of group Security</description>
-          <object type="org.exoplatform.commons.api.notification.plugin.config.GroupConfig">
-            <field name="id">
-              <string>security</string>
-            </field>
-            <field name="resourceBundleKey">
-              <string>UINotification.label.group.Security</string>
-            </field>
-            <field name="order">
-              <string>6</string>
-            </field>
-          </object>
-        </object-param>
-
-        <object-param>
-          <name>group.malwareDetection</name>
-          <description>The information of group malwareDetection</description>
-          <object type="org.exoplatform.commons.api.notification.plugin.config.GroupConfig">
-            <field name="id">
-              <string>malwareDetection</string>
-            </field>
-            <field name="resourceBundleKey">
-              <string>UINotification.label.group.MalwareDetection</string>
-            </field>
-            <field name="order">
-              <string>7</string>
-            </field>
-          </object>
-        </object-param>
-       
-        <object-param>
           <name>group.other</name>
           <description>The information of group activity other</description>
           <object type="org.exoplatform.commons.api.notification.plugin.config.GroupConfig">
@@ -419,7 +363,6 @@
             </field>
           </object>
         </object-param>
-       
       </init-params>
     </component-plugin>
   </external-component-plugins>
