@@ -17,6 +17,7 @@
 package org.exoplatform.commons.notification;
 
 import java.text.MessageFormat;
+import java.text.Normalizer;
 import java.util.*;
 import java.util.regex.Matcher;
 
@@ -188,21 +189,17 @@ public class NotificationUtils {
     return Integer.valueOf(getSystemValue(params, systemKey, paramKey, String.valueOf(defaultValue)));
   }
 
-  public static boolean isValidNotificationSenderName(String name){
-    if (name == null || name.length() < 0)
-      return false;
-    try {
-        Matcher matcher = NOTIFICATION_SENDER_NAME_PATTERN.matcher(name.trim());
-        if (! matcher.find()) return false;
-      } catch (Exception e) {
+  public static boolean isValidNotificationSenderName(String name) {
+    if (StringUtils.isBlank(name)) {
       return false;
     }
-    return true;
+    try {
+      return NOTIFICATION_SENDER_NAME_PATTERN.matcher(unAccent(name)).find();
+    } catch (Exception e) {
+      return false;
+    }
   }
 
-  public static void main(String[] args) {
-    System.out.println(NOTIFICATION_SENDER_NAME_PATTERN.matcher("We3 Hub").find());
-  }
   public static boolean isValidEmailAddresses(String addressList){
     if (addressList == null || addressList.length() < 0)
       return false;
@@ -303,4 +300,9 @@ public class NotificationUtils {
     
     return "<a target=\"_blank\" style=\"text-decoration: none; font-weight: bold; color: #2F5E92; \" href=\"" + portalLink.toString() + "\">" + portalName + "</a>";
   }
+
+  private static String unAccent(String src) {
+    return Normalizer.normalize(StringUtils.trim(src), Normalizer.Form.NFKD).replaceAll("\\p{M}", "");
+  }
+
 }

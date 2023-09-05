@@ -66,33 +66,37 @@ public class NotificationUtilsTest extends TestCase {
     assertFalse(NotificationUtils.isValidNotificationSenderName(senderName));
     // senderName starts with space(s) and contain letters and numbers
     senderName = "    test123456";
-    assertFalse(NotificationUtils.isValidNotificationSenderName(senderName));
-    // senderName contains special characters
+    assertTrue(NotificationUtils.isValidNotificationSenderName(senderName));
     senderName = "test12, 34 56; test";
     assertFalse(NotificationUtils.isValidNotificationSenderName(senderName));
-    // senderName contains only numbers
+    senderName = "testéé12, 34 56; test";
+    assertFalse(NotificationUtils.isValidNotificationSenderName(senderName));
+    senderName = "testéé12@test";
+    assertFalse(NotificationUtils.isValidNotificationSenderName(senderName));
+    senderName = "testéé12>test";
+    assertFalse(NotificationUtils.isValidNotificationSenderName(senderName));
+    senderName = "testéé12#test";
+    assertFalse(NotificationUtils.isValidNotificationSenderName(senderName));
+    senderName = "testéé12$test";
+    assertFalse(NotificationUtils.isValidNotificationSenderName(senderName));
+    senderName = "testéé12-_test";
+    assertTrue(NotificationUtils.isValidNotificationSenderName(senderName));
     senderName = "123456";
-    assertFalse(NotificationUtils.isValidNotificationSenderName(senderName));
-    // senderName starts with number
+    assertTrue(NotificationUtils.isValidNotificationSenderName(senderName));
     senderName = "123 test 456";
-    assertFalse(NotificationUtils.isValidNotificationSenderName(senderName));
-    // senderName contains only numbers and spaces
+    assertTrue(NotificationUtils.isValidNotificationSenderName(senderName));
     senderName = "123 45 6";
-    assertFalse(NotificationUtils.isValidNotificationSenderName(senderName));
-    // senderName contains letters and numbers
+    assertTrue(NotificationUtils.isValidNotificationSenderName(senderName));
     senderName = "test123456";
-    assertFalse(NotificationUtils.isValidNotificationSenderName(senderName));
-    // senderName contains letters, spaces & numbers
-    senderName = "test12 34 56 test";
-    assertFalse(NotificationUtils.isValidNotificationSenderName(senderName));
-    // senderName contains only letters
+    assertTrue(NotificationUtils.isValidNotificationSenderName(senderName));
+    senderName = "test12 34 56-test";
+    assertTrue(NotificationUtils.isValidNotificationSenderName(senderName));
     senderName = "test";
     assertTrue(NotificationUtils.isValidNotificationSenderName(senderName));
-    // senderName contains only letters and spaces
     senderName = "test  test";
     assertTrue(NotificationUtils.isValidNotificationSenderName(senderName));
   }
-  
+
   public void testIsValidEmailAddresses() {
     String emails = "";
     // email is empty
