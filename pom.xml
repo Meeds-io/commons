@@ -20,7 +20,6 @@
     <module>commons-component-product</module>
     <module>commons-component-upgrade</module>
     <module>commons-extension-webapp</module>
-    <module>commons-juzu</module>
     <module>commons-testing</module>
     <module>commons-search</module>
   </modules>
@@ -134,12 +133,6 @@
       <dependency>
         <groupId>org.exoplatform.commons</groupId>
         <artifactId>commons-testing</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.exoplatform.commons</groupId>
-        <artifactId>commons-juzu</artifactId>
         <version>${project.version}</version>
       </dependency>
 
