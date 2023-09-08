@@ -38,35 +38,51 @@ import org.exoplatform.commons.api.notification.plugin.GroupProviderPlugin;
 import org.exoplatform.commons.api.notification.plugin.config.GroupConfig;
 import org.exoplatform.commons.api.notification.plugin.config.PluginConfig;
 import org.exoplatform.commons.api.notification.service.setting.PluginSettingService;
-import org.exoplatform.commons.api.notification.service.setting.UserSettingService;
 import org.exoplatform.commons.api.settings.SettingService;
 import org.exoplatform.commons.api.settings.SettingValue;
 import org.exoplatform.commons.api.settings.data.Context;
 import org.exoplatform.commons.api.settings.data.Scope;
 import org.exoplatform.commons.notification.NotificationUtils;
 import org.exoplatform.commons.notification.impl.AbstractService;
-import org.exoplatform.container.ExoContainerContext;
+import org.exoplatform.commons.utils.MailUtils;
+import org.exoplatform.services.listener.ListenerService;
+import org.exoplatform.services.log.ExoLogger;
+import org.exoplatform.services.log.Log;
 
 public class JPAPluginSettingServiceImpl extends AbstractService implements PluginSettingService {
 
-  private static final long             SPECIFIC_CHANNEL_VERSION = 1;
+  public static final String         NOTIFICATION_CHANNEL_STATUS_MODIFIED = "notification.channel.status.modified";
 
-  private static final Scope            NOTIFICATION_SCOPE = Scope.APPLICATION.id("NotificationSettings");
+  public static final String         NOTIFICATION_PLUGIN_STATUS_MODIFIED  = "notification.plugin.status.modified";
 
-  private static final String           NAME_SPACES    = "exo:";
+  private static final Log           LOG                                  = ExoLogger.getLogger(JPAPluginSettingServiceImpl.class);
 
-  private List<PluginConfig>            pluginConfigs  = new ArrayList<>();
+  private static final long          SPECIFIC_CHANNEL_VERSION             = 1;
 
-  private Map<String, GroupProvider>    groupPluginMap = new ConcurrentHashMap<>();
+  private static final Scope         NOTIFICATION_SCOPE                   = Scope.APPLICATION.id("NotificationSettings");
 
-  private SettingService                settingService;
+  private static final Context       CHANNEL_CONTEXT                      = Context.GLOBAL.id("NotificationChannelSetting");
 
-  private ChannelManager                channelManager;
+  private static final Scope         CHANNEL_SCOPE                        = Scope.APPLICATION.id("NotificationChannelSetting");
+
+  private static final String        NAME_SPACES                          = "exo:";
+
+  private List<PluginConfig>         pluginConfigs                        = new ArrayList<>();
+
+  private Map<String, GroupProvider> groupPluginMap                       = new ConcurrentHashMap<>();
+
+  private SettingService             settingService;
+
+  private ChannelManager             channelManager;
+
+  private ListenerService            listenerService;
 
   public JPAPluginSettingServiceImpl(SettingService settingService,
-                                     ChannelManager channelManager) {
+                                     ChannelManager channelManager,
+                                     ListenerService listenerService) {
     this.settingService = settingService;
     this.channelManager = channelManager;
+    this.listenerService = listenerService;
   }
 
   @Override
@@ -161,6 +177,50 @@ public class JPAPluginSettingServiceImpl extends AbstractService implements Plug
   }
 
   @Override
+  public void saveChannelStatus(String channelId, boolean enable) {
+    settingService.set(CHANNEL_CONTEXT, CHANNEL_SCOPE, channelId, SettingValue.create(String.valueOf(enable)));
+    try {
+      listenerService.broadcast(NOTIFICATION_CHANNEL_STATUS_MODIFIED, channelId, null);
+    } catch (Exception e) {
+      LOG.warn("Error broadcasting channel status modification", e);
+    }
+  }
+
+  @Override
+  public void saveEmailSender(String name, String email) {
+    if (!NotificationUtils.isValidNotificationSenderName(name)) {
+      throw new IllegalArgumentException("invalidSenderName");
+    }
+    if (!NotificationUtils.isValidEmailAddresses(email)) {
+      throw new IllegalArgumentException("invalidSenderEmail");
+    }
+    settingService.set(org.exoplatform.commons.api.settings.data.Context.GLOBAL,
+                       Scope.GLOBAL,
+                       MailUtils.SENDER_NAME_PARAM,
+                       SettingValue.create(name));
+    settingService.set(org.exoplatform.commons.api.settings.data.Context.GLOBAL,
+                       Scope.GLOBAL,
+                       MailUtils.SENDER_EMAIL_PARAM,
+                       SettingValue.create(email));
+  }
+
+  @Override
+  public String getEmailSenderName() {
+    return MailUtils.getSenderName();
+  }
+
+  @Override
+  public String getEmailSenderEmail() {
+    return MailUtils.getSenderEmail();
+  }
+
+  @Override
+  public boolean isChannelActive(String channelId) {
+    SettingValue<?> activeSettingValue = settingService.get(CHANNEL_CONTEXT, CHANNEL_SCOPE, channelId);
+    return activeSettingValue == null || activeSettingValue.getValue() == null || StringUtils.equals(activeSettingValue.getValue().toString(), "true");
+  }
+
+  @Override
   public boolean isActive(String channelId, String pluginId) {
     return isAllowed(channelId, pluginId) && getPluginChannels(pluginId).contains(channelId);
   }
@@ -170,6 +230,7 @@ public class JPAPluginSettingServiceImpl extends AbstractService implements Plug
     AbstractChannel channel = channelManager.getChannel(ChannelKey.key(channelId));
     PluginConfig pluginConfig = getPluginConfig(pluginId);
     return channel != null && pluginConfig != null
+        && isChannelActive(channelId)
         && (channel.isDefaultChannel() || pluginConfig.getAdditionalChannels().contains(channelId));
   }
 
@@ -258,7 +319,11 @@ public class JPAPluginSettingServiceImpl extends AbstractService implements Plug
                        (NAME_SPACES + pluginId),
                        SettingValue.create(activeChannelsString));
     savePluginSettingVersion(pluginId);
-    clearCache();
+    try {
+      listenerService.broadcast(NOTIFICATION_PLUGIN_STATUS_MODIFIED, pluginId, null);
+    } catch (Exception e) {
+      LOG.warn("Error broadcasting plugin status modification", e);
+    }
   }
 
   private void savePluginSettingVersion(String pluginId) {
@@ -274,10 +339,6 @@ public class JPAPluginSettingServiceImpl extends AbstractService implements Plug
                                                       (NAME_SPACES + pluginId));
     return settingValue != null && settingValue.getValue() != null
         && Long.parseLong(settingValue.getValue().toString()) >= settingVersion;
-  }
-
-  private void clearCache() {
-    ExoContainerContext.getService(UserSettingService.class).clearDefaultSetting();
   }
 
 }
