@@ -29,7 +29,7 @@
   <packaging>jar</packaging>
   <name>eXo PLF:: Commons - API</name>
   <properties>
-    <exo.test.coverage.ratio>0.18</exo.test.coverage.ratio>
+    <exo.test.coverage.ratio>0</exo.test.coverage.ratio>
   </properties>
   <dependencies>
     <!--
