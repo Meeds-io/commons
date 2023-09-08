@@ -19,6 +19,9 @@
 
 package org.exoplatform.settings.jpa;
 
+import static org.exoplatform.settings.jpa.JPAPluginSettingServiceImpl.NOTIFICATION_CHANNEL_STATUS_MODIFIED;
+import static org.exoplatform.settings.jpa.JPAPluginSettingServiceImpl.NOTIFICATION_PLUGIN_STATUS_MODIFIED;
+
 import java.util.List;
 
 import org.exoplatform.commons.api.notification.NotificationContext;
@@ -28,6 +31,9 @@ import org.exoplatform.services.cache.CacheService;
 import org.exoplatform.services.cache.ExoCache;
 import org.exoplatform.services.cache.future.FutureExoCache;
 import org.exoplatform.services.cache.future.Loader;
+import org.exoplatform.services.listener.Event;
+import org.exoplatform.services.listener.Listener;
+import org.exoplatform.services.listener.ListenerService;
 import org.exoplatform.services.organization.User;
 
 public class CacheUserSettingServiceImpl implements UserSettingService {
@@ -40,7 +46,9 @@ public class CacheUserSettingServiceImpl implements UserSettingService {
 
   private FutureExoCache<String, UserSetting, UserSettingService> userSettingFutureCache;
 
-  public CacheUserSettingServiceImpl(CacheService cacheService, JPAUserSettingServiceImpl userSettingService) {
+  public CacheUserSettingServiceImpl(CacheService cacheService,
+                                     ListenerService listenerService,
+                                     JPAUserSettingServiceImpl userSettingService) {
     this.userSettingService = userSettingService;
 
     userSettingCache = cacheService.getCacheInstance(CACHE_NAME);
@@ -52,6 +60,18 @@ public class CacheUserSettingServiceImpl implements UserSettingService {
       }
     };
     userSettingFutureCache = new FutureExoCache<>(loader, userSettingCache);
+    listenerService.addListener(NOTIFICATION_CHANNEL_STATUS_MODIFIED, new Listener<String, Object>() {
+      @Override
+      public void onEvent(Event<String, Object> event) throws Exception {
+        clearDefaultSetting();
+      }
+    });
+    listenerService.addListener(NOTIFICATION_PLUGIN_STATUS_MODIFIED, new Listener<String, Object>() {
+      @Override
+      public void onEvent(Event<String, Object> event) throws Exception {
+        clearDefaultSetting();
+      }
+    });
   }
 
   @Override
@@ -65,7 +85,8 @@ public class CacheUserSettingServiceImpl implements UserSettingService {
 
   @Override
   public UserSetting get(String userId) {
-    return userSettingFutureCache.get(userSettingService, userId);
+    UserSetting userSetting = userSettingFutureCache.get(userSettingService, userId);
+    return userSetting == null ? null : userSetting.clone();
   }
 
   @Override
@@ -110,4 +131,5 @@ public class CacheUserSettingServiceImpl implements UserSettingService {
     userSettingCache.clearCache();
     userSettingService.clearDefaultSetting();
   }
+
 }
