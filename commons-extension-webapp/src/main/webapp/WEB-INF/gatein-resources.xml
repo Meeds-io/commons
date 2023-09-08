@@ -1,21 +1,6 @@
 <?xml version="1.0" encoding="ISO-8859-1" ?>
 
 <gatein-resources xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.exoplatform.org/xml/ns/gatein_resources_1_4 http://www.exoplatform.org/xml/ns/gatein_resources_1_4" xmlns="http://www.exoplatform.org/xml/ns/gatein_resources_1_4">
-  <portlet>
-    <name>NotificationsAdminJuzuPortlet</name>
-    <module>
-      <script>
-        <path>/javascript/portlet/notificationsAdmin.js</path>
-      </script>
-      <depends>
-        <module>juzu-ajax</module>
-      </depends>
-      <depends>
-        <module>jquery</module>
-        <as>gj</as>
-      </depends>
-    </module>
-  </portlet>
 
   <module>
     <name>commons-editor</name>
@@ -49,18 +34,6 @@
     </depends>
     <depends>
       <module>tagSuggester</module>
-    </depends>
-  </module>
-
-  <module>
-    <name>juzu-ajax</name>
-    <as>jzAjax</as>
-    <script>
-      <path>/javascript/portlet/juzu/ajax/script.js</path>
-    </script>
-    <depends>
-      <module>jquery</module>
-      <as>jQuery</as>
     </depends>
   </module>
 
