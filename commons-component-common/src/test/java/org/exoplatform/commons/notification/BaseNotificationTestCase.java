@@ -32,6 +32,12 @@ public abstract class BaseNotificationTestCase extends BaseCommonsTestCase {
     storage = getContainer().getComponentInstanceOfType(WebNotificationStorage.class);
   }
 
+  @Override
+  public void setUp() throws Exception {
+    super.setUp();
+    userIds = new ArrayList<String>();
+  }
+
   protected NotificationInfo makeWebNotificationInfo(String userId) {
     NotificationInfo info = NotificationInfo.instance();
     info.key(new PluginKey(PluginTest.ID));
