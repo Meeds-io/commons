@@ -45,7 +45,8 @@ public final class SimpleLifecycle extends AbstractNotificationLifecycle {
     for (String userId : userIds) {
       UserSetting userSetting = userService.get(userId);
       // check channel active for user
-      if (!userSetting.isEnabled()
+      if (userSetting == null
+          || !userSetting.isEnabled()
           || !userSetting.isChannelGloballyActive(channelId)
           || !userSetting.isActive(channelId, pluginId)) {
         continue;
