@@ -22,7 +22,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.stream.Collectors;
 
 import org.picocontainer.Startable;
 
@@ -99,14 +98,14 @@ public class ChannelManagerImpl implements ChannelManager, Startable {
   public List<AbstractChannel> getDefaultChannels() {
     return getChannels().stream()
                         .filter(AbstractChannel::isDefaultChannel)
-                        .collect(Collectors.toList());
+                        .toList();
   }
 
   @Override
   public List<AbstractChannel> getSpecificChannels() {
     return getChannels().stream()
         .filter(channel -> !channel.isDefaultChannel())
-        .collect(Collectors.toList());
+        .toList();
   }
 
   @Override

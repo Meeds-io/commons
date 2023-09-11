@@ -24,6 +24,7 @@ import org.junit.Test;
 import org.exoplatform.commons.api.notification.model.UserSetting;
 import org.exoplatform.services.cache.CacheService;
 import org.exoplatform.services.cache.concurrent.ConcurrentFIFOExoCache;
+import org.exoplatform.services.listener.ListenerService;
 import org.exoplatform.settings.jpa.CacheUserSettingServiceImpl;
 import org.exoplatform.settings.jpa.JPAUserSettingServiceImpl;
 
@@ -33,19 +34,21 @@ public class CacheUserSettingTest {
   private CacheService cacheService;
   private JPAUserSettingServiceImpl userSettingServiceImpl;
   private CacheUserSettingServiceImpl cacheUserSettingServiceImpl;
+  private ListenerService listenerService;
   private UserSetting userSetting = new UserSetting();
 
   @Before
   public void setUp() throws Exception {
     cacheService = mock(CacheService.class);
     userSettingServiceImpl = mock(JPAUserSettingServiceImpl.class);
+    listenerService = mock(ListenerService.class);
 
     userSetting.setUserId(USER_ID);
 
     when(cacheService.getCacheInstance(CacheUserSettingServiceImpl.CACHE_NAME)).thenReturn(new ConcurrentFIFOExoCache<>());
     when(userSettingServiceImpl.get(USER_ID)).thenReturn(userSetting);
 
-    cacheUserSettingServiceImpl = new CacheUserSettingServiceImpl(cacheService, userSettingServiceImpl);
+    cacheUserSettingServiceImpl = new CacheUserSettingServiceImpl(cacheService, listenerService, userSettingServiceImpl);
   }
 
   @Test

@@ -17,13 +17,10 @@
 package org.exoplatform.commons.api.notification.model;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
 public class GroupProvider {
-  public static final List<String> defaultGroupIds = Arrays.asList("general", "connections", 
-                                                                     "spaces", "activity_stream", "documents", "other");
 
   private String             groupId;
 
@@ -31,7 +28,7 @@ public class GroupProvider {
 
   private int                order         = 0;
 
-  private List<PluginInfo> pluginInfos = new ArrayList<PluginInfo>();
+  private List<PluginInfo> pluginInfos = new ArrayList<>();
 
   public GroupProvider(String groupId) {
     this.groupId = groupId;
