@@ -26,6 +26,7 @@ import org.exoplatform.commons.api.notification.model.MessageInfo;
 import org.exoplatform.commons.api.notification.model.NotificationInfo;
 import org.exoplatform.commons.api.notification.model.UserSetting;
 import org.exoplatform.commons.api.notification.service.QueueMessage;
+import org.exoplatform.commons.api.notification.service.setting.PluginSettingService;
 import org.exoplatform.commons.api.notification.service.setting.UserSettingService;
 import org.exoplatform.commons.api.notification.service.storage.MailNotificationStorage;
 import org.exoplatform.commons.notification.NotificationContextFactory;
@@ -54,8 +55,10 @@ public class MailLifecycle extends AbstractNotificationLifecycle {
   public void process(NotificationContext ctx, String... userIds) {
     NotificationInfo notification = ctx.getNotificationInfo();
     String pluginId = notification.getKey().getId();
+    if (!CommonsUtils.getService(PluginSettingService.class).isActive(MailChannel.ID, pluginId)) {
+      return;
+    }
     UserSettingService userService = CommonsUtils.getService(UserSettingService.class);
-    
     List<String> userIdPendings = new ArrayList<>();
     for (String userId : userIds) {
       UserSetting userSetting = userService.get(userId);

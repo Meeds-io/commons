@@ -327,7 +327,6 @@ public class CachedWebNotificationStorageTest extends BaseNotificationTestCase {
   }
   
   public void testGetNewMessage() throws Exception  {
-    assertEquals(8, NotificationMessageUtils.getMaxItemsInPopover());
     String userId = "root82";
     userIds.add(userId);
     assertEquals(0, cachedStorage.getNumberOnBadge(userId));

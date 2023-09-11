@@ -16,7 +16,6 @@
  */
 package org.exoplatform.commons.api.notification.service;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.exoplatform.commons.api.notification.model.ArgumentLiteral;
@@ -26,7 +25,7 @@ import org.exoplatform.commons.api.notification.model.WebNotificationFilter;
 public interface WebNotificationService {
 
   /** Define the argument parameter for popup over context */  
-  public final static ArgumentLiteral<Boolean> POPUP_OVER = new ArgumentLiteral<Boolean>(Boolean.class, "popupOver");
+  public static final ArgumentLiteral<Boolean> POPUP_OVER = new ArgumentLiteral<>(Boolean.class, "popupOver");
 
   /**
    * Creates the new notification message to the specified user.
@@ -65,7 +64,7 @@ public interface WebNotificationService {
    * @LevelAPI Platform
    * @since PLF 4.2
    */
-  void markAllRead(String userId) throws Exception;
+  void markAllRead(String userId);
 
   /**
    * Updates the notification's popover list status to be FALSE value
@@ -110,13 +109,14 @@ public interface WebNotificationService {
    * @LevelAPI Platform
    * @since PLF 5.1
    */
-  default List<NotificationInfo> getNotificationInfos(WebNotificationFilter filter, int offset, int limit) {
-    List<NotificationInfo> list = new ArrayList<>();
-    for (String notif : get(filter, offset, limit)) {
-      list.add(new NotificationInfo());
-    }
-    return list;
-  }
+  List<NotificationInfo> getNotificationInfos(WebNotificationFilter filter, int offset, int limit);
+
+  /**
+   * Retrieve Built Message using Groovy Template engine.
+   * @deprecated replaced by Frontend UI building instead of Server end message building
+   */
+  @Deprecated(forRemoval = true, since = "1.5.0")
+  String getNotificationMessage(NotificationInfo notification, boolean isOnPopover);
 
   /**
    * Removes the notification by the notificationId
@@ -144,4 +144,5 @@ public interface WebNotificationService {
    * @since PLF 4.2
    */
   void resetNumberOnBadge(String userId);
+
 }

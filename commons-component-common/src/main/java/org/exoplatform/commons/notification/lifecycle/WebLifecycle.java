@@ -23,6 +23,7 @@ import org.exoplatform.commons.api.notification.lifecycle.AbstractNotificationLi
 import org.exoplatform.commons.api.notification.model.MessageInfo;
 import org.exoplatform.commons.api.notification.model.NotificationInfo;
 import org.exoplatform.commons.api.notification.model.UserSetting;
+import org.exoplatform.commons.api.notification.service.setting.PluginSettingService;
 import org.exoplatform.commons.api.notification.service.setting.UserSettingService;
 import org.exoplatform.commons.api.notification.service.storage.WebNotificationStorage;
 import org.exoplatform.commons.notification.channel.WebChannel;
@@ -45,8 +46,11 @@ public class WebLifecycle extends AbstractNotificationLifecycle {
   public void process(NotificationContext ctx, String... userIds) {
     NotificationInfo notification = ctx.getNotificationInfo();
     String pluginId = notification.getKey().getId();
-    UserSettingService userService = CommonsUtils.getService(UserSettingService.class);
+    if (!CommonsUtils.getService(PluginSettingService.class).isActive(WebChannel.ID, pluginId)) {
+      return;
+    }
 
+    UserSettingService userService = CommonsUtils.getService(UserSettingService.class);
     for (String userId : userIds) {
       UserSetting userSetting = userService.get(userId);
       if (!userSetting.isEnabled()

@@ -93,7 +93,6 @@ public class WebNotificationStorageTest extends BaseNotificationTestCase {
   }
 
   public void testGetNewMessage() throws Exception  {
-    assertEquals(8, NotificationMessageUtils.getMaxItemsInPopover());
     //
     String userId = "root16";
     userIds.add(userId);

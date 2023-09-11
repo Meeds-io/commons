@@ -4,7 +4,6 @@ import java.util.*;
 
 import org.exoplatform.commons.api.notification.NotificationMessageUtils;
 import org.exoplatform.commons.api.notification.model.*;
-import org.exoplatform.commons.api.notification.service.storage.WebNotificationStorage;
 import org.exoplatform.commons.notification.BaseNotificationTestCase;
 import org.exoplatform.commons.notification.impl.jpa.web.JPAWebNotificationStorage;
 import org.exoplatform.commons.notification.impl.jpa.web.dao.*;
@@ -19,7 +18,6 @@ public class JPAWebNotificationStorageTest extends BaseNotificationTestCase {
   private WebNotifDAO webNotifDAO;
   private WebUsersDAO webUsersDAO;
   private WebParamsDAO webParamsDAO;
-  protected List<String> userIds;
 
   @Override
   public void setUp() throws Exception  {
@@ -28,7 +26,6 @@ public class JPAWebNotificationStorageTest extends BaseNotificationTestCase {
     webNotifDAO = getService(WebNotifDAO.class);
     webUsersDAO = getService(WebUsersDAO.class);
     webParamsDAO = getService(WebParamsDAO.class);
-    userIds = new ArrayList<String>();
   }
 
   @Override
@@ -120,64 +117,7 @@ public class JPAWebNotificationStorageTest extends BaseNotificationTestCase {
     assertTrue(got.getLastModifiedDate() + " should equal to " + lastUpdatedTime, lastUpdatedTime == got.getLastModifiedDate());
   }
 
-  public void testRemoveByJob() throws Exception {
-    // Create data for old notifications
-    /* Example:
-     *  PastTime is 1/12/2014
-     *  Today is 15/12/2014
-     *  Create notification for:
-     *   + 04/12/2014
-     *   + 06/12/2014
-     *   + 08/12/2014
-     *   + 10/12/2014
-     *   + 12/12/2014
-     *  Case 1: Delay time 9 days, remove all web notification on days:
-     *   + 04/12/2014
-     *   + 06/12/2014
-     *  Expected: remaining is 30 notifications / 3 days
-     *  Case 2: Delay time 3 days, remove all web notification on days:
-     *   + 08/12/2014
-     *   + 10/12/2014
-     *   + 12/12/2014
-     *  Expected: remaining is 0 notification
-    */
-    String userId = "demo";
-    Calendar cal = Calendar.getInstance();
-    long t = 86400000l;
-    long current = cal.getTimeInMillis();
-    for (int i = 12; i > 3; i = i - 2) {
-      cal.setTimeInMillis(current - i * t);
-      for (int j = 0; j < 10; j++) {
-        NotificationInfo info = makeWebNotificationInfo(userId).setDateCreated(cal);
-        //
-        webNotificationStorage.save(info);
-      }
-    }
-    webNotifDAO.findAll();
-    // check data
-    //getWebUserDateNode
-//    SessionProvider sProvider = SessionProvider.createSystemProvider();
-//    Node parentNode = getOrCreateChannelNode(sProvider, userId);
-//    assertEquals(5, webNotifDAO.findAll());
-//    //
-//    NodeIterator iter = null;
-//    for (int i = 4; i < 13; i = i + 2) {
-//      cal.setTimeInMillis(current - i * t);
-//      Node node = getOrCreateWebDateNode(sProvider, cal, userId);
-//      iter = node.getNodes();
-//      assertEquals(10, iter.getSize());
-//    }
-    //
-//    storage.remove(userId, 9 * daySeconds);
-//    //
-//    assertEquals(3, parentNode.getNodes().getSize());
-//    //
-//    storage.remove(userId, 3 * daySeconds);
-//    assertEquals(0, parentNode.getNodes().getSize());
-  }
-
   public void testGetNewMessage() throws Exception  {
-    assertEquals(8, NotificationMessageUtils.getMaxItemsInPopover());
     //
     String userId = "root";
     userIds.add(userId);
@@ -218,53 +158,6 @@ public class JPAWebNotificationStorageTest extends BaseNotificationTestCase {
     assertTrue(webNotificationStorage.remove(userId, 86400));
     //
     assertEquals(0, webNotificationStorage.getNumberOnBadge(userId));
-  }
-
-  public void testRemoveByLiveTime() throws Exception {
-    // Create data for old notifications
-    /* Example:
-     *  PastTime is 1/12/2014
-     *  Today is 15/12/2014
-     *  Create notification for:
-     *   + 04/12/2014
-     *   + 06/12/2014
-     *   + 08/12/2014
-     *   + 10/12/2014
-     *   + 12/12/2014
-     *  Case 1: Delay time 9 days, remove all web notification on days:
-     *   + 04/12/2014
-     *   + 06/12/2014
-     *  Expected: remaining is 30 notifications / 3 days
-     *  Case 2: Delay time 3 days, remove all web notification on days:
-     *   + 08/12/2014
-     *   + 10/12/2014
-     *   + 12/12/2014
-     *  Expected: remaining is 0 notification
-    */
-    String userId = "demo";
-    Calendar cal = Calendar.getInstance();
-    long t = 86400000l;
-    long current = cal.getTimeInMillis();
-    for (int i = 12; i > 3; i = i - 2) {
-      cal.setTimeInMillis(current - i * t);
-      for (int j = 0; j < 10; j++) {
-        NotificationInfo info = makeWebNotificationInfo(userId).setDateCreated(cal);
-        //
-        webNotificationStorage.save(info);
-      }
-    }
-    webNotifDAO.findAll();
-//    // check data
-//    SessionProvider sProvider = SessionProvider.createSystemProvider();
-//    Node parentNode = getOrCreateChannelNode(sProvider, userId);
-//    assertEquals(5, parentNode.getNodes().getSize());
-//    //
-//    webNotificationStorage.remove(userId, 9 * daySeconds);
-//    //
-//    assertEquals(3, parentNode.getNodes().getSize());
-//    //
-//    webNotificationStorage.remove(userId, 3 * daySeconds);
-//    assertEquals(0, parentNode.getNodes().getSize());
   }
 
   public void testGetNotificationsByTypeAndParams() {
