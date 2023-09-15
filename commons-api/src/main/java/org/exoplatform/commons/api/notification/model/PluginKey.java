@@ -20,15 +20,19 @@ import java.io.Serializable;
 
 import org.exoplatform.commons.api.notification.plugin.BaseNotificationPlugin;
 
-public final class PluginKey implements Serializable {
-  private static final long serialVersionUID = 1L;
+import lombok.Data;
 
-  private final String id;
-  
+@Data
+public final class PluginKey implements Serializable {
+
+  private static final long serialVersionUID = -8398874553307926320L;
+
+  private final String      id;
+
   public PluginKey(BaseNotificationPlugin plugin) {
     this(plugin.getId());
   }
-  
+
   public PluginKey(String id) {
     this.id = id;
   }
@@ -36,40 +40,9 @@ public final class PluginKey implements Serializable {
   public static PluginKey key(BaseNotificationPlugin plugin) {
     return new PluginKey(plugin);
   }
-  
+
   public static PluginKey key(String id) {
     return new PluginKey(id);
-  }
-  
-  public String getId() {
-    return this.id;
-  }
-  
-  @Override
-  public boolean equals(final Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (!(o instanceof PluginKey)) {
-      return false;
-    }
-
-    PluginKey that = (PluginKey) o;
-
-    if (id != null ? !id.equals(that.id) : that.id != null) {
-      return false;
-    }
-
-    return true;
-  }
-  @Override
-  public int hashCode() {
-    return (id != null ? id.hashCode() : 0);
-  }
-  
-  @Override
-  public String toString() {
-      return "NotificationPluginKey[id=" + id + "]";
   }
 
 }

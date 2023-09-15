@@ -117,6 +117,30 @@ public class JPAWebNotificationStorageTest extends BaseNotificationTestCase {
     assertTrue(got.getLastModifiedDate() + " should equal to " + lastUpdatedTime, lastUpdatedTime == got.getLastModifiedDate());
   }
 
+  public void testGetNumberOnBadge() throws Exception  {
+    String userId = "root";
+    userIds.add(userId);
+    NotificationInfo webNotificationInfo = makeWebNotificationInfo(userId);
+    webNotificationStorage.save(webNotificationInfo);
+    assertEquals(1, webNotificationStorage.getNumberOnBadge(userId));
+    webNotificationStorage.save(makeWebNotificationInfo(userId));
+    assertEquals(2, webNotificationStorage.getNumberOnBadge(userId));
+    for (int i = 0; i < 10; ++i) {
+      webNotificationStorage.save(makeWebNotificationInfo(userId));
+    }
+    assertEquals(12, webNotificationStorage.getNumberOnBadge(userId));
+
+    Map<String, Integer> badgeByPlugin = webNotificationStorage.getNumberOnBadgeByPlugin(userId);
+    assertEquals(1, badgeByPlugin.size());
+    assertEquals(12, badgeByPlugin.get(webNotificationInfo.getKey().getId()).intValue());
+
+    webNotificationStorage.resetNumberOnBadge(userId);
+    assertEquals(0, webNotificationStorage.getNumberOnBadge(userId));
+
+    badgeByPlugin = webNotificationStorage.getNumberOnBadgeByPlugin(userId);
+    assertTrue(badgeByPlugin.isEmpty());
+  }
+
   public void testGetNewMessage() throws Exception  {
     //
     String userId = "root";

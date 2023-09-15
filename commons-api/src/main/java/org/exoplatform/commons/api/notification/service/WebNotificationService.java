@@ -17,6 +17,7 @@
 package org.exoplatform.commons.api.notification.service;
 
 import java.util.List;
+import java.util.Map;
 
 import org.exoplatform.commons.api.notification.model.ArgumentLiteral;
 import org.exoplatform.commons.api.notification.model.NotificationInfo;
@@ -130,14 +131,19 @@ public interface WebNotificationService {
   
   /**
    * Gets the number on the badge by the specified user
-   * @param userId
+   * @param username user to retrieve its badges
    * @return
    * @LevelAPI Platform
    * @since PLF 4.2
    */
-  int getNumberOnBadge(String userId);
-  
-  
+  int getNumberOnBadge(String username);
+
+  /**
+   * @param username user to retrieve its badges
+   * @return {@link Map} of Badges per plugin
+   */
+  Map<String, Integer> getNumberOnBadgeByPlugin(String userId);
+
   /**
    * @param userId
    * @LevelAPI Platform
