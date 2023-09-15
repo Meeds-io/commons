@@ -45,7 +45,8 @@ public class WebLifecycle extends AbstractNotificationLifecycle {
   public void process(NotificationContext ctx, String... userIds) {
     NotificationInfo notification = ctx.getNotificationInfo();
     String pluginId = notification.getKey().getId();
-    if (!CommonsUtils.getService(PluginSettingService.class).isActive(WebChannel.ID, pluginId)) {
+    if (!CommonsUtils.getService(PluginSettingService.class).isActive(WebChannel.ID, pluginId)
+        || notification.isRead()) {
       return;
     }
 
