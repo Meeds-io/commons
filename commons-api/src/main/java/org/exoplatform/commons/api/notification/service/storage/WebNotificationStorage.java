@@ -1,6 +1,7 @@
 package org.exoplatform.commons.api.notification.service.storage;
 
 import java.util.List;
+import java.util.Map;
 
 import org.exoplatform.commons.api.notification.model.NotificationInfo;
 import org.exoplatform.commons.api.notification.model.WebNotificationFilter;
@@ -123,8 +124,9 @@ public interface WebNotificationStorage {
    * @since PLF 4.2
    */
   int getNumberOnBadge(String userId);
-  
-  
+
+  Map<String, Integer> getNumberOnBadgeByPlugin(String userId);
+
   /**
    * Reset the number on badge of the specified user
    *  
@@ -143,4 +145,5 @@ public interface WebNotificationStorage {
    * @since PLF 4.2
    */
   boolean remove(long seconds);
+
 }

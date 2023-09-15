@@ -192,15 +192,16 @@ public class CachedWebNotificationStorageTest extends BaseNotificationTestCase {
     assertTrue(notifInfo.isOnPopOver());
     //
     //checks caching
-    List<NotificationInfo> infos = cachedStorage.get(new WebNotificationFilter(userId, true), 0 , 10);
+    WebNotificationFilter filter = new WebNotificationFilter(userId, true);
+    cachedStorage.get(filter, 0 , 10);
 
-    ListWebNotificationsKey key = ListWebNotificationsKey.key(userId, true, 0, 10);
+    ListWebNotificationsKey key = new ListWebNotificationsKey(filter, 0, 10);
     ListWebNotificationsData listData = exoWebNotificationsCache.get(key);
     assertNotNull(listData);
     assertEquals(1,listData.size());
 
     //
-    infos = cachedStorage.get(new WebNotificationFilter(userId, true), 0 , 10);
+    List<NotificationInfo> infos = cachedStorage.get(new WebNotificationFilter(userId, true), 0 , 10);
     assertEquals(infos.get(0), notifInfo);
     assertTrue(infos.get(0).isOnPopOver());
 

@@ -1,6 +1,8 @@
 package org.exoplatform.jpa.notifications.web.dao;
 
 import java.util.Calendar;
+import java.util.Collections;
+import java.util.Map;
 
 import org.junit.After;
 import org.junit.Before;
@@ -47,8 +49,8 @@ public class WebUsersDAOTest extends CommonsDAOJPAImplTest {
     EntityManagerHolder.get().clear();
 
     //Then
-    assertEquals(1, webUsersDAO.findWebNotifsByFilter("plugin1", "user1", true, 0, 10).size());
-    assertEquals(0, webUsersDAO.findWebNotifsByFilter("plugin2", "user1", true, 0, 10).size());
+    assertEquals(1, webUsersDAO.findWebNotifsByFilter(Collections.singletonList("plugin1"), "user1", true, 0, 10).size());
+    assertEquals(0, webUsersDAO.findWebNotifsByFilter(Collections.singletonList("plugin2"), "user1", true, 0, 10).size());
 
     WebNotifEntity webNotifEntity2 = new WebNotifEntity();
     webNotifEntity2.setType("plugin2");
@@ -65,9 +67,9 @@ public class WebUsersDAOTest extends CommonsDAOJPAImplTest {
 
     EntityManagerHolder.get().clear();
 
-    assertEquals(1, webUsersDAO.findWebNotifsByFilter("plugin2", "user1", true, 0, 10).size());
-    assertEquals(0, webUsersDAO.findWebNotifsByFilter("plugin1", "user2", true, 0, 10).size());
-    assertEquals(0, webUsersDAO.findWebNotifsByFilter("plugin1", "user2", false, 0, 10).size());
+    assertEquals(1, webUsersDAO.findWebNotifsByFilter(Collections.singletonList("plugin2"), "user1", true, 0, 10).size());
+    assertEquals(0, webUsersDAO.findWebNotifsByFilter(Collections.singletonList("plugin1"), "user2", true, 0, 10).size());
+    assertEquals(0, webUsersDAO.findWebNotifsByFilter(Collections.singletonList("plugin1"), "user2", false, 0, 10).size());
     assertEquals(2, webUsersDAO.findWebNotifsByFilter("user1", 0, 10).size());
     assertEquals(2, webUsersDAO.findWebNotifsByFilter("user1", true, 0, 10).size());
 
@@ -80,7 +82,82 @@ public class WebUsersDAOTest extends CommonsDAOJPAImplTest {
   }
 
   @Test
-  public void testgetNotificationsByTypeAndParams() {
+  public void testGetUnreadByPlugin() {
+    String receiver = "user1";
+
+    WebNotifEntity webNotifEntity2 = new WebNotifEntity();
+    webNotifEntity2.setType("plugin2");
+    webNotifEntity2.setCreationDate(Calendar.getInstance());
+    webNotifEntity2 = webNotifDAO.create(webNotifEntity2);
+
+    WebNotifEntity webNotifEntity1 = new WebNotifEntity();
+    webNotifEntity1.setType("plugin1");
+    webNotifEntity1.setCreationDate(Calendar.getInstance());
+    webNotifEntity1 = webNotifDAO.create(webNotifEntity1);
+
+    WebUsersEntity webUsersEntity1 = new WebUsersEntity();
+    webUsersEntity1.setShowPopover(true);
+    webUsersEntity1.setRead(false);
+    webUsersEntity1.setResetNumberOnBadge(false);
+    webUsersEntity1.setReceiver(receiver);
+    webUsersEntity1.setNotification(webNotifEntity1);
+    webUsersEntity1.setUpdateDate(Calendar.getInstance());
+    webUsersEntity1 = webUsersDAO.create(webUsersEntity1);
+
+    Map<String, Integer> badgeByPlugin = webUsersDAO.getNumberOnBadgeByPlugin(receiver);
+    assertNotNull(badgeByPlugin);
+    assertEquals(1, badgeByPlugin.size());
+    assertEquals(1, badgeByPlugin.get(webNotifEntity1.getType()).intValue());
+
+    badgeByPlugin = webUsersDAO.getNumberOnBadgeByPlugin("fakeUser");
+    assertNotNull(badgeByPlugin);
+    assertTrue(badgeByPlugin.isEmpty());
+
+    webUsersEntity1.setResetNumberOnBadge(true);
+    webUsersDAO.update(webUsersEntity1);
+    assertNotNull(badgeByPlugin);
+    assertTrue(badgeByPlugin.isEmpty());
+
+    WebUsersEntity webUsersEntity = new WebUsersEntity();
+    webUsersEntity.setShowPopover(true);
+    webUsersEntity.setRead(false);
+    webUsersEntity.setResetNumberOnBadge(false);
+    webUsersEntity.setReceiver(receiver);
+    webUsersEntity.setNotification(webNotifEntity1);
+    webUsersEntity.setUpdateDate(Calendar.getInstance());
+    webUsersDAO.create(webUsersEntity);
+
+    webUsersEntity = new WebUsersEntity();
+    webUsersEntity.setShowPopover(true);
+    webUsersEntity.setRead(false);
+    webUsersEntity.setResetNumberOnBadge(false);
+    webUsersEntity.setReceiver(receiver);
+    webUsersEntity.setNotification(webNotifEntity1);
+    webUsersEntity.setUpdateDate(Calendar.getInstance());
+    webUsersDAO.create(webUsersEntity);
+
+    webUsersEntity = new WebUsersEntity();
+    webUsersEntity.setShowPopover(true);
+    webUsersEntity.setRead(false);
+    webUsersEntity.setResetNumberOnBadge(false);
+    webUsersEntity.setReceiver(receiver);
+    webUsersEntity.setNotification(webNotifEntity2);
+    webUsersEntity.setUpdateDate(Calendar.getInstance());
+    webUsersDAO.create(webUsersEntity);
+
+    badgeByPlugin = webUsersDAO.getNumberOnBadgeByPlugin(receiver);
+    assertNotNull(badgeByPlugin);
+    assertEquals(2, badgeByPlugin.size());
+    assertEquals(2, badgeByPlugin.get(webNotifEntity1.getType()).intValue());
+    assertEquals(1, badgeByPlugin.get(webNotifEntity2.getType()).intValue());
+
+    badgeByPlugin = webUsersDAO.getNumberOnBadgeByPlugin("fakeUser");
+    assertNotNull(badgeByPlugin);
+    assertTrue(badgeByPlugin.isEmpty());
+  }
+
+  @Test
+  public void testGetNotificationsByTypeAndParams() {
     WebNotifEntity webNotifEntity1 = new WebNotifEntity();
     webNotifEntity1.setType("plugin1");
     webNotifEntity1.setCreationDate(Calendar.getInstance());
@@ -100,11 +177,11 @@ public class WebUsersDAOTest extends CommonsDAOJPAImplTest {
     EntityManagerHolder.get().clear();
 
     //Then
-    assertEquals(1, webUsersDAO.findNotificationsByTypeAndParams("plugin1", "toto", "titi", "user1", 0, 10).size());
-    assertEquals(0, webUsersDAO.findNotificationsByTypeAndParams("plugin2", "toto", "titi", "user1", 0, 10).size());
-    assertEquals(0, webUsersDAO.findNotificationsByTypeAndParams("plugin1", "toto", "tata", "user1", 0, 10).size());
-    assertEquals(0, webUsersDAO.findNotificationsByTypeAndParams("plugin1", "tata", "titi", "user1", 0, 10).size());
-    assertEquals(0, webUsersDAO.findNotificationsByTypeAndParams("plugin1", "toto", "titi", "user2", 0, 10).size());
+    assertEquals(1, webUsersDAO.findNotificationsByTypeAndParams(Collections.singletonList("plugin1"), "toto", "titi", "user1", 0, 10).size());
+    assertEquals(0, webUsersDAO.findNotificationsByTypeAndParams(Collections.singletonList("plugin2"), "toto", "titi", "user1", 0, 10).size());
+    assertEquals(0, webUsersDAO.findNotificationsByTypeAndParams(Collections.singletonList("plugin1"), "toto", "tata", "user1", 0, 10).size());
+    assertEquals(0, webUsersDAO.findNotificationsByTypeAndParams(Collections.singletonList("plugin1"), "tata", "titi", "user1", 0, 10).size());
+    assertEquals(0, webUsersDAO.findNotificationsByTypeAndParams(Collections.singletonList("plugin1"), "toto", "titi", "user2", 0, 10).size());
   }
 
   @Test

@@ -18,6 +18,7 @@ package org.exoplatform.commons.notification.impl.service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
 import org.exoplatform.commons.api.notification.NotificationContext;
@@ -119,21 +120,18 @@ public class WebNotificationServiceImpl implements WebNotificationService {
 
   @Override
   public int getNumberOnBadge(String userId) {
-    if (StringUtils.isNotBlank(userId)) {
-      try {
-        return storage.getNumberOnBadge(userId);
-      } catch (Exception e) {
-        if (LOG.isDebugEnabled()) {
-          LOG.error("Exception raising when getNumberOnBadge() ", e);
-        } else {
-            LOG.warn("Exception raising when getNumberOnBadge() associated to the userId " + userId);
-        }
-      }
-      return 0;
-    } else {
-      LOG.warn("Can't getNumberOnBadge(). The userId is null");
-      return 0;
+    if (StringUtils.isBlank(userId)) {
+      throw new IllegalArgumentException("User is mandatory");
     }
+    return storage.getNumberOnBadge(userId);
+  }
+
+  @Override
+  public Map<String, Integer> getNumberOnBadgeByPlugin(String userId) {
+    if (StringUtils.isBlank(userId)) {
+      throw new IllegalArgumentException("User is mandatory");
+    }
+    return storage.getNumberOnBadgeByPlugin(userId);
   }
 
   private String getNotificationMessage(NotificationContext ctx, NotificationInfo notification) {

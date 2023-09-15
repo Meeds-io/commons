@@ -49,8 +49,8 @@ public class JPAWebNotificationStorage implements WebNotificationStorage {
   @Override
   @ExoTransactional
   public List<NotificationInfo> get(WebNotificationFilter filter, int offset, int limit) {
-    List<NotificationInfo> result = new ArrayList<NotificationInfo>();
-    String pluginId = filter.getPluginKey() != null ? filter.getPluginKey().getId() : null;
+    List<String> pluginIds = filter.getPluginKeys() == null ? Collections.emptyList()
+                                                            : filter.getPluginKeys().stream().map(PluginKey::getId).toList();
     String userId = filter.getUserId();
     Pair<String, String> parameter = filter.getParameter();
     String paramName = null;
@@ -60,21 +60,17 @@ public class JPAWebNotificationStorage implements WebNotificationStorage {
       paramValue = parameter.getValue();
     }
     List<WebUsersEntity> webUsersEntities;
-    if (paramName != null && paramValue != null && pluginId != null) {
-      webUsersEntities = webUsersDAO.findNotificationsByTypeAndParams(pluginId, paramName, paramValue, userId, offset, limit);
-    } else if (pluginId != null) {
+    if (paramName != null && paramValue != null && !pluginIds.isEmpty()) {
+      webUsersEntities = webUsersDAO.findNotificationsByTypeAndParams(pluginIds, paramName, paramValue, userId, offset, limit);
+    } else if (!pluginIds.isEmpty()) {
       // web notifs entities order by lastUpdated DESC
-      webUsersEntities = webUsersDAO.findWebNotifsByFilter(pluginId, userId, filter.isOnPopover(), offset, limit);
+      webUsersEntities = webUsersDAO.findWebNotifsByFilter(pluginIds, userId, filter.isOnPopover(), offset, limit);
     } else if (filter.isOnPopover()) {
       webUsersEntities = webUsersDAO.findWebNotifsByFilter(userId, filter.isOnPopover(), offset, limit);
     } else {
       webUsersEntities = webUsersDAO.findWebNotifsByFilter(userId, offset, limit);
     }
-    //
-    for (WebUsersEntity webUserNotifEntity : webUsersEntities) {
-      result.add(convertWebNotifEntityToNotificationInfo(webUserNotifEntity));
-    }
-    return result;
+    return webUsersEntities.stream().map(this::convertWebNotifEntityToNotificationInfo).toList();
   }
 
   @Override
@@ -200,6 +196,11 @@ public class JPAWebNotificationStorage implements WebNotificationStorage {
   @ExoTransactional
   public int getNumberOnBadge(String userId) {
     return webUsersDAO.getNumberOnBadge(userId);
+  }
+
+  @Override
+  public Map<String, Integer> getNumberOnBadgeByPlugin(String userId) {
+    return webUsersDAO.getNumberOnBadgeByPlugin(userId);
   }
 
   @Override

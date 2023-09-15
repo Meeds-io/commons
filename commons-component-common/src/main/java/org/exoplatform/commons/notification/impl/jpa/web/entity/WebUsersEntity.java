@@ -15,9 +15,16 @@ import java.util.Calendar;
 @ExoEntity
 @Table(name = "NTF_WEB_NOTIFS_USERS")
 @NamedQueries({
-    @NamedQuery(name = "NotificationsWebUsersEntity.getNumberOnBadge", query = "SELECT COUNT(u) FROM NotificationsWebUsersEntity u " +
-        "WHERE u.receiver = :userId " +
-        "AND u.resetNumberOnBadge = FALSE "),
+  @NamedQuery(name = "NotificationsWebUsersEntity.getNumberOnBadge", query = "SELECT COUNT(u) FROM NotificationsWebUsersEntity u " +
+      "WHERE u.receiver = :userId " +
+      "AND u.resetNumberOnBadge = FALSE "),
+    @NamedQuery(
+        name = "NotificationsWebUsersEntity.getNumberOnBadgeByPlugin",
+        query = "SELECT w.type, COUNT(u) FROM NotificationsWebUsersEntity u " +
+          " INNER JOIN u.webNotification w " +
+          " WHERE u.receiver = :userId " +
+          " AND u.resetNumberOnBadge = FALSE" +
+          " GROUP BY w.type"),
     @NamedQuery(name = "NotificationsWebUsersEntity.findNotifsWithBadge", query = "SELECT u FROM NotificationsWebUsersEntity u " +
         "WHERE u.receiver = :userId " +
         "AND u.resetNumberOnBadge = FALSE "),
@@ -25,12 +32,25 @@ import java.util.Calendar;
         "SET u.read = TRUE " +
         "WHERE u.receiver = :userId " +
         "AND u.read = FALSE "),
-    @NamedQuery(name = "NotificationsWebUsersEntity.findWebNotifsByPluginFilter", query = "SELECT u FROM NotificationsWebUsersEntity u " +
-        "JOIN FETCH u.webNotification w " +
-        "WHERE u.webNotification.type= :pluginId " +
-        "AND u.receiver = :userId " +
-        "AND u.showPopover= :isOnPopover " +
-        "ORDER BY u.updateDate DESC "),
+    @NamedQuery(
+      name = "NotificationsWebUsersEntity.findWebNotifsByPluginFilter",
+      query = "SELECT distinct(u) FROM NotificationsWebUsersEntity u " +
+        " INNER JOIN u.webNotification w " +
+        " ON w.type IN (:pluginIds)" +
+        " WHERE u.receiver = :userId " +
+        " AND u.showPopover= :isOnPopover " +
+        " ORDER BY u.updateDate DESC "
+    ),
+    @NamedQuery(
+      name = "NotificationsWebUsersEntity.findNotificationsByTypeAndParams",
+      query = "SELECT distinct(u) FROM NotificationsWebUsersEntity u " +
+        " INNER JOIN u.webNotification w" +
+        " ON w.type IN (:pluginIds)" +
+        " INNER JOIN w.parameters p" +
+        " ON p.name = :paramName" +
+        " AND p.value = :paramValue" +
+        " WHERE u.receiver = :receiver" +
+        " ORDER BY u.updateDate DESC "),
     @NamedQuery(name = "NotificationsWebUsersEntity.findWebNotifsByUserFilter", query = "SELECT u FROM NotificationsWebUsersEntity u " +
         "JOIN FETCH u.webNotification w " +
         "WHERE u.receiver = :userId " +
@@ -54,14 +74,7 @@ import java.util.Calendar;
         "AND u.updateDate < :calendar "),
     @NamedQuery(name = "NotificationsWebUsersEntity.findWebNotifsByLastUpdatedDate", query = "SELECT u FROM NotificationsWebUsersEntity u " +
         "JOIN FETCH u.webNotification w " +
-        "WHERE u.updateDate < :calendar "),
-    @NamedQuery(name = "NotificationsWebUsersEntity.findNotificationsByTypeAndParams", query = "SELECT distinct(u) FROM NotificationsWebUsersEntity u " +
-        "JOIN u.webNotification w " +
-        "JOIN u.webNotification.parameters p " +
-        "WHERE w.type= :pluginType " +
-        "AND p.name= :paramName " +
-        "AND p.value= :paramValue " +
-        "AND u.receiver= :receiver ")
+        "WHERE u.updateDate < :calendar ")
 })
 public class WebUsersEntity {
   @Id
