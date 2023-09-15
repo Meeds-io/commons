@@ -43,8 +43,7 @@ public class WebNotificationInfosSelector implements CachedObjectSelector<ListWe
   public void onSelect(ExoCache<? extends ListWebNotificationsKey, ? extends Object> cache,
       ListWebNotificationsKey key, ObjectCacheInfo<? extends Object> ocinfo) throws Exception {
     Object data = ocinfo.get();
-    if (data instanceof ListWebNotificationsData) {
-      ListWebNotificationsData listData = (ListWebNotificationsData) data;
+    if (data instanceof ListWebNotificationsData listData) {
       if (key.isOnPopover()) {
         listData.removeByValue(notificationInfo.getId());
       } else {

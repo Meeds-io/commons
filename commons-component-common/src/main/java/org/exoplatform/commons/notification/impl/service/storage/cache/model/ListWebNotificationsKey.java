@@ -17,84 +17,36 @@
 
 package org.exoplatform.commons.notification.impl.service.storage.cache.model;
 
-import java.io.Serializable;
-
+import org.exoplatform.commons.api.notification.model.WebNotificationFilter;
 import org.exoplatform.commons.notification.impl.service.storage.cache.CacheKey;
 
-public class ListWebNotificationsKey implements CacheKey, Serializable {
-  private static final long serialVersionUID = 1L;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
-  private final boolean     isOnPopover;
+@Data
+@EqualsAndHashCode(callSuper = true)
+@NoArgsConstructor
+@AllArgsConstructor
+public class ListWebNotificationsKey extends WebNotificationFilter implements CacheKey {
 
-  private final String      userId;
+  private static final long serialVersionUID = -6483807024658392464L;
 
-  private final int         offset;
+  private int               offset;
 
-  private final int         limit;
+  private int               limit;
 
-  private ListWebNotificationsKey(final String userId, final boolean isOnPopover, int offset, int limit) {
-    this.userId = userId;
-    this.isOnPopover = isOnPopover;
+  public ListWebNotificationsKey(WebNotificationFilter filter, int offset, int limit) {
+    super(filter.getPluginKeys(),
+          filter.getUserId(),
+          filter.getLimitDay(),
+          filter.isOnPopover(),
+          filter.getIsRead(),
+          filter.isOrder(),
+          filter.getParameter());
     this.offset = offset;
     this.limit = limit;
-  }
-  
-  public static ListWebNotificationsKey key(String userId, boolean isOnPopover, int offset, int limit) {
-    return new ListWebNotificationsKey(userId, isOnPopover,offset, limit);
-  }
-  
-  public boolean isOnPopover() {
-    return isOnPopover;
-  }
-
-  public String getUserId() {
-    return userId;
-  }
-
-  public int getOffset() {
-    return offset;
-  }
-
-  public int getLimit() {
-    return limit;
-  }
-
-  @Override
-  public boolean equals(final Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (!(o instanceof ListWebNotificationsKey)) {
-      return false;
-    }
-    
-    ListWebNotificationsKey that = (ListWebNotificationsKey) o;
-
-    if (userId != null ? !userId.equals(that.userId) : that.userId != null)
-      return false;
-    
-    if (offset != that.offset) {
-      return false;
-    }
-    
-    if (limit != that.limit) {
-      return false;
-    }
-    
-    if (isOnPopover != that.isOnPopover) {
-      return false;
-    }
-    
-    return true;
-  }
-
-  @Override
-  public int hashCode() {
-    int result = 31 * (userId != null ? userId.hashCode() : 0);
-    result = 31 * result + (isOnPopover ? 1 : 0);
-    result = 31 * result + offset;
-    result = 31 * result + limit;
-    return result;
   }
 
 }

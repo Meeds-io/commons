@@ -28,38 +28,9 @@ import java.lang.NumberFormatException;
  * Dec 30, 2014  
  */
 public class NotificationMessageUtils {
-  private static int maxItemsInPopover = 0;
 
   protected static final Log LOG = ExoLogger.getLogger(NotificationMessageUtils.class);
-  
-  public final static ArgumentLiteral<String> READ_PORPERTY = new ArgumentLiteral<String>(String.class, "read");
-  
-  public final static ArgumentLiteral<String> SHOW_POPOVER_PROPERTY = new ArgumentLiteral<String>(String.class, "showPopover");
-  
+
   public final static ArgumentLiteral<String> NOT_HIGHLIGHT_COMMENT_PORPERTY = new ArgumentLiteral<String>(String.class, "notHighlightComment");
-  
-  /**
-   * Gets the number of notifications that are displayed in the popover list.<br>
-   * The first time this method is called, it will retrieve it from the configuration, via the property exo.notification.maxitems,
-   * or default to 8 if the property is not set.<br>
-   * If the property is set to an incorrect value (negative number, 0, not a number), the default value is used too.
-   * @return the number of items (notifications) that are displayed in the popover list.
-   */
-  public static int getMaxItemsInPopover() {
-    if (maxItemsInPopover == 0) {
-      String maxItemsProperty = System.getProperty("exo.notification.maxitems", "8");
-      try {
-        maxItemsInPopover = Integer.parseInt(maxItemsProperty);
-        if (maxItemsInPopover <= 0) {
-          LOG.warn("The value of the property exo.notification.maxitems cannot be 0 or negative. Using the default value instead: 8.");
-          maxItemsInPopover = 8;
-        }
-      } catch (NumberFormatException e) {
-        LOG.warn(String.format("The value of the property exo.notification.maxitems is incorrect: %s. Using the default value instead: 8.", maxItemsProperty));
-        maxItemsInPopover = 8;
-      }
-    }
-    return maxItemsInPopover;
-  }
 
 }
