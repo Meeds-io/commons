@@ -17,18 +17,19 @@
 
 package org.exoplatform.commons.notification.impl.service.storage.cache.model;
 
-import org.exoplatform.commons.api.notification.NotificationMessageUtils;
 import org.exoplatform.commons.api.notification.model.ChannelKey;
 import org.exoplatform.commons.api.notification.model.NotificationInfo;
 import org.exoplatform.commons.api.notification.model.PluginKey;
+
+import lombok.EqualsAndHashCode;
 
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
+@EqualsAndHashCode
 public class WebNotifInfoData implements Serializable {
   private static final long serialVersionUID = 1L;
 
@@ -37,14 +38,16 @@ public class WebNotifInfoData implements Serializable {
   private String              from           = "";
   private String              to;
   private int                 order;
-  private Map<String, String> ownerParameter = new HashMap<String, String>();
-  private List<String>        sendToUserIds  = new ArrayList<String>();
+  private Map<String, String> ownerParameter = new HashMap<>();
+  private List<String>        sendToUserIds  = new ArrayList<>();
   private String[]            sendToDaily;
   private String[]            sendToWeekly;
   private long                lastModifiedDate;
   private String              title = "";
   private ChannelKey          channelKey;
-  
+  private boolean             onPopOver;
+  private boolean             read;
+
   public WebNotifInfoData(NotificationInfo notificationInfo) {
     this.id = notificationInfo.getId();
     this.key = notificationInfo.getKey();                                          
@@ -58,6 +61,8 @@ public class WebNotifInfoData implements Serializable {
     this.lastModifiedDate = notificationInfo.getLastModifiedDate();
     this.title = notificationInfo.getTitle();
     this.channelKey = notificationInfo.getChannelKey();
+    this.onPopOver = notificationInfo.isOnPopOver();
+    this.read = notificationInfo.isRead();
   }
   
   public NotificationInfo build() {
@@ -74,13 +79,8 @@ public class WebNotifInfoData implements Serializable {
     notificationInfo.setLastModifiedDate(this.lastModifiedDate);
     notificationInfo.setTitle(this.title);
     notificationInfo.setChannelKey(this.channelKey);
-    if (ownerParameter != null && ownerParameter.containsKey(NotificationMessageUtils.SHOW_POPOVER_PROPERTY.getKey())) {
-      notificationInfo.setOnPopOver(Boolean.valueOf(ownerParameter.get(NotificationMessageUtils.SHOW_POPOVER_PROPERTY.getKey())));
-    }
-    if (ownerParameter != null && ownerParameter.containsKey(NotificationMessageUtils.READ_PORPERTY.getKey())) {
-      notificationInfo.setRead(Boolean.valueOf(ownerParameter.get(NotificationMessageUtils.READ_PORPERTY.getKey())));
-    }
-
+    notificationInfo.setOnPopOver(onPopOver);
+    notificationInfo.setRead(read);
     return notificationInfo;
   }
 
@@ -89,60 +89,13 @@ public class WebNotifInfoData implements Serializable {
   }
 
   public WebNotifInfoData updateRead(boolean isRead) {
-    if (ownerParameter == null) {
-      ownerParameter = new HashMap<String, String>();
-    }
-    ownerParameter.put(NotificationMessageUtils.READ_PORPERTY.getKey(), String.valueOf(isRead));
+    this.read = isRead;
     return this;
   }
 
   public WebNotifInfoData updateShowPopover(boolean isShow) {
-    if (ownerParameter == null) {
-      ownerParameter = new HashMap<String, String>();
-    }
-    ownerParameter.put(NotificationMessageUtils.SHOW_POPOVER_PROPERTY.getKey(), String.valueOf(isShow));
+    this.onPopOver = isShow;
     return this;
   }
 
-  @Override
-  public String toString() {
-    StringBuffer sb = new StringBuffer();
-    sb.append("WebNotif{")
-      .append("title: ")
-      .append(title)
-      .append("from: ")
-      .append(from)
-      .append("to: ")
-      .append(to)
-      .append("channelKey: ")
-      .append(channelKey)
-      .append(", showPopover: ")
-      .append(ownerParameter.get(NotificationMessageUtils.SHOW_POPOVER_PROPERTY.getKey()));
-    return sb.toString();
-
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    WebNotifInfoData that = (WebNotifInfoData) o;
-    return order == that.order &&
-            lastModifiedDate == that.lastModifiedDate &&
-            Objects.equals(id, that.id) &&
-            Objects.equals(key, that.key) &&
-            Objects.equals(from, that.from) &&
-            Objects.equals(to, that.to) &&
-            Objects.equals(ownerParameter, that.ownerParameter) &&
-            Objects.equals(sendToUserIds, that.sendToUserIds) &&
-            Objects.equals(sendToDaily, that.sendToDaily) &&
-            Objects.equals(sendToWeekly, that.sendToWeekly) &&
-            Objects.equals(title, that.title) &&
-            Objects.equals(channelKey, that.channelKey);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(id, key, from, to, order, ownerParameter, sendToUserIds, sendToDaily, sendToWeekly, lastModifiedDate, title, channelKey);
-  }
 }

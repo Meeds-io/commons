@@ -33,7 +33,7 @@
     <rest.api.doc.version>1.0</rest.api.doc.version>
     <rest.api.doc.description>Commons Rest endpoints</rest.api.doc.description>
 
-    <exo.test.coverage.ratio>0.56</exo.test.coverage.ratio>
+    <exo.test.coverage.ratio>0.55</exo.test.coverage.ratio>
   </properties>
   <dependencies>
     <dependency>

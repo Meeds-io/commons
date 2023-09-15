@@ -1,9 +1,9 @@
 package org.exoplatform.commons.notification.storage;
 
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.List;
 
-import org.exoplatform.commons.api.notification.NotificationMessageUtils;
 import org.exoplatform.commons.api.notification.model.NotificationInfo;
 import org.exoplatform.commons.api.notification.model.WebNotificationFilter;
 import org.exoplatform.commons.api.notification.service.storage.WebNotificationStorage;
@@ -131,15 +131,15 @@ public class CachedWebNotificationStorageTest extends BaseNotificationTestCase {
     cachedStorage.save(info);
     //
     NotificationInfo notifInfo = cachedStorage.get(info.getId());
-    assertFalse(Boolean.valueOf(notifInfo.getValueOwnerParameter(NotificationMessageUtils.READ_PORPERTY.getKey())));
+    assertFalse(notifInfo.isRead());
     //
     cachedStorage.markRead(notifInfo.getId());
     //
     notifInfo = cachedStorage.get(info.getId());
-    assertTrue(Boolean.valueOf(notifInfo.getValueOwnerParameter(NotificationMessageUtils.READ_PORPERTY.getKey())));
+    assertTrue(notifInfo.isRead());
   }
 
-  public void testMarkAllRead() throws Exception {
+  public void testMarkAllRead() {
     String userId = "demo8";
     userIds.add(userId);
     for (int i = 0; i < 10; i++) {
@@ -149,32 +149,33 @@ public class CachedWebNotificationStorageTest extends BaseNotificationTestCase {
     List<NotificationInfo> onPopoverInfos = cachedStorage.get(new WebNotificationFilter(userId, true), 0 , 10);
     assertEquals(10, onPopoverInfos.size());
     for (NotificationInfo notifInfo : onPopoverInfos) {
-      assertFalse(Boolean.valueOf(notifInfo.getValueOwnerParameter(NotificationMessageUtils.READ_PORPERTY.getKey())));
+      assertFalse(notifInfo.isRead());
     }
     List<NotificationInfo> viewAllInfos = cachedStorage.get(new WebNotificationFilter(userId, false), 0 , 10);
     assertEquals(10, viewAllInfos.size());
     for (NotificationInfo notifInfo : viewAllInfos) {
-      assertFalse(Boolean.valueOf(notifInfo.getValueOwnerParameter(NotificationMessageUtils.READ_PORPERTY.getKey())));
+      assertFalse(notifInfo.isRead());
     }
     //
     cachedStorage.markAllRead(userId);
+    restartTransaction();
     //
     onPopoverInfos = cachedStorage.get(new WebNotificationFilter(userId, true), 0 , 10);
     assertEquals(10, onPopoverInfos.size());
     for (NotificationInfo notifInfo : onPopoverInfos) {
-      assertTrue(Boolean.valueOf(notifInfo.getValueOwnerParameter(NotificationMessageUtils.READ_PORPERTY.getKey())));
+      assertTrue(notifInfo.isRead());
     }
     viewAllInfos = cachedStorage.get(new WebNotificationFilter(userId, false), 0 , 10);
     assertEquals(10, viewAllInfos.size());
     for (NotificationInfo notifInfo : viewAllInfos) {
-      assertTrue(Boolean.valueOf(notifInfo.getValueOwnerParameter(NotificationMessageUtils.READ_PORPERTY.getKey())));
+      assertTrue(notifInfo.isRead());
     }
     //
     for (NotificationInfo info : viewAllInfos) {
       WebNotifInfoCacheKey notifKey = WebNotifInfoCacheKey.key(info.getId());
       WebNotifInfoData notifData = exoWebNotificationCache.get(notifKey);
       NotificationInfo notifInfo = notifData.build();
-      assertTrue(Boolean.valueOf(notifInfo.getValueOwnerParameter(NotificationMessageUtils.READ_PORPERTY.getKey())));
+      assertTrue(notifInfo.isRead());
     }
   }
 
@@ -192,25 +193,25 @@ public class CachedWebNotificationStorageTest extends BaseNotificationTestCase {
     assertTrue(notifInfo.isOnPopOver());
     //
     //checks caching
-    List<NotificationInfo> infos = cachedStorage.get(new WebNotificationFilter(userId, true), 0 , 10);
+    WebNotificationFilter filter = new WebNotificationFilter(userId, true);
+    cachedStorage.get(filter, 0 , 10);
 
-    ListWebNotificationsKey key = ListWebNotificationsKey.key(userId, true, 0, 10);
+    ListWebNotificationsKey key = new ListWebNotificationsKey(filter, 0, 10);
     ListWebNotificationsData listData = exoWebNotificationsCache.get(key);
     assertNotNull(listData);
     assertEquals(1,listData.size());
 
     //
-    infos = cachedStorage.get(new WebNotificationFilter(userId, true), 0 , 10);
+    List<NotificationInfo> infos = cachedStorage.get(new WebNotificationFilter(userId, true), 0 , 10);
     assertEquals(infos.get(0), notifInfo);
     assertTrue(infos.get(0).isOnPopOver());
 
     //
     cachedStorage.hidePopover(notifInfo.getId());
+    restartTransaction();
 
     //
-    WebNotifInfoCacheKey notifKey = WebNotifInfoCacheKey.key(notifInfo.getId());
-    WebNotifInfoData notifData = exoWebNotificationCache.get(notifKey);
-    notifInfo = notifData.build();
+    notifInfo = cachedStorage.get(notifInfo.getId());
     assertFalse(notifInfo.isOnPopOver());
   }
   
@@ -327,12 +328,12 @@ public class CachedWebNotificationStorageTest extends BaseNotificationTestCase {
   }
   
   public void testGetNewMessage() throws Exception  {
-    assertEquals(8, NotificationMessageUtils.getMaxItemsInPopover());
     String userId = "root82";
     userIds.add(userId);
     assertEquals(0, cachedStorage.getNumberOnBadge(userId));
     //
-    cachedStorage.save(makeWebNotificationInfo(userId));
+    NotificationInfo notificationInfo = makeWebNotificationInfo(userId);
+    cachedStorage.save(notificationInfo);
     //
     assertEquals(1, cachedStorage.getNumberOnBadge(userId));
     cachedStorage.save(makeWebNotificationInfo(userId));
@@ -346,8 +347,17 @@ public class CachedWebNotificationStorageTest extends BaseNotificationTestCase {
     //
     assertEquals(12, cachedStorage.getNumberOnBadge(userId));
     //
-    cachedStorage.resetNumberOnBadge(userId);
+    cachedStorage.resetNumberOnBadge(Collections.singletonList("testPluginFake"), userId);
+    assertEquals(12, cachedStorage.getNumberOnBadge(userId));
+
+    cachedStorage.resetNumberOnBadge(Collections.singletonList(notificationInfo.getKey().getId()), userId);
+    assertEquals(0, cachedStorage.getNumberOnBadge(userId));
+
+    cachedStorage.save(makeWebNotificationInfo(userId));
+    assertEquals(1, cachedStorage.getNumberOnBadge(userId));
+
     //
+    cachedStorage.resetNumberOnBadge(userId);
     assertEquals(0, cachedStorage.getNumberOnBadge(userId));
   }
 }
