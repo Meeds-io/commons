@@ -2,9 +2,7 @@ package org.exoplatform.jpa.notifications.web.impl;
 
 import java.util.*;
 
-import org.exoplatform.commons.api.notification.NotificationMessageUtils;
 import org.exoplatform.commons.api.notification.model.*;
-import org.exoplatform.commons.api.notification.service.storage.WebNotificationStorage;
 import org.exoplatform.commons.notification.BaseNotificationTestCase;
 import org.exoplatform.commons.notification.impl.jpa.web.JPAWebNotificationStorage;
 import org.exoplatform.commons.notification.impl.jpa.web.dao.*;
@@ -16,23 +14,24 @@ import org.exoplatform.services.security.Identity;
 public class JPAWebNotificationStorageTest extends BaseNotificationTestCase {
 
   private JPAWebNotificationStorage webNotificationStorage;
-  private WebNotifDAO webNotifDAO;
-  private WebUsersDAO webUsersDAO;
-  private WebParamsDAO webParamsDAO;
-  protected List<String> userIds;
+
+  private WebNotifDAO               webNotifDAO;
+
+  private WebUsersDAO               webUsersDAO;
+
+  private WebParamsDAO              webParamsDAO;
 
   @Override
-  public void setUp() throws Exception  {
+  public void setUp() throws Exception {
     super.setUp();
     webNotificationStorage = getService(JPAWebNotificationStorage.class);
     webNotifDAO = getService(WebNotifDAO.class);
     webUsersDAO = getService(WebUsersDAO.class);
     webParamsDAO = getService(WebParamsDAO.class);
-    userIds = new ArrayList<String>();
   }
 
   @Override
-  public void tearDown() throws Exception  {
+  public void tearDown() throws Exception {
     webParamsDAO.deleteAll();
     webUsersDAO.deleteAll();
     webNotifDAO.deleteAll();
@@ -56,12 +55,12 @@ public class JPAWebNotificationStorageTest extends BaseNotificationTestCase {
     List<NotificationInfo> list = webNotificationStorage.get(new WebNotificationFilter(userId), 0, 10);
     assertEquals(1, list.size());
     NotificationInfo notif = list.get(0);
-    assertFalse(Boolean.valueOf(notif.getOwnerParameter().get(NotificationMessageUtils.READ_PORPERTY.getKey())));
+    assertFalse(notif.isRead());
     //
     webNotificationStorage.markRead(notif.getId());
     //
     notif = webNotificationStorage.get(notif.getId());
-    assertTrue(Boolean.valueOf(notif.getOwnerParameter().get(NotificationMessageUtils.READ_PORPERTY.getKey())));
+    assertTrue(notif.isRead());
   }
 
   public void testMarkReadAll() throws Exception {
@@ -73,8 +72,8 @@ public class JPAWebNotificationStorageTest extends BaseNotificationTestCase {
     }
     List<NotificationInfo> list = webNotificationStorage.get(new WebNotificationFilter(userId), 0, 10);
     assertEquals(10, list.size());
-    for(NotificationInfo notif : list) {
-      assertFalse(Boolean.valueOf(notif.getOwnerParameter().get(NotificationMessageUtils.READ_PORPERTY.getKey())));
+    for (NotificationInfo notif : list) {
+      assertFalse(notif.isRead());
     }
     ConversationState.setCurrent(new ConversationState(new Identity(userId)));
     //
@@ -84,8 +83,8 @@ public class JPAWebNotificationStorageTest extends BaseNotificationTestCase {
     list = webNotificationStorage.get(new WebNotificationFilter(userId), 0, 10);
     assertEquals(10, list.size());
     //
-    for(NotificationInfo notif : list) {
-      assertTrue(Boolean.valueOf(notif.getValueOwnerParameter(NotificationMessageUtils.READ_PORPERTY.getKey())));
+    for (NotificationInfo notif : list) {
+      assertTrue(notif.isRead());
     }
   }
 
@@ -120,64 +119,39 @@ public class JPAWebNotificationStorageTest extends BaseNotificationTestCase {
     assertTrue(got.getLastModifiedDate() + " should equal to " + lastUpdatedTime, lastUpdatedTime == got.getLastModifiedDate());
   }
 
-  public void testRemoveByJob() throws Exception {
-    // Create data for old notifications
-    /* Example:
-     *  PastTime is 1/12/2014
-     *  Today is 15/12/2014
-     *  Create notification for:
-     *   + 04/12/2014
-     *   + 06/12/2014
-     *   + 08/12/2014
-     *   + 10/12/2014
-     *   + 12/12/2014
-     *  Case 1: Delay time 9 days, remove all web notification on days:
-     *   + 04/12/2014
-     *   + 06/12/2014
-     *  Expected: remaining is 30 notifications / 3 days
-     *  Case 2: Delay time 3 days, remove all web notification on days:
-     *   + 08/12/2014
-     *   + 10/12/2014
-     *   + 12/12/2014
-     *  Expected: remaining is 0 notification
-    */
-    String userId = "demo";
-    Calendar cal = Calendar.getInstance();
-    long t = 86400000l;
-    long current = cal.getTimeInMillis();
-    for (int i = 12; i > 3; i = i - 2) {
-      cal.setTimeInMillis(current - i * t);
-      for (int j = 0; j < 10; j++) {
-        NotificationInfo info = makeWebNotificationInfo(userId).setDateCreated(cal);
-        //
-        webNotificationStorage.save(info);
-      }
+  public void testGetNumberOnBadge() throws Exception {
+    String userId = "root";
+    userIds.add(userId);
+    NotificationInfo webNotificationInfo = makeWebNotificationInfo(userId);
+    webNotificationStorage.save(webNotificationInfo);
+    assertEquals(1, webNotificationStorage.getNumberOnBadge(userId));
+    webNotificationStorage.save(makeWebNotificationInfo(userId));
+    assertEquals(2, webNotificationStorage.getNumberOnBadge(userId));
+    for (int i = 0; i < 10; ++i) {
+      webNotificationStorage.save(makeWebNotificationInfo(userId));
     }
-    webNotifDAO.findAll();
-    // check data
-    //getWebUserDateNode
-//    SessionProvider sProvider = SessionProvider.createSystemProvider();
-//    Node parentNode = getOrCreateChannelNode(sProvider, userId);
-//    assertEquals(5, webNotifDAO.findAll());
-//    //
-//    NodeIterator iter = null;
-//    for (int i = 4; i < 13; i = i + 2) {
-//      cal.setTimeInMillis(current - i * t);
-//      Node node = getOrCreateWebDateNode(sProvider, cal, userId);
-//      iter = node.getNodes();
-//      assertEquals(10, iter.getSize());
-//    }
-    //
-//    storage.remove(userId, 9 * daySeconds);
-//    //
-//    assertEquals(3, parentNode.getNodes().getSize());
-//    //
-//    storage.remove(userId, 3 * daySeconds);
-//    assertEquals(0, parentNode.getNodes().getSize());
+    assertEquals(12, webNotificationStorage.getNumberOnBadge(userId));
+
+    Map<String, Integer> badgeByPlugin = webNotificationStorage.countUnreadByPlugin(userId);
+    assertEquals(1, badgeByPlugin.size());
+    assertEquals(12, badgeByPlugin.get(webNotificationInfo.getKey().getId()).intValue());
+
+    webNotificationStorage.resetNumberOnBadge(userId);
+    assertEquals(0, webNotificationStorage.getNumberOnBadge(userId));
+
+    badgeByPlugin = webNotificationStorage.countUnreadByPlugin(userId);
+    assertEquals(1, badgeByPlugin.size());
+
+    webNotificationStorage.markAllRead(Collections.singletonList("fake"), userId);
+    badgeByPlugin = webNotificationStorage.countUnreadByPlugin(userId);
+    assertEquals(1, badgeByPlugin.size());
+
+    webNotificationStorage.markAllRead(Collections.singletonList(webNotificationInfo.getKey().getId()), userId);
+    badgeByPlugin = webNotificationStorage.countUnreadByPlugin(userId);
+    assertTrue(badgeByPlugin.isEmpty());
   }
 
-  public void testGetNewMessage() throws Exception  {
-    assertEquals(8, NotificationMessageUtils.getMaxItemsInPopover());
+  public void testGetNewMessage() {
     //
     String userId = "root";
     userIds.add(userId);
@@ -201,7 +175,7 @@ public class JPAWebNotificationStorageTest extends BaseNotificationTestCase {
   }
 
   public void testSpecialUserNameToGetMessage() throws Exception {
-    //Test with methods: getUnreadNotification, getNewMessage and remove
+    // Test with methods: getUnreadNotification, getNewMessage and remove
     String userId = "don't_blink_polarity";
     userIds.add(userId);
     Calendar cal = Calendar.getInstance();
@@ -218,53 +192,6 @@ public class JPAWebNotificationStorageTest extends BaseNotificationTestCase {
     assertTrue(webNotificationStorage.remove(userId, 86400));
     //
     assertEquals(0, webNotificationStorage.getNumberOnBadge(userId));
-  }
-
-  public void testRemoveByLiveTime() throws Exception {
-    // Create data for old notifications
-    /* Example:
-     *  PastTime is 1/12/2014
-     *  Today is 15/12/2014
-     *  Create notification for:
-     *   + 04/12/2014
-     *   + 06/12/2014
-     *   + 08/12/2014
-     *   + 10/12/2014
-     *   + 12/12/2014
-     *  Case 1: Delay time 9 days, remove all web notification on days:
-     *   + 04/12/2014
-     *   + 06/12/2014
-     *  Expected: remaining is 30 notifications / 3 days
-     *  Case 2: Delay time 3 days, remove all web notification on days:
-     *   + 08/12/2014
-     *   + 10/12/2014
-     *   + 12/12/2014
-     *  Expected: remaining is 0 notification
-    */
-    String userId = "demo";
-    Calendar cal = Calendar.getInstance();
-    long t = 86400000l;
-    long current = cal.getTimeInMillis();
-    for (int i = 12; i > 3; i = i - 2) {
-      cal.setTimeInMillis(current - i * t);
-      for (int j = 0; j < 10; j++) {
-        NotificationInfo info = makeWebNotificationInfo(userId).setDateCreated(cal);
-        //
-        webNotificationStorage.save(info);
-      }
-    }
-    webNotifDAO.findAll();
-//    // check data
-//    SessionProvider sProvider = SessionProvider.createSystemProvider();
-//    Node parentNode = getOrCreateChannelNode(sProvider, userId);
-//    assertEquals(5, parentNode.getNodes().getSize());
-//    //
-//    webNotificationStorage.remove(userId, 9 * daySeconds);
-//    //
-//    assertEquals(3, parentNode.getNodes().getSize());
-//    //
-//    webNotificationStorage.remove(userId, 3 * daySeconds);
-//    assertEquals(0, parentNode.getNodes().getSize());
   }
 
   public void testGetNotificationsByTypeAndParams() {

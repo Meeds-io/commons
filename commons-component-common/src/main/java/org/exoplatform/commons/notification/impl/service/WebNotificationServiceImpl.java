@@ -18,10 +18,13 @@ package org.exoplatform.commons.notification.impl.service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.exoplatform.commons.api.notification.NotificationContext;
 import org.exoplatform.commons.api.notification.channel.AbstractChannel;
+import org.exoplatform.commons.api.notification.channel.ChannelManager;
 import org.exoplatform.commons.api.notification.channel.template.AbstractTemplateBuilder;
 import org.exoplatform.commons.api.notification.model.ChannelKey;
 import org.exoplatform.commons.api.notification.model.MessageInfo;
@@ -41,9 +44,13 @@ public class WebNotificationServiceImpl implements WebNotificationService {
 
   /** storage */
   private final WebNotificationStorage storage;
+
+  private final AbstractChannel        webChannel;
   
-  public WebNotificationServiceImpl(WebNotificationStorage webStorage) {
+  public WebNotificationServiceImpl(WebNotificationStorage webStorage,
+                                    ChannelManager channelManager) {
     this.storage = webStorage;
+    this.webChannel = channelManager.getChannel(ChannelKey.key(WebChannel.ID));
   }
 
   @Override
@@ -62,51 +69,47 @@ public class WebNotificationServiceImpl implements WebNotificationService {
   }
 
   @Override
-  public void markAllRead(String userId) throws Exception {
+  public void markAllRead(String userId) {
     storage.markAllRead(userId);
   }
 
   @Override
-  public List<String> get(WebNotificationFilter filter, int offset, int limit) {
-    List<String> result = new ArrayList<String>();
-    List<NotificationInfo> gotList = getNotificationInfos(filter, offset, 20);
-    NotificationContext ctx = NotificationContextImpl.cloneInstance();
-    ctx.append(POPUP_OVER, filter.isOnPopover());
-    AbstractChannel channel = ctx.getChannelManager().getChannel(ChannelKey.key(WebChannel.ID));
-    while (true) {
-      for (NotificationInfo notification : gotList) {
-        AbstractTemplateBuilder builder = channel.getTemplateBuilder(notification.getKey());
-        MessageInfo msg = null;
-        try {
-          msg = builder.buildMessage(ctx.setNotificationInfo(notification));
-        } catch (Exception e) {
-          LOG.error("Error while building message for notification with id = " + notification.getId(), e);
-        }
-        if (msg != null && msg.getBody() != null && !msg.getBody().isEmpty()) {
-          result.add(msg.getBody());
-        }
-        // if have any exception when template transformation
-        // ignore to display the notification
-        if (ctx.isFailed()) {
-          LOG.warn(ctx.getException().getMessage(), ctx.getException());
-        }
-        if (result.size() == limit){
-          return result;
-        }
-      }
-      if (result.size() < limit) {
-        offset += 20;
-        gotList = getNotificationInfos(filter, offset, 20);
-      }
-      if(gotList.isEmpty()){
-        return result;
-      }
+  public void markAllRead(List<String> plugins, String username) {
+    if (CollectionUtils.isEmpty(plugins)) {
+      markAllRead(username);
+    } else {
+      storage.markAllRead(plugins, username);
     }
   }
 
   @Override
   public List<NotificationInfo> getNotificationInfos(WebNotificationFilter filter, int offset, int limit) {
-    return storage.get(filter, offset, limit);
+    List<NotificationInfo> notifications = new ArrayList<>();
+    boolean limitReached = true;
+    do {
+      List<NotificationInfo> list = storage.get(filter, offset, limit);
+      notifications.addAll(list);
+      limitReached = list.size() < limit || notifications.size() >= limit;
+      offset += limit;
+    } while (!limitReached);
+    return limit > 0 ? notifications.stream().limit(limit).toList() : notifications;
+  }
+
+  @Override
+  @Deprecated(forRemoval = true, since = "1.5.0")
+  public String getNotificationMessage(NotificationInfo notification, boolean isOnPopover) {
+    NotificationContext ctx = NotificationContextImpl.cloneInstance();
+    ctx.append(POPUP_OVER, isOnPopover);
+    return getNotificationMessage(ctx, notification);
+  }
+
+  @Override
+  public List<String> get(WebNotificationFilter filter, int offset, int limit) {
+    List<NotificationInfo> notifications = getNotificationInfos(filter, offset, limit);
+
+    NotificationContext ctx = NotificationContextImpl.cloneInstance();
+    ctx.append(POPUP_OVER, filter.isOnPopover());
+    return notifications.stream().map(notification -> getNotificationMessage(ctx, notification)).toList();
   }
 
   @Override
@@ -126,21 +129,46 @@ public class WebNotificationServiceImpl implements WebNotificationService {
   }
 
   @Override
-  public int getNumberOnBadge(String userId) {
-    if (StringUtils.isNotBlank(userId)) {
-      try {
-        return storage.getNumberOnBadge(userId);
-      } catch (Exception e) {
-        if (LOG.isDebugEnabled()) {
-          LOG.error("Exception raising when getNumberOnBadge() ", e);
-        } else {
-            LOG.warn("Exception raising when getNumberOnBadge() associated to the userId " + userId);
-        }
-      }
-      return 0;
+  public void resetNumberOnBadge(List<String> plugins, String username) {
+    if (CollectionUtils.isEmpty(plugins)) {
+      resetNumberOnBadge(username);
     } else {
-      LOG.warn("Can't getNumberOnBadge(). The userId is null");
-      return 0;
+      storage.resetNumberOnBadge(plugins, username);
+      WebNotificationSender.sendJsonMessage(username, new MessageInfo());
     }
   }
+
+  @Override
+  public int getNumberOnBadge(String userId) {
+    if (StringUtils.isBlank(userId)) {
+      throw new IllegalArgumentException("User is mandatory");
+    }
+    return storage.getNumberOnBadge(userId);
+  }
+
+  @Override
+  public Map<String, Integer> countUnreadByPlugin(String userId) {
+    if (StringUtils.isBlank(userId)) {
+      throw new IllegalArgumentException("User is mandatory");
+    }
+    return storage.countUnreadByPlugin(userId);
+  }
+
+  private String getNotificationMessage(NotificationContext ctx, NotificationInfo notification) {
+    AbstractTemplateBuilder builder = webChannel.getTemplateBuilder(notification.getKey());
+    if (builder != null) {
+      try {
+        MessageInfo msg = builder.buildMessage(ctx.setNotificationInfo(notification));
+        if (ctx.isFailed()) {
+          LOG.warn("Error while building message for notification with id '{}'", notification.getId(), ctx.getException());
+        } else if (msg != null && msg.getBody() != null && !msg.getBody().isEmpty()) {
+          return msg.getBody();
+        }
+      } catch (Exception e) {
+        LOG.error("Error while building message for notification with id '{}'", notification.getId(), e);
+      }
+    }
+    return null;
+  }
+
 }

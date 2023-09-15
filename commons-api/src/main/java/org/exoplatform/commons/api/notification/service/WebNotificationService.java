@@ -16,17 +16,18 @@
  */
 package org.exoplatform.commons.api.notification.service;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.exoplatform.commons.api.notification.model.ArgumentLiteral;
 import org.exoplatform.commons.api.notification.model.NotificationInfo;
+import org.exoplatform.commons.api.notification.model.PluginKey;
 import org.exoplatform.commons.api.notification.model.WebNotificationFilter;
 
 public interface WebNotificationService {
 
   /** Define the argument parameter for popup over context */  
-  public final static ArgumentLiteral<Boolean> POPUP_OVER = new ArgumentLiteral<Boolean>(Boolean.class, "popupOver");
+  public static final ArgumentLiteral<Boolean> POPUP_OVER = new ArgumentLiteral<>(Boolean.class, "popupOver");
 
   /**
    * Creates the new notification message to the specified user.
@@ -65,7 +66,15 @@ public interface WebNotificationService {
    * @LevelAPI Platform
    * @since PLF 4.2
    */
-  void markAllRead(String userId) throws Exception;
+  void markAllRead(String userId);
+
+  /**
+   * Marks all notifications of the user as read for the designated notification types.
+   * 
+   * @param username the user name
+   * @param plugins {@link List} of {@link PluginKey} ids
+   */
+  void markAllRead(List<String> plugins, String username);
 
   /**
    * Updates the notification's popover list status to be FALSE value
@@ -110,13 +119,14 @@ public interface WebNotificationService {
    * @LevelAPI Platform
    * @since PLF 5.1
    */
-  default List<NotificationInfo> getNotificationInfos(WebNotificationFilter filter, int offset, int limit) {
-    List<NotificationInfo> list = new ArrayList<>();
-    for (String notif : get(filter, offset, limit)) {
-      list.add(new NotificationInfo());
-    }
-    return list;
-  }
+  List<NotificationInfo> getNotificationInfos(WebNotificationFilter filter, int offset, int limit);
+
+  /**
+   * Retrieve Built Message using Groovy Template engine.
+   * @deprecated replaced by Frontend UI building instead of Server end message building
+   */
+  @Deprecated(forRemoval = true, since = "1.5.0")
+  String getNotificationMessage(NotificationInfo notification, boolean isOnPopover);
 
   /**
    * Removes the notification by the notificationId
@@ -130,18 +140,32 @@ public interface WebNotificationService {
   
   /**
    * Gets the number on the badge by the specified user
-   * @param userId
+   * @param username user to retrieve its badges
    * @return
    * @LevelAPI Platform
    * @since PLF 4.2
    */
-  int getNumberOnBadge(String userId);
-  
-  
+  int getNumberOnBadge(String username);
+
+  /**
+   * @param username user to retrieve its badges
+   * @return {@link Map} of Badges per plugin
+   */
+  Map<String, Integer> countUnreadByPlugin(String username);
+
   /**
    * @param userId
    * @LevelAPI Platform
    * @since PLF 4.2
    */
   void resetNumberOnBadge(String userId);
+
+  /**
+   * Reset badge on notifications of the user for the designated notification types.
+   * 
+   * @param username the user name
+   * @param plugins {@link List} of {@link PluginKey} ids
+   */
+  void resetNumberOnBadge(List<String> plugins, String username);
+
 }

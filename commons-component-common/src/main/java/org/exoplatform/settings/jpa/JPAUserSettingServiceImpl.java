@@ -301,7 +301,7 @@ public class JPAUserSettingServiceImpl extends AbstractService implements UserSe
         for (Context context : contexts) {
           String username = context.getId();
           UserSetting userSetting = get(username);
-          if (userSetting.isEnabled()) {
+          if (userSetting != null && userSetting.isEnabled()) {
             models.add(userSetting);
           }
         }

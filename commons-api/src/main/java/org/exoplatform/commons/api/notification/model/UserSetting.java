@@ -16,8 +16,16 @@
  */
 package org.exoplatform.commons.api.notification.model;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
+import java.util.Set;
 
 /**
  * User setting notification
@@ -55,11 +63,11 @@ public class UserSetting {
   private boolean                   isEnabled    = true;
 
   public UserSetting() {
-    this.channelActives = new HashSet<>();
-    this.channelPlugins = new HashMap<>();
+    this.channelActives = newSet(null);
+    this.channelPlugins = newMap(null);
     //
-    this.dailyPlugins = new ArrayList<>();
-    this.weeklyPlugins = new ArrayList<>();
+    this.dailyPlugins = newList(null);
+    this.weeklyPlugins = newList(null);
     this.lastUpdateTime = Calendar.getInstance();
     this.isEnabled = true;
   }
@@ -78,7 +86,7 @@ public class UserSetting {
 
   public Set<String> getChannelActives() {
     if (channelActives == null) {
-      channelActives = new HashSet<>();
+      channelActives = newSet(null);
     }
     return channelActives;
   }
@@ -93,7 +101,7 @@ public class UserSetting {
 
   public void setChannelActive(String channelId) {
     if (channelActives == null) {
-      channelActives = new HashSet<>();
+      channelActives = newSet(null);
     }
     channelActives.add(channelId);
   }
@@ -103,7 +111,7 @@ public class UserSetting {
   }
 
   public void setChannelActives(Set<String> channelActives) {
-    this.channelActives = channelActives;
+    this.channelActives = newSet(channelActives);
   }
 
   public String getUserId() {
@@ -125,7 +133,7 @@ public class UserSetting {
   }
 
   public void setAllChannelPlugins(Map<String, List<String>> channelPlugins) {
-    this.channelPlugins = channelPlugins;
+    this.channelPlugins = newMap(channelPlugins);
   }
 
   public Map<String, List<String>> getAllChannelPlugins() {
@@ -133,11 +141,11 @@ public class UserSetting {
   }
 
   public List<String> getPlugins(String channelId) {
-    return channelPlugins.computeIfAbsent(channelId, key -> new ArrayList<>());
+    return channelPlugins.getOrDefault(channelId, Collections.emptyList());
   }
 
   public void setChannelPlugins(String channelId, List<String> pluginIds) {
-    this.channelPlugins.put(channelId, pluginIds);
+    this.channelPlugins.put(channelId, newList(pluginIds));
   }
 
   /**
@@ -147,7 +155,7 @@ public class UserSetting {
    * @param  pluginId Plugin identifier
    */
   public void addChannelPlugin(String channelId, String pluginId) {
-    List<String> plugins = getPlugins(channelId);
+    List<String> plugins = channelPlugins.computeIfAbsent(channelId, key -> newList(null));
     if (!plugins.contains(pluginId)) {
       plugins.add(pluginId);
     }
@@ -160,8 +168,8 @@ public class UserSetting {
    * @param pluginId  Plugin identifier
    */
   public void removeChannelPlugin(String channelId, String pluginId) {
-    List<String> plugins = getPlugins(channelId);
-    if (plugins.contains(pluginId)) {
+    List<String> plugins = channelPlugins.get(channelId);
+    if (plugins != null && plugins.contains(pluginId)) {
       plugins.remove(pluginId);
     }
   }
@@ -177,7 +185,7 @@ public class UserSetting {
    * @param dailyPlugins the dailyPlugins to set
    */
   public void setDailyPlugins(List<String> dailyPlugins) {
-    this.dailyPlugins = dailyPlugins;
+    this.dailyPlugins = newList(dailyPlugins);
   }
 
   /**
@@ -191,7 +199,7 @@ public class UserSetting {
    * @param weeklyPlugins the weeklyPlugins to set
    */
   public void setWeeklyPlugins(List<String> weeklyPlugins) {
-    this.weeklyPlugins = weeklyPlugins;
+    this.weeklyPlugins = newList(weeklyPlugins);
   }
 
   /**
@@ -249,12 +257,12 @@ public class UserSetting {
   @Override
   public UserSetting clone() { // NOSONAR
     UserSetting setting = getInstance();
-    setting.setChannelActives(new HashSet<>(channelActives));
-    setting.setDailyPlugins(new ArrayList<>(dailyPlugins));
-    setting.setWeeklyPlugins(new ArrayList<>(weeklyPlugins));
+    setting.setChannelActives(newSet(channelActives));
+    setting.setDailyPlugins(newList(dailyPlugins));
+    setting.setWeeklyPlugins(newList(weeklyPlugins));
     //
     for (Entry<String, List<String>> entry : channelPlugins.entrySet()) {
-      setting.getPlugins(entry.getKey()).addAll(entry.getValue());
+      setting.setChannelPlugins(entry.getKey(), newList(entry.getValue()));
     }
     setting.setUserId(userId);
     return setting;
@@ -301,4 +309,17 @@ public class UserSetting {
                         lastReadDate,
                         isEnabled);
   }
+
+  private Map<String, List<String>> newMap(Map<String, List<String>> map) {
+    return Collections.synchronizedMap(map == null ? new HashMap<>() : new HashMap<>(map));
+  }
+
+  private List<String> newList(List<String> list) {
+    return Collections.synchronizedList(list == null ? new ArrayList<>() : new ArrayList<>(list));
+  }
+
+  private Set<String> newSet(Set<String> set) {
+    return Collections.synchronizedSet(set == null ? new HashSet<>() : new HashSet<>(set));
+  }
+
 }
