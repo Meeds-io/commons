@@ -104,16 +104,16 @@ public class WebUsersDAOTest extends CommonsDAOJPAImplTest {
     webUsersEntity1.setUpdateDate(Calendar.getInstance());
     webUsersEntity1 = webUsersDAO.create(webUsersEntity1);
 
-    Map<String, Integer> badgeByPlugin = webUsersDAO.getNumberOnBadgeByPlugin(receiver);
+    Map<String, Integer> badgeByPlugin = webUsersDAO.countUnreadByPlugin(receiver);
     assertNotNull(badgeByPlugin);
     assertEquals(1, badgeByPlugin.size());
     assertEquals(1, badgeByPlugin.get(webNotifEntity1.getType()).intValue());
 
-    badgeByPlugin = webUsersDAO.getNumberOnBadgeByPlugin("fakeUser");
+    badgeByPlugin = webUsersDAO.countUnreadByPlugin("fakeUser");
     assertNotNull(badgeByPlugin);
     assertTrue(badgeByPlugin.isEmpty());
 
-    webUsersEntity1.setResetNumberOnBadge(true);
+    webUsersEntity1.setRead(true);
     webUsersDAO.update(webUsersEntity1);
     assertNotNull(badgeByPlugin);
     assertTrue(badgeByPlugin.isEmpty());
@@ -121,7 +121,6 @@ public class WebUsersDAOTest extends CommonsDAOJPAImplTest {
     WebUsersEntity webUsersEntity = new WebUsersEntity();
     webUsersEntity.setShowPopover(true);
     webUsersEntity.setRead(false);
-    webUsersEntity.setResetNumberOnBadge(false);
     webUsersEntity.setReceiver(receiver);
     webUsersEntity.setNotification(webNotifEntity1);
     webUsersEntity.setUpdateDate(Calendar.getInstance());
@@ -130,7 +129,6 @@ public class WebUsersDAOTest extends CommonsDAOJPAImplTest {
     webUsersEntity = new WebUsersEntity();
     webUsersEntity.setShowPopover(true);
     webUsersEntity.setRead(false);
-    webUsersEntity.setResetNumberOnBadge(false);
     webUsersEntity.setReceiver(receiver);
     webUsersEntity.setNotification(webNotifEntity1);
     webUsersEntity.setUpdateDate(Calendar.getInstance());
@@ -139,19 +137,18 @@ public class WebUsersDAOTest extends CommonsDAOJPAImplTest {
     webUsersEntity = new WebUsersEntity();
     webUsersEntity.setShowPopover(true);
     webUsersEntity.setRead(false);
-    webUsersEntity.setResetNumberOnBadge(false);
     webUsersEntity.setReceiver(receiver);
     webUsersEntity.setNotification(webNotifEntity2);
     webUsersEntity.setUpdateDate(Calendar.getInstance());
     webUsersDAO.create(webUsersEntity);
 
-    badgeByPlugin = webUsersDAO.getNumberOnBadgeByPlugin(receiver);
+    badgeByPlugin = webUsersDAO.countUnreadByPlugin(receiver);
     assertNotNull(badgeByPlugin);
     assertEquals(2, badgeByPlugin.size());
     assertEquals(2, badgeByPlugin.get(webNotifEntity1.getType()).intValue());
     assertEquals(1, badgeByPlugin.get(webNotifEntity2.getType()).intValue());
 
-    badgeByPlugin = webUsersDAO.getNumberOnBadgeByPlugin("fakeUser");
+    badgeByPlugin = webUsersDAO.countUnreadByPlugin("fakeUser");
     assertNotNull(badgeByPlugin);
     assertTrue(badgeByPlugin.isEmpty());
   }

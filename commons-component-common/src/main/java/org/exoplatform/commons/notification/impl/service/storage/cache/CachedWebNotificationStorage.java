@@ -35,10 +35,10 @@ import org.exoplatform.services.cache.*;
 
 public class CachedWebNotificationStorage implements WebNotificationStorage {
   //
-  private final static String WEB_NOTIFICATION_CACHING_NAME = "commons.WebNotificationCache";
-  private final static String LIST_WEB_NOTIFICATION_CACHING_NAME = "commons.WebNotificationsCache";
-  private final static String WEB_NOTIFICATION_COUNT_CACHING_NAME = "commons.WebNotificationCountCache";
-  private final static String WEB_NOTIFICATION_BY_PLUGIN_COUNT_CACHING_NAME = "commons.WebNotificationCountByPluginCache";
+  private static final String WEB_NOTIFICATION_CACHING_NAME = "commons.WebNotificationCache";
+  private static final String LIST_WEB_NOTIFICATION_CACHING_NAME = "commons.WebNotificationsCache";
+  private static final String WEB_NOTIFICATION_COUNT_CACHING_NAME = "commons.WebNotificationCountCache";
+  private static final String WEB_NOTIFICATION_BY_PLUGIN_COUNT_CACHING_NAME = "commons.WebNotificationCountByPluginCache";
   //
   private final ExoCache<WebNotifInfoCacheKey, WebNotifInfoData> webNotificationCache;
   private final ExoCache<WebNotifInfoCacheKey, IntegerData> webNotificationCountCache;
@@ -66,7 +66,7 @@ public class CachedWebNotificationStorage implements WebNotificationStorage {
       @Override
       public Map<String, Integer> retrieve(Object context,
                                            WebNotifInfoCacheKey key) throws Exception {
-        return storage.getNumberOnBadgeByPlugin(key.getId());
+        return storage.countUnreadByPlugin(key.getId());
       }
     }, webNotificationCountByPluginCache);
   }
@@ -108,7 +108,13 @@ public class CachedWebNotificationStorage implements WebNotificationStorage {
   @Override
   public void markAllRead(String userId) {
     storage.markAllRead(userId);
-    updateCacheByUser(userId, true);
+    updateCacheByUser(userId);
+  }
+
+  @Override
+  public void markAllRead(List<String> plugins, String username) {
+    storage.markAllRead(plugins, username);
+    updateCacheByUser(username);
   }
 
   @Override
@@ -132,15 +138,10 @@ public class CachedWebNotificationStorage implements WebNotificationStorage {
     final ListWebNotificationsKey key = new ListWebNotificationsKey(filter,
                                                                     offset,
                                                                     limit);
-      //
-    ListWebNotificationsData keys = futureWebNotificationsCache.get(
-        new ServiceContext<ListWebNotificationsData>() {
-          public ListWebNotificationsData execute() {
-            List<NotificationInfo> got = storage.get(filter, offset, limit);
-            return buildWebNotifDataIds(key, got);
-          }
-        }, key);
-      //
+    ListWebNotificationsData keys = futureWebNotificationsCache.get(() -> {
+      List<NotificationInfo> got = storage.get(filter, offset, limit);
+      return buildWebNotifDataIds(key, got);
+    }, key);
     return buildNotifications(keys);
   }
 
@@ -165,20 +166,10 @@ public class CachedWebNotificationStorage implements WebNotificationStorage {
   @Override
   public NotificationInfo get(final String notificationId) {
     WebNotifInfoCacheKey key = WebNotifInfoCacheKey.key(notificationId);
-    WebNotifInfoData notificationInfo = futureWebNotificationCache.get(
-        new ServiceContext<WebNotifInfoData>() {
-          public WebNotifInfoData execute() {
-            try {
-              NotificationInfo got = storage.get(notificationId);
-              if (got != null) {
-                return new WebNotifInfoData(got);
-              }
-              return null;
-            } catch (Exception e) {
-              throw new RuntimeException(e);
-            }
-          }
-        }, key);
+    WebNotifInfoData notificationInfo = futureWebNotificationCache.get(() -> {
+      NotificationInfo got = storage.get(notificationId);
+      return got == null ? null: new WebNotifInfoData(got);
+    }, key);
     //
     if(notificationInfo == null) {
       return null;
@@ -193,7 +184,7 @@ public class CachedWebNotificationStorage implements WebNotificationStorage {
   @Override
   public boolean remove(String userId, long seconds) {
     clearWebNotificationCountCache(userId);
-    updateCacheByUser(userId, false);
+    updateCacheByUser(userId);
     //
     return storage.remove(userId, seconds);
   }
@@ -217,17 +208,8 @@ public class CachedWebNotificationStorage implements WebNotificationStorage {
   public int getNumberOnBadge(final String userId) {
     if (StringUtils.isNotBlank(userId)) {
       WebNotifInfoCacheKey key = WebNotifInfoCacheKey.key(userId);
-      IntegerData numberOfMessageData = futureWebNotificationCountCache.get(
-              new ServiceContext<IntegerData>() {
-                public IntegerData execute() {
-                  try {
-                    int number = storage.getNumberOnBadge(userId);
-                    return new IntegerData(number);
-                  } catch (Exception e) {
-                    throw new RuntimeException(e);
-                  }
-                }
-              }, key);
+      IntegerData numberOfMessageData = futureWebNotificationCountCache.get(() -> new IntegerData(storage.getNumberOnBadge(userId)),
+                                                                            key);
       return numberOfMessageData.build().intValue();
     } else {
       return 0;
@@ -235,15 +217,20 @@ public class CachedWebNotificationStorage implements WebNotificationStorage {
   }
 
   @Override
-  public Map<String, Integer> getNumberOnBadgeByPlugin(String userId) {
+  public Map<String, Integer> countUnreadByPlugin(String userId) {
     return futureWebNotificationCountByPluginCache.get(null, WebNotifInfoCacheKey.key(userId));
   }
 
   @Override
   public void resetNumberOnBadge(String userId) {
     storage.resetNumberOnBadge(userId);
-    //
     clearWebNotificationCountCache(userId);
+  }
+
+  @Override
+  public void resetNumberOnBadge(List<String> plugins, String username) {
+    storage.resetNumberOnBadge(plugins, username);
+    clearWebNotificationCountCache(username);
   }
 
   public void setStorage(WebNotificationStorage storage) {
@@ -251,7 +238,7 @@ public class CachedWebNotificationStorage implements WebNotificationStorage {
   }
 
   public void updateAllRead(String userId) {
-    updateCacheByUser(userId, true);
+    updateCacheByUser(userId);
   }
 
   private void updateRead(String notificationId, boolean isRead) {
@@ -263,34 +250,10 @@ public class CachedWebNotificationStorage implements WebNotificationStorage {
     }
   }
 
-  private void updateCacheByUser(final String userId, final boolean isUpdateRead) {
-    if (!isUpdateRead) {
-      clearUserWebNotificationList(userId);
-      clearUserWebNotifications(userId);
-    } else {
-      // In case isUpdateRead, we will just update the cached WebNotification entries of user
-      updateReadForUserWebNotifications(userId);
-    }
-  }
-
-  private void updateReadForUserWebNotifications(final String userId) {
-    try {
-      webNotificationCache.select(new CachedObjectSelector<WebNotifInfoCacheKey, WebNotifInfoData>() {
-        @Override
-        public boolean select(WebNotifInfoCacheKey key, ObjectCacheInfo<? extends WebNotifInfoData> ocinfo) {
-          return ocinfo.get() != null && userId.equals(ocinfo.get().getTo());
-        }
-
-        @Override
-        public void onSelect(ExoCache<? extends WebNotifInfoCacheKey, ? extends WebNotifInfoData> cache,
-                             WebNotifInfoCacheKey key,
-                             ObjectCacheInfo<? extends WebNotifInfoData> ocinfo) throws Exception {
-          ocinfo.get().updateRead(true);
-        }
-      });
-    } catch (Exception e) {
-      throw new IllegalStateException("Can't update Notification Cache entries for user " + userId, e);
-    }
+  private void updateCacheByUser(final String userId) {
+    clearUserWebNotificationList(userId);
+    clearUserWebNotifications(userId);
+    clearWebNotificationCountCache(userId);
   }
 
   private void clearUserWebNotifications(final String userId) {

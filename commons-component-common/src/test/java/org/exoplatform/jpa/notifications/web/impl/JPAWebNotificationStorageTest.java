@@ -15,12 +15,15 @@ import org.exoplatform.services.security.Identity;
 public class JPAWebNotificationStorageTest extends BaseNotificationTestCase {
 
   private JPAWebNotificationStorage webNotificationStorage;
-  private WebNotifDAO webNotifDAO;
-  private WebUsersDAO webUsersDAO;
-  private WebParamsDAO webParamsDAO;
+
+  private WebNotifDAO               webNotifDAO;
+
+  private WebUsersDAO               webUsersDAO;
+
+  private WebParamsDAO              webParamsDAO;
 
   @Override
-  public void setUp() throws Exception  {
+  public void setUp() throws Exception {
     super.setUp();
     webNotificationStorage = getService(JPAWebNotificationStorage.class);
     webNotifDAO = getService(WebNotifDAO.class);
@@ -29,7 +32,7 @@ public class JPAWebNotificationStorageTest extends BaseNotificationTestCase {
   }
 
   @Override
-  public void tearDown() throws Exception  {
+  public void tearDown() throws Exception {
     webParamsDAO.deleteAll();
     webUsersDAO.deleteAll();
     webNotifDAO.deleteAll();
@@ -70,7 +73,7 @@ public class JPAWebNotificationStorageTest extends BaseNotificationTestCase {
     }
     List<NotificationInfo> list = webNotificationStorage.get(new WebNotificationFilter(userId), 0, 10);
     assertEquals(10, list.size());
-    for(NotificationInfo notif : list) {
+    for (NotificationInfo notif : list) {
       assertFalse(Boolean.valueOf(notif.getOwnerParameter().get(NotificationMessageUtils.READ_PORPERTY.getKey())));
     }
     ConversationState.setCurrent(new ConversationState(new Identity(userId)));
@@ -81,7 +84,7 @@ public class JPAWebNotificationStorageTest extends BaseNotificationTestCase {
     list = webNotificationStorage.get(new WebNotificationFilter(userId), 0, 10);
     assertEquals(10, list.size());
     //
-    for(NotificationInfo notif : list) {
+    for (NotificationInfo notif : list) {
       assertTrue(Boolean.valueOf(notif.getValueOwnerParameter(NotificationMessageUtils.READ_PORPERTY.getKey())));
     }
   }
@@ -117,7 +120,7 @@ public class JPAWebNotificationStorageTest extends BaseNotificationTestCase {
     assertTrue(got.getLastModifiedDate() + " should equal to " + lastUpdatedTime, lastUpdatedTime == got.getLastModifiedDate());
   }
 
-  public void testGetNumberOnBadge() throws Exception  {
+  public void testGetNumberOnBadge() throws Exception {
     String userId = "root";
     userIds.add(userId);
     NotificationInfo webNotificationInfo = makeWebNotificationInfo(userId);
@@ -130,18 +133,26 @@ public class JPAWebNotificationStorageTest extends BaseNotificationTestCase {
     }
     assertEquals(12, webNotificationStorage.getNumberOnBadge(userId));
 
-    Map<String, Integer> badgeByPlugin = webNotificationStorage.getNumberOnBadgeByPlugin(userId);
+    Map<String, Integer> badgeByPlugin = webNotificationStorage.countUnreadByPlugin(userId);
     assertEquals(1, badgeByPlugin.size());
     assertEquals(12, badgeByPlugin.get(webNotificationInfo.getKey().getId()).intValue());
 
     webNotificationStorage.resetNumberOnBadge(userId);
     assertEquals(0, webNotificationStorage.getNumberOnBadge(userId));
 
-    badgeByPlugin = webNotificationStorage.getNumberOnBadgeByPlugin(userId);
+    badgeByPlugin = webNotificationStorage.countUnreadByPlugin(userId);
+    assertEquals(1, badgeByPlugin.size());
+
+    webNotificationStorage.markAllRead(Collections.singletonList("fake"), userId);
+    badgeByPlugin = webNotificationStorage.countUnreadByPlugin(userId);
+    assertEquals(1, badgeByPlugin.size());
+
+    webNotificationStorage.markAllRead(Collections.singletonList(webNotificationInfo.getKey().getId()), userId);
+    badgeByPlugin = webNotificationStorage.countUnreadByPlugin(userId);
     assertTrue(badgeByPlugin.isEmpty());
   }
 
-  public void testGetNewMessage() throws Exception  {
+  public void testGetNewMessage() {
     //
     String userId = "root";
     userIds.add(userId);
@@ -165,7 +176,7 @@ public class JPAWebNotificationStorageTest extends BaseNotificationTestCase {
   }
 
   public void testSpecialUserNameToGetMessage() throws Exception {
-    //Test with methods: getUnreadNotification, getNewMessage and remove
+    // Test with methods: getUnreadNotification, getNewMessage and remove
     String userId = "don't_blink_polarity";
     userIds.add(userId);
     Calendar cal = Calendar.getInstance();

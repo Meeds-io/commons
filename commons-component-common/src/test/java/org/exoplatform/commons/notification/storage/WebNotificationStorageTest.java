@@ -50,6 +50,7 @@ public class WebNotificationStorageTest extends BaseNotificationTestCase {
     }
     //
     storage.markAllRead(userId);
+    restartTransaction();
     //
     list = storage.get(new WebNotificationFilter(userId), 0, 10);
     assertEquals(10, list.size());

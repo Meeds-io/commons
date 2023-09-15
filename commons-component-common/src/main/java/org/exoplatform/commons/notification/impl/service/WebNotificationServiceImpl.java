@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.exoplatform.commons.api.notification.NotificationContext;
 import org.exoplatform.commons.api.notification.channel.AbstractChannel;
@@ -73,6 +74,15 @@ public class WebNotificationServiceImpl implements WebNotificationService {
   }
 
   @Override
+  public void markAllRead(List<String> plugins, String username) {
+    if (CollectionUtils.isEmpty(plugins)) {
+      markAllRead(username);
+    } else {
+      storage.markAllRead(plugins, username);
+    }
+  }
+
+  @Override
   public List<NotificationInfo> getNotificationInfos(WebNotificationFilter filter, int offset, int limit) {
     List<NotificationInfo> notifications = new ArrayList<>();
     boolean limitReached = true;
@@ -119,6 +129,16 @@ public class WebNotificationServiceImpl implements WebNotificationService {
   }
 
   @Override
+  public void resetNumberOnBadge(List<String> plugins, String username) {
+    if (CollectionUtils.isEmpty(plugins)) {
+      resetNumberOnBadge(username);
+    } else {
+      storage.resetNumberOnBadge(plugins, username);
+      WebNotificationSender.sendJsonMessage(username, new MessageInfo());
+    }
+  }
+
+  @Override
   public int getNumberOnBadge(String userId) {
     if (StringUtils.isBlank(userId)) {
       throw new IllegalArgumentException("User is mandatory");
@@ -127,11 +147,11 @@ public class WebNotificationServiceImpl implements WebNotificationService {
   }
 
   @Override
-  public Map<String, Integer> getNumberOnBadgeByPlugin(String userId) {
+  public Map<String, Integer> countUnreadByPlugin(String userId) {
     if (StringUtils.isBlank(userId)) {
       throw new IllegalArgumentException("User is mandatory");
     }
-    return storage.getNumberOnBadgeByPlugin(userId);
+    return storage.countUnreadByPlugin(userId);
   }
 
   private String getNotificationMessage(NotificationContext ctx, NotificationInfo notification) {

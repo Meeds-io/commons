@@ -47,6 +47,8 @@ public interface WebNotificationStorage {
    */
   void markAllRead(String userId);
 
+  void markAllRead(List<String> plugins, String username);
+
   /**
    * Updates the notification's popover status to be FALSE value
    * However it's still showing on View All page.
@@ -125,7 +127,7 @@ public interface WebNotificationStorage {
    */
   int getNumberOnBadge(String userId);
 
-  Map<String, Integer> getNumberOnBadgeByPlugin(String userId);
+  Map<String, Integer> countUnreadByPlugin(String userId);
 
   /**
    * Reset the number on badge of the specified user
@@ -135,6 +137,8 @@ public interface WebNotificationStorage {
    * @since PLF 4.2
    */
   void resetNumberOnBadge(String userId);
+
+  void resetNumberOnBadge(List<String> plugins, String username);
 
   /**
    * Remove the NotificationInfo live after X days

@@ -3,6 +3,7 @@ package org.exoplatform.commons.notification.impl.jpa.web;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -167,9 +168,20 @@ public class JPAWebNotificationStorage implements WebNotificationStorage {
   @Override
   @ExoTransactional
   public void markAllRead(String userId) {
-    //
     webUsersDAO.markAllRead(userId);
     userSettingService.saveLastReadDate(userId, System.currentTimeMillis());
+  }
+
+  @Override
+  public void markAllRead(List<String> plugins, String username) {
+    List<WebUsersEntity> notifsWithBadge = webUsersDAO.findUnreadByUserAndPlugins(plugins, username);
+    if (CollectionUtils.isNotEmpty(notifsWithBadge)) {
+      notifsWithBadge.forEach(n -> {
+        n.setResetNumberOnBadge(true);
+        n.setRead(true);
+      });
+      webUsersDAO.updateAll(notifsWithBadge);
+    }
   }
 
   @Override
@@ -199,18 +211,27 @@ public class JPAWebNotificationStorage implements WebNotificationStorage {
   }
 
   @Override
-  public Map<String, Integer> getNumberOnBadgeByPlugin(String userId) {
-    return webUsersDAO.getNumberOnBadgeByPlugin(userId);
+  public Map<String, Integer> countUnreadByPlugin(String userId) {
+    return webUsersDAO.countUnreadByPlugin(userId);
   }
 
   @Override
   @ExoTransactional
   public void resetNumberOnBadge(String userId) {
     List<WebUsersEntity> notifsWithBadge = webUsersDAO.findNotifsWithBadge(userId);
-    if (notifsWithBadge != null && notifsWithBadge.size() > 0) {
+    if (CollectionUtils.isNotEmpty(notifsWithBadge)) {
       for (WebUsersEntity webUsersEntity : notifsWithBadge) {
         webUsersEntity.setResetNumberOnBadge(true);
       }
+      webUsersDAO.updateAll(notifsWithBadge);
+    }
+  }
+
+  @Override
+  public void resetNumberOnBadge(List<String> plugins, String username) {
+    List<WebUsersEntity> notifsWithBadge = webUsersDAO.findNotifsWithBadgeByPlugins(plugins, username);
+    if (CollectionUtils.isNotEmpty(notifsWithBadge)) {
+      notifsWithBadge.forEach(n -> n.setResetNumberOnBadge(true));
       webUsersDAO.updateAll(notifsWithBadge);
     }
   }

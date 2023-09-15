@@ -1,6 +1,7 @@
 package org.exoplatform.commons.notification.storage;
 
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.List;
 
 import org.exoplatform.commons.api.notification.NotificationMessageUtils;
@@ -139,7 +140,7 @@ public class CachedWebNotificationStorageTest extends BaseNotificationTestCase {
     assertTrue(Boolean.valueOf(notifInfo.getValueOwnerParameter(NotificationMessageUtils.READ_PORPERTY.getKey())));
   }
 
-  public void testMarkAllRead() throws Exception {
+  public void testMarkAllRead() {
     String userId = "demo8";
     userIds.add(userId);
     for (int i = 0; i < 10; i++) {
@@ -158,6 +159,7 @@ public class CachedWebNotificationStorageTest extends BaseNotificationTestCase {
     }
     //
     cachedStorage.markAllRead(userId);
+    restartTransaction();
     //
     onPopoverInfos = cachedStorage.get(new WebNotificationFilter(userId, true), 0 , 10);
     assertEquals(10, onPopoverInfos.size());
@@ -332,7 +334,8 @@ public class CachedWebNotificationStorageTest extends BaseNotificationTestCase {
     userIds.add(userId);
     assertEquals(0, cachedStorage.getNumberOnBadge(userId));
     //
-    cachedStorage.save(makeWebNotificationInfo(userId));
+    NotificationInfo notificationInfo = makeWebNotificationInfo(userId);
+    cachedStorage.save(notificationInfo);
     //
     assertEquals(1, cachedStorage.getNumberOnBadge(userId));
     cachedStorage.save(makeWebNotificationInfo(userId));
@@ -346,8 +349,17 @@ public class CachedWebNotificationStorageTest extends BaseNotificationTestCase {
     //
     assertEquals(12, cachedStorage.getNumberOnBadge(userId));
     //
-    cachedStorage.resetNumberOnBadge(userId);
+    cachedStorage.resetNumberOnBadge(Collections.singletonList("testPluginFake"), userId);
+    assertEquals(12, cachedStorage.getNumberOnBadge(userId));
+
+    cachedStorage.resetNumberOnBadge(Collections.singletonList(notificationInfo.getKey().getId()), userId);
+    assertEquals(0, cachedStorage.getNumberOnBadge(userId));
+
+    cachedStorage.save(makeWebNotificationInfo(userId));
+    assertEquals(1, cachedStorage.getNumberOnBadge(userId));
+
     //
+    cachedStorage.resetNumberOnBadge(userId);
     assertEquals(0, cachedStorage.getNumberOnBadge(userId));
   }
 }

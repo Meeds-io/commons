@@ -143,8 +143,8 @@ public class WebUsersDAO extends GenericDAOJPAImpl<WebUsersEntity, Long> {
     return query.getSingleResult().intValue();
   }
 
-  public Map<String, Integer> getNumberOnBadgeByPlugin(String userId) {
-    TypedQuery<Tuple> query = getEntityManager().createNamedQuery("NotificationsWebUsersEntity.getNumberOnBadgeByPlugin", Tuple.class)
+  public Map<String, Integer> countUnreadByPlugin(String userId) {
+    TypedQuery<Tuple> query = getEntityManager().createNamedQuery("NotificationsWebUsersEntity.countUnreadByPlugin", Tuple.class)
                                                .setParameter(USER_ID_PARAM, userId);
     List<Tuple> result = query.getResultList();
     if (CollectionUtils.isEmpty(result)) {
@@ -159,6 +159,20 @@ public class WebUsersDAO extends GenericDAOJPAImpl<WebUsersEntity, Long> {
     return getEntityManager().createNamedQuery("NotificationsWebUsersEntity.findNotifsWithBadge", WebUsersEntity.class)
                              .setParameter(USER_ID_PARAM, userId)
                              .getResultList();
+  }
+
+  public List<WebUsersEntity> findNotifsWithBadgeByPlugins(List<String> pluginIds, String username) {
+    return getEntityManager().createNamedQuery("NotificationsWebUsersEntity.findNotifsWithBadgeByPlugins", WebUsersEntity.class)
+        .setParameter(USER_ID_PARAM, username)
+        .setParameter(PLUGIN_IDS_PARAM, pluginIds)
+        .getResultList();
+  }
+
+  public List<WebUsersEntity> findUnreadByUserAndPlugins(List<String> pluginIds, String username) {
+    return getEntityManager().createNamedQuery("NotificationsWebUsersEntity.findUnreadByUserAndPlugins", WebUsersEntity.class)
+        .setParameter(USER_ID_PARAM, username)
+        .setParameter(PLUGIN_IDS_PARAM, pluginIds)
+        .getResultList();
   }
 
 }

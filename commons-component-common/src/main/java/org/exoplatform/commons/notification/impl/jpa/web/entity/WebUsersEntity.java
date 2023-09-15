@@ -19,15 +19,29 @@ import java.util.Calendar;
       "WHERE u.receiver = :userId " +
       "AND u.resetNumberOnBadge = FALSE "),
     @NamedQuery(
-        name = "NotificationsWebUsersEntity.getNumberOnBadgeByPlugin",
+        name = "NotificationsWebUsersEntity.countUnreadByPlugin",
         query = "SELECT w.type, COUNT(u) FROM NotificationsWebUsersEntity u " +
           " INNER JOIN u.webNotification w " +
           " WHERE u.receiver = :userId " +
-          " AND u.resetNumberOnBadge = FALSE" +
+          " AND u.read = FALSE" +
           " GROUP BY w.type"),
     @NamedQuery(name = "NotificationsWebUsersEntity.findNotifsWithBadge", query = "SELECT u FROM NotificationsWebUsersEntity u " +
         "WHERE u.receiver = :userId " +
         "AND u.resetNumberOnBadge = FALSE "),
+    @NamedQuery(
+    name = "NotificationsWebUsersEntity.findNotifsWithBadgeByPlugins",
+    query = "SELECT u FROM NotificationsWebUsersEntity u " +
+        " INNER JOIN u.webNotification w " +
+        " ON w.type IN (:pluginIds)" +
+        " WHERE u.receiver = :userId " +
+        " AND u.resetNumberOnBadge = FALSE "),
+    @NamedQuery(
+      name = "NotificationsWebUsersEntity.findUnreadByUserAndPlugins",
+      query = "SELECT u FROM NotificationsWebUsersEntity u " +
+        " INNER JOIN u.webNotification w " +
+        " ON w.type IN (:pluginIds)" +
+        " WHERE u.receiver = :userId " +
+        " AND u.read = FALSE "),
     @NamedQuery(name = "NotificationsWebUsersEntity.markWebNotifsAsReadByUser", query = "UPDATE NotificationsWebUsersEntity u " +
         "SET u.read = TRUE " +
         "WHERE u.receiver = :userId " +
