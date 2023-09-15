@@ -23,6 +23,7 @@ package org.exoplatform.commons.notification.impl.service.storage.cache;
  * @author <a href="mailto:alain.defrance@exoplatform.com">Alain Defrance</a>
  * @version $Revision$
  */
+@FunctionalInterface
 public interface ServiceContext<V> {
 
   /**

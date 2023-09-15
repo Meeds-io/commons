@@ -3,7 +3,6 @@ package org.exoplatform.commons.notification.storage;
 import java.util.Calendar;
 import java.util.List;
 
-import org.exoplatform.commons.api.notification.NotificationMessageUtils;
 import org.exoplatform.commons.api.notification.model.NotificationInfo;
 import org.exoplatform.commons.api.notification.model.WebNotificationFilter;
 import org.exoplatform.commons.notification.BaseNotificationTestCase;
@@ -28,12 +27,12 @@ public class WebNotificationStorageTest extends BaseNotificationTestCase {
     List<NotificationInfo> list = storage.get(new WebNotificationFilter(userId), 0, 10);
     assertEquals(1, list.size());
     NotificationInfo notif = list.get(0);
-    assertFalse(Boolean.valueOf(notif.getOwnerParameter().get(NotificationMessageUtils.READ_PORPERTY.getKey())));
+    assertFalse(notif.isRead());
     //
     storage.markRead(notif.getId());
     //
     notif = storage.get(notif.getId());
-    assertTrue(Boolean.valueOf(notif.getOwnerParameter().get(NotificationMessageUtils.READ_PORPERTY.getKey())));
+    assertTrue(notif.isRead());
   }
 
   public void testMarkReadAll() throws Exception {
@@ -50,6 +49,7 @@ public class WebNotificationStorageTest extends BaseNotificationTestCase {
     }
     //
     storage.markAllRead(userId);
+    restartTransaction();
     //
     list = storage.get(new WebNotificationFilter(userId), 0, 10);
     assertEquals(10, list.size());
@@ -93,7 +93,6 @@ public class WebNotificationStorageTest extends BaseNotificationTestCase {
   }
 
   public void testGetNewMessage() throws Exception  {
-    assertEquals(8, NotificationMessageUtils.getMaxItemsInPopover());
     //
     String userId = "root16";
     userIds.add(userId);
