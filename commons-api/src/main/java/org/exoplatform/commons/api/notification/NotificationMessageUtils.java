@@ -30,11 +30,7 @@ import java.lang.NumberFormatException;
 public class NotificationMessageUtils {
 
   protected static final Log LOG = ExoLogger.getLogger(NotificationMessageUtils.class);
-  
-  public final static ArgumentLiteral<String> READ_PORPERTY = new ArgumentLiteral<String>(String.class, "read");
-  
-  public final static ArgumentLiteral<String> SHOW_POPOVER_PROPERTY = new ArgumentLiteral<String>(String.class, "showPopover");
-  
+
   public final static ArgumentLiteral<String> NOT_HIGHLIGHT_COMMENT_PORPERTY = new ArgumentLiteral<String>(String.class, "notHighlightComment");
 
 }

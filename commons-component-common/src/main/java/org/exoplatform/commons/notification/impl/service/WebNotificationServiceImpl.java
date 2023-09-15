@@ -18,7 +18,9 @@ package org.exoplatform.commons.notification.impl.service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.exoplatform.commons.api.notification.NotificationContext;
 import org.exoplatform.commons.api.notification.channel.AbstractChannel;
@@ -72,6 +74,15 @@ public class WebNotificationServiceImpl implements WebNotificationService {
   }
 
   @Override
+  public void markAllRead(List<String> plugins, String username) {
+    if (CollectionUtils.isEmpty(plugins)) {
+      markAllRead(username);
+    } else {
+      storage.markAllRead(plugins, username);
+    }
+  }
+
+  @Override
   public List<NotificationInfo> getNotificationInfos(WebNotificationFilter filter, int offset, int limit) {
     List<NotificationInfo> notifications = new ArrayList<>();
     boolean limitReached = true;
@@ -118,22 +129,29 @@ public class WebNotificationServiceImpl implements WebNotificationService {
   }
 
   @Override
-  public int getNumberOnBadge(String userId) {
-    if (StringUtils.isNotBlank(userId)) {
-      try {
-        return storage.getNumberOnBadge(userId);
-      } catch (Exception e) {
-        if (LOG.isDebugEnabled()) {
-          LOG.error("Exception raising when getNumberOnBadge() ", e);
-        } else {
-            LOG.warn("Exception raising when getNumberOnBadge() associated to the userId " + userId);
-        }
-      }
-      return 0;
+  public void resetNumberOnBadge(List<String> plugins, String username) {
+    if (CollectionUtils.isEmpty(plugins)) {
+      resetNumberOnBadge(username);
     } else {
-      LOG.warn("Can't getNumberOnBadge(). The userId is null");
-      return 0;
+      storage.resetNumberOnBadge(plugins, username);
+      WebNotificationSender.sendJsonMessage(username, new MessageInfo());
     }
+  }
+
+  @Override
+  public int getNumberOnBadge(String userId) {
+    if (StringUtils.isBlank(userId)) {
+      throw new IllegalArgumentException("User is mandatory");
+    }
+    return storage.getNumberOnBadge(userId);
+  }
+
+  @Override
+  public Map<String, Integer> countUnreadByPlugin(String userId) {
+    if (StringUtils.isBlank(userId)) {
+      throw new IllegalArgumentException("User is mandatory");
+    }
+    return storage.countUnreadByPlugin(userId);
   }
 
   private String getNotificationMessage(NotificationContext ctx, NotificationInfo notification) {

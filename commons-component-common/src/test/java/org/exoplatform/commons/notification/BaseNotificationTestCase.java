@@ -3,7 +3,6 @@ package org.exoplatform.commons.notification;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.exoplatform.commons.api.notification.NotificationMessageUtils;
 import org.exoplatform.commons.api.notification.model.NotificationInfo;
 import org.exoplatform.commons.api.notification.model.PluginKey;
 import org.exoplatform.commons.api.notification.service.storage.WebNotificationStorage;
@@ -44,10 +43,11 @@ public abstract class BaseNotificationTestCase extends BaseCommonsTestCase {
     info.setTitle("The title");
     info.setFrom("mary");
     info.setTo(userId);
-    info.with(NotificationMessageUtils.SHOW_POPOVER_PROPERTY.getKey(), "true")
-        .with(NotificationMessageUtils.READ_PORPERTY.getKey(), "false")
-        .with("activityId", "TheActivityId")
+    info.setRead(false);
+    info.setOnPopOver(true);
+    info.with("activityId", "TheActivityId")
         .with("accessLink", "http://fsdfsdf.com/fsdfsf");
     return info;
   }
+
 }

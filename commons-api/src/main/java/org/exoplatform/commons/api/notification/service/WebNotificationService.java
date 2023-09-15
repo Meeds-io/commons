@@ -17,9 +17,11 @@
 package org.exoplatform.commons.api.notification.service;
 
 import java.util.List;
+import java.util.Map;
 
 import org.exoplatform.commons.api.notification.model.ArgumentLiteral;
 import org.exoplatform.commons.api.notification.model.NotificationInfo;
+import org.exoplatform.commons.api.notification.model.PluginKey;
 import org.exoplatform.commons.api.notification.model.WebNotificationFilter;
 
 public interface WebNotificationService {
@@ -65,6 +67,14 @@ public interface WebNotificationService {
    * @since PLF 4.2
    */
   void markAllRead(String userId);
+
+  /**
+   * Marks all notifications of the user as read for the designated notification types.
+   * 
+   * @param username the user name
+   * @param plugins {@link List} of {@link PluginKey} ids
+   */
+  void markAllRead(List<String> plugins, String username);
 
   /**
    * Updates the notification's popover list status to be FALSE value
@@ -130,19 +140,32 @@ public interface WebNotificationService {
   
   /**
    * Gets the number on the badge by the specified user
-   * @param userId
+   * @param username user to retrieve its badges
    * @return
    * @LevelAPI Platform
    * @since PLF 4.2
    */
-  int getNumberOnBadge(String userId);
-  
-  
+  int getNumberOnBadge(String username);
+
+  /**
+   * @param username user to retrieve its badges
+   * @return {@link Map} of Badges per plugin
+   */
+  Map<String, Integer> countUnreadByPlugin(String username);
+
   /**
    * @param userId
    * @LevelAPI Platform
    * @since PLF 4.2
    */
   void resetNumberOnBadge(String userId);
+
+  /**
+   * Reset badge on notifications of the user for the designated notification types.
+   * 
+   * @param username the user name
+   * @param plugins {@link List} of {@link PluginKey} ids
+   */
+  void resetNumberOnBadge(List<String> plugins, String username);
 
 }

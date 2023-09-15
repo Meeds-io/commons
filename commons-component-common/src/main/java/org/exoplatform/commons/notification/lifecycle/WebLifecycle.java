@@ -17,7 +17,6 @@
 package org.exoplatform.commons.notification.lifecycle;
 
 import org.exoplatform.commons.api.notification.NotificationContext;
-import org.exoplatform.commons.api.notification.NotificationMessageUtils;
 import org.exoplatform.commons.api.notification.channel.template.AbstractTemplateBuilder;
 import org.exoplatform.commons.api.notification.lifecycle.AbstractNotificationLifecycle;
 import org.exoplatform.commons.api.notification.model.MessageInfo;
@@ -91,14 +90,8 @@ public class WebLifecycle extends AbstractNotificationLifecycle {
     // Get notification to update
     AbstractTemplateBuilder builder = getChannel().getTemplateBuilder(notifInfo.getKey());
     notifInfo = builder.getNotificationToStore(notifInfo);
-
-    notifInfo.with(NotificationMessageUtils.SHOW_POPOVER_PROPERTY.getKey(), "true")
-             .with(NotificationMessageUtils.READ_PORPERTY.getKey(), "false");
-    // set these values explicitly to make sure the notification is always displayed in the popover and set as unread
-    // in any case (creation or update)
     notifInfo.setOnPopOver(true);
     notifInfo.setRead(false);
-
     CommonsUtils.getService(WebNotificationStorage.class).save(notifInfo);
   }
   
