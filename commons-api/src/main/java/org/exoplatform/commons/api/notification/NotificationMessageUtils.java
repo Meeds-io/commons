@@ -19,6 +19,8 @@ package org.exoplatform.commons.api.notification;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 import org.exoplatform.commons.api.notification.model.ArgumentLiteral;
+import org.exoplatform.commons.api.notification.model.NotificationInfo;
+
 import java.lang.NumberFormatException;
 
 /**
@@ -31,6 +33,18 @@ public class NotificationMessageUtils {
 
   protected static final Log LOG = ExoLogger.getLogger(NotificationMessageUtils.class);
 
-  public final static ArgumentLiteral<String> NOT_HIGHLIGHT_COMMENT_PORPERTY = new ArgumentLiteral<String>(String.class, "notHighlightComment");
+  /**
+   * @deprecated Use {@link NotificationInfo#isRead()} instead
+   */
+  @Deprecated(forRemoval = true, since = "1.5.0")
+  public final static ArgumentLiteral<String> READ_PORPERTY = new ArgumentLiteral<>(String.class, "read");
+
+  /**
+   * @deprecated Use {@link NotificationInfo#isOnPopOver()} instead
+   */
+  @Deprecated(forRemoval = true, since = "1.5.0")
+  public final static ArgumentLiteral<String> SHOW_POPOVER_PROPERTY = new ArgumentLiteral<>(String.class, "showPopover");
+
+  public final static ArgumentLiteral<String> NOT_HIGHLIGHT_COMMENT_PORPERTY = new ArgumentLiteral<>(String.class, "notHighlightComment");
 
 }
