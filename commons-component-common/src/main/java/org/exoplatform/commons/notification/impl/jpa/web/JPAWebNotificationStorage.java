@@ -7,6 +7,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
+import org.exoplatform.commons.api.notification.NotificationMessageUtils;
 import org.exoplatform.commons.api.notification.model.*;
 import org.exoplatform.commons.api.notification.service.setting.UserSettingService;
 import org.exoplatform.commons.api.notification.service.storage.WebNotificationStorage;
@@ -113,7 +114,7 @@ public class JPAWebNotificationStorage implements WebNotificationStorage {
       }
       webUsersDAO.delete(webUsersEntity);
     }
-    removed = notifEntities.size() > 0;
+    removed = !notifEntities.isEmpty();
     if (removed) {
       for (WebNotifEntity webNotifEntity : notifEntities) {
         webParamsDAO.deleteAll(new ArrayList<>(webNotifEntity.getParameters()));
@@ -151,7 +152,14 @@ public class JPAWebNotificationStorage implements WebNotificationStorage {
     if (webUsersEntity != null) {
       webUsersEntity.setRead(true);
       webUsersEntity.setResetNumberOnBadge(true);
-      webUsersDAO.update(webUsersEntity);
+      webUsersEntity = webUsersDAO.update(webUsersEntity);
+
+      // FIXME: Start:: Delete when all Web notifs migrated to use Vue based templates
+      NotificationInfo notification = get(notificationId);
+      Map<String, String> ownerParameters = notification.getOwnerParameter();
+      ownerParameters.put(NotificationMessageUtils.READ_PORPERTY.getKey(), String.valueOf(webUsersEntity.isRead()));
+      updateNotificationParameters(webUsersEntity.getNotification(), ownerParameters, false);
+      // FIXME: End
     }
   }
 
@@ -163,7 +171,15 @@ public class JPAWebNotificationStorage implements WebNotificationStorage {
       webUsersEntity.setShowPopover(false);
       webUsersEntity.setRead(true);
       webUsersEntity.setResetNumberOnBadge(true);
-      webUsersDAO.update(webUsersEntity);
+      webUsersEntity = webUsersDAO.update(webUsersEntity);
+
+      // FIXME: Start:: Delete when all Web notifs migrated to use Vue based templates
+      NotificationInfo notification = get(notificationId);
+      Map<String, String> ownerParameters = notification.getOwnerParameter();
+      ownerParameters.put(NotificationMessageUtils.READ_PORPERTY.getKey(), String.valueOf(webUsersEntity.isRead()));
+      ownerParameters.put(NotificationMessageUtils.SHOW_POPOVER_PROPERTY.getKey(), String.valueOf(webUsersEntity.isShowPopover()));
+      updateNotificationParameters(webUsersEntity.getNotification(), ownerParameters, false);
+      // FIXME: End
     }
   }
 
@@ -272,10 +288,48 @@ public class JPAWebNotificationStorage implements WebNotificationStorage {
       webNotifEntity = webNotifDAO.update(webNotifEntity);
     }
 
-    Map<String, String> ownerParameter = notification.getOwnerParameter();
+    Map<String, String> ownerParameters = notification.getOwnerParameter();
+    updateNotificationParameters(webNotifEntity, ownerParameters, isNew);
+
+    // fill WebUsersEntity with data from notification
+    webUsersEntity.setReceiver(notification.getTo());
+    Calendar calendar = Calendar.getInstance();
+    if (moveTop) {
+      webUsersEntity.setUpdateDate(calendar);
+    } else if (notification.getLastModifiedDate() > 0) {
+      calendar.setTimeInMillis(notification.getLastModifiedDate());
+      webUsersEntity.setUpdateDate(calendar);
+    } else {
+      webUsersEntity.setUpdateDate(webNotifEntity.getCreationDate());
+    }
+
+    webUsersEntity.setResetNumberOnBadge(notification.isResetOnBadge());
+    // FIXME: Start:: Delete when all Web notifs migrated to use Vue based templates
+    if (ownerParameters != null && ownerParameters.containsKey(NotificationMessageUtils.READ_PORPERTY.getKey())) {
+      webUsersEntity.setRead(Boolean.parseBoolean(ownerParameters.get(NotificationMessageUtils.READ_PORPERTY.getKey()).toLowerCase()));
+    } else {
+      webUsersEntity.setRead(notification.isRead());
+    }
+    if (ownerParameters != null && ownerParameters.containsKey(NotificationMessageUtils.SHOW_POPOVER_PROPERTY.getKey())) {
+      webUsersEntity.setShowPopover(Boolean.parseBoolean(ownerParameters.get(NotificationMessageUtils.SHOW_POPOVER_PROPERTY.getKey()).toLowerCase()));
+    } else {
+      webUsersEntity.setShowPopover(notification.isOnPopOver());
+    }
+    // FIXME: End
+
+    webUsersEntity.setNotification(webNotifEntity);
+    if (isNew) {
+      webUsersEntity = webUsersDAO.create(webUsersEntity);
+      notification.setId(String.valueOf(webUsersEntity.getId()));
+    } else {
+      webUsersDAO.update(webUsersEntity);
+    }
+  }
+
+  private void updateNotificationParameters(WebNotifEntity webNotifEntity, Map<String, String> ownerParameters, boolean isNew) {
     Set<WebParamsEntity> parameters = webNotifEntity.getParameters();
-    if (ownerParameter != null && !ownerParameter.isEmpty()) {
-      for (String key : ownerParameter.keySet()) {
+    if (ownerParameters != null && !ownerParameters.isEmpty()) {
+      for (String key : ownerParameters.keySet()) {
         String propertyName = key.replace(NTF_NAME_SPACE, "");
         // fill WebParamsEntity with data from notification
         WebParamsEntity webParamsEntity = null;
@@ -295,7 +349,7 @@ public class JPAWebNotificationStorage implements WebNotificationStorage {
           webParamsEntity = new WebParamsEntity();
         }
         webParamsEntity.setName(propertyName);
-        webParamsEntity.setValue(ownerParameter.get(key));
+        webParamsEntity.setValue(ownerParameters.get(key));
         webParamsEntity.setNotification(webNotifEntity);
         if (isParamNew) {
           webParamsDAO.create(webParamsEntity);
@@ -303,30 +357,6 @@ public class JPAWebNotificationStorage implements WebNotificationStorage {
           webParamsDAO.update(webParamsEntity);
         }
       }
-    }
-
-    // fill WebUsersEntity with data from notification
-    webUsersEntity.setReceiver(notification.getTo());
-    Calendar calendar = Calendar.getInstance();
-    if (moveTop) {
-      webUsersEntity.setUpdateDate(calendar);
-    } else if (notification.getLastModifiedDate() > 0) {
-      calendar.setTimeInMillis(notification.getLastModifiedDate());
-      webUsersEntity.setUpdateDate(calendar);
-    } else {
-      webUsersEntity.setUpdateDate(webNotifEntity.getCreationDate());
-    }
-    webUsersEntity.setShowPopover(notification.isOnPopOver());
-
-    webUsersEntity.setResetNumberOnBadge(notification.isResetOnBadge());
-    webUsersEntity.setRead(notification.isRead());
-
-    webUsersEntity.setNotification(webNotifEntity);
-    if (isNew) {
-      webUsersEntity = webUsersDAO.create(webUsersEntity);
-      notification.setId(String.valueOf(webUsersEntity.getId()));
-    } else {
-      webUsersDAO.update(webUsersEntity);
     }
   }
 
@@ -357,6 +387,11 @@ public class JPAWebNotificationStorage implements WebNotificationStorage {
                                                   .collect(Collectors.toMap(WebParamsEntity::getName,
                                                                             value -> value.getValue() == null ? ""
                                                                                                               : value.getValue()));
+    // FIXME: Start:: Delete when all Web notifs migrated to use Vue based templates
+    ownerParameters = new HashMap<>(ownerParameters);
+    ownerParameters.put(NotificationMessageUtils.READ_PORPERTY.getKey(), String.valueOf(webUsersEntity.isRead()));
+    ownerParameters.put(NotificationMessageUtils.SHOW_POPOVER_PROPERTY.getKey(), String.valueOf(webUsersEntity.isShowPopover()));
+    // FIXME: End
     notificationInfo.setOwnerParameter(ownerParameters);
     notificationInfo.key(new PluginKey(notification.getType()));
     notificationInfo.setTitle(notification.getText());
