@@ -1,6 +1,7 @@
 package org.exoplatform.commons.api.notification.service.storage;
 
 import java.util.List;
+import java.util.Map;
 
 import org.exoplatform.commons.api.notification.model.NotificationInfo;
 import org.exoplatform.commons.api.notification.model.WebNotificationFilter;
@@ -45,6 +46,8 @@ public interface WebNotificationStorage {
    * @since PLF 4.2
    */
   void markAllRead(String userId);
+
+  void markAllRead(List<String> plugins, String username);
 
   /**
    * Updates the notification's popover status to be FALSE value
@@ -123,8 +126,9 @@ public interface WebNotificationStorage {
    * @since PLF 4.2
    */
   int getNumberOnBadge(String userId);
-  
-  
+
+  Map<String, Integer> countUnreadByPlugin(String userId);
+
   /**
    * Reset the number on badge of the specified user
    *  
@@ -133,6 +137,8 @@ public interface WebNotificationStorage {
    * @since PLF 4.2
    */
   void resetNumberOnBadge(String userId);
+
+  void resetNumberOnBadge(List<String> plugins, String username);
 
   /**
    * Remove the NotificationInfo live after X days
@@ -143,4 +149,5 @@ public interface WebNotificationStorage {
    * @since PLF 4.2
    */
   boolean remove(long seconds);
+
 }

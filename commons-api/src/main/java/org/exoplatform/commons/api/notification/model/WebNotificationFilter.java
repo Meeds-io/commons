@@ -1,18 +1,49 @@
 package org.exoplatform.commons.api.notification.model;
 
+import java.io.Serializable;
+import java.util.Collections;
+import java.util.List;
+
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
-import org.json.JSONObject;
 
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-public class WebNotificationFilter {
-  
-  private PluginKey pluginKey;
-  private final String userId;
-  private int limitDay = 0;
-  private boolean onPopover = false;
-  private Boolean isRead = null;
-  private boolean isOrder = true;
+@EqualsAndHashCode
+@NoArgsConstructor
+@AllArgsConstructor
+public class WebNotificationFilter implements Serializable {
+
+  private static final long    serialVersionUID = 4731392723219635179L;
+
+  @Getter
+  @Setter
+  private List<PluginKey>      pluginKeys;
+
+  @Getter
+  private String               userId;
+
+  @Getter
+  @Setter
+  private int                  limitDay;
+
+  @Getter
+  @Setter
+  private boolean              onPopover;
+
+  @Getter
+  @Setter
+  private Boolean              isRead;
+
+  @Getter
+  @Setter
+  private boolean              isOrder          = true;
+
+  @Getter
   private Pair<String, String> parameter;
 
   public WebNotificationFilter(String userId) {
@@ -24,70 +55,19 @@ public class WebNotificationFilter {
     this.onPopover = onPopover;
   }
 
-  public PluginKey getPluginKey() {
-    return pluginKey;
-  }
-
-  public WebNotificationFilter setPluginKey(PluginKey pluginKey) {
-    this.pluginKey = pluginKey;
-    return this;
-  }
-
-  public String getUserId() {
-    return userId;
-  }
-
-  public int getLimitDay() {
-    return limitDay;
-  }
-
-  public void setLimitDay(int limitDay) {
-    this.limitDay = limitDay;
-  }
-
-  public boolean isOnPopover() {
-    return onPopover;
-  }
-
-  public WebNotificationFilter setOnPopover(boolean onPopover) {
+  public WebNotificationFilter(String userId, List<PluginKey> pluginKeys, boolean onPopover) {
+    this.userId = userId;
     this.onPopover = onPopover;
-    return this;
-  }
-
-  public Boolean isRead() {
-    return isRead;
-  }
-
-  public WebNotificationFilter setRead(boolean isRead) {
-    this.isRead = isRead;
-    return this;
-  }
-
-  public boolean isOrder() {
-    return isOrder;
-  }
-
-  public WebNotificationFilter setOrder(boolean isOrder) {
-    this.isOrder = isOrder;
-    return this;
-  }
-
-  public Pair<String, String> getParameter() {
-    return parameter;
+    this.pluginKeys = pluginKeys;
   }
 
   public WebNotificationFilter setParameter(String paramName, String paramValue) {
     this.parameter = new ImmutablePair<>(paramName, paramValue);
     return this;
   }
-  
-  @Override
-  public String toString() {
-    try {
-      return new JSONObject(this).toString();
-    } catch (Exception e) {
-      return "[WebNotificationFilter: userId = " + userId + " ]";
-    }
+
+  public void setPluginKey(PluginKey pluginKey) {
+    this.pluginKeys = pluginKey == null ? Collections.emptyList() : Collections.singletonList(pluginKey);
   }
 
 }
