@@ -43,7 +43,6 @@ public class ListWebNotificationsKey extends WebNotificationFilter implements Ca
           filter.getLimitDay(),
           filter.isOnPopover(),
           filter.getIsRead(),
-          filter.isOrder(),
           filter.getParameter());
     this.offset = offset;
     this.limit = limit;
