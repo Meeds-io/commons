@@ -133,7 +133,9 @@ public class CachedWebNotificationStorageTest extends BaseNotificationTestCase {
     NotificationInfo notifInfo = cachedStorage.get(info.getId());
     assertFalse(notifInfo.isRead());
     //
+    assertEquals(1, cachedStorage.countUnreadByPlugin(userId).size());
     cachedStorage.markRead(notifInfo.getId());
+    assertEquals(0, cachedStorage.countUnreadByPlugin(userId).size());
     //
     notifInfo = cachedStorage.get(info.getId());
     assertTrue(notifInfo.isRead());
