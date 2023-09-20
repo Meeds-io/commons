@@ -1,19 +1,29 @@
 package org.exoplatform.commons.notification.impl.jpa.web;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang3.tuple.Pair;
 
 import org.exoplatform.commons.api.notification.NotificationMessageUtils;
-import org.exoplatform.commons.api.notification.model.*;
+import org.exoplatform.commons.api.notification.model.NotificationInfo;
+import org.exoplatform.commons.api.notification.model.PluginKey;
+import org.exoplatform.commons.api.notification.model.WebNotificationFilter;
 import org.exoplatform.commons.api.notification.service.setting.UserSettingService;
 import org.exoplatform.commons.api.notification.service.storage.WebNotificationStorage;
 import org.exoplatform.commons.api.persistence.ExoTransactional;
-import org.exoplatform.commons.notification.impl.jpa.web.dao.*;
-import org.exoplatform.commons.notification.impl.jpa.web.entity.*;
+import org.exoplatform.commons.notification.impl.jpa.web.dao.WebNotifDAO;
+import org.exoplatform.commons.notification.impl.jpa.web.dao.WebParamsDAO;
+import org.exoplatform.commons.notification.impl.jpa.web.dao.WebUsersDAO;
+import org.exoplatform.commons.notification.impl.jpa.web.entity.WebNotifEntity;
+import org.exoplatform.commons.notification.impl.jpa.web.entity.WebParamsEntity;
+import org.exoplatform.commons.notification.impl.jpa.web.entity.WebUsersEntity;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 
@@ -50,28 +60,10 @@ public class JPAWebNotificationStorage implements WebNotificationStorage {
   @Override
   @ExoTransactional
   public List<NotificationInfo> get(WebNotificationFilter filter, int offset, int limit) {
-    List<String> pluginIds = filter.getPluginKeys() == null ? Collections.emptyList()
-                                                            : filter.getPluginKeys().stream().map(PluginKey::getId).toList();
-    String userId = filter.getUserId();
-    Pair<String, String> parameter = filter.getParameter();
-    String paramName = null;
-    String paramValue = null;
-    if (parameter != null) {
-      paramName = parameter.getKey();
-      paramValue = parameter.getValue();
-    }
-    List<WebUsersEntity> webUsersEntities;
-    if (paramName != null && paramValue != null && !pluginIds.isEmpty()) {
-      webUsersEntities = webUsersDAO.findNotificationsByTypeAndParams(pluginIds, paramName, paramValue, userId, offset, limit);
-    } else if (!pluginIds.isEmpty()) {
-      // web notifs entities order by lastUpdated DESC
-      webUsersEntities = webUsersDAO.findWebNotifsByFilter(pluginIds, userId, filter.isOnPopover(), offset, limit);
-    } else if (filter.isOnPopover()) {
-      webUsersEntities = webUsersDAO.findWebNotifsByFilter(userId, filter.isOnPopover(), offset, limit);
-    } else {
-      webUsersEntities = webUsersDAO.findWebNotifsByFilter(userId, offset, limit);
-    }
-    return webUsersEntities.stream().map(this::convertWebNotifEntityToNotificationInfo).toList();
+    return webUsersDAO.findWebNotificationsByFilter(filter, offset, limit)
+                      .stream()
+                      .map(this::convertWebNotifEntityToNotificationInfo)
+                      .toList();
   }
 
   @Override
