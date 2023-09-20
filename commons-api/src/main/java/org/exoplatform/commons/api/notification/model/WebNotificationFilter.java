@@ -40,10 +40,6 @@ public class WebNotificationFilter implements Serializable {
   private Boolean              isRead;
 
   @Getter
-  @Setter
-  private boolean              isOrder          = true;
-
-  @Getter
   private Pair<String, String> parameter;
 
   public WebNotificationFilter(String userId) {
