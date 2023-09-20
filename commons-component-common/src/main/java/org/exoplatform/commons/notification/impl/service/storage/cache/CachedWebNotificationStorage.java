@@ -101,8 +101,7 @@ public class CachedWebNotificationStorage implements WebNotificationStorage {
   @Override
   public void markRead(String notificationId) {
     storage.markRead(notificationId);
-    //
-    updateRead(notificationId, true);
+    updateRead(notificationId);
   }
 
   @Override
@@ -237,12 +236,11 @@ public class CachedWebNotificationStorage implements WebNotificationStorage {
     updateCacheByUser(userId);
   }
 
-  private void updateRead(String notificationId, boolean isRead) {
+  private void updateRead(String notificationId) {
     WebNotifInfoCacheKey key = WebNotifInfoCacheKey.key(notificationId);
     WebNotifInfoData infoData = webNotificationCache.get(key);
     if (infoData != null) {
-      infoData.updateRead(isRead);
-      webNotificationCache.put(key, infoData);
+      updateCacheByUser(infoData.getTo());
     }
   }
 
