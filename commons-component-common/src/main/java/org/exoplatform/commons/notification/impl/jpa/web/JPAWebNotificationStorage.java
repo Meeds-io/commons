@@ -5,6 +5,7 @@ import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -62,7 +63,15 @@ public class JPAWebNotificationStorage implements WebNotificationStorage {
   public List<NotificationInfo> get(WebNotificationFilter filter, int offset, int limit) {
     return webUsersDAO.findWebNotificationsByFilter(filter, offset, limit)
                       .stream()
-                      .map(this::convertWebNotifEntityToNotificationInfo)
+                      .map(n -> {
+                        try {
+                          return this.convertWebNotifEntityToNotificationInfo(n);
+                        } catch (Exception e) {
+                          LOG.warn("Error while converting Web Notification Entity {} to DTO", n, e);
+                          return null;
+                        }
+                      })
+                      .filter(Objects::nonNull)
                       .toList();
   }
 
@@ -378,7 +387,8 @@ public class JPAWebNotificationStorage implements WebNotificationStorage {
                                         parameters.stream()
                                                   .collect(Collectors.toMap(WebParamsEntity::getName,
                                                                             value -> value.getValue() == null ? ""
-                                                                                                              : value.getValue()));
+                                                                                                              : value.getValue(),
+                                                                           (v1, v2) -> v2));
     // FIXME: Start:: Delete when all Web notifs migrated to use Vue based templates
     ownerParameters = new HashMap<>(ownerParameters);
     ownerParameters.put(NotificationMessageUtils.READ_PORPERTY.getKey(), String.valueOf(webUsersEntity.isRead()));
