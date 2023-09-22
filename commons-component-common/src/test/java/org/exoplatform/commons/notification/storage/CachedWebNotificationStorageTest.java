@@ -1,5 +1,6 @@
 package org.exoplatform.commons.notification.storage;
 
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.List;
@@ -20,7 +21,7 @@ public class CachedWebNotificationStorageTest extends BaseNotificationTestCase {
   private final static String WEB_NOTIFICATION_COUNT_CACHING_NAME = "commons.WebNotificationsCache";
   private  CacheService cacheService;
   private ExoCache<ListWebNotificationsKey, ListWebNotificationsData> exoWebNotificationsCache;
-  private ExoCache<WebNotifInfoCacheKey, WebNotifInfoData> exoWebNotificationCache;
+  private ExoCache<WebNotifInfoCacheKey, NotificationInfo> exoWebNotificationCache;
   private ExoCache<WebNotifInfoCacheKey, IntegerData> exoWebNotificationCountCache;
 
   @Override
@@ -144,9 +145,13 @@ public class CachedWebNotificationStorageTest extends BaseNotificationTestCase {
   public void testMarkAllRead() {
     String userId = "demo8";
     userIds.add(userId);
+    List<NotificationInfo> notifs = new ArrayList<>();
     for (int i = 0; i < 10; i++) {
-      cachedStorage.save(makeWebNotificationInfo(userId));
+      NotificationInfo notif = makeWebNotificationInfo(userId);
+      cachedStorage.save(notif);
+      notifs.add(notif);
     }
+    long updateTime = System.currentTimeMillis();
     //
     List<NotificationInfo> onPopoverInfos = cachedStorage.get(new WebNotificationFilter(userId, true), 0 , 10);
     assertEquals(10, onPopoverInfos.size());
@@ -157,6 +162,7 @@ public class CachedWebNotificationStorageTest extends BaseNotificationTestCase {
     assertEquals(10, viewAllInfos.size());
     for (NotificationInfo notifInfo : viewAllInfos) {
       assertFalse(notifInfo.isRead());
+      assertTrue(notifInfo.getLastModifiedDate() <= updateTime);
     }
     //
     cachedStorage.markAllRead(userId);
@@ -166,18 +172,20 @@ public class CachedWebNotificationStorageTest extends BaseNotificationTestCase {
     assertEquals(10, onPopoverInfos.size());
     for (NotificationInfo notifInfo : onPopoverInfos) {
       assertTrue(notifInfo.isRead());
+      assertTrue(notifInfo.getLastModifiedDate() <= updateTime);
     }
     viewAllInfos = cachedStorage.get(new WebNotificationFilter(userId, false), 0 , 10);
     assertEquals(10, viewAllInfos.size());
     for (NotificationInfo notifInfo : viewAllInfos) {
       assertTrue(notifInfo.isRead());
+      assertTrue(notifInfo.getLastModifiedDate() <= updateTime);
     }
     //
     for (NotificationInfo info : viewAllInfos) {
       WebNotifInfoCacheKey notifKey = WebNotifInfoCacheKey.key(info.getId());
-      WebNotifInfoData notifData = exoWebNotificationCache.get(notifKey);
-      NotificationInfo notifInfo = notifData.build();
+      NotificationInfo notifInfo = exoWebNotificationCache.get(notifKey);
       assertTrue(notifInfo.isRead());
+      assertTrue(notifInfo.getLastModifiedDate() <= updateTime);
     }
   }
 
@@ -355,11 +363,14 @@ public class CachedWebNotificationStorageTest extends BaseNotificationTestCase {
     cachedStorage.resetNumberOnBadge(Collections.singletonList(notificationInfo.getKey().getId()), userId);
     assertEquals(0, cachedStorage.getNumberOnBadge(userId));
 
-    cachedStorage.save(makeWebNotificationInfo(userId));
+    NotificationInfo notif = makeWebNotificationInfo(userId);
+    cachedStorage.save(notif);
     assertEquals(1, cachedStorage.getNumberOnBadge(userId));
 
-    //
     cachedStorage.resetNumberOnBadge(userId);
     assertEquals(0, cachedStorage.getNumberOnBadge(userId));
+    NotificationInfo cachedNotif = cachedStorage.get(notif.getId());
+    assertEquals(notif.getLastModifiedDate(), cachedNotif.getLastModifiedDate());
   }
+
 }
