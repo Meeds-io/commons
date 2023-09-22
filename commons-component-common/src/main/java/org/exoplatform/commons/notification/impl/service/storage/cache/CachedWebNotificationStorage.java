@@ -40,12 +40,12 @@ public class CachedWebNotificationStorage implements WebNotificationStorage {
   private static final String WEB_NOTIFICATION_COUNT_CACHING_NAME = "commons.WebNotificationCountCache";
   private static final String WEB_NOTIFICATION_BY_PLUGIN_COUNT_CACHING_NAME = "commons.WebNotificationCountByPluginCache";
   //
-  private final ExoCache<WebNotifInfoCacheKey, WebNotifInfoData> webNotificationCache;
+  private final ExoCache<WebNotifInfoCacheKey, NotificationInfo> webNotificationCache;
   private final ExoCache<WebNotifInfoCacheKey, IntegerData> webNotificationCountCache;
   private final ExoCache<WebNotifInfoCacheKey, Map<String, Integer>> webNotificationCountByPluginCache;
   private final ExoCache<ListWebNotificationsKey, ListWebNotificationsData> webNotificationsCache;
   //
-  private FutureExoCache<WebNotifInfoCacheKey, WebNotifInfoData, ServiceContext<WebNotifInfoData>> futureWebNotificationCache;
+  private FutureExoCache<WebNotifInfoCacheKey, NotificationInfo, ServiceContext<NotificationInfo>> futureWebNotificationCache;
   private FutureExoCache<ListWebNotificationsKey, ListWebNotificationsData, ServiceContext<ListWebNotificationsData>> futureWebNotificationsCache;
   private FutureExoCache<WebNotifInfoCacheKey, IntegerData, ServiceContext<IntegerData>> futureWebNotificationCountCache;
   private FutureExoCache<WebNotifInfoCacheKey, Map<String, Integer>, Object> futureWebNotificationCountByPluginCache;
@@ -80,9 +80,7 @@ public class CachedWebNotificationStorage implements WebNotificationStorage {
     } else {
       storage.save(notification);
     }
-    webNotificationCache.put(WebNotifInfoCacheKey.key(notification.getId()), new WebNotifInfoData(notification));
-    clearWebNotificationCountCache(notification.getTo());
-    clearUserWebNotificationList(notification.getTo());
+    updateCacheByUser(notification.getTo());
   }
 
   @Override
@@ -91,11 +89,7 @@ public class CachedWebNotificationStorage implements WebNotificationStorage {
     notification.setResetOnBadge(!moveTop);
 
     storage.update(notification, moveTop);
-    //
-    WebNotifInfoCacheKey key = WebNotifInfoCacheKey.key(notification.getId());
-    webNotificationCache.remove(key);
-    clearWebNotificationCountCache(notification.getTo());
-    clearUserWebNotificationList(notification.getTo());
+    updateCacheByUser(notification.getTo());
   }
 
   @Override
@@ -121,8 +115,7 @@ public class CachedWebNotificationStorage implements WebNotificationStorage {
     storage.hidePopover(notificationId);
 
     // update data showPopover
-    WebNotifInfoCacheKey key = WebNotifInfoCacheKey.key(notificationId);
-    WebNotifInfoData infoData = webNotificationCache.get(key);
+    NotificationInfo infoData = webNotificationCache.get(WebNotifInfoCacheKey.key(notificationId));
     if (infoData != null) {
       updateCacheByUser(infoData.getTo());
     }
@@ -161,15 +154,8 @@ public class CachedWebNotificationStorage implements WebNotificationStorage {
   @Override
   public NotificationInfo get(final String notificationId) {
     WebNotifInfoCacheKey key = WebNotifInfoCacheKey.key(notificationId);
-    WebNotifInfoData notificationInfo = futureWebNotificationCache.get(() -> {
-      NotificationInfo got = storage.get(notificationId);
-      return got == null ? null: new WebNotifInfoData(got);
-    }, key);
-    //
-    if(notificationInfo == null) {
-      return null;
-    }
-    return notificationInfo.build();
+    NotificationInfo notificationInfo = futureWebNotificationCache.get(() -> storage.get(notificationId), key);
+    return notificationInfo == null ? null : notificationInfo.clone();
   }
 
   public NotificationInfo getUnreadNotification(String pluginId, String activityId, String owner) {
@@ -238,7 +224,7 @@ public class CachedWebNotificationStorage implements WebNotificationStorage {
 
   private void updateRead(String notificationId) {
     WebNotifInfoCacheKey key = WebNotifInfoCacheKey.key(notificationId);
-    WebNotifInfoData infoData = webNotificationCache.get(key);
+    NotificationInfo infoData = webNotificationCache.get(key);
     if (infoData != null) {
       updateCacheByUser(infoData.getTo());
     }
@@ -252,16 +238,16 @@ public class CachedWebNotificationStorage implements WebNotificationStorage {
 
   private void clearUserWebNotifications(final String userId) {
     try {
-      webNotificationCache.select(new CachedObjectSelector<WebNotifInfoCacheKey, WebNotifInfoData>() {
+      webNotificationCache.select(new CachedObjectSelector<WebNotifInfoCacheKey, NotificationInfo>() {
         @Override
-        public boolean select(WebNotifInfoCacheKey key, ObjectCacheInfo<? extends WebNotifInfoData> ocinfo) {
+        public boolean select(WebNotifInfoCacheKey key, ObjectCacheInfo<? extends NotificationInfo> ocinfo) {
           return ocinfo.get() != null && userId.equals(ocinfo.get().getTo());
         }
         
         @Override
-        public void onSelect(ExoCache<? extends WebNotifInfoCacheKey, ? extends WebNotifInfoData> cache,
+        public void onSelect(ExoCache<? extends WebNotifInfoCacheKey, ? extends NotificationInfo> cache,
                              WebNotifInfoCacheKey key,
-                             ObjectCacheInfo<? extends WebNotifInfoData> ocinfo) throws Exception {
+                             ObjectCacheInfo<? extends NotificationInfo> ocinfo) throws Exception {
           cache.remove(key);
         }
       });
@@ -310,8 +296,9 @@ public class CachedWebNotificationStorage implements WebNotificationStorage {
       }
       // Update single Nofification cache when the notification doesn't exit there yet
       WebNotifInfoCacheKey webNotifKey = WebNotifInfoCacheKey.key(notif.getId());
-      if (webNotificationCache.get(webNotifKey) == null) {
-        webNotificationCache.put(webNotifKey, new WebNotifInfoData(notif));
+      NotificationInfo cachedNotificationInfo = webNotificationCache.get(webNotifKey);
+      if (cachedNotificationInfo == null) {
+        webNotificationCache.put(webNotifKey, notif);
       }
       // Insert notification at the end of list
       if (!data.contains(notif.getId())) {

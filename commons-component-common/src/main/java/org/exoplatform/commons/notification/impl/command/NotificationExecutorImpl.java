@@ -68,7 +68,6 @@ public class NotificationExecutorImpl implements NotificationExecutor {
           }
         } catch (Exception e) {
           LOG.warn("Process NotificationInfo is failed: " + e.getMessage(), e);
-          LOG.debug(e.getMessage(), e);
           return false;
         } finally {
           RequestLifeCycle.end();

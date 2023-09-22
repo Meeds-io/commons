@@ -16,67 +16,64 @@
  */
 package org.exoplatform.commons.api.notification.model;
 
+import java.io.Serializable;
 import java.util.*;
 
 import org.apache.commons.lang.ArrayUtils;
 
-import org.exoplatform.container.ExoContainerContext;
-import org.exoplatform.container.PortalContainer;
-import org.exoplatform.services.idgenerator.IDGeneratorService;
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
-public class NotificationInfo {
-  public static final String        PREFIX_ID      = "NotificationMessage";
+@AllArgsConstructor
+@NoArgsConstructor
+@EqualsAndHashCode
+public class NotificationInfo implements Serializable, Cloneable {
 
-  public static final String        FOR_ALL_USER   = "&forAllUser";
+  private static final long   serialVersionUID      = 689981271399587101L;
 
-  public static final String        FOR_ALL_INTERNAL_USER   = "&forAllInternalUsers";
+  public static final String  PREFIX_ID             = "NotificationMessage";
 
-  private static IDGeneratorService idGeneratorService;
+  public static final String  FOR_ALL_USER          = "&forAllUser";
 
-  private String                    id;
+  public static final String  FOR_ALL_INTERNAL_USER = "&forAllInternalUsers";
 
-  private PluginKey                 key;                                   //
+  private String              id;
 
-  private String                    from;
+  private PluginKey           key;                                               //
 
-  private String                    to;
+  private String              from;
 
-  private int                       order;
+  private String              to;
 
-  private Map<String, String>       ownerParameter = new HashMap<>();
+  private int                 order;
 
-  private List<String>              sendToUserIds  = new ArrayList<>();
+  private Map<String, String> ownerParameter        = new HashMap<>();
 
-  private List<String>              excludedUsersIds  = new ArrayList<>();
+  private List<String>        sendToUserIds         = new ArrayList<>();
+
+  private List<String>        excludedUsersIds      = new ArrayList<>();
 
   // list users send by frequency
-  private String[]                  sendToDaily;
+  private String[]            sendToDaily           = new String[] { "" };
 
-  private String[]                  sendToWeekly;
+  private String[]            sendToWeekly          = new String[] { "" };
 
-  private long                      lastModifiedDate;
+  private long                lastModifiedDate      = System.currentTimeMillis();
 
-  private String                    title          = "";
+  private String              title                 = "";
 
-  private ChannelKey                channelKey;
+  private ChannelKey          channelKey;
 
-  private Calendar                  dateCreated;
+  private Calendar            dateCreated           = Calendar.getInstance();
 
-  private boolean                   isOnPopOver    = true;
+  private boolean             isOnPopOver           = true;
 
-  private boolean                   read           = false;
+  private boolean             read                  = false;
 
-  private boolean                   resetOnBadge   = false;
+  private boolean             resetOnBadge          = false;
 
-  private boolean                   isUpdate       = false;
-
-  public NotificationInfo() {
-    this.id = PREFIX_ID + generate();
-    this.sendToDaily = new String[] { "" };
-    this.sendToWeekly = new String[] { "" };
-    this.lastModifiedDate = System.currentTimeMillis();
-    this.setDateCreated(Calendar.getInstance());
-  }
+  private boolean             isUpdate              = false;
 
   public static NotificationInfo instance() {
     return new NotificationInfo();
@@ -103,13 +100,11 @@ public class NotificationInfo {
   }
 
   public boolean isSendAll() {
-    return ArrayUtils.contains(sendToDaily, FOR_ALL_USER) ||
-        ArrayUtils.contains(sendToWeekly, FOR_ALL_USER);
+    return ArrayUtils.contains(sendToDaily, FOR_ALL_USER) || ArrayUtils.contains(sendToWeekly, FOR_ALL_USER);
   }
 
   public boolean isSendAllInternals() {
-    return ArrayUtils.contains(sendToDaily, FOR_ALL_INTERNAL_USER) ||
-        ArrayUtils.contains(sendToWeekly, FOR_ALL_INTERNAL_USER);
+    return ArrayUtils.contains(sendToDaily, FOR_ALL_INTERNAL_USER) || ArrayUtils.contains(sendToWeekly, FOR_ALL_INTERNAL_USER);
   }
 
   public NotificationInfo setSendAllInternals(boolean isSendAllInternals) {
@@ -429,29 +424,6 @@ public class NotificationInfo {
   }
 
   @Override
-  public boolean equals(Object o) {
-
-    if (o instanceof NotificationInfo) {
-      NotificationInfo m = (NotificationInfo) o;
-      if (super.equals(o)) {
-        return true;
-      }
-      if (m.getId() == null || this.id == null) {
-        return false;
-      }
-      if (m.getId().equals(this.id)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(id);
-  }
-
-  @Override
   public String toString() {
     StringBuilder buffer = new StringBuilder("{");
     buffer.append("providerType: ")
@@ -501,23 +473,24 @@ public class NotificationInfo {
   }
 
   public NotificationInfo clone(boolean isNew) {
-    NotificationInfo message = instance();
-    message.setFrom(from)
-           .key(key)
-           .setTitle(title)
-           .setUpdate(!isNew)
-           .setOrder(order)
-           .setOwnerParameter(new HashMap<String, String>(ownerParameter))
-           .setSendToDaily(arrayCopy(sendToDaily))
-           .setSendToWeekly(arrayCopy(sendToWeekly))
-           .setTo(to)
-           .setId(isNew ? null : id);
-    if (!isNew) {
-      message.setOnPopOver(isOnPopOver)
-             .setResetOnBadge(resetOnBadge)
-             .setRead(read);
-    }
-    return message;
+    return new NotificationInfo(isNew ? null : id,
+                                key,
+                                from,
+                                to,
+                                order,
+                                new HashMap<>(ownerParameter),
+                                sendToUserIds == null ? null : new ArrayList<>(sendToUserIds),
+                                excludedUsersIds == null ? null : new ArrayList<>(excludedUsersIds),
+                                arrayCopy(sendToDaily),
+                                arrayCopy(sendToWeekly),
+                                lastModifiedDate,
+                                title,
+                                channelKey,
+                                dateCreated,
+                                isNew || isOnPopOver,
+                                !isNew && read,
+                                !isNew && resetOnBadge,
+                                !isNew);
   }
 
   /**
@@ -531,19 +504,4 @@ public class NotificationInfo {
     return (source != null && source.length > 0) ? Arrays.asList(source).toArray(new String[source.length]) : new String[] { "" };
   }
 
-  public static IDGeneratorService getIdGeneratorService() {
-    if (idGeneratorService == null) {
-      idGeneratorService = ExoContainerContext.getService(IDGeneratorService.class);
-    }
-    return idGeneratorService;
-  }
-
-  public static String generate() {
-    String generatedString = Long.toString(System.currentTimeMillis());
-    if (getIdGeneratorService() == null) {
-      return generatedString;
-    } else {
-      return getIdGeneratorService().generateStringID(generatedString);
-    }
-  }
 }
