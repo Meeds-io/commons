@@ -17,10 +17,8 @@
 package org.exoplatform.commons.notification.impl.service;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import org.apache.commons.lang.StringUtils;
 
@@ -105,50 +103,29 @@ public class NotificationServiceImpl extends AbstractService implements Notifica
     ctx.setNotificationInfo(notification);
     //
 
+    PluginSettingService pluginSettingService = CommonsUtils.getService(PluginSettingService.class);
+    SettingService settingService = CommonsUtils.getService(SettingService.class);
     List<AbstractChannel> channels = channelManager.getChannels();
+    Exception error = null;
     for (AbstractChannel channel : channels) {
-      PluginSettingService pluginSettingService = CommonsUtils.getService(PluginSettingService.class);
-      if (!pluginSettingService.isActive(channel.getId(), pluginId)) {
-        continue;
-      }
+      try {
+        if (!pluginSettingService.isActive(channel.getId(), pluginId)) {
+          continue;
+        }
 
-      AbstractNotificationLifecycle lifecycle = channelManager.getLifecycle(ChannelKey.key(channel.getId()));
-      if (notification.isSendAll() || notification.isSendAllInternals()) {
-        SettingService settingService = CommonsUtils.getService(SettingService.class);
-        long usersCount = settingService.countContextsByType(Context.USER.getName());
-        int maxResults = 100;
-        for (int i = 0; i < usersCount; i += maxResults) {
-          List<String> users = settingService.getContextNamesByType(Context.USER.getName(), i, maxResults);
-          if (notification.isSendAllInternals()) {
-            users = users.stream().filter(userId -> {
-              // Filter on external users
-              try {
-                UserProfile userProfile = organizationService.getUserProfileHandler().findUserProfileByName(userId);
-                return userProfile == null || !StringUtils.equals(userProfile.getAttribute(UserProfile.OTHER_KEYS[2]), "true");
-              } catch (Exception e) {
-                return false;
-              }
-            }).collect(Collectors.toList());
-          }
-          if (!notification.getExcludedUsersIds().isEmpty()) {
-            users = users.stream().filter(userId -> !notification.isExcluded(userId)).collect(Collectors.toList());
-          }
-          if (!users.isEmpty()) {
-            lifecycle.process(ctx, users.toArray(new String[users.size()]));
-          }
-        }
-      } else {
-        List<String> userIds;
-        if (notification.getSendToUserIds() == null || notification.getSendToUserIds().isEmpty()) {
-          LOG.debug("Notification with id '{}' and parameters = '{}' not sent because receivers are empty",
-                    notification.getId(),
-                    notification.getOwnerParameter());
-          userIds = Collections.emptyList();
-        } else {
-          userIds = notification.getSendToUserIds();
-        }
-        lifecycle.process(ctx, userIds.toArray(new String[userIds.size()]));
+        process(settingService, ctx, notification, channel);
+      } catch (Exception e) {
+        LOG.warn("Error processing notification with id '{}' on channel '{}' for plugin '{}'",
+                 notification.getId(),
+                 channel.getId(),
+                 notification.getKey().getId(),
+                 e);
+        error = e;
       }
+    }
+    if (error != null) {
+      // Must indicate error status for the notification
+      throw error;
     }
   }
 
@@ -172,7 +149,7 @@ public class NotificationServiceImpl extends AbstractService implements Notifica
     int offset = 0;
     while (true) {
       List<UserSetting> userDigestSettings = this.userService.getDigestSettingForAllUser(notifContext, offset, limit);
-      if (userDigestSettings.size() == 0) {
+      if (userDigestSettings.isEmpty()) {
         break;
       }
       send(notifContext, userDigestSettings);
@@ -182,11 +159,11 @@ public class NotificationServiceImpl extends AbstractService implements Notifica
         + "ms.");
     startTime = System.currentTimeMillis();
     // process for users used default setting
-    if (defaultConfigPlugins.getDailyPlugins().size() > 0 || defaultConfigPlugins.getWeeklyPlugins().size() > 0) {
+    if (!defaultConfigPlugins.getDailyPlugins().isEmpty() || !defaultConfigPlugins.getWeeklyPlugins().isEmpty()) {
       offset = 0;
       while (true) {
         List<UserSetting> usersWithDefaultSettings = this.userService.getDigestDefaultSettingForAllUser(offset, limit);
-        if (usersWithDefaultSettings.size() == 0) {
+        if (usersWithDefaultSettings.isEmpty()) {
           break;
         }
         sendDefault(notifContext, usersWithDefaultSettings, defaultConfigPlugins);
@@ -198,6 +175,60 @@ public class NotificationServiceImpl extends AbstractService implements Notifica
     storage.removeMessageAfterSent(notifContext);
     LOG.info("Time spent to send mail messages for users having default settings: " + (System.currentTimeMillis() - startTime)
         + "ms.");
+  }
+
+  private AbstractNotificationLifecycle process(SettingService settingService,
+                                                NotificationContext notificationContext,
+                                                NotificationInfo notification,
+                                                AbstractChannel channel) {
+    AbstractNotificationLifecycle lifecycle = channelManager.getLifecycle(ChannelKey.key(channel.getId()));
+    if (notification.isSendAll() || notification.isSendAllInternals()) {
+      processSendAll(settingService, notificationContext, notification, lifecycle);
+    } else {
+      if (notification.getSendToUserIds() == null || notification.getSendToUserIds().isEmpty()) {
+        LOG.debug("Notification with id '{}' and parameters = '{}' not sent because receivers are empty",
+                  notification.getId(),
+                  notification.getOwnerParameter());
+      } else {
+        processSendToUsers(notificationContext, notification, lifecycle);
+      }
+    }
+    return lifecycle;
+  }
+
+  private void processSendAll(SettingService settingService,
+                              NotificationContext notificationContext,
+                              NotificationInfo notification,
+                              AbstractNotificationLifecycle lifecycle) {
+    long usersCount = settingService.countContextsByType(Context.USER.getName());
+    int maxResults = 100;
+    for (int i = 0; i < usersCount; i += maxResults) {
+      List<String> users = settingService.getContextNamesByType(Context.USER.getName(), i, maxResults);
+      if (notification.isSendAllInternals()) {
+        users = users.stream().filter(userId -> {
+          // Filter on external users
+          try {
+            UserProfile userProfile = organizationService.getUserProfileHandler().findUserProfileByName(userId);
+            return userProfile == null || !StringUtils.equals(userProfile.getAttribute(UserProfile.OTHER_KEYS[2]), "true");
+          } catch (Exception e) {
+            return false;
+          }
+        }).toList();
+      }
+      if (!notification.getExcludedUsersIds().isEmpty()) {
+        users = users.stream().filter(userId -> !notification.isExcluded(userId)).toList();
+      }
+      if (!users.isEmpty()) {
+        lifecycle.process(notificationContext, users.toArray(new String[users.size()]));
+      }
+    }
+  }
+
+  private void processSendToUsers(NotificationContext notificationContext,
+                                  NotificationInfo notification,
+                                  AbstractNotificationLifecycle lifecycle) {
+    List<String> userIds = notification.getSendToUserIds();
+    lifecycle.process(notificationContext, userIds.toArray(new String[userIds.size()]));
   }
 
   private void send(NotificationContext context, List<UserSetting> userSettings) {
