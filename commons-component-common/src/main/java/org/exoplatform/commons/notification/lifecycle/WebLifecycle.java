@@ -60,20 +60,18 @@ public class WebLifecycle extends AbstractNotificationLifecycle {
         continue;
       }
       NotificationInfo notif = notification.clone(true).setTo(userId).setLastModifiedDate(Calendar.getInstance());
-      ctx.setNotificationInfo(notif);
-      //store before building message to get notification id (for actions in messages using notif ID)
-      store(ctx.getNotificationInfo());
-      String notificationId = ctx.getNotificationInfo().getId();
+      store(notif);
 
       //build message
+      ctx.setNotificationInfo(notif);
       MessageInfo msg = buildMessageInfo(ctx);
       if (msg == null) {
-        CommonsUtils.getService(WebNotificationStorage.class).remove(notificationId);
+        CommonsUtils.getService(WebNotificationStorage.class).remove(notif.getId());
         continue;
       }
 
       ctx.append(WebChannel.MESSAGE_INFO, msg);
-      ctx.value(WebChannel.MESSAGE_INFO).setId(notificationId);
+      ctx.value(WebChannel.MESSAGE_INFO).setId(notif.getId());
       //send
       getChannel().dispatch(ctx, userId);
     }
@@ -86,8 +84,6 @@ public class WebLifecycle extends AbstractNotificationLifecycle {
   
   @Override
   public void store(NotificationInfo notifInfo) {
-    LOG.info("WEB:: Store the notification to db by Web channel.");
-
     // Get notification to update
     AbstractTemplateBuilder builder = getChannel().getTemplateBuilder(notifInfo.getKey());
     notifInfo = builder.getNotificationToStore(notifInfo);

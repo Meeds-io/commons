@@ -278,10 +278,8 @@ public class JPAWebNotificationStorage implements WebNotificationStorage {
     webNotifEntity.setType(notification.getKey().getId());
     webNotifEntity.setText(notification.getTitle());
     webNotifEntity.setSender(notification.getFrom());
-    if (notification.getDateCreated() == null) {
+    if (webNotifEntity.getCreationDate() == null) {
       webNotifEntity.setCreationDate(Calendar.getInstance());
-    } else {
-      webNotifEntity.setCreationDate(notification.getDateCreated());
     }
     if (isNew) {
       webNotifEntity = webNotifDAO.create(webNotifEntity);
