@@ -184,6 +184,8 @@ abstract public class HTMLSanitizer {
                                                                                                                                 .allowAttributes("noresize")
                                                                                                                                 .matching(Pattern.compile("(?i)noresize"))
                                                                                                                                 .onElements("table")
+                                                                                                                                .allowAttributes("summary")
+                                                                                                                                .onElements("table")
                                                                                                                                 .allowAttributes("background")
                                                                                                                                 .matching(ONSITE_URL)
                                                                                                                                 .onElements("td",
@@ -346,6 +348,7 @@ abstract public class HTMLSanitizer {
                                                                                                                                 .globally()
                                                                                                                                 .allowAttributes("v-identity-popover")
                                                                                                                                 .globally()
+                                                                                                                                .allowElements("caption")
                                                                                                                                 .toFactory();
 
   /**
