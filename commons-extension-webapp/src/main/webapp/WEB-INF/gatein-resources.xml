@@ -8,8 +8,8 @@
     <script>
       <adapter>
         (function() {
-        var oldJQuery = window.jQuery;
         window.jQuery = $;
+        var oldJQuery = window.jQuery;
         window.CKEDITOR_BASEPATH = '/commons-extension/ckeditor/';
         <include>/ckeditor/ckeditor.js</include>
         // force compatible version in any case to make sure the editor will initialize
