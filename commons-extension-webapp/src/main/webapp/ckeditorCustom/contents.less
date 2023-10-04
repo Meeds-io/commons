@@ -3,7 +3,8 @@ Copyright (c) 2003-2015, CKSource - Frederico Knabben. All rights reserved.
 For licensing, see LICENSE.md or http://ckeditor.com/license
 */
 
-@import "/rest/v1/platform/branding/css";
+@import (css) "/rest/v1/platform/branding/css";
+@import "../ckeditor/skins/common/editor.less";
 
 @font-face {
 	font-family: 'PLF-FONT-ICONS';
@@ -17,11 +18,11 @@ body
 {
 	/* Font */
 	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-	font-size: 12px;
+	font-size: @normalFontSize;
 	overflow: auto;
 
 	/* Text color */
-	color: #333;
+	color: @normalFontColor;
 
 	/* Remove the background color to make it transparent */
 	background-color: transparent;
