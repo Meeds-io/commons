@@ -2,6 +2,13 @@
 
 <gatein-resources xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.exoplatform.org/xml/ns/gatein_resources_1_4 http://www.exoplatform.org/xml/ns/gatein_resources_1_4" xmlns="http://www.exoplatform.org/xml/ns/gatein_resources_1_4">
 
+  <portal-skin>
+    <skin-name>Enterprise</skin-name>
+    <skin-module>codeHighlighter</skin-module>
+    <css-path>/ckeditor/plugins/codesnippet/lib/highlight/styles/monokai_sublime.css</css-path>
+    <css-priority>1</css-priority>
+  </portal-skin>
+
   <module>
     <name>commons-editor</name>
     <as>ckeditor</as>
@@ -35,6 +42,22 @@
     <depends>
       <module>tagSuggester</module>
     </depends>
+    <depends>
+      <module>codeHighlighter</module>
+    </depends>
+  </module>
+
+  <module>
+    <name>codeHighlighter</name>
+    <script>
+      <minify>false</minify>
+      <adapter>
+        (function() {
+        <include>/js/lib/highlight.min.js</include>
+        return hljs;
+        })();
+      </adapter>
+    </script>
   </module>
 
 </gatein-resources>
