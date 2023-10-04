@@ -95,6 +95,7 @@ public class JPAPluginSettingServiceImpl extends AbstractService implements Plug
                 .setOrder(Integer.valueOf(pluginConfig.getOrder()))
                 .setResourceBundleKey(pluginConfig.getResourceBundleKey())
                 .setBundlePath(pluginConfig.getBundlePath())
+                .setMutable(pluginConfig.isMutable())
                 .setDefaultConfig(pluginConfig.getDefaultConfig());
       // all channels
       String groupId = pluginConfig.getGroupId();
