@@ -110,15 +110,15 @@
 						var that = this;
 
 						if ( editor.plugins.codesnippet.isSupportedEnvironment() ) {
-							CKEDITOR.scriptLoader.load( path + 'lib/highlight/highlight.pack.js', function() {
-								that.hljs = window.hljs;
+							window.require(['SHARED/codeHighlighter'], function(hljs) {
+								that.hljs = hljs;
 								callback();
-							} );
+							});
 						}
 
 						// Method is available only if wysiwygarea exists.
 						if ( editor.addContentsCss ) {
-							editor.addContentsCss( path + 'lib/highlight/styles/' + editor.config.codeSnippet_theme + '.css' );
+							editor.addContentsCss( path + 'lib/highlight/styles/monokai_sublime.css' );
 						}
 					},
 
