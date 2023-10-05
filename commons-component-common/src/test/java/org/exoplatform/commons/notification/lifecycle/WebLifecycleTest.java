@@ -176,6 +176,110 @@ public class WebLifecycleTest extends BaseCommonsTestCase {
     assertTrue(webNotificationsJohn.get(0).isOnPopOver());
   }
 
+  public void testReceiveNotificationWithNonMutablePlugin() {
+    // Given
+    NotificationInfo notificationInfo = new NotificationInfo().key("TestNonMutablePlugin");
+    notificationInfo.setSpaceId(5l);
+    NotificationContext ctx = NotificationContextImpl.cloneInstance();
+    ctx.setNotificationInfo(notificationInfo);
+
+    UserSetting johnSettings = userSettingService.get("john");
+    johnSettings.addMutedSpace(notificationInfo.getSpaceId());
+    userSettingService.save(johnSettings);
+
+    WebChannel webChannel = new WebChannel();
+    WebLifecycle webLifecycle = (WebLifecycle) webChannel.getLifecycle();
+    webLifecycle.process(ctx, "john", "mary");
+    
+    List<NotificationInfo> webNotificationsJohn = webNotificationService.getNotificationInfos(new WebNotificationFilter("john"),
+                                                                                              0,
+                                                                                              10);
+    assertNotNull(webNotificationsJohn);
+    assertEquals(0, webNotificationsJohn.size());
+  }
+
+  public void testReceiveNotificationWithMutablePlugin() {
+    // Given
+    NotificationInfo notificationInfo = new NotificationInfo().key("TestMutablePlugin");
+    notificationInfo.setSpaceId(2l);
+    NotificationContext ctx = NotificationContextImpl.cloneInstance();
+    ctx.setNotificationInfo(notificationInfo);
+    
+    WebChannel webChannel = new WebChannel();
+    WebLifecycle webLifecycle = (WebLifecycle) webChannel.getLifecycle();
+    webLifecycle.process(ctx, "john", "mary");
+    
+    List<NotificationInfo> webNotificationsJohn = webNotificationService.getNotificationInfos(new WebNotificationFilter("john"),
+                                                                                              0,
+                                                                                              10);
+    assertNotNull(webNotificationsJohn);
+    assertEquals(1, webNotificationsJohn.size());
+    NotificationInfo notificationInfoJohn = webNotificationsJohn.get(0);
+    assertNotNull(notificationInfoJohn);
+    assertEquals(notificationInfo.getSpaceId(), notificationInfoJohn.getSpaceId());
+    assertTrue(notificationInfoJohn.isMutable());
+    assertFalse(notificationInfoJohn.isSpaceMuted());
+  }
+
+  public void testReceiveNotificationWithMutablePluginAndMutedSpace() {
+    // Given
+    NotificationInfo notificationInfo = new NotificationInfo().key("TestMutablePlugin");
+    notificationInfo.setSpaceId(5l);
+
+    UserSetting johnSettings = userSettingService.get("john");
+    johnSettings.addMutedSpace(notificationInfo.getSpaceId());
+    userSettingService.save(johnSettings);
+
+    NotificationContext ctx = NotificationContextImpl.cloneInstance();
+    ctx.setNotificationInfo(notificationInfo);
+
+    WebChannel webChannel = new WebChannel();
+    WebLifecycle webLifecycle = (WebLifecycle) webChannel.getLifecycle();
+    webLifecycle.process(ctx, "john", "mary");
+
+    List<NotificationInfo> webNotificationsJohn = webNotificationService.getNotificationInfos(new WebNotificationFilter("john"),
+                                                                                              0,
+                                                                                              10);
+    assertNotNull(webNotificationsJohn);
+    assertEquals(0, webNotificationsJohn.size());
+  }
+
+  public void testReceiveNotificationWithMutablePluginAndMutedSpaceAfterNotificationSend() {
+    // Given
+    NotificationInfo notificationInfo = new NotificationInfo().key("TestMutablePlugin");
+    notificationInfo.setSpaceId(3l);
+    NotificationContext ctx = NotificationContextImpl.cloneInstance();
+    ctx.setNotificationInfo(notificationInfo);
+
+    WebChannel webChannel = new WebChannel();
+    WebLifecycle webLifecycle = (WebLifecycle) webChannel.getLifecycle();
+    webLifecycle.process(ctx, "john", "mary");
+
+    List<NotificationInfo> webNotificationsJohn = webNotificationService.getNotificationInfos(new WebNotificationFilter("john"),
+                                                                                              0,
+                                                                                              10);
+    assertNotNull(webNotificationsJohn);
+    assertEquals(1, webNotificationsJohn.size());
+    NotificationInfo notificationInfoJohn = webNotificationsJohn.get(0);
+    assertNotNull(notificationInfoJohn);
+    assertEquals(notificationInfo.getSpaceId(), notificationInfoJohn.getSpaceId());
+    assertTrue(notificationInfoJohn.isMutable());
+    assertFalse(notificationInfoJohn.isSpaceMuted());
+
+    UserSetting johnSettings = userSettingService.get("john");
+    johnSettings.addMutedSpace(notificationInfoJohn.getSpaceId());
+    userSettingService.save(johnSettings);
+
+    webNotificationsJohn = webNotificationService.getNotificationInfos(new WebNotificationFilter("john"), 0, 10);
+    assertNotNull(webNotificationsJohn);
+    assertEquals(1, webNotificationsJohn.size());
+    notificationInfoJohn = webNotificationsJohn.get(0);
+    assertNotNull(notificationInfoJohn);
+    assertEquals(notificationInfo.getSpaceId(), notificationInfoJohn.getSpaceId());
+    assertTrue(notificationInfoJohn.isMutable());
+    assertTrue(notificationInfoJohn.isSpaceMuted());
+  }
+
   private void cleanData() {
     webUsersDAO.deleteAll();
     webParamsDAO.deleteAll();
@@ -186,7 +290,7 @@ public class WebLifecycleTest extends BaseCommonsTestCase {
     userSetting.setUserId("john");
     userSetting.setChannelActive(UserSetting.EMAIL_CHANNEL);
     userSetting.setChannelActive(WebChannel.ID);
-    userSetting.setChannelPlugins(WebChannel.ID, Arrays.asList("TestPlugin"));
+    userSetting.setChannelPlugins(WebChannel.ID, Arrays.asList("TestPlugin", "TestMutablePlugin", "TestNonMutablePlugin"));
     userSettingService.save(userSetting);
     userSetting.setUserId("mary");
     userSettingService.save(userSetting);

@@ -56,7 +56,8 @@ public class WebLifecycle extends AbstractNotificationLifecycle {
       if (userSetting == null
           || !userSetting.isEnabled()
           || !userSetting.isChannelGloballyActive(WebChannel.ID)
-          || !userSetting.isActive(WebChannel.ID, pluginId)) {
+          || !userSetting.isActive(WebChannel.ID, pluginId)
+          || userSetting.isSpaceMuted(notification.getSpaceId())) {
         continue;
       }
       NotificationInfo notif = notification.clone(true).setTo(userId).setLastModifiedDate(Calendar.getInstance());

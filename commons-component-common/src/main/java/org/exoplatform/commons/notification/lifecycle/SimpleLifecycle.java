@@ -48,7 +48,8 @@ public final class SimpleLifecycle extends AbstractNotificationLifecycle {
       if (userSetting == null
           || !userSetting.isEnabled()
           || !userSetting.isChannelGloballyActive(channelId)
-          || !userSetting.isActive(channelId, pluginId)) {
+          || !userSetting.isActive(channelId, pluginId)
+          || userSetting.isSpaceMuted(notification.getSpaceId())) {
         continue;
       }
 
