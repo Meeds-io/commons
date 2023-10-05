@@ -62,6 +62,71 @@
             </field>
           </object>
         </object-param>
+        <object-param>
+          <name>template.TestNonMutablePlugin</name>
+          <description>The template of PluginTest</description>
+          <object type="org.exoplatform.commons.api.notification.plugin.config.PluginConfig">
+            <field name="pluginId">
+              <string>TestNonMutablePlugin</string>
+            </field>
+            <field name="resourceBundleKey">
+              <string>UINotification.label.TestPlugin</string>
+            </field>
+            <field name="order">
+              <string>1</string>
+            </field>
+            <field name="defaultConfig">
+              <collection type="java.util.ArrayList">
+                <value>
+                  <string>Instantly</string>
+                </value>
+                <value>
+                  <string>weekly</string>
+                </value>
+              </collection>
+            </field>
+            <field name="groupId">
+              <string>other</string>
+            </field>
+            <field name="bundlePath">
+              <string>locale.notification.template.Notification</string>
+            </field>
+            <field name="mutable">
+              <boolean>false</boolean>
+            </field>
+          </object>
+        </object-param>
+        <object-param>
+          <name>template.TestMutablePlugin</name>
+          <description>The template of PluginTest</description>
+          <object type="org.exoplatform.commons.api.notification.plugin.config.PluginConfig">
+            <field name="pluginId">
+              <string>TestMutablePlugin</string>
+            </field>
+            <field name="resourceBundleKey">
+              <string>UINotification.label.TestPlugin</string>
+            </field>
+            <field name="order">
+              <string>1</string>
+            </field>
+            <field name="defaultConfig">
+              <collection type="java.util.ArrayList">
+                <value>
+                  <string>Instantly</string>
+                </value>
+                <value>
+                  <string>weekly</string>
+                </value>
+              </collection>
+            </field>
+            <field name="groupId">
+              <string>other</string>
+            </field>
+            <field name="bundlePath">
+              <string>locale.notification.template.Notification</string>
+            </field>
+          </object>
+        </object-param>
       </init-params>
     </component-plugin>
     <component-plugin>

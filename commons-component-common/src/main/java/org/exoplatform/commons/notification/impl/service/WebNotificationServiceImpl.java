@@ -29,8 +29,12 @@ import org.exoplatform.commons.api.notification.channel.template.AbstractTemplat
 import org.exoplatform.commons.api.notification.model.ChannelKey;
 import org.exoplatform.commons.api.notification.model.MessageInfo;
 import org.exoplatform.commons.api.notification.model.NotificationInfo;
+import org.exoplatform.commons.api.notification.model.UserSetting;
 import org.exoplatform.commons.api.notification.model.WebNotificationFilter;
+import org.exoplatform.commons.api.notification.plugin.config.PluginConfig;
 import org.exoplatform.commons.api.notification.service.WebNotificationService;
+import org.exoplatform.commons.api.notification.service.setting.PluginSettingService;
+import org.exoplatform.commons.api.notification.service.setting.UserSettingService;
 import org.exoplatform.commons.api.notification.service.storage.WebNotificationStorage;
 import org.exoplatform.commons.notification.channel.WebChannel;
 import org.exoplatform.commons.notification.impl.NotificationContextImpl;
@@ -39,17 +43,24 @@ import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 
 public class WebNotificationServiceImpl implements WebNotificationService {
-  /** logger */
+
   private static final Log LOG = ExoLogger.getLogger(WebNotificationServiceImpl.class);
 
-  /** storage */
+  private final PluginSettingService   pluginSettingService;
+
+  private final UserSettingService     userSettingService;
+
   private final WebNotificationStorage storage;
 
   private final AbstractChannel        webChannel;
   
-  public WebNotificationServiceImpl(WebNotificationStorage webStorage,
+  public WebNotificationServiceImpl(PluginSettingService pluginSettingService,
+                                    UserSettingService userSettingService,
+                                    WebNotificationStorage webStorage,
                                     ChannelManager channelManager) {
     this.storage = webStorage;
+    this.pluginSettingService = pluginSettingService;
+    this.userSettingService = userSettingService;
     this.webChannel = channelManager.getChannel(ChannelKey.key(WebChannel.ID));
   }
 
@@ -92,7 +103,10 @@ public class WebNotificationServiceImpl implements WebNotificationService {
       limitReached = list.size() < limit || notifications.size() >= limit;
       offset += limit;
     } while (!limitReached);
-    return limit > 0 ? notifications.stream().limit(limit).toList() : notifications;
+    return limit > 0 ? notifications.stream()
+                     .limit(limit)
+                     .map(this::buildSpaceMuteProperties)
+                     .toList() : notifications;
   }
 
   @Override
@@ -152,6 +166,20 @@ public class WebNotificationServiceImpl implements WebNotificationService {
       throw new IllegalArgumentException("User is mandatory");
     }
     return storage.countUnreadByPlugin(userId);
+  }
+
+  private NotificationInfo buildSpaceMuteProperties(NotificationInfo notification) {
+    if (notification.getSpaceId() > 0) {
+      PluginConfig pluginConfig = pluginSettingService.getPluginConfig(notification.getKey().getId());
+      notification.setMutable(pluginConfig != null && pluginConfig.isMutable());
+      if (notification.getTo() != null) {
+        UserSetting userSetting = userSettingService.get(notification.getTo());
+        if (userSetting != null) {
+          notification.setSpaceMuted(userSetting.isSpaceMuted(notification.getSpaceId()));
+        }
+      }
+    }
+    return notification;
   }
 
   private String getNotificationMessage(NotificationContext ctx, NotificationInfo notification) {

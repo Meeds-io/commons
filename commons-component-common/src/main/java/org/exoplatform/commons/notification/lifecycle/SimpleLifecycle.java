@@ -20,8 +20,11 @@ import org.exoplatform.commons.api.notification.NotificationContext;
 import org.exoplatform.commons.api.notification.lifecycle.AbstractNotificationLifecycle;
 import org.exoplatform.commons.api.notification.model.NotificationInfo;
 import org.exoplatform.commons.api.notification.model.UserSetting;
+import org.exoplatform.commons.api.notification.plugin.config.PluginConfig;
+import org.exoplatform.commons.api.notification.service.setting.PluginSettingService;
 import org.exoplatform.commons.api.notification.service.setting.UserSettingService;
 import org.exoplatform.commons.utils.CommonsUtils;
+import org.exoplatform.container.ExoContainerContext;
 
 /**
  * Created by The eXo Platform SAS
@@ -41,6 +44,8 @@ public final class SimpleLifecycle extends AbstractNotificationLifecycle {
     String channelId = getChannel().getId();
     String pluginId = notification.getKey().getId();
     UserSettingService userService = CommonsUtils.getService(UserSettingService.class);
+    PluginSettingService pluginSettingService = ExoContainerContext.getService(PluginSettingService.class);
+    PluginConfig pluginConfig = pluginSettingService.getPluginConfig(pluginId);
 
     for (String userId : userIds) {
       UserSetting userSetting = userService.get(userId);
@@ -48,7 +53,8 @@ public final class SimpleLifecycle extends AbstractNotificationLifecycle {
       if (userSetting == null
           || !userSetting.isEnabled()
           || !userSetting.isChannelGloballyActive(channelId)
-          || !userSetting.isActive(channelId, pluginId)) {
+          || !userSetting.isActive(channelId, pluginId)
+          || (userSetting.isSpaceMuted(notification.getSpaceId()) && pluginConfig.isMutable())) {
         continue;
       }
 
