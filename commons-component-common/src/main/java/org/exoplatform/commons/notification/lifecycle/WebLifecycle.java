@@ -22,6 +22,7 @@ import org.exoplatform.commons.api.notification.lifecycle.AbstractNotificationLi
 import org.exoplatform.commons.api.notification.model.MessageInfo;
 import org.exoplatform.commons.api.notification.model.NotificationInfo;
 import org.exoplatform.commons.api.notification.model.UserSetting;
+import org.exoplatform.commons.api.notification.plugin.config.PluginConfig;
 import org.exoplatform.commons.api.notification.service.setting.PluginSettingService;
 import org.exoplatform.commons.api.notification.service.setting.UserSettingService;
 import org.exoplatform.commons.api.notification.service.storage.WebNotificationStorage;
@@ -45,18 +46,21 @@ public class WebLifecycle extends AbstractNotificationLifecycle {
   public void process(NotificationContext ctx, String... userIds) {
     NotificationInfo notification = ctx.getNotificationInfo();
     String pluginId = notification.getKey().getId();
-    if (!CommonsUtils.getService(PluginSettingService.class).isActive(WebChannel.ID, pluginId)
+    PluginSettingService pluginSettingService = CommonsUtils.getService(PluginSettingService.class);
+    if (!pluginSettingService.isActive(WebChannel.ID, pluginId)
         || notification.isRead()) {
       return;
     }
 
+    PluginConfig pluginConfig = pluginSettingService.getPluginConfig(pluginId);
     UserSettingService userService = CommonsUtils.getService(UserSettingService.class);
     for (String userId : userIds) {
       UserSetting userSetting = userService.get(userId);
       if (userSetting == null
           || !userSetting.isEnabled()
           || !userSetting.isChannelGloballyActive(WebChannel.ID)
-          || !userSetting.isActive(WebChannel.ID, pluginId)) {
+          || !userSetting.isActive(WebChannel.ID, pluginId)
+          || (userSetting.isSpaceMuted(notification.getSpaceId()) && pluginConfig.isMutable())) {
         continue;
       }
       NotificationInfo notif = notification.clone(true).setTo(userId).setLastModifiedDate(Calendar.getInstance());
