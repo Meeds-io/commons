@@ -21,6 +21,8 @@ public abstract class AbstractService {
 
   public static final String  EXO_IS_ACTIVE      = "exo:isActive";
 
+  public static final String  EXO_MUTED_SPACES   = "exo:mutedSpaces";
+
   public static final String  EXO_INSTANTLY      = "exo:instantly";
 
   public static final String  EXO_DAILY          = "exo:daily";

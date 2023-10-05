@@ -58,6 +58,8 @@ public class UserSetting {
 
   private List<String>              weeklyPlugins;
 
+  private List<Long>                mutedSpaces;
+
   private long                      lastReadDate = 0;
 
   private boolean                   isEnabled    = true;
@@ -94,9 +96,38 @@ public class UserSetting {
   public boolean isChannelGloballyActive(String channelId) {
     return isEnabled && channelActives != null && channelActives.contains(channelId);
   }
-
+  
   public boolean isChannelActive(String channelId, String pluginId) {
     return isEnabled && channelPlugins != null && channelPlugins.containsKey(channelId) && channelPlugins.get(channelId).contains(pluginId);
+  }
+
+  public boolean isSpaceMuted(long spaceId) {
+    return mutedSpaces != null && mutedSpaces.contains(spaceId);
+  }
+
+  public void addMutedSpace(long spaceId) {
+    if (mutedSpaces == null) {
+      mutedSpaces = new ArrayList<>();
+    }
+    mutedSpaces.add(spaceId);
+  }
+
+  public void removeMutedSpace(long spaceId) {
+    if (mutedSpaces != null) {
+      mutedSpaces.remove(spaceId);
+    }
+  }
+
+  public void setMutedSpaces(List<Long> mutedSpaces) {
+    this.mutedSpaces = mutedSpaces == null ? new ArrayList<>() : new ArrayList<>(mutedSpaces);
+  }
+
+  public List<Long> getMutedSpaces() {
+    if (mutedSpaces == null) {
+      return Collections.emptyList();
+    } else {
+      return mutedSpaces;
+    }
   }
 
   public void setChannelActive(String channelId) {
@@ -265,6 +296,7 @@ public class UserSetting {
       setting.setChannelPlugins(entry.getKey(), newList(entry.getValue()));
     }
     setting.setUserId(userId);
+    setting.setMutedSpaces(mutedSpaces);
     return setting;
   }
 
