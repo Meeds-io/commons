@@ -19,7 +19,6 @@ package org.exoplatform.commons.api.notification.model;
 import java.util.ArrayList;
 import java.util.List;
 
-
 public class PluginInfo {
 
   private String       type;
@@ -30,7 +29,9 @@ public class PluginInfo {
   
   private String       bundlePath;
 
-  private List<String> defaultConfig = new ArrayList<String>();
+  private List<String> defaultConfig = new ArrayList<>();
+
+  private boolean      mutable;
 
   /**
    * @return the type
@@ -104,6 +105,15 @@ public class PluginInfo {
   public PluginInfo setBundlePath(String bundlePath) {
     this.bundlePath = bundlePath;
     return this;
+  }
+
+  public PluginInfo setMutable(boolean mutable) {
+    this.mutable = mutable;
+    return this;
+  }
+
+  public boolean isMutable() {
+    return mutable;
   }
 
   public PluginInfo end() {
