@@ -25,6 +25,7 @@ import org.exoplatform.commons.api.notification.lifecycle.AbstractNotificationLi
 import org.exoplatform.commons.api.notification.model.MessageInfo;
 import org.exoplatform.commons.api.notification.model.NotificationInfo;
 import org.exoplatform.commons.api.notification.model.UserSetting;
+import org.exoplatform.commons.api.notification.plugin.config.PluginConfig;
 import org.exoplatform.commons.api.notification.service.QueueMessage;
 import org.exoplatform.commons.api.notification.service.setting.PluginSettingService;
 import org.exoplatform.commons.api.notification.service.setting.UserSettingService;
@@ -33,6 +34,7 @@ import org.exoplatform.commons.notification.NotificationContextFactory;
 import org.exoplatform.commons.notification.NotificationUtils;
 import org.exoplatform.commons.notification.channel.MailChannel;
 import org.exoplatform.commons.utils.CommonsUtils;
+import org.exoplatform.container.ExoContainerContext;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 
@@ -59,13 +61,15 @@ public class MailLifecycle extends AbstractNotificationLifecycle {
       return;
     }
     UserSettingService userService = CommonsUtils.getService(UserSettingService.class);
+    PluginSettingService pluginSettingService = ExoContainerContext.getService(PluginSettingService.class);
+    PluginConfig pluginConfig = pluginSettingService.getPluginConfig(pluginId);
     List<String> userIdPendings = new ArrayList<>();
     for (String userId : userIds) {
       UserSetting userSetting = userService.get(userId);
       if (userSetting == null
           || !userSetting.isEnabled()
           || !userSetting.isChannelGloballyActive(MailChannel.ID)
-          || userSetting.isSpaceMuted(notification.getSpaceId())) {
+          || (userSetting.isSpaceMuted(notification.getSpaceId()) && pluginConfig.isMutable())) {
         continue;
       }
       // check plugin active for user

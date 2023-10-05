@@ -19,6 +19,8 @@ package org.exoplatform.commons.api.notification.lifecycle;
 import org.exoplatform.commons.api.notification.NotificationContext;
 import org.exoplatform.commons.api.notification.model.NotificationInfo;
 import org.exoplatform.commons.api.notification.model.UserSetting;
+import org.exoplatform.commons.api.notification.plugin.config.PluginConfig;
+import org.exoplatform.commons.api.notification.service.setting.PluginSettingService;
 import org.exoplatform.commons.api.notification.service.setting.UserSettingService;
 import org.exoplatform.container.ExoContainerContext;
 
@@ -41,12 +43,14 @@ public final class DefaultLifecycle extends AbstractNotificationLifecycle {
     String channelId = getChannel().getId();
     String pluginId = notification.getKey().getId();
     UserSettingService userService = ExoContainerContext.getService(UserSettingService.class);
+    PluginSettingService pluginSettingService = ExoContainerContext.getService(PluginSettingService.class);
+    PluginConfig pluginConfig = pluginSettingService.getPluginConfig(pluginId);
     for (String userId : userIds) {
       UserSetting userSetting = userService.get(userId);
       if (!userSetting.isEnabled()
           || !userSetting.isChannelGloballyActive(channelId)
           || !userSetting.isActive(channelId, pluginId)
-          || userSetting.isSpaceMuted(notification.getSpaceId())) {
+          || (userSetting.isSpaceMuted(notification.getSpaceId()) && pluginConfig.isMutable())) {
         continue;
       }
       process(ctx.setNotificationInfo(notification.clone(true).setTo(userId)), userId);

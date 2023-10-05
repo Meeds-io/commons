@@ -48,12 +48,14 @@ public class WebLifecycleTest extends BaseCommonsTestCase {
     webParamsDAO = getService(WebParamsDAO.class);
     webUsersDAO = getService(WebUsersDAO.class);
 
+    begin();
     cleanData();
   }
 
   public void tearDown() throws Exception {
     super.tearDown();
     cleanData();
+    end();
   }
 
   public void testReceiveOneNotificationWhenUsersHaveDefaultSettings() {
@@ -85,21 +87,21 @@ public class WebLifecycleTest extends BaseCommonsTestCase {
     NotificationContext ctx = NotificationContextImpl.cloneInstance();
     ctx.setNotificationInfo(notificationInfo);
 
-    UserSetting johnSettings = userSettingService.get("john");
-    johnSettings.removeChannelActive(WebChannel.ID);
-    userSettingService.save(johnSettings);
+    UserSetting marySettings = userSettingService.get("mary");
+    marySettings.removeChannelActive(WebChannel.ID);
+    userSettingService.save(marySettings);
 
     WebChannel webChannel = new WebChannel();
     WebLifecycle webLifecycle = (WebLifecycle) webChannel.getLifecycle();
 
     // When
-    webLifecycle.process(ctx, "john", "demo");
+    webLifecycle.process(ctx, "mary", "demo");
 
     // Then
-    WebNotificationFilter filterJohn = new WebNotificationFilter("john");
-    List<NotificationInfo> webNotificationsJohn = webNotificationService.getNotificationInfos(filterJohn, 0, 10);
-    assertNotNull(webNotificationsJohn);
-    assertEquals(0, webNotificationsJohn.size());
+    WebNotificationFilter filterMary = new WebNotificationFilter("mary");
+    List<NotificationInfo> webNotificationsMary = webNotificationService.getNotificationInfos(filterMary, 0, 10);
+    assertNotNull(webNotificationsMary);
+    assertEquals(0, webNotificationsMary.size());
     WebNotificationFilter filterDemo = new WebNotificationFilter("demo");
     List<NotificationInfo> webNotificationsDemo = webNotificationService.getNotificationInfos(filterDemo, 0, 10);
     assertNotNull(webNotificationsDemo);
@@ -179,7 +181,7 @@ public class WebLifecycleTest extends BaseCommonsTestCase {
   public void testReceiveNotificationWithNonMutablePlugin() {
     // Given
     NotificationInfo notificationInfo = new NotificationInfo().key("TestNonMutablePlugin");
-    notificationInfo.setSpaceId(5l);
+    notificationInfo.setSpaceId(525l);
     NotificationContext ctx = NotificationContextImpl.cloneInstance();
     ctx.setNotificationInfo(notificationInfo);
 
@@ -195,13 +197,13 @@ public class WebLifecycleTest extends BaseCommonsTestCase {
                                                                                               0,
                                                                                               10);
     assertNotNull(webNotificationsJohn);
-    assertEquals(0, webNotificationsJohn.size());
+    assertEquals(1, webNotificationsJohn.size());
   }
 
   public void testReceiveNotificationWithMutablePlugin() {
     // Given
     NotificationInfo notificationInfo = new NotificationInfo().key("TestMutablePlugin");
-    notificationInfo.setSpaceId(2l);
+    notificationInfo.setSpaceId(2664l);
     NotificationContext ctx = NotificationContextImpl.cloneInstance();
     ctx.setNotificationInfo(notificationInfo);
     
@@ -224,7 +226,7 @@ public class WebLifecycleTest extends BaseCommonsTestCase {
   public void testReceiveNotificationWithMutablePluginAndMutedSpace() {
     // Given
     NotificationInfo notificationInfo = new NotificationInfo().key("TestMutablePlugin");
-    notificationInfo.setSpaceId(5l);
+    notificationInfo.setSpaceId(5668l);
 
     UserSetting johnSettings = userSettingService.get("john");
     johnSettings.addMutedSpace(notificationInfo.getSpaceId());
@@ -285,6 +287,7 @@ public class WebLifecycleTest extends BaseCommonsTestCase {
     webParamsDAO.deleteAll();
     webNotifDAO.deleteAll();
 
+    restartTransaction();
     // Reset notifications user settings
     UserSetting userSetting = new UserSetting();
     userSetting.setUserId("john");
@@ -294,6 +297,7 @@ public class WebLifecycleTest extends BaseCommonsTestCase {
     userSettingService.save(userSetting);
     userSetting.setUserId("mary");
     userSettingService.save(userSetting);
+    restartTransaction();
   }
 
   /**
