@@ -32,6 +32,7 @@ import org.exoplatform.commons.api.notification.model.NotificationInfo;
 import org.exoplatform.commons.api.notification.model.PluginKey;
 import org.exoplatform.commons.api.notification.model.UserSetting;
 import org.exoplatform.commons.api.notification.model.UserSetting.FREQUENCY;
+import org.exoplatform.commons.api.notification.plugin.config.PluginConfig;
 import org.exoplatform.commons.api.notification.service.QueueMessage;
 import org.exoplatform.commons.api.notification.service.setting.PluginSettingService;
 import org.exoplatform.commons.api.notification.service.setting.UserSettingService;
@@ -219,7 +220,7 @@ public class NotificationServiceImpl extends AbstractService implements Notifica
         users = users.stream().filter(userId -> !notification.isExcluded(userId)).toList();
       }
       if (!users.isEmpty()) {
-        lifecycle.process(notificationContext, users.toArray(new String[users.size()]));
+        processLifecycle(notificationContext, lifecycle, users);
       }
     }
   }
@@ -228,6 +229,23 @@ public class NotificationServiceImpl extends AbstractService implements Notifica
                                   NotificationInfo notification,
                                   AbstractNotificationLifecycle lifecycle) {
     List<String> userIds = notification.getSendToUserIds();
+    processLifecycle(notificationContext, lifecycle, userIds);
+  }
+
+  private void processLifecycle(NotificationContext notificationContext,
+                                AbstractNotificationLifecycle lifecycle,
+                                List<String> userIds) {
+    NotificationInfo notificationInfo = notificationContext.getNotificationInfo();
+    long spaceId = notificationInfo.getSpaceId();
+    if (spaceId > 0) {
+      PluginSettingService pluginSettingService = CommonsUtils.getService(PluginSettingService.class);
+      PluginConfig pluginConfig = pluginSettingService.getPluginConfig(notificationInfo.getKey().getId());
+      if (pluginConfig.isMutable()) {
+        userIds = userIds.stream()
+                         .filter(username -> !pluginConfig.isMutable() || !userService.get(username).isSpaceMuted(spaceId))
+                         .toList();
+      }
+    }
     lifecycle.process(notificationContext, userIds.toArray(new String[userIds.size()]));
   }
 

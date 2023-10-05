@@ -45,7 +45,8 @@ public final class DefaultLifecycle extends AbstractNotificationLifecycle {
       UserSetting userSetting = userService.get(userId);
       if (!userSetting.isEnabled()
           || !userSetting.isChannelGloballyActive(channelId)
-          || !userSetting.isActive(channelId, pluginId)) {
+          || !userSetting.isActive(channelId, pluginId)
+          || userSetting.isSpaceMuted(notification.getSpaceId())) {
         continue;
       }
       process(ctx.setNotificationInfo(notification.clone(true).setTo(userId)), userId);

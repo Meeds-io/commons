@@ -20,10 +20,13 @@ import java.io.Serializable;
 import java.util.*;
 
 import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -74,6 +77,16 @@ public class NotificationInfo implements Serializable, Cloneable {
   private boolean             resetOnBadge          = false;
 
   private boolean             isUpdate              = false;
+
+  private long                spaceId               = 0l;
+
+  @Getter
+  @Setter
+  private boolean             mutable               = false;
+
+  @Getter
+  @Setter
+  private boolean             spaceMuted            = false;
 
   public static NotificationInfo instance() {
     return new NotificationInfo();
@@ -264,6 +277,22 @@ public class NotificationInfo implements Serializable, Cloneable {
    */
   public String getValueOwnerParameter(String key) {
     return ownerParameter.get(key);
+  }
+
+  public long getSpaceId() {
+    if (spaceId == 0) {
+      String spaceIdString = getValueOwnerParameter("spaceId");
+      if (StringUtils.isNotBlank(spaceIdString) && StringUtils.isNumeric(spaceIdString)) {
+        spaceId = Long.parseLong(spaceIdString);
+      }
+    }
+    return spaceId;
+  }
+
+  public NotificationInfo setSpaceId(long spaceId) {
+    this.spaceId = spaceId;
+    getOwnerParameter().put("spaceId", String.valueOf(spaceId));
+    return this;
   }
 
   /**
@@ -490,7 +519,10 @@ public class NotificationInfo implements Serializable, Cloneable {
                                 isNew || isOnPopOver,
                                 !isNew && read,
                                 !isNew && resetOnBadge,
-                                !isNew);
+                                !isNew,
+                                spaceId,
+                                mutable,
+                                spaceMuted);
   }
 
   /**

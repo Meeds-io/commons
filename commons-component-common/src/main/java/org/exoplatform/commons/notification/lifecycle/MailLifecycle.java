@@ -64,7 +64,8 @@ public class MailLifecycle extends AbstractNotificationLifecycle {
       UserSetting userSetting = userService.get(userId);
       if (userSetting == null
           || !userSetting.isEnabled()
-          || !userSetting.isChannelGloballyActive(MailChannel.ID)) {
+          || !userSetting.isChannelGloballyActive(MailChannel.ID)
+          || userSetting.isSpaceMuted(notification.getSpaceId())) {
         continue;
       }
       // check plugin active for user
