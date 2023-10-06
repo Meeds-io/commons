@@ -17,11 +17,10 @@ CKEDITOR.editorConfig = function( config ){
   // config to add custom plugin  
   CKEDITOR.plugins.addExternal('content','/eXoWCMResources/eXoPlugins/content/','plugin.js');
   CKEDITOR.plugins.addExternal('simpleLink','/commons-extension/eXoPlugins/simpleLink/','plugin.js');
-  CKEDITOR.plugins.addExternal('confirmBeforeReload','/commons-extension/eXoPlugins/confirmBeforeReload/','plugin.js');
   CKEDITOR.plugins.addExternal('acceptInline','/eXoWCMResources/eXoPlugins/acceptInline/','plugin.js');
   CKEDITOR.plugins.addExternal('cancelInline','/eXoWCMResources/eXoPlugins/cancelInline/','plugin.js');
 
-	config.extraPlugins = 'content,acceptInline,cancelInline,onchange,syntaxhighlight,confirmBeforeReload';
+	config.extraPlugins = 'content,acceptInline,cancelInline,onchange,syntaxhighlight';
 	config.removePlugins = 'scayt,wsc';
 	config.toolbarCanCollapse = false;
 	config.skin = 'moono-exo,/commons-extension/ckeditor/skins/moono-exo/';
