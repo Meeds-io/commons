@@ -130,6 +130,8 @@ public class JPAUserSettingServiceImpl extends AbstractService implements UserSe
     String dailys = NotificationUtils.listToString(model.getDailyPlugins(), VALUE_PATTERN);
     String weeklys = NotificationUtils.listToString(model.getWeeklyPlugins(), VALUE_PATTERN);
     String channelActives = NotificationUtils.listToString(model.getChannelActives(), VALUE_PATTERN);
+    String mutedSpaces = NotificationUtils.listToString(model.getMutedSpaces().stream().map(String::valueOf).toList(),
+                                                        VALUE_PATTERN);
 
     // Notification scope
 
@@ -144,6 +146,7 @@ public class JPAUserSettingServiceImpl extends AbstractService implements UserSe
     saveUserSetting(userId, NOTIFICATION_SCOPE, EXO_DAILY, dailys);
     saveUserSetting(userId, NOTIFICATION_SCOPE, EXO_WEEKLY, weeklys);
     saveUserSetting(userId, NOTIFICATION_SCOPE, EXO_IS_ACTIVE, channelActives);
+    saveUserSetting(userId, NOTIFICATION_SCOPE, EXO_MUTED_SPACES, mutedSpaces);
     if (model.getLastReadDate() > 0) {
       saveLastReadDate(userId, model.getLastReadDate());
     }
@@ -188,6 +191,7 @@ public class JPAUserSettingServiceImpl extends AbstractService implements UserSe
       Set<String> channelActives = userSettings.getChannelActives();
       List<String> dailyPlugins = userSettings.getDailyPlugins();
       List<String> weeklyPlugins = userSettings.getWeeklyPlugins();
+      List<String> mutedSpaces = userSettings.getMutedSpaces().stream().map(String::valueOf).toList();
 
       // Notification settings
       Map<String, SettingValue<String>> notificationSettings = userNotificationSettings.get(NOTIFICATION_SCOPE);
@@ -213,6 +217,8 @@ public class JPAUserSettingServiceImpl extends AbstractService implements UserSe
           userSettings.setDailyPlugins(getArrayListValue(value, dailyPlugins));
         } else if (EXO_WEEKLY.equals(key)) {
           userSettings.setWeeklyPlugins(getArrayListValue(value, weeklyPlugins));
+        } else if (EXO_MUTED_SPACES.equals(key)) {
+          userSettings.setMutedSpaces(getArrayListValue(value, mutedSpaces).stream().map(Long::parseLong).toList());
         } else if (channelPluginByName.containsKey(key)) {
           AbstractChannel channel = channelPluginByName.get(key);
           userSettings.setChannelPlugins(channel.getId(), getArrayListValue(value, new ArrayList<>()));

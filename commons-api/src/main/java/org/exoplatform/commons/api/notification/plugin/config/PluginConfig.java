@@ -21,6 +21,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import lombok.Getter;
+import lombok.Setter;
+
 public class PluginConfig {
   public static final String  DEFAULT_SRC_RESOURCE_BUNDLE_KEY = "locale.notification.template.Notification";
 
@@ -46,7 +49,7 @@ public class PluginConfig {
 
   private String              groupId                         = "other";
 
-  private List<String>        defaultConfig                   = new ArrayList<String>();
+  private List<String>        defaultConfig                   = new ArrayList<>();
 
   private GroupConfig         groupConfig;
 
@@ -56,7 +59,11 @@ public class PluginConfig {
 
   private List<String>        additionalChannels              = new ArrayList<>();
 
-  private Map<String, String> keyMapping                      = new HashMap<String, String>();
+  private Map<String, String> keyMapping                      = new HashMap<>();
+
+  @Getter
+  @Setter
+  private boolean             mutable                         = true;
 
   public PluginConfig() {
     templateConfig = new TemplateConfig();
