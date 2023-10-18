@@ -66,7 +66,7 @@ public class NotificationExecutorImpl implements NotificationExecutor {
           if (notifiction != null) {
             notificationService.process(notifiction);
           }
-        } catch (Exception e) {
+        } catch (Throwable e) {
           LOG.warn("Process NotificationInfo is failed: " + e.getMessage(), e);
           return false;
         } finally {
