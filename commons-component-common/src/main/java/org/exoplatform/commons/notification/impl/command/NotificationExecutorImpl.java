@@ -61,13 +61,14 @@ public class NotificationExecutorImpl implements NotificationExecutor {
         PortalContainer container = PortalContainer.getInstance();
         ExoContainerContext.setCurrentContainer(container);
         RequestLifeCycle.begin(container);
+        NotificationInfo notification = create(ctx, command);
         try {
-          NotificationInfo notifiction = create(ctx, command);
-          if (notifiction != null) {
-            notificationService.process(notifiction);
+          if (notification != null) {
+            notificationService.process(notification);
           }
         } catch (Throwable e) {
-          LOG.warn("Process NotificationInfo is failed: " + e.getMessage(), e);
+          String pluginId = notification.getKey().getId();
+          LOG.warn("Process NotificationInfo is failed. Plugin id={}, error message={}", pluginId, e.getMessage(), e);
           return false;
         } finally {
           RequestLifeCycle.end();
