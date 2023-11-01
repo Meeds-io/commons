@@ -1,0 +1,175 @@
+/**
+  This file is part of the Meeds project (https://meeds.io/).
+  Copyright (C) 2020 - 2023 Meeds Association contact@meeds.io
+  This program is free software; you can redistribute it and/or
+  modify it under the terms of the GNU Lesser General Public
+  License as published by the Free Software Foundation; either
+  version 3 of the License, or (at your option) any later version.
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+  Lesser General Public License for more details.
+  You should have received a copy of the GNU Lesser General Public License
+  along with this program; if not, write to the Free Software Foundation,
+  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+*/
+
+@import "./editor.less";
+
+.VuetifyApp .v-application .extended-rich-content {
+
+  pre {
+    padding: 9.5px;
+    margin: 0 0 10px;
+    font-size: 13px;
+    line-height: 20px;
+    border: 1px solid rgba(0, 0, 0, 0.15);
+
+    code {
+      white-space: pre-wrap !important;
+      display: block;
+      padding: 0.5em !important;
+      font-size: @codeFontSize;
+      font-weight: @normalFontWeight;
+    }
+  }
+
+  table[border="0"] tr, table[border="0"] tr td {
+    border-width: 0 !important;
+  }
+
+  table tr, table tr td {
+    border-width: 1px !important;
+    border-style: solid !important;
+  }
+
+  table[align="center"] {
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  table[align="left"] {
+    margin-right: auto;
+  }
+
+  table[align="right"] {
+    margin-left: auto;
+  }
+
+  table {
+    border-collapse: collapse;
+    box-sizing: revert;
+    margin-top: 0 !important;
+    margin-bottom: 10px !important;
+
+    td, th {
+      line-height: @normalLineHeight;
+      font-size: @normalFontSize;
+      padding: 5px;
+
+      p:last-child {
+        margin-bottom: 0 !important;
+      }
+    }
+  }
+
+  img {
+    margin: @imageMargin !important;
+  }
+
+  blockquote {
+    font-weight: @blockquoteFontWeight;
+    padding: @blockquotePadding !important;
+    border-left-color: var(--allPagesPrimaryColor, #3f8487) !important;
+    margin: @blockquoteMargin;
+
+    p {
+      margin-bottom: 0;
+      line-height: @normalLineHeight;
+      font-size: @normalFontSize !important;
+      font-style: @blockquoteFontStyle;
+    }
+
+    strong {
+      font-weight: bold;
+    }
+  }
+
+  a {
+    color: @linkColor;
+  }
+
+  ol, ul, dl {
+    margin: @listMargin !important;
+    padding: @listPadding !important;
+  }
+
+  ol {
+    list-style-type: decimal;
+
+    & ol {
+      list-style-type: lower-latin;
+
+      & ol {
+        list-style-type: lower-roman;
+
+        & ol {
+          list-style-type: upper-latin;
+
+          & ol {
+            list-style-type: upper-roman;
+          }
+        }
+      }
+    }
+  }
+
+  ul li, ol li {
+    list-style: revert;
+    font-size: @normalFontSize;
+    line-height: @normalLineHeight;
+    list-style-type: inherit !important;
+  }
+
+  h1 {
+    font-size: @h1FontSize;
+    margin-top: 45px;
+  }
+
+  h2 {
+    font-size: @h2FontSize;
+    margin-top: 35px;
+  }
+
+  h3 {
+    font-size: @h3FontSize;
+    margin-top: 25px;
+  }
+
+
+  h4, h5, h6 {
+    font-weight: @normalFontWeight;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    line-height: @TitleLineHeight;
+
+  }
+
+  h1, h2, h3 {
+    font-weight: @TitleFontWeight;
+  }
+
+  h1:first-child, h2:first-child, h3:first-child {
+    margin-top: 0;
+  }
+
+  p, li {
+    line-height: @normalLineHeight;
+  }
+
+  p, li, blockquote {
+    font-size: @normalFontSize;
+  }
+
+}
