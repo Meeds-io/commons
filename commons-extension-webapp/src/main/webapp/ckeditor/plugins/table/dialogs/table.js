@@ -363,10 +363,11 @@
 								this.setValue( selectedTable.getAttribute( 'border' ) || '' );
 							},
 							commit: function( data, selectedTable ) {
-								if ( this.getValue() )
-									selectedTable.setAttribute( 'border', this.getValue() );
-								else
-									selectedTable.removeAttribute( 'border' );
+								if (this.getValue()) {
+									selectedTable.setAttribute('border', this.getValue());
+									selectedTable.setAttribute('style', `border-width:${this.getValue()}px;`);
+								} else
+									selectedTable.removeAttribute('border');
 							}
 						},
 						{
