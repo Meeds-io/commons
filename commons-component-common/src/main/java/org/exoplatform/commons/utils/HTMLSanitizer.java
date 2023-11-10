@@ -21,8 +21,11 @@ package org.exoplatform.commons.utils;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Map;
 import java.util.regex.Pattern;
 
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import org.apache.commons.collections.CollectionUtils;
 import org.owasp.html.*;
 
@@ -90,6 +93,12 @@ abstract public class HTMLSanitizer {
 
   private static final Pattern                                                ALLOW_FULL_SCREEN_ON_IFRAME               = Pattern.compile("fullscreen");
 
+
+  private static final CssSchema.Property                                     ASPECT_RATIO_PROPERTY       =
+                                                                                                    new CssSchema.Property(5,
+                                                                                                                           ImmutableSet.of("auto",
+                                                                                                                                           "inherit"),
+                                                                                                                           ImmutableMap.of());
 
   /** A policy definition that matches the minimal HTML that eXo allows. */
   public static final Function<HtmlStreamEventReceiver, HtmlSanitizer.Policy> POLICY_DEFINITION        = new HtmlPolicyBuilder()
@@ -270,6 +279,10 @@ abstract public class HTMLSanitizer {
                                                                                                                                 .matching(NUMBER_OR_PERCENT)
                                                                                                                                 .onElements("colgroup",
                                                                                                                                         "col")
+                                                                                                                                .allowStyling(CssSchema.withProperties(Map.of("aspect-ratio",
+                                                                                                                                        ASPECT_RATIO_PROPERTY)))
+                                                                                                                                .allowAttributes("data-iframe")
+                                                                                                                                .onElements("oembed")
                                                                                                                                 .allowElements("a",
                                                                                                                                         "oembed",
                                                                                                                                         "label",
