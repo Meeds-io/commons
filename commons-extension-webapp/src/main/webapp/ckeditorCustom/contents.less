@@ -3,20 +3,10 @@ Copyright (c) 2003-2015, CKSource - Frederico Knabben. All rights reserved.
 For licensing, see LICENSE.md or http://ckeditor.com/license
 */
 
-@import (css) "/rest/v1/platform/branding/css";
 @import "../ckeditor/skins/common/editor.less";
 
-@font-face {
-  font-family: 'PLF-FONT-ICONS';
-  src: url('/platform-ui/skin/fonts/PLF-FONT-ICONS.eot?-m9uidt');
-  src: url('/platform-ui/skin/fonts/PLF-FONT-ICONS.eot?#iefix-m9uidt') format('embedded-opentype'), url('/platform-ui/skin/fonts/PLF-FONT-ICONS.ttf?-m9uidt') format('truetype'), url('/platform-ui/skin/fonts/PLF-FONT-ICONS.woff?-m9uidt') format('woff'), url('/platform-ui/skin/fonts/PLF-FONT-ICONS.svg?-m9uidt#PLF-FONT-ICONS') format('svg');
-  font-weight: normal;
-  font-style: normal;
-}
 
 body {
-  /* Font */
-  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
   font-size: @normalFontSize;
   overflow: auto;
 
@@ -150,7 +140,7 @@ span[data-cke-display-name="image"] {
 }
 
 a {
-  color: @linkColor;
+  color: @linkColor !important;
 }
 
 ol, ul, dl {
