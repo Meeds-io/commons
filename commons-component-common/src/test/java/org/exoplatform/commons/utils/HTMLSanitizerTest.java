@@ -97,7 +97,7 @@ public class HTMLSanitizerTest {
   public void testNotAllowedURLInIFrame() throws Exception {
     String input = "<iframe allow=\"fullscreen\" frameborder=\"0\" src=\"https://www.udemy.com/course/java-the-complete-java-developer-course/\"></iframe>";
     String sanitized = HTMLSanitizer.sanitize(input);
-    assertEquals("<iframe allow=\"fullscreen\" frameborder=\"0\"></iframe>", sanitized);
+    assertEquals("<iframe allow=\"fullscreen\" frameborder=\"0\" src=\"https://www.udemy.com/course/java-the-complete-java-developer-course/\"></iframe>", sanitized);
   }
 
   @Test

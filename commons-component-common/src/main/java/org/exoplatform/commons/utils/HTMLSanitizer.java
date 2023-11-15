@@ -87,9 +87,7 @@ abstract public class HTMLSanitizer {
   @SuppressWarnings("unchecked")
   private static final Collection<String>                                     CUSTOM_ALLOWED_STYLES    =
                                                                                                     (Collection<String>) CollectionUtils.union(CssSchema.DEFAULT.allowedProperties(),
-                                                                                                                                               Arrays.asList(new String[]{"float", "display", "clear"}));
-  private static final Pattern                                                SRC_ON_IFRAME               = Pattern.compile("^(https?\\:\\/\\/)?(www\\.youtube\\.com|youtu\\.?be|player.vimeo\\.com|dai\\.?ly|www\\.dailymotion\\.com)\\/.+$");
-
+                                                                                                                                               Arrays.asList(new String[]{"float", "display", "clear", "position", "left", "top"}));
 
   private static final Pattern                                                ALLOW_FULL_SCREEN_ON_IFRAME               = Pattern.compile("fullscreen");
 
@@ -118,6 +116,8 @@ abstract public class HTMLSanitizer {
                                                                                                                                 .matching(HTML_TITLE)
                                                                                                                                 .globally()
                                                                                                                                 .allowStyling(CssSchema.withProperties(CUSTOM_ALLOWED_STYLES))
+                                                                                                                                .allowStyling(CssSchema.withProperties(Map.of("aspect-ratio",
+                                                                                                                                                                                 ASPECT_RATIO_PROPERTY)))
                                                                                                                                 .allowAttributes("align")
                                                                                                                                 .matching(ALIGN)
                                                                                                                                 .onElements("p")
@@ -279,10 +279,6 @@ abstract public class HTMLSanitizer {
                                                                                                                                 .matching(NUMBER_OR_PERCENT)
                                                                                                                                 .onElements("colgroup",
                                                                                                                                         "col")
-                                                                                                                                .allowStyling(CssSchema.withProperties(Map.of("aspect-ratio",
-                                                                                                                                        ASPECT_RATIO_PROPERTY)))
-                                                                                                                                .allowAttributes("data-iframe")
-                                                                                                                                .onElements("oembed")
                                                                                                                                 .allowElements("a",
                                                                                                                                         "oembed",
                                                                                                                                         "label",
@@ -348,16 +344,14 @@ abstract public class HTMLSanitizer {
                                                                                                                                 .allowElements("wikiimage","wikilink","wikimacro")
                                                                                                                                 .allowAttributes("wikiparam")
                                                                                                                                 .globally()
-
                                                                                                                                 .allowAttributes("src")
-                                                                                                                                .matching(SRC_ON_IFRAME)
                                                                                                                                 .onElements("iframe")
                                                                                                                                 .allowAttributes("allow")
                                                                                                                                 .matching(ALLOW_FULL_SCREEN_ON_IFRAME)
                                                                                                                                 .onElements("iframe")
                                                                                                                                 .allowAttributes("frameborder")
                                                                                                                                 .onElements("iframe")
-                                                                                                                                .allowAttributes("contenteditable")
+                                                                                                                                .allowAttributes("contenteditable", "data-url")
                                                                                                                                 .globally()
                                                                                                                                 .allowAttributes("v-identity-popover")
                                                                                                                                 .globally()

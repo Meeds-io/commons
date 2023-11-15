@@ -110,10 +110,10 @@
 						var that = this;
 
 						if ( editor.plugins.codesnippet.isSupportedEnvironment() ) {
-							window.require(['SHARED/codeHighlighter'], function(hljs) {
-								that.hljs = hljs;
+							CKEDITOR.scriptLoader.load( path + 'lib/highlight/highlight.min.js', function() {
+								that.hljs = window.hljs;
 								callback();
-							});
+							} );
 						}
 
 						// Method is available only if wysiwygarea exists.
