@@ -51,7 +51,7 @@ public class NotificationPluginUtilsTest extends AbstractKernelTest {
     }
 
     language = NotificationPluginUtils.getLanguage(userName);
-    assertEquals(langFR_FR, language);
+    assertEquals(langFR, language);
   }
 
   public void testGetBrandingPortalName() throws Exception {
