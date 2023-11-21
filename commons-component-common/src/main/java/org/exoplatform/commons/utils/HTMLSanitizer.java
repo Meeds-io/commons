@@ -21,8 +21,11 @@ package org.exoplatform.commons.utils;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Map;
 import java.util.regex.Pattern;
 
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import org.apache.commons.collections.CollectionUtils;
 import org.owasp.html.*;
 
@@ -84,12 +87,16 @@ abstract public class HTMLSanitizer {
   @SuppressWarnings("unchecked")
   private static final Collection<String>                                     CUSTOM_ALLOWED_STYLES    =
                                                                                                     (Collection<String>) CollectionUtils.union(CssSchema.DEFAULT.allowedProperties(),
-                                                                                                                                               Arrays.asList(new String[]{"float", "display", "clear"}));
-  private static final Pattern                                                SRC_ON_IFRAME               = Pattern.compile("^(https?\\:\\/\\/)?(www\\.youtube\\.com|youtu\\.?be|player.vimeo\\.com|dai\\.?ly|www\\.dailymotion\\.com)\\/.+$");
-
+                                                                                                                                               Arrays.asList(new String[]{"float", "display", "clear", "position", "left", "top"}));
 
   private static final Pattern                                                ALLOW_FULL_SCREEN_ON_IFRAME               = Pattern.compile("fullscreen");
 
+
+  private static final CssSchema.Property                                     ASPECT_RATIO_PROPERTY       =
+                                                                                                    new CssSchema.Property(5,
+                                                                                                                           ImmutableSet.of("auto",
+                                                                                                                                           "inherit"),
+                                                                                                                           ImmutableMap.of());
 
   /** A policy definition that matches the minimal HTML that eXo allows. */
   public static final Function<HtmlStreamEventReceiver, HtmlSanitizer.Policy> POLICY_DEFINITION        = new HtmlPolicyBuilder()
@@ -109,6 +116,8 @@ abstract public class HTMLSanitizer {
                                                                                                                                 .matching(HTML_TITLE)
                                                                                                                                 .globally()
                                                                                                                                 .allowStyling(CssSchema.withProperties(CUSTOM_ALLOWED_STYLES))
+                                                                                                                                .allowStyling(CssSchema.withProperties(Map.of("aspect-ratio",
+                                                                                                                                                                                 ASPECT_RATIO_PROPERTY)))
                                                                                                                                 .allowAttributes("align")
                                                                                                                                 .matching(ALIGN)
                                                                                                                                 .onElements("p")
@@ -183,6 +192,8 @@ abstract public class HTMLSanitizer {
                                                                                                                                 .onElements("table")
                                                                                                                                 .allowAttributes("noresize")
                                                                                                                                 .matching(Pattern.compile("(?i)noresize"))
+                                                                                                                                .onElements("table")
+                                                                                                                                .allowAttributes("summary")
                                                                                                                                 .onElements("table")
                                                                                                                                 .allowAttributes("background")
                                                                                                                                 .matching(ONSITE_URL)
@@ -333,19 +344,18 @@ abstract public class HTMLSanitizer {
                                                                                                                                 .allowElements("wikiimage","wikilink","wikimacro")
                                                                                                                                 .allowAttributes("wikiparam")
                                                                                                                                 .globally()
-
                                                                                                                                 .allowAttributes("src")
-                                                                                                                                .matching(SRC_ON_IFRAME)
                                                                                                                                 .onElements("iframe")
                                                                                                                                 .allowAttributes("allow")
                                                                                                                                 .matching(ALLOW_FULL_SCREEN_ON_IFRAME)
                                                                                                                                 .onElements("iframe")
                                                                                                                                 .allowAttributes("frameborder")
                                                                                                                                 .onElements("iframe")
-                                                                                                                                .allowAttributes("contenteditable")
+                                                                                                                                .allowAttributes("contenteditable", "data-url")
                                                                                                                                 .globally()
                                                                                                                                 .allowAttributes("v-identity-popover")
                                                                                                                                 .globally()
+                                                                                                                                .allowElements("caption")
                                                                                                                                 .toFactory();
 
   /**
