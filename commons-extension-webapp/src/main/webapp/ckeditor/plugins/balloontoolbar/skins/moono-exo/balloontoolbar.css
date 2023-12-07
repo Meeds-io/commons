@@ -42,3 +42,14 @@ CKEditor 4 LTS ("Long Term Support") is available under the terms of the Extende
 	padding: 1px;
 	outline: 1px solid #bcbcbc;
 }
+
+.cke_balloontoolbar.cke_inputTextBalloon .cke_balloon_close_button {
+	left:  10px!important;
+	top: 11px;
+}
+
+.cke_balloontoolbar.cke_inputTextBalloon #inputURL {
+	height: 28px!important;
+    min-height: 28px!important;
+}
+
