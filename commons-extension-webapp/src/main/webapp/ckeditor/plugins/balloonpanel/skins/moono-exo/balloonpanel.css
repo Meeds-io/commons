@@ -221,3 +221,12 @@ a.cke_balloon_close_button:active
 	top: 50%;
 	margin-top: -20px;
 }
+
+.cke_balloontoolbar.cke_inputTextBalloon .cke_balloon_close_button {
+	left:  10px!important;
+}
+
+.cke_balloontoolbar.cke_inputTextBalloon a.cke_balloon_close_button
+{
+	background-image: url(images/arrow.png) !important;
+}

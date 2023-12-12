@@ -255,6 +255,7 @@
 
 			this.parts.close.on( 'click', function( evt ) {
 				this.hide();
+        document.dispatchEvent(new CustomEvent('ballonPanelHidden'));
 				evt.data.preventDefault();
 			}, this );
 		},
