@@ -685,6 +685,10 @@
 				if ( CKEDITOR.env.iOS && !editable.isInline() ) {
 					editorScrollableElement = editor.window.getFrame().getParent();
 				}
+        
+        document.addEventListener('parent-element-scrolled', () => {
+          this.reposition();
+        });
 
 				this._detachListeners();
 
