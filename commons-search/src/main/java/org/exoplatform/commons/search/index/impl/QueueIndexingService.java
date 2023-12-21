@@ -2,7 +2,7 @@ package org.exoplatform.commons.search.index.impl;
 
 import java.util.List;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import org.exoplatform.commons.search.dao.IndexingOperationDAO;
 import org.exoplatform.commons.search.domain.IndexingOperation;

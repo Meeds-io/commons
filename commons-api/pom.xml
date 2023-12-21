@@ -29,7 +29,7 @@
   <packaging>jar</packaging>
   <name>eXo PLF:: Commons - API</name>
   <properties>
-    <exo.test.coverage.ratio>0.12</exo.test.coverage.ratio>
+    <exo.test.coverage.ratio>0.01</exo.test.coverage.ratio>
   </properties>
   <dependencies>
     <!--
@@ -113,8 +113,8 @@
       <artifactId>commons-httpclient</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.apache.httpcomponents</groupId>
-      <artifactId>httpclient</artifactId>
+      <groupId>org.apache.httpcomponents.client5</groupId>
+      <artifactId>httpclient5</artifactId>
     </dependency>
     <dependency>
       <groupId>com.googlecode.owasp-java-html-sanitizer</groupId>

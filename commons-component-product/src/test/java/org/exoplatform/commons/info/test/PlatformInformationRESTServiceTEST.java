@@ -4,7 +4,7 @@ import static org.junit.Assert.assertNotEquals;
 
 import javax.ws.rs.core.Response;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import org.exoplatform.commons.info.PlatformInformationRESTService;
 import org.exoplatform.commons.info.PlatformInformationRESTService.JsonPlatformInfo;

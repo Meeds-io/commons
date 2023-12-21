@@ -2,9 +2,9 @@ package org.exoplatform.commons.search.es.client;
 
 import java.util.Map;
 
-import org.apache.commons.lang.StringUtils;
-import org.apache.http.conn.HttpClientConnectionManager;
-import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManager;
+import org.apache.hc.client5.http.io.HttpClientConnectionManager;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
