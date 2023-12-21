@@ -8,7 +8,7 @@ import org.exoplatform.jpa.BaseTest;
 import org.junit.Before;
 import org.junit.Test;
 
-import javax.persistence.TransactionRequiredException;
+import jakarta.persistence.TransactionRequiredException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;

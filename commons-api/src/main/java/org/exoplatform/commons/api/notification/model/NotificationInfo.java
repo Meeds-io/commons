@@ -19,7 +19,7 @@ package org.exoplatform.commons.api.notification.model;
 import java.io.Serializable;
 import java.util.*;
 
-import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import lombok.AllArgsConstructor;
