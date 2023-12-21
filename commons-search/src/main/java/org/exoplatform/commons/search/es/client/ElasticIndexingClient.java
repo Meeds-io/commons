@@ -16,13 +16,17 @@
  */
 package org.exoplatform.commons.search.es.client;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.httpclient.HttpStatus;
-import org.apache.commons.lang.StringUtils;
-import org.apache.http.conn.HttpClientConnectionManager;
-import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
-import org.json.simple.*;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManager;
+import org.apache.hc.client5.http.io.HttpClientConnectionManager;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.JSONValue;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 

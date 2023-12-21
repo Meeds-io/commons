@@ -18,7 +18,7 @@ package org.exoplatform.commons.search.domain;
 
 import org.exoplatform.commons.api.persistence.ExoEntity;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.io.Serializable;
 import java.util.Date;
 

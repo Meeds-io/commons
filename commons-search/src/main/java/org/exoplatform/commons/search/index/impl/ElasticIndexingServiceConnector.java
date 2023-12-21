@@ -18,7 +18,7 @@ package org.exoplatform.commons.search.index.impl;
 
 import java.io.InputStream;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.json.simple.JSONObject;
 
 import org.exoplatform.commons.search.index.IndexingServiceConnector;

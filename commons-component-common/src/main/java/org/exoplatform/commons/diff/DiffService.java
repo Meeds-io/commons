@@ -19,7 +19,7 @@ package org.exoplatform.commons.diff;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.ecs.Filter;
 import org.apache.ecs.filter.CharacterFilter;
 import org.suigeneris.jrcs.diff.Diff;

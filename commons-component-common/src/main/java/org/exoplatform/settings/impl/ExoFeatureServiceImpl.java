@@ -19,7 +19,7 @@ package org.exoplatform.settings.impl;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import org.exoplatform.commons.api.settings.*;
 import org.exoplatform.commons.api.settings.data.Context;

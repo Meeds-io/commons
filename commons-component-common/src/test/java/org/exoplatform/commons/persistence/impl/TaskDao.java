@@ -2,7 +2,7 @@ package org.exoplatform.commons.persistence.impl;
 
 import org.exoplatform.commons.api.persistence.ExoTransactional;
 
-import javax.persistence.Query;
+import jakarta.persistence.Query;
 import java.util.List;
 
 public class TaskDao extends GenericDAOJPAImpl<Task, Long> {
