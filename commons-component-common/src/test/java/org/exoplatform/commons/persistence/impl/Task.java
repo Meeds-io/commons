@@ -2,18 +2,18 @@ package org.exoplatform.commons.persistence.impl;
 
 import org.exoplatform.commons.api.persistence.ExoEntity;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 
 @ExoEntity
 @Entity(name = "Task")
 @Table(name = "TASK")
 public class Task {
   @Id
-  @GeneratedValue
+  @GeneratedValue(generator = "hibernate_sequence")
   @Column(name = "TASK_ID")
   private Long id;
 

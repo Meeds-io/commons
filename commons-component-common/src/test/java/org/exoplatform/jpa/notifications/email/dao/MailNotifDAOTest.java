@@ -6,7 +6,7 @@ import org.exoplatform.commons.notification.impl.jpa.email.entity.MailDigestEnti
 import org.exoplatform.commons.notification.impl.jpa.email.entity.MailNotifEntity;
 import org.exoplatform.jpa.CommonsDAOJPAImplTest;
 
-import org.apache.commons.lang.time.DateUtils;
+import org.apache.commons.lang3.time.DateUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;

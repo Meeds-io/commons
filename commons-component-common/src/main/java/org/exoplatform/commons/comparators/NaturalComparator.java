@@ -1,6 +1,6 @@
 package org.exoplatform.commons.comparators;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.Comparator;
 

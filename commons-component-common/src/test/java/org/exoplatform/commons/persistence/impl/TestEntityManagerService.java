@@ -4,7 +4,7 @@ import org.exoplatform.container.PortalContainer;
 import org.exoplatform.container.component.RequestLifeCycle;
 import org.exoplatform.jpa.CommonsDAOJPAImplTest;
 
-import javax.persistence.EntityManager;
+import jakarta.persistence.EntityManager;
 
 public class TestEntityManagerService extends CommonsDAOJPAImplTest {
 
