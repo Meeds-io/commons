@@ -2,7 +2,7 @@ package org.exoplatform.commons.notification.impl.jpa.email.entity;
 
 import org.exoplatform.commons.api.persistence.ExoEntity;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.util.Calendar;
 
 @Entity(name = "NotificationsMailQueueEntity")

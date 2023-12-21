@@ -24,8 +24,8 @@ import java.util.regex.Matcher;
 import javax.mail.internet.AddressException;
 import javax.mail.internet.InternetAddress;
 
-import org.apache.commons.lang.StringEscapeUtils;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.text.StringEscapeUtils;
 
 import org.exoplatform.commons.api.notification.plugin.config.PluginConfig;
 import org.exoplatform.commons.api.notification.template.Element;
@@ -265,7 +265,7 @@ public class NotificationUtils {
     //Work-around for SOC-4730 : for calendar activity only, the title is not stored by raw data but 
     //it's escaped before storing it. We need to unescape the title when build the notification
     if (CALENDAR_ACTIVITY.equals(activityType)) {
-      displayTitle = StringEscapeUtils.unescapeHtml(displayTitle);
+      displayTitle = StringEscapeUtils.unescapeHtml4(displayTitle);
     }
     //
     return displayTitle;

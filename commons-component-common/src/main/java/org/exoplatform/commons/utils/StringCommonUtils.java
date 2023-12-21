@@ -28,7 +28,7 @@ import java.util.Map;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * Created by The eXo Platform SAS Author : eXoPlatform exo@exoplatform.com Dec
