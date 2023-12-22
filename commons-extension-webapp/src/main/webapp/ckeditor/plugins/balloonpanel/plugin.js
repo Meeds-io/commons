@@ -418,6 +418,7 @@
 							return item.getClientRects( true )[ 0 ];
 						} );
 					} else {
+						elementOrSelection.selectRanges([ranges[ ranges.length - 1 ]]);
 						rectList = ranges[ ranges.length - 1 ].getClientRects( true );
 					}
 
