@@ -15,7 +15,10 @@ CKEDITOR.dialog.add( 'anchor', function( editor ) {
 			attributes: attributes
 		} ), 'cke_anchor', 'anchor' );
 	}
-
+	
+	function removeAccents( name ) {
+		return name.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+	}
 
 	function getSelectedAnchor( selection ) {
 		var range = selection.getRanges()[ 0 ],
@@ -69,8 +72,9 @@ CKEDITOR.dialog.add( 'anchor', function( editor ) {
 			return getSelectedAnchor( editor.getSelection() ) || null;
 		},
 		onOk: function() {
-			var name = CKEDITOR.tools.trim( this.getValueOf( 'info', 'txtName' ) ),
-				attributes = {
+			var name = CKEDITOR.tools.trim( this.getValueOf( 'info', 'txtName' ) );
+			name = removeAccents(name);
+			var attributes = {
 					id: name,
 					name: name,
 					'data-cke-saved-name': name
