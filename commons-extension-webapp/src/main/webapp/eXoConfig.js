@@ -21,7 +21,7 @@ CKEDITOR.editorConfig = function( config ){
   CKEDITOR.plugins.addExternal('cancelInline','/eXoWCMResources/eXoPlugins/cancelInline/','plugin.js');
 
 	config.extraPlugins = 'content,acceptInline,cancelInline,onchange,syntaxhighlight';
-	config.removePlugins = 'scayt,wsc';
+	config.removePlugins = 'scayt';
 	config.toolbarCanCollapse = false;
 	config.skin = 'moono-exo,/commons-extension/ckeditor/skins/moono-exo/';
 	config.allowedContent = true;
