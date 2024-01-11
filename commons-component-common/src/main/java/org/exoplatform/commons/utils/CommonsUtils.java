@@ -204,7 +204,7 @@ public class CommonsUtils {
       return pContext.getPortalOwner();
     } else {
       UserPortalConfigService portalConfig = getService(UserPortalConfigService.class);
-      return portalConfig == null ? null : portalConfig.getDefaultPortal();
+      return portalConfig == null ? null : portalConfig.getMetaPortal();
     }
   }
 
