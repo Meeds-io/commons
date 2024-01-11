@@ -16,7 +16,7 @@
  */
 package org.exoplatform.settings.impl;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.exoplatform.commons.api.settings.ExoFeatureService;
 import org.exoplatform.commons.api.settings.FeaturePlugin;
 import org.exoplatform.commons.testing.BaseCommonsTestCase;

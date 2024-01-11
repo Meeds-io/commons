@@ -17,26 +17,28 @@
 package org.exoplatform.commons.search.es.client;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 
-import org.apache.commons.httpclient.HttpStatus;
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang.StringUtils;
-import org.apache.http.HttpResponse;
-import org.apache.http.auth.AuthScope;
-import org.apache.http.auth.UsernamePasswordCredentials;
-import org.apache.http.client.CredentialsProvider;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.*;
-import org.apache.http.conn.HttpClientConnectionManager;
-import org.apache.http.entity.ContentType;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.DefaultConnectionReuseStrategy;
-import org.apache.http.impl.client.BasicCredentialsProvider;
-import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.impl.client.HttpClients;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.hc.client5.http.auth.AuthScope;
+import org.apache.hc.client5.http.auth.UsernamePasswordCredentials;
+import org.apache.hc.client5.http.classic.HttpClient;
+import org.apache.hc.client5.http.classic.methods.HttpDelete;
+import org.apache.hc.client5.http.classic.methods.HttpGet;
+import org.apache.hc.client5.http.classic.methods.HttpHead;
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.classic.methods.HttpPut;
+import org.apache.hc.client5.http.impl.auth.BasicCredentialsProvider;
+import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
+import org.apache.hc.client5.http.io.HttpClientConnectionManager;
+import org.apache.hc.core5.http.ClassicHttpResponse;
+import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.HttpEntity;
+import org.apache.hc.core5.http.ParseException;
+import org.apache.hc.core5.http.impl.DefaultConnectionReuseStrategy;
+import org.apache.hc.core5.http.io.entity.EntityUtils;
+import org.apache.hc.core5.http.io.entity.StringEntity;
 
+import org.exoplatform.commons.search.es.ElasticSearchException;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 
@@ -72,7 +74,7 @@ public abstract class ElasticClient {
       if(StringUtils.isNotBlank(content)) {
         httpTypeRequest.setEntity(new StringEntity(content, ContentType.APPLICATION_JSON));
       }
-      response = handleHttpResponse(client.execute(httpTypeRequest));
+      response = client.execute(httpTypeRequest, this::handleHttpResponse);
       LOG.debug("Sent request to ES:\n Method = POST \nURI =  {} \nContent = {}", url, content);
       logResultDependingOnStatusCode(url, response);
     } catch (IOException e) {
@@ -88,7 +90,7 @@ public abstract class ElasticClient {
       if(StringUtils.isNotBlank(content)) {
         httpTypeRequest.setEntity(new StringEntity(content, ContentType.APPLICATION_JSON));
       }
-      response = handleHttpResponse(client.execute(httpTypeRequest));
+      response = client.execute(httpTypeRequest, this::handleHttpResponse);
       LOG.debug("Sent request to ES:\n Method = PUT \nURI =  '{}' \nContent = '{}'", url, content);
       logResultDependingOnStatusCode(url, response);
     } catch (IOException e) {
@@ -102,7 +104,7 @@ public abstract class ElasticClient {
 
     try {
       HttpDelete httpDeleteRequest = new HttpDelete(url);
-      response = handleHttpResponse(client.execute(httpDeleteRequest));
+      response = client.execute(httpDeleteRequest, this::handleHttpResponse);
       LOG.debug("Sent request to ES:\n Method = DELETE \nURI =  {}", url);
       logResultDependingOnStatusCode(url, response);
     } catch (IOException e) {
@@ -116,7 +118,7 @@ public abstract class ElasticClient {
 
     try {
       HttpGet httpGetRequest = new HttpGet(url);
-      response = handleHttpResponse(client.execute(httpGetRequest));
+      response = client.execute(httpGetRequest, this::handleHttpResponse);
       LOG.debug("Sent request to ES:\n Method = GET \nURI =  {}", url);
     } catch (IOException e) {
       throw new ElasticClientException(e);
@@ -130,7 +132,7 @@ public abstract class ElasticClient {
 
     try {
       HttpHead httpHeadRequest = new HttpHead(url);
-      response = handleHttpResponse(client.execute(httpHeadRequest));
+      response = client.execute(httpHeadRequest, this::handleHttpResponse);
       LOG.debug("Sent request to ES:\n Method = HEAD \nURI =  {}", url);
     } catch (IOException e) {
       throw new ElasticClientException(e);
@@ -145,16 +147,16 @@ public abstract class ElasticClient {
   protected HttpClient getHttpClient() {
     // Check if Basic Authentication need to be used
     HttpClientConnectionManager clientConnectionManager = getClientConnectionManager();
-    HttpClientBuilder httpClientBuilder = HttpClients.custom()
+    HttpClientBuilder httpClientBuilder = HttpClientBuilder
+        .create().disableAutomaticRetries()
         .setConnectionManager(clientConnectionManager)
-        .setConnectionReuseStrategy(new DefaultConnectionReuseStrategy())
-        .setMaxConnPerRoute(getMaxConnections());
+        .setConnectionReuseStrategy(new DefaultConnectionReuseStrategy());
     if (StringUtils.isNotBlank(getEsUsernameProperty())) {
-      CredentialsProvider credsProvider = new BasicCredentialsProvider();
+      BasicCredentialsProvider credsProvider = new BasicCredentialsProvider();
       credsProvider.setCredentials(
-              new AuthScope(AuthScope.ANY_HOST, AuthScope.ANY_PORT),
+              new AuthScope(null, -1),
               new UsernamePasswordCredentials(getEsUsernameProperty(),
-                                              getEsPasswordProperty()));
+                                              getEsPasswordProperty().toCharArray()));
 
       HttpClient httpClient = httpClientBuilder
           .setDefaultCredentialsProvider(credsProvider)
@@ -174,26 +176,15 @@ public abstract class ElasticClient {
    *
    * @param httpResponse The Http Response to handle
    */
-  private ElasticResponse handleHttpResponse(HttpResponse httpResponse) throws IOException {
-    String response = null;
-    InputStream is = null;
-
-    if (httpResponse.getEntity()!=null) {
-      try {
-        is = httpResponse.getEntity().getContent();
-        response = IOUtils.toString(is, StandardCharsets.UTF_8);
-      } finally {
-        if (is != null) {
-          is.close();
-        }
-      }
+  private ElasticResponse handleHttpResponse(ClassicHttpResponse httpResponse) throws IOException {
+    final HttpEntity entity = httpResponse.getEntity();
+    int statusCode = httpResponse.getCode();
+    try {
+      return new ElasticResponse(EntityUtils.toString(entity), statusCode);
+    } catch (ParseException e) {
+      throw new ElasticSearchException("Error while parsing http response with code " + statusCode + " and response " + entity,
+                                       e);
     }
-
-    int statusCode = httpResponse.getStatusLine().getStatusCode();
-    if (statusCode == HttpStatus.SC_UNAUTHORIZED) {
-      throw new ElasticClientAuthenticationException();
-    }
-    return new ElasticResponse(response, statusCode);
   }
 
   private void logResultDependingOnStatusCode(String url, ElasticResponse response) {

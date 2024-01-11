@@ -3,7 +3,7 @@ package org.exoplatform.commons.notification.impl.jpa.email.dao;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.persistence.Query;
+import jakarta.persistence.Query;
 
 import org.exoplatform.commons.api.persistence.ExoTransactional;
 import org.exoplatform.commons.notification.impl.jpa.email.entity.MailNotifEntity;

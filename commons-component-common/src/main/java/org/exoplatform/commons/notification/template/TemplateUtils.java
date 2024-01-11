@@ -28,8 +28,9 @@ import java.util.ResourceBundle;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 
-import org.apache.commons.lang.StringEscapeUtils;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.text.StringEscapeUtils;
+
 import org.exoplatform.commons.api.notification.plugin.config.PluginConfig;
 import org.exoplatform.commons.api.notification.plugin.config.TemplateConfig;
 import org.exoplatform.commons.api.notification.service.template.TemplateContext;
@@ -159,7 +160,7 @@ public class TemplateUtils {
     //The title of activity is escaped on social, then we need to unescape it to process the send email
     String value = (String) ctx.get("ACTIVITY");
     if (value != null) {
-      ctx.put("ACTIVITY", StringEscapeUtils.unescapeHtml(value));
+      ctx.put("ACTIVITY", StringEscapeUtils.unescapeHtml4(value));
     }
 
     String subject = (String) ctx.get("SUBJECT");
@@ -181,7 +182,7 @@ public class TemplateUtils {
    * @since 4.1.x
    */
   public static String getExcerptSubject(String subject) {
-    String newSubject = StringEscapeUtils.unescapeHtml(cleanHtmlTags(subject));
+    String newSubject = StringEscapeUtils.unescapeHtml4(cleanHtmlTags(subject));
     if (newSubject != null && newSubject.length() > MAX_SUBJECT_LENGTH) {
       newSubject = newSubject.substring(0, MAX_SUBJECT_LENGTH);
       int lastSpace = newSubject.lastIndexOf(" ");

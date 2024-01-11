@@ -2,7 +2,7 @@ package org.exoplatform.commons.resource;
 
 import javax.ws.rs.core.Response;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.json.JSONObject;
 
 import org.exoplatform.commons.testing.BaseResourceTestCase;
