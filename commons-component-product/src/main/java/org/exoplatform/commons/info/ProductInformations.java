@@ -60,6 +60,8 @@ public class ProductInformations implements Startable {
 
   public static final String  PRODUCT_NAME                          = "product.name";
 
+  public static final String  PRODUCT_LINK                          = "product.link";
+
   public static final String  PRODUCT_GROUP_ID                      = "product.groupId";
 
   public static final String  PRODUCT_REVISION                      = "product.revision";
@@ -139,6 +141,10 @@ public class ProductInformations implements Startable {
 
   public String getProductName() {
     return productInformation.get(PRODUCT_NAME);
+  }
+
+  public String getProductLink() {
+    return productInformation.get(PRODUCT_LINK);
   }
 
   public String getProductCode() {
