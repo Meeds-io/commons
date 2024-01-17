@@ -80,6 +80,8 @@ public class TestProductInformations extends BasicTestCase {
     p.setProperty(ProductInformations.DELAY, "0");
     p.setProperty(ProductInformations.PRODUCT_CODE, "0");
     p.setProperty(ProductInformations.PRODUCT_KEY, "0");
+    p.setProperty(ProductInformations.PRODUCT_NAME, "name");
+    p.setProperty(ProductInformations.PRODUCT_LINK, "link");
 
     // When
     productInformations.setUnlockInformation(p);
@@ -91,6 +93,8 @@ public class TestProductInformations extends BasicTestCase {
     assertEquals(productInformations.getDuration(), "0");
     assertEquals(productInformations.getProductCode(), "0");
     assertEquals(productInformations.getProductKey(), "0");
+    assertEquals(productInformations.getProductName(), "name");
+    assertEquals(productInformations.getProductLink(), "link");
   }
 
   @SuppressWarnings("rawtypes")

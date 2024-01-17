@@ -306,6 +306,8 @@ public class ProductInformations implements Startable {
     productInformation.put(NB_USERS, (String) unlockInformation.get(NB_USERS));
     productInformation.put(PRODUCT_KEY, (String) unlockInformation.get(PRODUCT_KEY));
     productInformation.put(PRODUCT_CODE, (String) unlockInformation.get(PRODUCT_CODE));
+    productInformation.put(PRODUCT_NAME, (String) unlockInformation.get(PRODUCT_NAME));
+    productInformation.put(PRODUCT_LINK, (String) unlockInformation.get(PRODUCT_LINK));
     productInformation.put(DELAY, (String) unlockInformation.get(DELAY));
     productInformation.put(KEY_GENERATION_DATE, (String) unlockInformation.get(KEY_GENERATION_DATE));
   }
