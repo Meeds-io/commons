@@ -139,14 +139,6 @@ public class ProductInformations implements Startable {
     return productInformation.get(DELAY);
   }
 
-  public String getProductName() {
-    return productInformation.get(PRODUCT_NAME);
-  }
-
-  public String getProductLink() {
-    return productInformation.get(PRODUCT_LINK);
-  }
-
   public String getProductCode() {
     return productInformation.get(PRODUCT_CODE);
   }
@@ -204,6 +196,26 @@ public class ProductInformations implements Startable {
   }
 
   /**
+   * @return the current product's name.
+   */
+  public String getProductName() throws MissingProductInformationException {
+    if (!productInformationProperties.containsKey(PRODUCT_NAME)) {
+      throw new MissingProductInformationException(PRODUCT_NAME);
+    }
+    return productInformationProperties.getProperty(PRODUCT_NAME);
+  }
+
+  /**
+   * @return the current product's link.
+   */
+  public String getProductLink() throws MissingProductInformationException {
+    if (!productInformationProperties.containsKey(PRODUCT_LINK)) {
+      throw new MissingProductInformationException(PRODUCT_LINK);
+    }
+    return productInformationProperties.getProperty(PRODUCT_LINK);
+  }
+
+  /**
    * @return the platform.version property. This method return the platform
    *         version.
    */
@@ -220,6 +232,28 @@ public class ProductInformations implements Startable {
       throw new MissingProductInformationException(productGroupId);
     }
     return productInformation.get(productGroupId);
+  }
+
+  /**
+   * @return the product.name property. This method return the product
+   *         name.
+   */
+  public String getPreviousProductName() throws MissingProductInformationException {
+    if (!productInformation.containsKey(PRODUCT_NAME)) {
+      throw new MissingProductInformationException(PRODUCT_NAME);
+    }
+    return productInformation.get(PRODUCT_NAME);
+  }
+
+  /**
+   * @return the product.link property. This method return the product
+   *         link.
+   */
+  public String getPreviousProductLink() throws MissingProductInformationException {
+    if (!productInformation.containsKey(PRODUCT_LINK)) {
+      throw new MissingProductInformationException(PRODUCT_LINK);
+    }
+    return productInformation.get(PRODUCT_LINK);
   }
 
   /**
@@ -306,8 +340,6 @@ public class ProductInformations implements Startable {
     productInformation.put(NB_USERS, (String) unlockInformation.get(NB_USERS));
     productInformation.put(PRODUCT_KEY, (String) unlockInformation.get(PRODUCT_KEY));
     productInformation.put(PRODUCT_CODE, (String) unlockInformation.get(PRODUCT_CODE));
-    productInformation.put(PRODUCT_NAME, (String) unlockInformation.get(PRODUCT_NAME));
-    productInformation.put(PRODUCT_LINK, (String) unlockInformation.get(PRODUCT_LINK));
     productInformation.put(DELAY, (String) unlockInformation.get(DELAY));
     productInformation.put(KEY_GENERATION_DATE, (String) unlockInformation.get(KEY_GENERATION_DATE));
   }
