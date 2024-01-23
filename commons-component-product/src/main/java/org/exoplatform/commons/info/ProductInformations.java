@@ -60,6 +60,8 @@ public class ProductInformations implements Startable {
 
   public static final String  PRODUCT_NAME                          = "product.name";
 
+  public static final String  PRODUCT_LINK                          = "product.link";
+
   public static final String  PRODUCT_GROUP_ID                      = "product.groupId";
 
   public static final String  PRODUCT_REVISION                      = "product.revision";
@@ -137,10 +139,6 @@ public class ProductInformations implements Startable {
     return productInformation.get(DELAY);
   }
 
-  public String getProductName() {
-    return productInformation.get(PRODUCT_NAME);
-  }
-
   public String getProductCode() {
     return productInformation.get(PRODUCT_CODE);
   }
@@ -198,6 +196,26 @@ public class ProductInformations implements Startable {
   }
 
   /**
+   * @return the current product's name.
+   */
+  public String getProductName() throws MissingProductInformationException {
+    if (!productInformationProperties.containsKey(PRODUCT_NAME)) {
+      throw new MissingProductInformationException(PRODUCT_NAME);
+    }
+    return productInformationProperties.getProperty(PRODUCT_NAME);
+  }
+
+  /**
+   * @return the current product's link.
+   */
+  public String getProductLink() throws MissingProductInformationException {
+    if (!productInformationProperties.containsKey(PRODUCT_LINK)) {
+      throw new MissingProductInformationException(PRODUCT_LINK);
+    }
+    return productInformationProperties.getProperty(PRODUCT_LINK);
+  }
+
+  /**
    * @return the platform.version property. This method return the platform
    *         version.
    */
@@ -214,6 +232,28 @@ public class ProductInformations implements Startable {
       throw new MissingProductInformationException(productGroupId);
     }
     return productInformation.get(productGroupId);
+  }
+
+  /**
+   * @return the product.name property. This method return the product
+   *         name.
+   */
+  public String getPreviousProductName() throws MissingProductInformationException {
+    if (!productInformation.containsKey(PRODUCT_NAME)) {
+      throw new MissingProductInformationException(PRODUCT_NAME);
+    }
+    return productInformation.get(PRODUCT_NAME);
+  }
+
+  /**
+   * @return the product.link property. This method return the product
+   *         link.
+   */
+  public String getPreviousProductLink() throws MissingProductInformationException {
+    if (!productInformation.containsKey(PRODUCT_LINK)) {
+      throw new MissingProductInformationException(PRODUCT_LINK);
+    }
+    return productInformation.get(PRODUCT_LINK);
   }
 
   /**
