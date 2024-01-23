@@ -80,6 +80,8 @@ public class TestProductInformations extends BasicTestCase {
     p.setProperty(ProductInformations.DELAY, "0");
     p.setProperty(ProductInformations.PRODUCT_CODE, "0");
     p.setProperty(ProductInformations.PRODUCT_KEY, "0");
+    p.setProperty(ProductInformations.PRODUCT_NAME, "name");
+    p.setProperty(ProductInformations.PRODUCT_LINK, "link");
 
     // When
     productInformations.setUnlockInformation(p);
@@ -120,12 +122,16 @@ public class TestProductInformations extends BasicTestCase {
     assertEquals(productInformations.getPreviousVersion(), OLD_VERSION);
     assertEquals(productInformations.getPreviousRevision(), OLD_VERSION);
     assertEquals(productInformations.getPreviousBuildNumber(), OLD_VERSION);
+    assertEquals(productInformations.getPreviousProductName(), "oldName");
+    assertEquals(productInformations.getPreviousProductLink(), "oldLink");
     assertEquals(productInformations.getPreviousVersion("org.exoplatform.social"), OLD_VERSION);
     assertEquals(productInformations.getPreviousVersion("org.gatein.portal"), OLD_VERSION);
 
     assertEquals(productInformations.getVersion(), NEW_VERSION);
     assertEquals(productInformations.getRevision(), NEW_VERSION);
     assertEquals(productInformations.getBuildNumber(), NEW_VERSION);
+    assertEquals(productInformations.getProductName(), "newName");
+    assertEquals(productInformations.getProductLink(), "newLink");
     assertEquals(productInformations.getVersion("org.exoplatform.social"), NEW_VERSION);
     assertEquals(productInformations.getVersion("org.gatein.portal"), NEW_VERSION);
     assertEquals(productInformations.getCurrentProductGroupId(), "org.exoplatform.commons");
@@ -150,7 +156,7 @@ public class TestProductInformations extends BasicTestCase {
     assertFalse(productInformationSettings.isEmpty());
     productInformationSettings.entrySet()
                               .stream()
-                              .filter(entry -> !"product.groupId".equals(entry.getKey()))
+                              .filter(entry -> !"product.groupId".equals(entry.getKey()) && !"product.name".equals(entry.getKey()) && !"product.link".equals(entry.getKey()))
                               .forEach(entry -> assertEquals(entry.getValue().getValue(), NEW_VERSION));
 
     assertEquals(productInformations.getPreviousVersion(), NEW_VERSION);
