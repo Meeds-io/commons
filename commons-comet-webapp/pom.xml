@@ -23,7 +23,7 @@
   <parent>
     <artifactId>commons</artifactId>
     <groupId>org.exoplatform.commons</groupId>
-    <version>6.6.x-exo-SNAPSHOT</version>
+    <version>6.6.0-exo-20240206</version>
   </parent>
   <artifactId>commons-comet-webapp</artifactId>
   <packaging>war</packaging>
