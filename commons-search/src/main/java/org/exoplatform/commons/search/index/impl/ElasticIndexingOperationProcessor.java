@@ -21,9 +21,12 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import org.apache.commons.lang3.StringUtils;
-import org.picocontainer.Startable;
 
 import org.exoplatform.commons.api.persistence.ExoTransactional;
+import org.exoplatform.container.ExoContainer;
+import org.exoplatform.container.ExoContainerContext;
+import org.picocontainer.Startable;
+
 import org.exoplatform.commons.persistence.impl.EntityManagerService;
 import org.exoplatform.commons.search.dao.IndexingOperationDAO;
 import org.exoplatform.commons.search.domain.IndexingOperation;
@@ -32,8 +35,6 @@ import org.exoplatform.commons.search.es.client.*;
 import org.exoplatform.commons.search.index.IndexingOperationProcessor;
 import org.exoplatform.commons.search.index.IndexingServiceConnector;
 import org.exoplatform.commons.utils.PropertyManager;
-import org.exoplatform.container.ExoContainer;
-import org.exoplatform.container.ExoContainerContext;
 import org.exoplatform.container.xml.InitParams;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
@@ -60,6 +61,8 @@ public class ElasticIndexingOperationProcessor extends IndexingOperationProcesso
 
   private static final int                   REINDEXING_BATCH_SIZE_DEFAULT_VALUE = 100;
 
+  private int                                reindexBatchSize                    = REINDEXING_BATCH_SIZE_DEFAULT_VALUE;
+
   // Service
   private final IndexingOperationDAO         indexingOperationDAO;
 
@@ -74,6 +77,8 @@ public class ElasticIndexingOperationProcessor extends IndexingOperationProcesso
   private Integer                            batchNumber                         = BATCH_NUMBER_DEFAULT;
 
   private Integer                            requestSizeLimit                    = REQUEST_SIZE_LIMIT_DEFAULT;
+
+  private Map<String, Set<String>>           indexUpgrading                      = new HashMap<>();
 
   private ExecutorService                    executors                           = Executors.newCachedThreadPool();
 
@@ -99,6 +104,9 @@ public class ElasticIndexingOperationProcessor extends IndexingOperationProcesso
     }
     if (StringUtils.isNotBlank(PropertyManager.getProperty(REQUEST_SIZE_LIMIT_PROPERTY_NAME))) {
       this.requestSizeLimit = Integer.valueOf(PropertyManager.getProperty(REQUEST_SIZE_LIMIT_PROPERTY_NAME));
+    }
+    if (StringUtils.isNotBlank(PropertyManager.getProperty(REINDEXING_BATCH_SIZE_PROPERTY_NAME))) {
+      this.reindexBatchSize = Integer.valueOf(PropertyManager.getProperty(REINDEXING_BATCH_SIZE_PROPERTY_NAME));
     }
     if (initParams == null || !initParams.containsKey("es.version")) {
       throw new IllegalStateException("es.version parameter is mandatory");
@@ -178,7 +186,16 @@ public class ElasticIndexingOperationProcessor extends IndexingOperationProcesso
     return this.interrupted;
   }
 
+  private boolean isUpgradeInProgress() {
+    return !indexUpgrading.isEmpty();
+  }
   private int processBulk() {
+    // Choose operation to delete from Queue one by one instead
+    if (isUpgradeInProgress()) {
+      LOG.info("Migration of indexes is in progress, indexation is suspended until migration finishes");
+      return 0;
+    }
+
     Map<OperationType, Map<String, List<IndexingOperation>>> indexingQueueSorted = new EnumMap<>(OperationType.class);
     List<IndexingOperation> indexingOperations;
     long maxIndexingOperationId = 0;
@@ -200,6 +217,7 @@ public class ElasticIndexingOperationProcessor extends IndexingOperationProcesso
     }
 
     processInit(indexingQueueSorted);
+    processDeleteAll(indexingQueueSorted);
     processCUD(indexingQueueSorted);
 
     if (isInterrupted()) {
@@ -443,6 +461,107 @@ public class ElasticIndexingOperationProcessor extends IndexingOperationProcesso
     }
   }
 
+  /**
+   * Process all the requests for “remove all documents of type” (Operation type =
+   * X) in the indexing queue (if any) = Delete type in ES
+   * 
+   * @param indexingQueueSorted Temporary inMemory IndexingQueue
+   */
+  private void processDeleteAll(Map<OperationType, Map<String, List<IndexingOperation>>> indexingQueueSorted) {
+    if (indexingQueueSorted.containsKey(OperationType.DELETE_ALL)) {
+      for (String entityType : indexingQueueSorted.get(OperationType.DELETE_ALL).keySet()) {
+        if (isInterrupted()) {
+          return;
+        }
+        if (indexingQueueSorted.get(OperationType.DELETE_ALL).containsKey(entityType)) {
+          for (IndexingOperation indexingOperation : indexingQueueSorted.get(OperationType.DELETE_ALL).get(entityType)) {
+            processDeleteAll(indexingOperation, indexingQueueSorted);
+          }
+        }
+      }
+      indexingQueueSorted.remove(OperationType.DELETE_ALL);
+    }
+  }
+
+  /**
+   * @param indexingOperation
+   * @param indexingQueueSorted Temporary inMemory IndexingQueue
+   */
+  private void processDeleteAll(IndexingOperation indexingOperation,
+                                Map<OperationType, Map<String, List<IndexingOperation>>> indexingQueueSorted) {
+    // Remove the type (= remove all documents of this type) and recreate it
+    ElasticIndexingServiceConnector connector =
+                                              (ElasticIndexingServiceConnector) getConnectors().get(indexingOperation.getEntityIndex());
+    // log in Audit Trail
+    auditTrail.audit(ElasticIndexingAuditTrail.DELETE_ALL, null, connector.getCurrentIndex(), null, null, 0);
+    // Call ES
+    elasticIndexingClient.sendDeleteAllDocsRequest(connector.getCurrentIndex());
+    // Remove all useless CUD operation that was plan before this delete all
+    deleteOperationsForTypesBefore(new OperationType[] { OperationType.CREATE, OperationType.UPDATE, OperationType.DELETE },
+                                   indexingQueueSorted,
+                                   indexingOperation);
+  }
+
+  private void deleteOperationsForTypesBefore(OperationType[] operations,
+                                              Map<OperationType, Map<String, List<IndexingOperation>>> indexingQueueSorted,
+                                              IndexingOperation refIindexOperation) {
+    for (OperationType operation : operations) {
+      if (indexingQueueSorted.containsKey(operation)) {
+        if (indexingQueueSorted.get(operation).containsKey(refIindexOperation.getEntityIndex())) {
+          for (Iterator<IndexingOperation> iterator = indexingQueueSorted.get(operation)
+                  .get(refIindexOperation.getEntityIndex())
+                  .iterator(); iterator.hasNext();) {
+            IndexingOperation indexingOperation = iterator.next();
+            // Check id higher than the timestamp of the reference
+            // indexing operation, the index operation is removed
+            if (refIindexOperation.getId() > indexingOperation.getId()) {
+              iterator.remove();
+            }
+          }
+        }
+      }
+    }
+  }
+
+  /**
+   * Reindex all the entities of the given entity type.
+   *
+   * @param index Entity type of the entities to reindex
+   */
+  @ExoTransactional
+  private void reindexAllByEntityIndex(String index) {
+    long startTime = System.currentTimeMillis();
+    IndexingServiceConnector connector = getConnectors().get(index);
+    if(connector != null) {
+
+      // 1- Delete all documents in ES (and purge the indexing queue)
+      indexingOperationDAO.create(new IndexingOperation(null, index, OperationType.DELETE_ALL));
+      int offset = 0;
+      int numberIndexed;
+      do {
+        if (isInterrupted()) {
+          return;
+        }
+        // 2- Get all the documents ID
+        List<String> ids = connector.getAllIds(offset, reindexBatchSize);
+        if (ids == null) {
+          numberIndexed = 0;
+        } else {
+          List<IndexingOperation> operations = new ArrayList<>(ids.size());
+          for (String id : ids) {
+            operations.add(new IndexingOperation(id, index, OperationType.CREATE));
+          }
+          // 3- Inject as a CUD operation
+          indexingOperationDAO.createAll(operations);
+          numberIndexed = ids.size();
+          offset += reindexBatchSize;
+        }
+      } while (numberIndexed == reindexBatchSize);
+      // 4- log in Audit Trail
+      auditTrail.audit(ElasticIndexingAuditTrail.REINDEX_ALL, null, index, null, null, (System.currentTimeMillis() - startTime));
+    }
+  }
+
   private void deleteOperationsByEntityIdForTypesBefore(OperationType[] operations,
                                                         Map<OperationType, Map<String, List<IndexingOperation>>> indexingQueueSorted,
                                                         IndexingOperation indexQueue) {
@@ -489,25 +608,58 @@ public class ElasticIndexingOperationProcessor extends IndexingOperationProcesso
 
     String indexAlias = connector.getIndexAlias();
     String index = connector.getCurrentIndex();
-    boolean useAlias = true;
-    if (index == null) {
-      index = indexAlias;
-      useAlias = false;
-    }
+    String previousIndex = connector.getPreviousIndex();
 
-    // Send request to create index
-    boolean newlyCreated =
-                         elasticIndexingClient.sendCreateIndexRequest(index,
-                                                                      elasticContentRequestBuilder.getCreateIndexRequestContent(connector),
-                                                                      connector.getMapping());
-    if (newlyCreated && useAlias) {
-      elasticIndexingClient.sendCreateIndexAliasRequest(index, null, indexAlias);
-    }
+    if (indexUpgrading.containsKey(indexAlias)) {
+      boolean newIndexExists = elasticIndexingClient.sendIsIndexExistsRequest(index);
 
-    if (connector.isNeedIngestPipeline()) {
-      elasticIndexingClient.sendCreateAttachmentPipelineRequest(index,
-                                                                connector.getPipelineName(),
-                                                                connector.getAttachmentProcessor());
+      // If the upgrade is incomplete (should point the alias on previous index)
+      boolean aliasExistsOnPreviousIndex = elasticIndexingClient.sendGetIndexAliasesRequest(previousIndex).contains(indexAlias);
+      if(!aliasExistsOnPreviousIndex) {
+        boolean aliasExistsOnCurrentIndex = newIndexExists && elasticIndexingClient.sendGetIndexAliasesRequest(index).contains(indexAlias);
+        // If the alias points to the new index, point it again to the previous one, else add new alias to previous
+        elasticIndexingClient.sendCreateIndexAliasRequest(previousIndex, aliasExistsOnCurrentIndex ? index : null, indexAlias);
+      }
+
+      if (newIndexExists) {
+        // Upgrade was interrupted, so remove it and upgrade again
+        LOG.warn("ES index upgrade '{}' was interrupted, the new index {} will be recreated", previousIndex, index);
+        elasticIndexingClient.sendDeleteIndexRequest(index);
+        // Send request to create index
+        elasticIndexingClient.sendCreateIndexRequest(index, elasticContentRequestBuilder.getCreateIndexRequestContent(connector), connector.getMapping());
+      } else {
+        elasticIndexingClient.sendCreateIndexRequest(index,
+                elasticContentRequestBuilder.getCreateIndexRequestContent(connector), connector.getMapping());
+        if(connector.isNeedIngestPipeline()) {
+          elasticIndexingClient.sendCreateAttachmentPipelineRequest(index, connector.getPipelineName(), connector.getAttachmentProcessor());
+        }
+      }
+
+      // Init reindex. Once the reindex finished, the index alias will be updated to new index
+      executors.submit(new ReindexESType(ExoContainerContext.getCurrentContainer(), connector));
+    } else {
+      boolean useAlias = true;
+      if (index == null) {
+        index = indexAlias;
+        useAlias = false;
+      }
+
+      // Send request to create index
+      boolean newlyCreated =
+              elasticIndexingClient.sendCreateIndexRequest(index,
+                      elasticContentRequestBuilder.getCreateIndexRequestContent(connector),
+                      connector.getMapping());
+      if (newlyCreated && useAlias) {
+        elasticIndexingClient.sendCreateIndexAliasRequest(index, null, indexAlias);
+      }
+
+      if (connector.isNeedIngestPipeline()) {
+        elasticIndexingClient.sendCreateAttachmentPipelineRequest(index,
+                connector.getPipelineName(),
+                connector.getAttachmentProcessor());
+      }
+      // Make sure that the migration is not executed twice on the same connector
+      connector.setPreviousIndex(null);
     }
   }
 
@@ -571,9 +723,93 @@ public class ElasticIndexingOperationProcessor extends IndexingOperationProcesso
   }
 
   private void initConnectors() {
+    for (Map.Entry<String, IndexingServiceConnector> entry: getConnectors().entrySet()) {
+      ElasticIndexingServiceConnector connector = (ElasticIndexingServiceConnector) entry.getValue();
+      String previousIndex = connector.getPreviousIndex();
+      String index = connector.getCurrentIndex();
+      String indexAlias = connector.getIndexAlias();
+
+      boolean needsUpgrade = false;
+      if (StringUtils.isNotBlank(previousIndex)) {
+        // Need to check the upgrade status (incomplete/ not run == new index doesn't exist or indexAlias is not added to new index)
+        needsUpgrade = elasticIndexingClient.sendIsIndexExistsRequest(previousIndex)
+                && (!elasticIndexingClient.sendIsIndexExistsRequest(index)
+                || !elasticIndexingClient.sendGetIndexAliasesRequest(index).contains(indexAlias));
+      }
+
+      if(needsUpgrade) {
+        if(!indexUpgrading.containsKey(indexAlias)) {
+          indexUpgrading.put(indexAlias, new HashSet<>());
+        }
+        indexUpgrading.get(indexAlias).add(entry.getKey());
+      }
+    }
     for (Map.Entry<String, IndexingServiceConnector> entry : getConnectors().entrySet()) {
       sendInitRequests(entry.getValue());
     }
   }
 
+  public class ReindexESType implements Runnable {
+
+    private ElasticIndexingServiceConnector indexingServiceConnector;
+
+    private ExoContainer exoContainer;
+
+    public ReindexESType(ExoContainer exoContainer, ElasticIndexingServiceConnector connector) {
+      this.exoContainer = exoContainer;
+      this.indexingServiceConnector = connector;
+    }
+
+    @Override
+    public void run() {
+      try {
+          LOG.info("Reindexing index alias {} from old index {} to new index {}",
+                  indexingServiceConnector.getIndexAlias(),
+                  indexingServiceConnector.getPreviousIndex(),
+                  indexingServiceConnector.getCurrentIndex());
+          try {
+            elasticIndexingClient.sendReindexTypeRequest(indexingServiceConnector.getCurrentIndex(), indexingServiceConnector.getPreviousIndex(), indexingServiceConnector.getPipelineName());
+            if(this.indexingServiceConnector.isReindexOnUpgrade()) {
+              ExoContainerContext.setCurrentContainer(exoContainer);
+              reindexAllByEntityIndex(indexingServiceConnector.getConnectorName());
+            }
+            LOG.info("Reindexation finished for index alias {} from old index {} to new index {}",
+                    indexingServiceConnector.getIndexAlias(),
+                    indexingServiceConnector.getPreviousIndex(),
+                    indexingServiceConnector.getCurrentIndex());
+          } catch (Exception e) {
+            LOG.warn("Reindexation using pipeline error for index alias {} from old index {} to new index {}, for type {}. The reindexation will proceed from eXo DB",
+                    indexingServiceConnector.getIndexAlias(),
+                    indexingServiceConnector.getPreviousIndex(),
+                    indexingServiceConnector.getCurrentIndex());
+          }
+
+        // This algorithm should be thread safe
+        synchronized (indexUpgrading) {
+          boolean indexMigrationInProgress = indexUpgrading.get(indexingServiceConnector.getIndexAlias()).size() > 1;
+
+          if (indexMigrationInProgress) {
+            LOG.info("The index {} has some types not completely migrated yet, the old index will be deleted after migration is finished",
+                    indexingServiceConnector.getPreviousIndex());
+          } else {
+            LOG.info("Switching index alias {} from old index {} to new index {}", indexingServiceConnector.getIndexAlias(), indexingServiceConnector.getPreviousIndex(), indexingServiceConnector.getCurrentIndex());
+            elasticIndexingClient.sendCreateIndexAliasRequest(indexingServiceConnector.getCurrentIndex(), indexingServiceConnector.getPreviousIndex(), indexingServiceConnector.getIndexAlias());
+
+            indexUpgrading.remove(indexingServiceConnector.getIndexAlias());
+
+            LOG.info("Remove old index {}", indexingServiceConnector.getPreviousIndex());
+            elasticIndexingClient.sendDeleteIndexRequest(indexingServiceConnector.getPreviousIndex());
+
+            if(indexUpgrading.isEmpty()) {
+              LOG.info("ES indexes migration finished (except indexes that will be reindexed from DB)");
+            }
+          }
+        }
+      } catch (Exception e) {
+        LOG.error("An error occurred while upgrading index " + indexingServiceConnector.getPreviousIndex(), e);
+      } finally {
+        indexUpgrading.remove(indexingServiceConnector.getIndexAlias());
+      }
+    }
+  }
 }
