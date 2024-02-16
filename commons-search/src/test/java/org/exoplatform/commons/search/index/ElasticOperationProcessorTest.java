@@ -16,7 +16,7 @@
 */
 package org.exoplatform.commons.search.index;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -79,7 +79,7 @@ public class ElasticOperationProcessorTest {
     InitParams initParams = new InitParams();
     ValueParam param = new ValueParam();
     param.setName("es.version");
-    param.setValue("Test version");
+    param.setValue("8.6");
     initParams.addParameter(param);
     elasticIndexingOperationProcessor = new ElasticIndexingOperationProcessor(indexingOperationDAO, elasticIndexingClient, elasticContentRequestBuilder, auditTrail, entityManagerService, initParams);
     initElasticServiceConnector();
@@ -105,6 +105,28 @@ public class ElasticOperationProcessorTest {
   public void clean() {
     elasticIndexingOperationProcessor.getConnectors().clear();
     entityManagerService.endRequest(null);
+  }
+
+  @Test
+  public void testStart() {
+    try {
+      when(elasticIndexingClient.sendGetESVersion()).thenReturn("8.6.0");
+      elasticIndexingOperationProcessor.addConnector(elasticIndexingServiceConnector);
+      when(elasticIndexingServiceConnector.getIndexAlias()).thenReturn("post");
+
+      elasticIndexingOperationProcessor.start();
+      assertTrue(elasticIndexingOperationProcessor.getConnectors().containsKey("post"));
+
+      when(elasticIndexingServiceConnector.getCurrentIndex()).thenReturn("post_v2");
+      when(elasticIndexingServiceConnector.getPreviousIndex()).thenReturn("post_v1");
+      when(elasticIndexingServiceConnector.isReindexOnUpgrade()).thenReturn(true);
+      when(elasticIndexingClient.sendIsIndexExistsRequest("post_v1")).thenReturn(true);
+      when(elasticIndexingClient.sendIsIndexExistsRequest("post_v2")).thenReturn(false);
+      elasticIndexingOperationProcessor.start();
+      assertTrue(elasticIndexingOperationProcessor.getConnectors().containsKey("post"));
+    } catch (Exception e) {
+      fail();
+    }
   }
 
   @Test
@@ -287,6 +309,40 @@ public class ElasticOperationProcessorTest {
     order.verify(elasticIndexingClient, times(1)).sendCUDRequest(anyString());
     verifyNoMoreInteractions(elasticIndexingClient);
   }
+
+  @Test
+  public void process_ifDeleteAllOperation_allOldestCreateUpdateDeleteOperationsWithSameTypeStillInQueueShouldBeCanceled() throws ParseException {
+    //Given
+    when(elasticIndexingServiceConnector.getCurrentIndex()).thenReturn("post");
+    elasticIndexingOperationProcessor.getConnectors().put("post", elasticIndexingServiceConnector);
+    IndexingOperation deleteAll = new IndexingOperation(null,"post",OperationType.DELETE_ALL);
+    deleteAll.setId(5L);
+    //CUD operation are older than delete all
+    IndexingOperation create = new IndexingOperation("1","post",OperationType.CREATE);
+    create.setId(1L);
+    IndexingOperation delete = new IndexingOperation("1","post",OperationType.DELETE);
+    delete.setId(2L);
+    IndexingOperation update = new IndexingOperation("1","post",OperationType.UPDATE);
+    update.setId(3L);
+    List<IndexingOperation> indexingOperations = new ArrayList<>();
+    indexingOperations.add(create);
+    indexingOperations.add(delete);
+    indexingOperations.add(update);
+    indexingOperations.add(deleteAll);
+    when(indexingOperationDAO.findAllFirst(anyInt())).thenReturn(indexingOperations);
+
+    //When
+    elasticIndexingOperationProcessor.process();
+
+    //Then
+    InOrder orderClient = inOrder(elasticIndexingClient);
+    //Remove and recreate type request
+    orderClient.verify(elasticIndexingClient).sendDeleteAllDocsRequest("post");
+    //No CUD request
+    verifyNoMoreInteractions(elasticIndexingClient);
+  }
+
+
 
   @Test
   public void process_ifCreateOperation_allOldestAndNewestUpdateOperationsWithSameEntityIdStillInQueueShouldBeCanceled() throws ParseException {

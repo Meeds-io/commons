@@ -38,6 +38,4 @@ public interface IndexingService {
    * @LevelAPI Experimental
    */
   void unindex(String connectorName, String id);
-
-
 }

@@ -13,6 +13,8 @@ import org.exoplatform.services.log.Log;
 public class ElasticIndexingAuditTrail {
   public static final String  REINDEX_ALL         = "reindex_all";
 
+  public static final String  DELETE_ALL          = "delete_all";
+
   public static final String  CREATE_INDEX        = "create_index";
 
   public static final String  DELETE_INDEX        = "delete_index";
