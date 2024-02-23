@@ -39,26 +39,6 @@ public class ElasticSearchingClient extends ElasticClient {
     initHttpClient();
   }
 
-  /**
-   * No need to ES Type anymore, this method will be removed
-   * shortly
-   * 
-   * @param esQuery
-   * @param index
-   * @param type
-   * @return
-   */
-  @Deprecated
-  public String sendRequest(String esQuery, String index, String type) {
-    if (LOG.isDebugEnabled()) {
-      // Display stack trace
-      LOG.warn(new IllegalStateException("This method has been deprecated and will be removed in future releases."));
-    } else {
-      LOG.warn("This method has been deprecated and will be removed in future releases. To see stack trace, you can enable debug level on this class.");
-    }
-    return sendRequest(esQuery, index);
-  }
-
   public String sendRequest(String esQuery, String index) {
     long startTime = System.currentTimeMillis();
     StringBuilder url = new StringBuilder();
