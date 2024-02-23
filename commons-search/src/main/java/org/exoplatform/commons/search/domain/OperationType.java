@@ -10,7 +10,8 @@ public enum OperationType {
   INIT("I"),
   CREATE("C"),
   UPDATE("U"),
-  DELETE("D");
+  DELETE("D"),
+  DELETE_ALL("X");
 
   private final String operationId;
 

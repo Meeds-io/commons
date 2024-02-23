@@ -106,6 +106,23 @@ public class ElasticIndexingClient extends ElasticClient {
   }
 
   /**
+   * Send request to ES to delete all documents of the given type
+   */
+  public void sendDeleteAllDocsRequest(String index) {
+    long startTime = System.currentTimeMillis();
+    String request = getDeleteAllDocumentsRequestContent();
+    ElasticResponse response = sendHttpPostRequest(
+                                                   urlClient + "/" + index
+                                                       + "/_delete_by_query?conflicts=proceed&wait_for_completion=true",
+                                                   request);
+    auditTrail.audit(ElasticIndexingAuditTrail.DELETE_ALL,
+                     null,
+                     index,
+                     response.getStatusCode(),
+                     response.getMessage(),
+                     (System.currentTimeMillis() - startTime));
+  }
+  /**
    * Send request to ES to create a new Ingest pipeline for attachment
    * 
    * @param index
@@ -205,13 +222,13 @@ public class ElasticIndexingClient extends ElasticClient {
    */
   @SuppressWarnings("unchecked")
   public Set<String> sendGetIndexAliasesRequest(String index) {
-    String indexAliasURL = urlClient + "/" + index + "/_aliases/";
+    String indexAliasURL = urlClient + "/" + index + "/_alias/";
     ElasticResponse responseExists = sendHttpGetRequest(indexAliasURL);
     // Test if he alias already exists
     if (responseExists.getStatusCode() == HttpStatus.SC_OK) {
       // Get all aliases information
       String aliasesURL = urlClient + "/_aliases";
-      ElasticResponse responseAliases = sendHttpGetRequest(indexAliasURL);
+      ElasticResponse responseAliases = sendHttpGetRequest(aliasesURL);
       // An ES communication can happen, so throw an exception
       if (responseAliases.getStatusCode() != HttpStatus.SC_OK) {
         throw new ElasticClientException("Can't get aliases from URL " + aliasesURL);
@@ -318,15 +335,13 @@ public class ElasticIndexingClient extends ElasticClient {
    * This operation reindex the documents from old index/type to new index/type
    * mapping. A pipeline could be used when reindexing in case Ingest Attachment
    * plugin is used by a target type.
-   * 
-   * @param index target index name
+   *
+   * @param index    target index name
    * @param oldIndex source index name
-   * @param type source type name
-   * @param pipeline target pipeline name (optional)
    */
-  public void sendReindexTypeRequest(String index, String oldIndex, String type, String pipeline) {
+  public void sendReindexTypeRequest(String index, String oldIndex, String pipeline) {
     long startTime = System.currentTimeMillis();
-    String request = getReindexRequestContent(index, oldIndex, type, pipeline);
+    String request = getReindexRequestContent(index, oldIndex, pipeline);
     ElasticResponse response = sendHttpPostRequest(urlClient + "/_reindex", request);
     auditTrail.audit(ElasticIndexingAuditTrail.REINDEX_TYPE,
                      null,
@@ -335,7 +350,7 @@ public class ElasticIndexingClient extends ElasticClient {
                      response.getMessage(),
                      (System.currentTimeMillis() - startTime));
     if (response.getStatusCode() != HttpStatus.SC_OK) {
-      throw new ElasticClientException("Can't reindex index " + index + ", type = " + type + ", reqponse code = "
+      throw new ElasticClientException("Can't reindex index " + index + ", response code = "
           + response.getStatusCode()
           + ", message = " + response.getMessage());
     }
@@ -419,26 +434,36 @@ public class ElasticIndexingClient extends ElasticClient {
       }
     }
   }
+  
+  private String getDeleteAllDocumentsRequestContent() {
+    JSONObject deleteAllRequest = new JSONObject();
+    JSONObject deleteQueryRequest = new JSONObject();
+    deleteQueryRequest.put("match_all", new JSONObject());
+    deleteAllRequest.put("query", deleteQueryRequest);
+
+    String request = deleteAllRequest.toJSONString();
+    LOG.debug("Delete All request to ES: \n {}", request);
+    return request;
+  }
 
   @SuppressWarnings({ "unchecked" })
-  private String getReindexRequestContent(String index, String oldIndex, String type, String pipeline) {
+  private String getReindexRequestContent(String index, String oldIndex, String pipeline) {
     JSONObject reindexRequest = new JSONObject();
 
     JSONObject reindexSourceRequest = new JSONObject();
-    reindexRequest.put("source", reindexSourceRequest);
     reindexSourceRequest.put("index", oldIndex);
-    reindexSourceRequest.put("type", type);
+    reindexRequest.put("source", reindexSourceRequest);
 
     JSONObject reindexDestRequest = new JSONObject();
-    reindexRequest.put("dest", reindexDestRequest);
     reindexDestRequest.put("index", index);
     if (pipeline != null) {
       reindexDestRequest.put("pipeline", pipeline);
     }
+    reindexRequest.put("dest", reindexDestRequest);
 
     String request = reindexRequest.toJSONString();
 
-    LOG.debug("Reindex Request from old index {} type {} to new index : \n {}", oldIndex, type, index, request);
+    LOG.debug("Reindex Request from old index {} type {} to new index : \n {}", oldIndex, index, request);
     return request;
   }
 
