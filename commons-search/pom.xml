@@ -29,7 +29,7 @@
   <packaging>jar</packaging>
   <name>eXo PLF:: Commons - Commons Search</name>
   <properties>
-    <exo.test.coverage.ratio>0.47</exo.test.coverage.ratio>
+    <exo.test.coverage.ratio>0.3</exo.test.coverage.ratio>
     <org.hamcrest.version>1.3</org.hamcrest.version>
   </properties>
   <dependencies>

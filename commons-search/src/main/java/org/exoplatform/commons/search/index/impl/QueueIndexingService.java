@@ -51,7 +51,7 @@ public class QueueIndexingService implements IndexingService {
     }
     addToIndexingQueue(connectorName, id, OperationType.DELETE);
   }
-
+  
   /**
    * Add a new operation to the create queue
    * @param connectorName Name of the connector

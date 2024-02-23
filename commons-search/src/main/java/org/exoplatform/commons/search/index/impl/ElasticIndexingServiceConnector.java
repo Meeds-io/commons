@@ -50,7 +50,9 @@ public abstract class ElasticIndexingServiceConnector extends IndexingServiceCon
 
   protected String indexAlias;
   protected String currentIndex;
+  protected String previousIndex;
   protected String mapping;
+  protected boolean reindexOnUpgrade;
   protected Integer shards = SHARDS_NUMBER_DEFAULT;
   protected Integer replicas = REPLICAS_NUMBER_DEFAULT;
 
@@ -58,6 +60,8 @@ public abstract class ElasticIndexingServiceConnector extends IndexingServiceCon
     PropertiesParam param = initParams.getPropertiesParam("constructor.params");
 
     this.currentIndex = param.getProperty("index_current");
+    this.previousIndex = param.getProperty("index_previous");
+    String reindexOnUpgradeString = param.getProperty("reindexOnUpgrade");
     if (StringUtils.isBlank(this.currentIndex)) {
       throw new IllegalStateException("Connector ES index name is mandatory.");
     }
@@ -65,6 +69,8 @@ public abstract class ElasticIndexingServiceConnector extends IndexingServiceCon
     if (StringUtils.isBlank(indexAlias)) {
       this.indexAlias = this.currentIndex;
     }
+    this.reindexOnUpgrade = StringUtils.isNotBlank(reindexOnUpgradeString) && reindexOnUpgradeString.trim().equalsIgnoreCase("true");
+
 
     //Get number of replicas in connector declaration or exo properties
     if (StringUtils.isNotBlank(param.getProperty("replica.number"))) {
@@ -129,6 +135,18 @@ public abstract class ElasticIndexingServiceConnector extends IndexingServiceCon
 
   public String getCurrentIndex() {
     return currentIndex;
+  }
+
+  public String getPreviousIndex() {
+    return previousIndex;
+  }
+
+  public void setPreviousIndex(String previousIndex) {
+    this.previousIndex = previousIndex;
+  }
+
+  public boolean isReindexOnUpgrade() {
+    return reindexOnUpgrade;
   }
 
   public String getIndexAlias() {
