@@ -87,7 +87,7 @@ CKEDITOR.dialog.add( 'embedBase', function( editor ) {
 
 						validate: function() {
 							var widget = this.getDialog().getModel( editor );
-
+							this.setValue(this.getValue().trim());
 							if ( !widget.isUrlValid( this.getValue() ) ) {
 								return lang.unsupportedUrlGiven;
 							}
