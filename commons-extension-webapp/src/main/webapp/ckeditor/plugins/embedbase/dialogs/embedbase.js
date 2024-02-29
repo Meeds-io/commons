@@ -29,7 +29,7 @@ CKEDITOR.dialog.add( 'embedBase', function( editor ) {
 				// Indicate visually that waiting for the response (https://dev.ckeditor.com/ticket/13213).
 				that.setState( CKEDITOR.DIALOG_STATE_BUSY );
 
-				var url = that.getValueOf( 'info', 'url' ).trim(),
+				var url = that.getValueOf( 'info', 'url' ),
 					widget = that.getModel( editor );
 
 				loadContentRequest = widget.loadContent( url, {
@@ -87,7 +87,7 @@ CKEDITOR.dialog.add( 'embedBase', function( editor ) {
 
 						validate: function() {
 							var widget = this.getDialog().getModel( editor );
-
+							this.setValue(this.getValue().trim());
 							if ( !widget.isUrlValid( this.getValue() ) ) {
 								return lang.unsupportedUrlGiven;
 							}
