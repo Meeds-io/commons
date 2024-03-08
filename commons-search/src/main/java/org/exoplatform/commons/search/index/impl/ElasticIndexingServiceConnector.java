@@ -181,6 +181,9 @@ public abstract class ElasticIndexingServiceConnector extends IndexingServiceCon
   public String getPipelineName() {
     return null;
   }
+  public String getReindexPipelineName() {
+    return null;
+  }
 
   public String getAttachmentProcessor() {
     return null;

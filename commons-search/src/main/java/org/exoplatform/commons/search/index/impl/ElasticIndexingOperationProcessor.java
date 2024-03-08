@@ -768,7 +768,7 @@ public class ElasticIndexingOperationProcessor extends IndexingOperationProcesso
                   indexingServiceConnector.getPreviousIndex(),
                   indexingServiceConnector.getCurrentIndex());
           try {
-            elasticIndexingClient.sendReindexTypeRequest(indexingServiceConnector.getCurrentIndex(), indexingServiceConnector.getPreviousIndex(), indexingServiceConnector.getPipelineName());
+            elasticIndexingClient.sendReindexTypeRequest(indexingServiceConnector.getCurrentIndex(), indexingServiceConnector.getPreviousIndex(), indexingServiceConnector.getReindexPipelineName());
             if(this.indexingServiceConnector.isReindexOnUpgrade()) {
               ExoContainerContext.setCurrentContainer(exoContainer);
               reindexAllByEntityIndex(indexingServiceConnector.getConnectorName());
