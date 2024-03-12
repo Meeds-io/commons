@@ -23,7 +23,7 @@
   <parent>
     <artifactId>commons</artifactId>
     <groupId>org.exoplatform.commons</groupId>
-    <version>6.6.x-meed-SNAPSHOT</version>
+    <version>6.6.0-meed-20240312</version>
   </parent>
   <artifactId>commons-component-upgrade</artifactId>
   <name>eXo PLF:: Commons - Transparent Upgrade Framework</name>
