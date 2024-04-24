@@ -9,7 +9,7 @@
   </parent>
   <groupId>io.meeds.commons</groupId>
   <artifactId>commons</artifactId>
-  <version>7.0.x-exo-SNAPSHOT</version>
+  <version>7.0.x-experience-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>Meeds:: PLF:: Commons</name>
   <modules>
