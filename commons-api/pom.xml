@@ -23,7 +23,7 @@
   <parent>
     <artifactId>commons</artifactId>
     <groupId>org.exoplatform.commons</groupId>
-    <version>7.0.x-exo-SNAPSHOT</version>
+    <version>7.0.0-exo-20240505</version>
   </parent>
   <artifactId>commons-api</artifactId>
   <packaging>jar</packaging>
