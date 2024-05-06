@@ -5,7 +5,6 @@ import org.exoplatform.commons.api.settings.SettingValue;
 import org.exoplatform.commons.api.settings.data.Context;
 import org.exoplatform.commons.api.settings.data.Scope;
 import org.exoplatform.commons.utils.PropertyManager;
-import org.exoplatform.commons.utils.SecurityHelper;
 import org.exoplatform.container.ExoContainer;
 import org.exoplatform.container.ExoContainerContext;
 import org.exoplatform.container.component.RequestLifeCycle;
@@ -15,7 +14,6 @@ import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 import org.picocontainer.Startable;
 
-import java.security.PrivilegedAction;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Timer;
@@ -98,13 +96,8 @@ public class StartableClusterService implements Startable {
             }
         }
         /** Unregister node name , If  System.exit() is called before Thread migration is done.**/
-        SecurityHelper.doPrivilegedAction(new PrivilegedAction<Void>() {
-            public Void run() {
-                ExoContainerContext.setCurrentContainer(container);
-                Runtime.getRuntime().addShutdownHook(hook);
-                return null;
-            }
-        });
+        ExoContainerContext.setCurrentContainer(container);
+        Runtime.getRuntime().addShutdownHook(hook);
         /**Register checker task, verify service state**/
         if (clusterEnabled) {
             boolean initTimer = false;
@@ -252,13 +245,8 @@ public class StartableClusterService implements Startable {
     private class ShutdownThread extends Thread {
         @Override
         public void run() {
-            SecurityHelper.doPrivilegedAction(new PrivilegedAction<Void>() {
-                public Void run() {
-                    ExoContainerContext.setCurrentContainer(container);
-                    resetSetting();
-                    return null;
-                }
-            });
+            ExoContainerContext.setCurrentContainer(container);
+            resetSetting();
         }
     }
 }
