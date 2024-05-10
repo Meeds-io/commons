@@ -64,7 +64,7 @@ table {
 }
 
 img:not(.cke_widget_mask, .cke_widget_drag_handler) {
-  margin: @imageMargin !important;
+  margin: 10px 0 !important;
 }
 
 .placeholder {
@@ -116,12 +116,9 @@ p, li {
   line-height: @normalLineHeight;
 }
 
-span[data-cke-display-name="image"] {
-  margin: auto !important;
+span[data-cke-display-name="image"] span.cke_image_resizer {
 
-  span.cke_image_resizer {
     bottom: 0 !important;
-  }
 }
 
 .cke_contents_ltr blockquote {
@@ -247,7 +244,7 @@ a > img {
 
 .cke_widget_selectImage {
   max-width: 100%;
-  margin: 0 10px 10px 0;
+  margin: 10px 5px 10px 0 !important;
 }
 
 .cke_widget_selectImage img {
