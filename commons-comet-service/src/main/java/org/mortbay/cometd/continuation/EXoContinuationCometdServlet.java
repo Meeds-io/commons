@@ -46,7 +46,6 @@ import org.cometd.oort.SetiServlet;
 import org.cometd.server.CometDServlet;
 import org.cometd.client.websocket.javax.WebSocketTransport;
 import org.eclipse.jetty.client.HttpClient;
-import org.exoplatform.commons.utils.PrivilegedSystemHelper;
 import org.exoplatform.commons.utils.PropertyManager;
 import org.exoplatform.container.ExoContainer;
 import org.exoplatform.container.PortalContainer;
@@ -344,7 +343,7 @@ public class EXoContinuationCometdServlet extends CometDServlet {
     public Enumeration<String> getInitParameterNames() {
       if (configs == null) {
         List<String> keys = new LinkedList<String>();
-        Properties props = PrivilegedSystemHelper.getProperties();
+        Properties props = System.getProperties();
         int len = PREFIX.length();
 
         for (Object key : props.keySet()) {
