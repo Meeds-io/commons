@@ -30,7 +30,6 @@ import org.exoplatform.commons.api.notification.stat.StatisticsCollector;
 import org.exoplatform.commons.notification.job.NotificationJob;
 import org.exoplatform.commons.notification.stat.ThreadLocalStatisticsImpl;
 import org.exoplatform.commons.utils.CommonsUtils;
-import org.exoplatform.commons.utils.PrivilegedSystemHelper;
 import org.exoplatform.management.annotations.Managed;
 import org.exoplatform.management.annotations.ManagedDescription;
 import org.exoplatform.management.jmx.annotations.NameTemplate;
@@ -300,7 +299,7 @@ public class StatisticsService implements Startable {
 
   @Override
   public void start() {
-    boolean stats = "true".equalsIgnoreCase(PrivilegedSystemHelper.getProperty("exo.social.notification.statistics.active", "false"));
+    boolean stats = "true".equalsIgnoreCase(System.getProperty("exo.social.notification.statistics.active", "false"));
     this.setStatisticsEnabled(stats);
   }
 
