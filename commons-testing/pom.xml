@@ -51,10 +51,6 @@
     </dependency>
     <dependency>
       <groupId>org.exoplatform.gatein.portal</groupId>
-      <artifactId>exo.portal.component.application-registry</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.exoplatform.gatein.portal</groupId>
       <artifactId>exo.portal.component.web.security</artifactId>
     </dependency>
     <dependency>
@@ -64,10 +60,6 @@
     <dependency>
       <groupId>org.exoplatform.gatein.portal</groupId>
       <artifactId>exo.portal.webui.portal</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.exoplatform.gatein.portal</groupId>
-      <artifactId>exo.portal.webui.framework</artifactId>
     </dependency>
 
     <!-- Test JARs -->
@@ -84,11 +76,6 @@
     <dependency>
       <groupId>org.exoplatform.gatein.portal</groupId>
       <artifactId>exo.portal.component.portal</artifactId>
-      <type>test-jar</type>
-    </dependency>
-    <dependency>
-      <groupId>org.exoplatform.gatein.portal</groupId>
-      <artifactId>exo.portal.component.application-registry</artifactId>
       <type>test-jar</type>
     </dependency>
     <dependency>
