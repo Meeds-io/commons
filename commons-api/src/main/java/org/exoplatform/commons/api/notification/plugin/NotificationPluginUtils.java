@@ -96,10 +96,6 @@ public class NotificationPluginUtils {
   }
 
   public static String getFrom(String from) {
-    if (from != null && from.length() > 0 && from.indexOf("@") > 0) {
-      return from;
-    }
-
     return new StringBuffer(MailUtils.getSenderName()).append("<").append(MailUtils.getSenderEmail()).append(">").toString();
   }
 
@@ -112,7 +108,12 @@ public class NotificationPluginUtils {
   }
   
   public static String getTo(String to) {
-    return isValidEmail(to) ? to : getEmailFormat(to);
+    String email = getEmailFormat(to);
+    if (email!=null) {
+      return email;
+    } else {
+      return isValidEmail(to) ? to : null;
+    }
   }
 
   public static boolean isValidEmail(String to) {
