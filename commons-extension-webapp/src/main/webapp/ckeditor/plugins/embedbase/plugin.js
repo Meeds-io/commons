@@ -423,9 +423,12 @@
 					if ( request.task ) {
 						request.task.done();
 					}
-
-					this._setContent( request.url, evtData.html );
-					return true;
+					if ( editor.name.indexOf('comment_') > -1 && request.response.type !== 'video' ) {
+						return false
+					} else {
+						this._setContent( request.url, evtData.html );
+						return true;
+					}
 				} else {
 					request.errorCallback( evtData.errorMessage );
 					return false;
