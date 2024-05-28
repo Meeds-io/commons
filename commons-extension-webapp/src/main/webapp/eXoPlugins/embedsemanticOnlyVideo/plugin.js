@@ -6,10 +6,10 @@
 ( function() {
 	'use strict';
 
-	CKEDITOR.plugins.add( 'embedsemantic', {
-		icons: 'embedsemantic', // %REMOVE_LINE_CORE%
+	CKEDITOR.plugins.add( 'embedsemanticOnlyVideo', {
+		icons: 'embedsemanticOnlyVideo', // %REMOVE_LINE_CORE%
 		hidpi: true, // %REMOVE_LINE_CORE%
-		requires: 'embedbase',
+		requires: 'embedbaseOnlyVideo',
 
 		onLoad: function() {
 			this.registerOembedTag();
@@ -21,7 +21,7 @@
 
 			CKEDITOR.tools.extend( widgetDefinition, {
 				// Use a dialog exposed by the embedbase plugin.
-				dialog: 'embedBase',
+				dialog: 'embedBaseOnlyVideo',
 				button: editor.lang.embedbase.button,
 				allowedContent: 'oembed',
 				requiredContent: 'oembed',
@@ -38,7 +38,6 @@
 					origInit.call( this );
 
           this.on( 'handleResponse', function( response ) {
-          console.warn('embedsemantic', editor.name);
             editor.fire('embedHandleResponse', response);
           }, this );
           this.on( 'requestCanceled', function() {
@@ -100,7 +99,7 @@
 				}
 			}, true );
 
-			editor.widgets.add( 'embedSemantic', widgetDefinition );
+			editor.widgets.add( 'embedsemanticOnlyVideo', widgetDefinition );
 		},
 
 		// Extends CKEDITOR.dtd so editor accepts <oembed> tag.
