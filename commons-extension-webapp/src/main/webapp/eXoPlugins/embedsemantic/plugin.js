@@ -38,7 +38,6 @@
 					origInit.call( this );
 
           this.on( 'handleResponse', function( response ) {
-          console.warn('embedsemantic', editor.name);
             editor.fire('embedHandleResponse', response);
           }, this );
           this.on( 'requestCanceled', function() {
