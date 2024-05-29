@@ -204,7 +204,9 @@
 		 * @returns {CKEDITOR.plugins.widget.definition/null} The definition of the widget to be used to embed the link.
 		 */
 		getWidgetDefinition: function( editor, url ) {
-			var opt = editor.config.autoEmbed_widget || 'embedSemantic',
+			var opt = editor.config.autoEmbed_widget
+						 || !!editor?.plugins?.embedsemantic && 'embedSemantic'
+						 || !!editor?.plugins?.embedsemanticOnlyVideo && 'embedSemanticOnlyVideo',
 					name,
 					widgets = editor.widgets.registered;
 
