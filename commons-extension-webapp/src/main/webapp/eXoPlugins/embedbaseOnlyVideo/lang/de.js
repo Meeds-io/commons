@@ -2,7 +2,7 @@
 Copyright (c) 2003-2020, CKSource - Frederico Knabben. All rights reserved.
 For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
 */
-CKEDITOR.plugins.setLang( 'embedBaseOnlyVideo', 'de', {
+CKEDITOR.plugins.setLang( 'embedbaseOnlyVideo', 'de', {
 	pathName: 'Medienobjekt',
 	title: 'Media Embed (Medieninhalte)',
 	button: 'Medieninhalte einfügen',

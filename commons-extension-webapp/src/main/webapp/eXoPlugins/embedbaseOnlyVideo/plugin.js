@@ -67,13 +67,13 @@
 		},
 
 		init: function() {
-			CKEDITOR.dialog.add( 'embedBaseOnlyVideo', this.path + 'dialogs/embedBaseOnlyVideo.js' );
+			CKEDITOR.dialog.add( 'embedbaseOnlyVideo', this.path + 'dialogs/embedbaseOnlyVideo.js' );
 		}
 	} );
 
 	function createWidgetBaseDefinition( editor ) {
 		var aggregator,
-			lang = editor.lang.embedBaseOnlyVideo;
+			lang = editor.lang.embedbaseOnlyVideo;
 
 		return {
 			mask: true,
@@ -202,9 +202,12 @@
 					if ( request.task ) {
 						request.task.done();
 					}
-
-					this._setContent( request.url, evtData.html );
-					return true;
+					if (request.response.type != 'video') {
+						return false
+					} else {
+						this._setContent( request.url, evtData.html );
+						return true;
+					}
 				} else {
 					request.errorCallback( evtData.errorMessage );
 					return false;
@@ -259,7 +262,7 @@
 	}
 
 
-	CKEDITOR.plugins.embedBaseOnlyVideo = {
+	CKEDITOR.plugins.embedbaseOnlyVideo = {
 		createWidgetBaseDefinition: createWidgetBaseDefinition,
 		_jsonp: Jsonp
 	};

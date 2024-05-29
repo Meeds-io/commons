@@ -2,7 +2,7 @@
 Copyright (c) 2003-2020, CKSource - Frederico Knabben. All rights reserved.
 For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
 */
-CKEDITOR.plugins.setLang( 'embedBaseOnlyVideo', 'hu', {
+CKEDITOR.plugins.setLang( 'embedbaseOnlyVideo', 'hu', {
 	pathName: 'média objektum',
 	title: 'Média beágyazása',
 	button: 'Beágyazott média beszúrása',

@@ -2,7 +2,7 @@
 Copyright (c) 2003-2020, CKSource - Frederico Knabben. All rights reserved.
 For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
 */
-CKEDITOR.plugins.setLang( 'embedBaseOnlyVideo', 'sr-latn', {
+CKEDITOR.plugins.setLang( 'embedbaseOnlyVideo', 'sr-latn', {
 	pathName: 'medijski objekat',
 	title: 'Ugradnja medija',
 	button: 'Umetnite ugradjene medije',

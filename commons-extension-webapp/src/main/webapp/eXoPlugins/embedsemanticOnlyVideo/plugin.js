@@ -16,13 +16,13 @@
 		},
 
 		init: function( editor ) {
-			var widgetDefinition = CKEDITOR.plugins.embedBase.createWidgetBaseDefinition( editor ),
+			var widgetDefinition = CKEDITOR.plugins.embedbaseOnlyVideo.createWidgetBaseDefinition( editor ),
 				origInit = widgetDefinition.init;
 
 			CKEDITOR.tools.extend( widgetDefinition, {
 				// Use a dialog exposed by the embedbase plugin.
-				dialog: 'embedBaseOnlyVideo',
-				button: editor.lang.embedbase.button,
+				dialog: 'embedbaseOnlyVideo',
+				button: editor.lang.embedbaseOnlyVideo.button,
 				allowedContent: 'oembed',
 				requiredContent: 'oembed',
 				styleableElements: 'oembed',
@@ -99,7 +99,7 @@
 				}
 			}, true );
 
-			editor.widgets.add( 'embedsemanticOnlyVideo', widgetDefinition );
+			editor.widgets.add( 'embedSemanticOnlyVideo', widgetDefinition );
 		},
 
 		// Extends CKEDITOR.dtd so editor accepts <oembed> tag.

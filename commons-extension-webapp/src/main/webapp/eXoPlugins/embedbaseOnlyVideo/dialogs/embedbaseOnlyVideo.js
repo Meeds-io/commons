@@ -5,10 +5,10 @@
 
 /* global alert */
 
-CKEDITOR.dialog.add( 'embedBaseOnlyVideo', function( editor ) {
+CKEDITOR.dialog.add( 'embedbaseOnlyVideo', function( editor ) {
 	'use strict';
 
-	var lang = editor.lang.embedBaseOnlyVideo;
+	var lang = editor.lang.embedbaseOnlyVideo;
 
 	return {
 		title: lang.title,

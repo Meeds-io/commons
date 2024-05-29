@@ -2,7 +2,7 @@
 Copyright (c) 2003-2020, CKSource - Frederico Knabben. All rights reserved.
 For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
 */
-CKEDITOR.plugins.setLang( 'embedBaseOnlyVideo', 'es', {
+CKEDITOR.plugins.setLang( 'embedbaseOnlyVideo', 'es', {
 	pathName: 'objeto media',
 	title: 'Media incrustado',
 	button: 'Insertar Media incrustado',
