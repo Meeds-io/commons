@@ -28,6 +28,9 @@
       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
       xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd">
   <display-name>commons-extension</display-name>
+
+  <absolute-ordering/>
+
   <listener>
     <listener-class>org.exoplatform.container.web.PortalContainerConfigOwner</listener-class>
   </listener>
@@ -39,8 +42,13 @@
 
   <filter-mapping>
     <filter-name>ResourceRequestFilter</filter-name>
-    <url-pattern>/*</url-pattern>
+    <url-pattern>*.css</url-pattern>
+    <url-pattern>*.js</url-pattern>
+    <url-pattern>*.html</url-pattern>
+    <url-pattern>*.png</url-pattern>
+    <url-pattern>*.ico</url-pattern>
+    <url-pattern>*.webp</url-pattern>
+    <url-pattern>/images/*</url-pattern>
   </filter-mapping>
 
-  <absolute-ordering/>
 </web-app>
