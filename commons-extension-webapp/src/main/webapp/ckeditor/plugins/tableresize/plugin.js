@@ -266,7 +266,7 @@
 			editor.fire( 'saveSnapshot' );
 			resizeStart();
 
-			document.on( 'mouseup', onMouseUp, this );
+			document.on( 'pointerup', onMouseUp, this );
 		}
 
 		function onMouseUp( evt ) {
