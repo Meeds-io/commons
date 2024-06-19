@@ -22,12 +22,12 @@
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <artifactId>commons</artifactId>
-    <groupId>org.exoplatform.commons</groupId>
+    <groupId>io.meeds.commons</groupId>
     <version>7.0.x-SNAPSHOT</version>
   </parent>
   <artifactId>commons-comet-service</artifactId>
   <packaging>jar</packaging>
-  <name>eXo PLF:: Commons - Comet Services</name>
+  <name>Meeds:: PLF:: Commons - Comet Services</name>
   <properties>
     <!-- All tests are broken here :( -->
     <!-- These are IT tests that must be reviewed -->
@@ -35,7 +35,7 @@
   </properties>
   <dependencies>
     <dependency>
-      <groupId>org.exoplatform.commons</groupId>
+      <groupId>io.meeds.commons</groupId>
       <artifactId>commons-api</artifactId>
     </dependency>
 

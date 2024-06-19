@@ -23,25 +23,25 @@
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <artifactId>commons</artifactId>
-    <groupId>org.exoplatform.commons</groupId>
+    <groupId>io.meeds.commons</groupId>
     <version>7.0.x-SNAPSHOT</version>
   </parent>
   <artifactId>commons-component-product</artifactId>
   <packaging>jar</packaging>
-  <name>eXo PLF:: Commons - Product Informations</name>
+  <name>Meeds:: PLF:: Commons - Product Informations</name>
   <description>Product informations: version, revision and build numbers</description>
   <properties>
     <exo.test.coverage.ratio>0.41</exo.test.coverage.ratio>
   </properties>
   <dependencies>
     <dependency>
-      <groupId>org.exoplatform.commons</groupId>
+      <groupId>io.meeds.commons</groupId>
       <artifactId>commons-component-common</artifactId>
     </dependency>
 
     <!-- This dependency is used for test classes compilation but is erroneously reported as useless by mvn dependency:analyze -->
     <dependency>
-      <groupId>org.exoplatform.commons</groupId>
+      <groupId>io.meeds.commons</groupId>
       <artifactId>commons-component-common</artifactId>
       <type>test-jar</type>
     </dependency>

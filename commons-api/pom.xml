@@ -22,12 +22,12 @@
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <artifactId>commons</artifactId>
-    <groupId>org.exoplatform.commons</groupId>
+    <groupId>io.meeds.commons</groupId>
     <version>7.0.x-SNAPSHOT</version>
   </parent>
   <artifactId>commons-api</artifactId>
   <packaging>jar</packaging>
-  <name>eXo PLF:: Commons - API</name>
+  <name>Meeds:: PLF:: Commons - API</name>
   <properties>
     <exo.test.coverage.ratio>0.01</exo.test.coverage.ratio>
   </properties>
@@ -37,7 +37,7 @@
       to prevent runtime error from compilation time.
     -->
     <dependency>
-      <groupId>org.exoplatform.gatein.portal</groupId>
+      <groupId>io.meeds.gatein.portal</groupId>
       <artifactId>exo.portal.component.portal</artifactId>
       <exclusions>
         <exclusion>
@@ -47,23 +47,23 @@
       </exclusions>
     </dependency>
     <dependency>
-      <groupId>org.exoplatform.gatein.portal</groupId>
+      <groupId>io.meeds.gatein.portal</groupId>
       <artifactId>exo.portal.component.resources</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.exoplatform.gatein.portal</groupId>
+      <groupId>io.meeds.gatein.portal</groupId>
       <artifactId>exo.portal.component.web.controller</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.exoplatform.gatein.portal</groupId>
+      <groupId>io.meeds.gatein.portal</groupId>
       <artifactId>exo.portal.component.web.security</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.exoplatform.gatein.portal</groupId>
+      <groupId>io.meeds.gatein.portal</groupId>
       <artifactId>exo.portal.component.identity</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.exoplatform.gatein.portal</groupId>
+      <groupId>io.meeds.gatein.portal</groupId>
       <artifactId>exo.portal.webui.portal</artifactId>
       <exclusions>
         <exclusion>
