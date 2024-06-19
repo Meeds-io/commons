@@ -33,7 +33,7 @@
     <!-- **************************************** -->
     <!-- Project Dependencies                     -->
     <!-- **************************************** -->
-    <org.exoplatform.gatein.portal.version>7.0.x-exo-SNAPSHOT</org.exoplatform.gatein.portal.version>
+    <org.exoplatform.gatein.portal.version>7.0.0-exo-20240619</org.exoplatform.gatein.portal.version>
     <!-- Sonar properties -->
     <sonar.organization>meeds-io</sonar.organization>
   </properties>
