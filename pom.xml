@@ -33,7 +33,7 @@
     <!-- **************************************** -->
     <!-- Project Dependencies                     -->
     <!-- **************************************** -->
-    <io.meeds.gatein.portal.version>7.0.x-SNAPSHOT</io.meeds.gatein.portal.version>
+    <io.meeds.portal.version>7.0.x-SNAPSHOT</io.meeds.portal.version>
     <!-- Sonar properties -->
     <sonar.organization>meeds-io</sonar.organization>
     <exo.snapshots.repo.url>https://repository.exoplatform.org/content/repositories/meeds-snapshots</exo.snapshots.repo.url>
@@ -42,9 +42,9 @@
     <dependencies>
       <!-- Import versions from platform-ui project -->
       <dependency>
-        <groupId>io.meeds.gatein.portal</groupId>
-        <artifactId>exo.portal.parent</artifactId>
-        <version>${io.meeds.gatein.portal.version}</version>
+        <groupId>io.meeds.portal</groupId>
+        <artifactId>portal.parent</artifactId>
+        <version>${io.meeds.portal.version}</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
