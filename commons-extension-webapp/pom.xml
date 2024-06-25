@@ -29,9 +29,70 @@
   <packaging>war</packaging>
   <name>Meeds:: PLF:: Commons - Commons Extension Webapp</name>
 
+  <dependencies>
+    <dependency>
+      <groupId>io.meeds.platform-ui</groupId>
+      <artifactId>platform-ui-skin</artifactId>
+      <classifier>sources</classifier>
+      <scope>provided</scope>
+    </dependency>
+  </dependencies>
   <build>
     <finalName>commons-extension</finalName>
     <plugins>
+      <plugin>
+        <artifactId>maven-resources-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>less-copy-ckeditor-resources</id>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>copy-resources</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${project.build.directory}/src/main/webapp/ckeditor/skins/</outputDirectory>
+              <resources>
+                <resource>
+                  <directory>src/main/webapp/ckeditor/skins/</directory>
+                </resource>
+              </resources>
+              <overwrite>true</overwrite>
+            </configuration>
+          </execution>
+          <execution>
+            <id>less-copy-ckeditorCustom-resources</id>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>copy-resources</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${project.build.directory}/src/main/webapp/ckeditorCustom/</outputDirectory>
+              <resources>
+                <resource>
+                  <directory>src/main/webapp/ckeditorCustom/</directory>
+                </resource>
+              </resources>
+              <overwrite>true</overwrite>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>platform-ui-src</id>
+            <phase>initialize</phase>
+            <goals>
+              <goal>unpack-dependencies</goal>
+            </goals>
+            <configuration>
+              <includeArtifactIds>platform-ui-skin</includeArtifactIds>
+              <outputDirectory>${project.build.directory}/src/main/webapp</outputDirectory>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>build-helper-maven-plugin</artifactId>
@@ -45,6 +106,7 @@
             <configuration>
               <sources>
                 <source>${project.basedir}/src/main/webapp</source>
+                <source>${project.build.directory}/src/main/webapp</source>
               </sources>
             </configuration>
           </execution>
@@ -58,7 +120,7 @@
             <id>ckeditor</id>
             <configuration>
               <!-- SourceDirectory shouldn't exist and we should have as default the lesss folder in /src/main/less     -->
-              <sourceDirectory>${project.basedir}/src/main/webapp/ckeditor/skins/moono-exo/less</sourceDirectory>
+              <sourceDirectory>${project.build.directory}/src/main/webapp/ckeditor/skins/moono-exo/less</sourceDirectory>
               <outputDirectory>${project.build.directory}/${project.build.finalName}/ckeditor/skins/moono-exo</outputDirectory>
               <compress>true</compress>
               <includes>
@@ -72,7 +134,7 @@
           <execution>
             <id>ckeditorCustom</id>
             <configuration>
-              <sourceDirectory>${project.basedir}/src/main/webapp/ckeditorCustom/</sourceDirectory>
+              <sourceDirectory>${project.build.directory}/src/main/webapp/ckeditorCustom/</sourceDirectory>
               <outputDirectory>${project.build.directory}/${project.build.finalName}/ckeditorCustom</outputDirectory>
               <compress>true</compress>
               <includes>
