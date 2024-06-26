@@ -17,18 +17,17 @@
 package org.exoplatform.settings.impl;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 
 import org.exoplatform.commons.api.settings.*;
 import org.exoplatform.commons.api.settings.data.Context;
 import org.exoplatform.commons.api.settings.data.Scope;
-import org.exoplatform.container.component.ComponentPlugin;
 import org.exoplatform.management.annotations.*;
 import org.exoplatform.management.jmx.annotations.NameTemplate;
 import org.exoplatform.management.jmx.annotations.Property;
 import org.exoplatform.management.rest.annotations.RESTEndpoint;
+import org.exoplatform.services.listener.ListenerService;
 import org.exoplatform.services.organization.Membership;
 import org.exoplatform.services.organization.OrganizationService;
 import org.exoplatform.services.security.IdentityRegistry;
@@ -53,16 +52,20 @@ public class ExoFeatureServiceImpl implements ExoFeatureService, Startable {
 
   private IdentityRegistry           identityRegistry;
 
+  private ListenerService            listenerService;
+
   private Map<String, Boolean>       featuresProperties = new HashMap<>();
 
   private Map<String, FeaturePlugin> plugins            = new HashMap<>();
 
   public ExoFeatureServiceImpl(SettingService settingService,
                                IdentityRegistry identityRegistry,
-                               OrganizationService organizationService) {
+                               OrganizationService organizationService,
+                               ListenerService listenerService) {
     this.settingService = settingService;
     this.organizationService = organizationService;
     this.identityRegistry = identityRegistry;
+    this.listenerService = listenerService;
   }
 
   @Managed
@@ -81,8 +84,12 @@ public class ExoFeatureServiceImpl implements ExoFeatureService, Startable {
   }
 
   @Override
-  public void saveActiveFeature(String featureName, boolean isActive) {
-    settingService.set(Context.GLOBAL, Scope.GLOBAL.id(null), (NAME_SPACES + featureName), SettingValue.create(isActive));
+  public void saveActiveFeature(String featureName, boolean status) {
+    boolean featureStattus = isActiveFeature(featureName);
+    settingService.set(Context.GLOBAL, Scope.GLOBAL.id(null), (NAME_SPACES + featureName), SettingValue.create(status));
+    if (featureStattus != status) {
+      this.listenerService.broadcast(FEATURE_STATUS_CHANGED_EVENT, featureName, status);
+    }
   }
 
   @Managed
@@ -130,7 +137,7 @@ public class ExoFeatureServiceImpl implements ExoFeatureService, Startable {
     String propertyName = "exo.feature." + featureName + ".permissions";
     String propertyValue = System.getProperty(propertyName);
     if (StringUtils.isNotBlank(propertyValue)) {
-      return Arrays.stream(StringUtils.split(propertyValue, ",")).map(String::trim).collect(Collectors.toList());
+      return Arrays.stream(StringUtils.split(propertyValue, ",")).map(String::trim).toList();
     }
     return Collections.emptyList();
   }
