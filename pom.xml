@@ -9,7 +9,7 @@
   </parent>
   <groupId>org.exoplatform.commons</groupId>
   <artifactId>commons</artifactId>
-  <version>7.0.0-exo-20240626</version>
+  <version>7.0.x-exo-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>eXo PLF:: Commons</name>
   <modules>
@@ -27,13 +27,13 @@
     <connection>scm:git:git://github.com/meeds-io/commons.git</connection>
     <developerConnection>scm:git:git@github.com:meeds-io/commons.git</developerConnection>
     <url>https://github.com/meeds-io/commons</url>
-    <tag>7.0.0-exo-20240626</tag>
+    <tag>HEAD</tag>
   </scm>
   <properties>
     <!-- **************************************** -->
     <!-- Project Dependencies                     -->
     <!-- **************************************** -->
-    <org.exoplatform.gatein.portal.version>7.0.0-exo-20240626</org.exoplatform.gatein.portal.version>
+    <org.exoplatform.gatein.portal.version>7.0.x-exo-SNAPSHOT</org.exoplatform.gatein.portal.version>
     <!-- Sonar properties -->
     <sonar.organization>meeds-io</sonar.organization>
   </properties>
