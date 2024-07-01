@@ -20,8 +20,6 @@ import java.io.InputStream;
 import java.util.Map;
 import java.util.Properties;
 
-import org.apache.commons.codec.binary.StringUtils;
-
 import org.exoplatform.commons.api.settings.SettingService;
 import org.exoplatform.commons.api.settings.SettingValue;
 import org.exoplatform.commons.api.settings.data.Context;
@@ -134,7 +132,7 @@ public class TestProductInformations extends BasicTestCase {
     assertEquals(productInformations.getProductLink(), "newLink");
     assertEquals(productInformations.getVersion("org.exoplatform.social"), NEW_VERSION);
     assertEquals(productInformations.getVersion("org.gatein.portal"), NEW_VERSION);
-    assertEquals(productInformations.getCurrentProductGroupId(), "org.exoplatform.commons");
+    assertEquals(productInformations.getCurrentProductGroupId(), "io.meeds.commons");
 
     // clean environment
     settingService.remove(Context.GLOBAL, Scope.APPLICATION.id(ProductInformations.PRODUCT_INFORMATION));
@@ -171,7 +169,7 @@ public class TestProductInformations extends BasicTestCase {
     assertEquals(productInformations.getBuildNumber(), NEW_VERSION);
     assertEquals(productInformations.getVersion("org.exoplatform.social"), NEW_VERSION);
     assertEquals(productInformations.getVersion("org.gatein.portal"), NEW_VERSION);
-    assertEquals(productInformations.getCurrentProductGroupId(), "org.exoplatform.commons");
+    assertEquals(productInformations.getCurrentProductGroupId(), "io.meeds.commons");
 
     // clean environment
     settingService.remove(Context.GLOBAL, Scope.APPLICATION.id(ProductInformations.PRODUCT_INFORMATION));

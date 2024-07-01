@@ -22,12 +22,12 @@
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <artifactId>commons</artifactId>
-    <groupId>org.exoplatform.commons</groupId>
+    <groupId>io.meeds.commons</groupId>
     <version>7.0.x-exo-SNAPSHOT</version>
   </parent>
   <artifactId>commons-component-common</artifactId>
   <packaging>jar</packaging>
-  <name>eXo PLF:: Commons - Common Services</name>
+  <name>Meeds:: PLF:: Commons - Common Services</name>
   <properties>
     <rest.api.doc.title>Commons Rest Api</rest.api.doc.title>
     <rest.api.doc.version>1.0</rest.api.doc.version>
