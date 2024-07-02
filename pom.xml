@@ -33,7 +33,7 @@
     <!-- **************************************** -->
     <!-- Project Dependencies                     -->
     <!-- **************************************** -->
-    <io.meeds.portal.version>7.0.x-exo-SNAPSHOT</io.meeds.portal.version>
+    <io.meeds.portal.version>7.0.0-exo-20240702</io.meeds.portal.version>
     <!-- Sonar properties -->
     <sonar.organization>meeds-io</sonar.organization>
     
