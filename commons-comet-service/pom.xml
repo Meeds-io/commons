@@ -23,7 +23,7 @@
   <parent>
     <artifactId>commons</artifactId>
     <groupId>io.meeds.commons</groupId>
-    <version>7.0.x-exo-SNAPSHOT</version>
+    <version>7.0.0-exo-20240707</version>
   </parent>
   <artifactId>commons-comet-service</artifactId>
   <packaging>jar</packaging>
