@@ -33,8 +33,8 @@
     <!-- **************************************** -->
     <!-- Project Dependencies                     -->
     <!-- **************************************** -->
-    <io.meeds.portal.version>7.0.x-meed-SNAPSHOT</io.meeds.portal.version>
-    <io.meeds.platform-ui.version>7.0.x-meed-SNAPSHOT</io.meeds.platform-ui.version>
+    <io.meeds.portal.version>7.0.0-meed-20240709</io.meeds.portal.version>
+    <io.meeds.platform-ui.version>7.0.0-meed-20240709</io.meeds.platform-ui.version>
     <!-- Sonar properties -->
     <sonar.organization>meeds-io</sonar.organization>
     
