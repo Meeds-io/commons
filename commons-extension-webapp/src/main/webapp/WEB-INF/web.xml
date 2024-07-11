@@ -48,6 +48,7 @@
     <url-pattern>*.png</url-pattern>
     <url-pattern>*.ico</url-pattern>
     <url-pattern>*.webp</url-pattern>
+    <url-pattern>/i18n/*</url-pattern>
     <url-pattern>/images/*</url-pattern>
   </filter-mapping>
 

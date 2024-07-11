@@ -1,17 +1,26 @@
 package org.exoplatform.commons.resource;
 
-import java.util.*;
+import java.util.Date;
 
-import javax.ws.rs.*;
-import javax.ws.rs.core.*;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.CacheControl;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.EntityTag;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Request;
+import javax.ws.rs.core.Response;
 
 import org.apache.commons.lang3.StringUtils;
-import org.json.simple.JSONObject;
 
 import org.exoplatform.commons.utils.PropertyManager;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
-import org.exoplatform.services.resources.*;
+import org.exoplatform.services.resources.LocaleConfig;
+import org.exoplatform.services.resources.LocaleConfigService;
+import org.exoplatform.services.resources.ResourceBundleService;
 import org.exoplatform.services.rest.resource.ResourceContainer;
 
 /**
@@ -21,8 +30,6 @@ import org.exoplatform.services.rest.resource.ResourceContainer;
 public class ResourceBundleREST implements ResourceContainer {
 
   private static final Log          LOG                    = ExoLogger.getLogger(ResourceBundleREST.class);
-
-  private static final Locale       DEFAULT_I18N_LOCALE    = Locale.ENGLISH;
 
   private static final CacheControl CACHE_CONTROL          = new CacheControl();
 
@@ -49,7 +56,6 @@ public class ResourceBundleREST implements ResourceContainer {
   @GET
   @Path("{name}-{lang}.json")
   @Produces(MediaType.APPLICATION_JSON)
-  @SuppressWarnings("unchecked")
   public Response getBundleContent( // NOSONAR
                                    @Context
                                    Request request,
@@ -69,32 +75,15 @@ public class ResourceBundleREST implements ResourceContainer {
         LOG.warn("Locale '{}' is not supported", lang);
         return Response.status(400).build();
       }
-      ResourceBundle resourceBundle = resourceBundleService.getResourceBundle(resourceBundleName, localeConfig.getLocale());
-      ResourceBundle defaultResourceBundle = resourceBundleService.getResourceBundle(resourceBundleName, DEFAULT_I18N_LOCALE);
-      if (resourceBundle == null) {
-        if (defaultResourceBundle == null) {
-          LOG.warn("resourceBundleName '{}' wasn't found", resourceBundleName);
-          return Response.status(404).build();
-        } else {
-          resourceBundle = defaultResourceBundle;
-        }
+      String content = resourceBundleService.getResourceBundleContent(resourceBundleName, localeConfig.getLocale());
+      if (content == null) {
+        return Response.status(404).build();
+      } else {
+        builder = Response.ok(content, MediaType.APPLICATION_JSON);
+        builder.cacheControl(CACHE_CONTROL);
+        builder.expires(new Date(System.currentTimeMillis() + CACHE_IN_MILLI_SECONDS));
+        builder.lastModified(DEFAULT_LAST_MODIFED);
       }
-
-      JSONObject resultJSON = new JSONObject();
-      Enumeration<String> keys = resourceBundle.getKeys();
-      while (keys.hasMoreElements()) {
-        String key = keys.nextElement();
-        resultJSON.put(key, resourceBundle.getString(key));
-      }
-      keys = defaultResourceBundle.getKeys();
-      while (keys.hasMoreElements()) {
-        String key = keys.nextElement();
-        resultJSON.putIfAbsent(key, defaultResourceBundle.getString(key));
-      }
-      builder = Response.ok(resultJSON.toJSONString(), MediaType.APPLICATION_JSON);
-      builder.cacheControl(CACHE_CONTROL);
-      builder.expires(new Date(System.currentTimeMillis() + CACHE_IN_MILLI_SECONDS));
-      builder.lastModified(DEFAULT_LAST_MODIFED);
     }
     return builder.build();
   }
