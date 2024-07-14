@@ -47,7 +47,7 @@ public class ImageResizeServiceImpl implements ImageResizeService {
     int originWidth = bufferedImage.getWidth();
     int originHeight = bufferedImage.getHeight();
 
-    if (!fitExact && width > originWidth || height > originHeight) {
+    if (!fitExact && (width > originWidth || height > originHeight)) {
       // we don't want to increase image size, so return original image
       return image;
     }
@@ -70,7 +70,7 @@ public class ImageResizeServiceImpl implements ImageResizeService {
     }
 
     byte[] response = toByteArray(bufferedImage);
-    if (response.length > image.length) {
+    if (!fitExact && response.length > image.length) {
       // if the original image is smaller in weight from the resized image, we
       // must keep the original image
       return image;
