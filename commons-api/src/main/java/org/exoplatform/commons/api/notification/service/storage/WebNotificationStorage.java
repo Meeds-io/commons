@@ -7,7 +7,15 @@ import org.exoplatform.commons.api.notification.model.NotificationInfo;
 import org.exoplatform.commons.api.notification.model.WebNotificationFilter;
 
 public interface WebNotificationStorage {
-  
+
+  static final String      NOTIFICATION_WEB_SAVED_EVENT    = "notification.web.saved";
+
+  static final String      NOTIFICATION_WEB_DELETED_EVENT  = "notification.web.deleted";
+
+  static final String      NOTIFICATION_WEB_READ_EVENT     = "notification.web.read";
+
+  static final String      NOTIFICATION_WEB_READ_ALL_EVENT = "notification.web.readAll";
+
   /**
    * Creates the new notification message to the specified user.
    * The userId gets from the notification#getTo().
