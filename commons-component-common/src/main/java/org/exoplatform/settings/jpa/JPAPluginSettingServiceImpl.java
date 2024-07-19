@@ -230,7 +230,9 @@ public class JPAPluginSettingServiceImpl extends AbstractService implements Plug
   public boolean isAllowed(String channelId, String pluginId) {
     AbstractChannel channel = channelManager.getChannel(ChannelKey.key(channelId));
     PluginConfig pluginConfig = getPluginConfig(pluginId);
-    return channel != null && pluginConfig != null
+    return channel != null
+        && channel.isEnabled()
+        && pluginConfig != null
         && isChannelActive(channelId)
         && (channel.isDefaultChannel() || pluginConfig.getAdditionalChannels().contains(channelId));
   }

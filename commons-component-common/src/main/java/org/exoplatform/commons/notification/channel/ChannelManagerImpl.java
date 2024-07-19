@@ -98,6 +98,7 @@ public class ChannelManagerImpl implements ChannelManager, Startable {
   public List<AbstractChannel> getDefaultChannels() {
     return getChannels().stream()
                         .filter(AbstractChannel::isDefaultChannel)
+                        .filter(AbstractChannel::isEnabled)
                         .toList();
   }
 
@@ -116,7 +117,7 @@ public class ChannelManagerImpl implements ChannelManager, Startable {
       channels.add(emailChannel);
     }
     for (AbstractChannel channel : this.allChannels.values()) {
-      if (MailChannel.ID.equals(channel.getId())) {
+      if (MailChannel.ID.equals(channel.getId()) || !channel.isEnabled()) {
         continue;
       }
       channels.add(channel);
