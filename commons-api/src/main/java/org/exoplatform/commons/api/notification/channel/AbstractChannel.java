@@ -29,6 +29,9 @@ import org.exoplatform.commons.api.notification.model.NotificationInfo;
 import org.exoplatform.commons.api.notification.model.PluginKey;
 import org.exoplatform.container.component.BaseComponentPlugin;
 
+import lombok.Getter;
+import lombok.Setter;
+
 /**
  * Created by The eXo Platform SAS
  * Author : eXoPlatform
@@ -38,7 +41,11 @@ import org.exoplatform.container.component.BaseComponentPlugin;
 public abstract class AbstractChannel extends BaseComponentPlugin {
   /** Defines the lifecycle what will handle the notification each channel*/
   private final AbstractNotificationLifecycle lifecycle;
-  
+
+  @Getter
+  @Setter
+  private boolean                             enabled = true;
+
   public AbstractChannel(AbstractNotificationLifecycle lifecycle) {
     if (lifecycle != null) {
       this.lifecycle = lifecycle;
