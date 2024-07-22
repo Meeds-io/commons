@@ -22,6 +22,7 @@ import java.util.Map;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+
 import org.exoplatform.commons.api.notification.NotificationContext;
 import org.exoplatform.commons.api.notification.channel.AbstractChannel;
 import org.exoplatform.commons.api.notification.channel.ChannelManager;
@@ -67,8 +68,22 @@ public class WebNotificationServiceImpl implements WebNotificationService {
   @Override
   public void save(NotificationInfo notification) {
     storage.save(notification);
+    String username = notification.getTo();
+    sendWebNotificationUpdate(username);
   }
-  
+
+  @Override
+  public void update(NotificationInfo notification, boolean moveTop) {
+    storage.update(notification, moveTop);
+    String username = notification.getTo();
+    sendWebNotificationUpdate(username);
+  }
+
+  @Override
+  public NotificationInfo getUnreadNotification(String pluginId, String activityId, String userId) {
+    return storage.getUnreadNotification(pluginId, activityId, userId);
+  }
+
   @Override
   public NotificationInfo getNotificationInfo(String notificationId) {
     return storage.get(notificationId);
@@ -77,11 +92,15 @@ public class WebNotificationServiceImpl implements WebNotificationService {
   @Override
   public void markRead(String notificationId) {
     storage.markRead(notificationId);
+    NotificationInfo notification = storage.get(notificationId);
+    String username = notification.getTo();
+    sendWebNotificationUpdate(username);
   }
 
   @Override
   public void markAllRead(String userId) {
     storage.markAllRead(userId);
+    sendWebNotificationUpdate(userId, 0);
   }
 
   @Override
@@ -90,6 +109,8 @@ public class WebNotificationServiceImpl implements WebNotificationService {
       markAllRead(username);
     } else {
       storage.markAllRead(plugins, username);
+      int badgeNumber = storage.getNumberOnBadge(username);
+      sendWebNotificationUpdate(username, badgeNumber);
     }
   }
 
@@ -128,18 +149,27 @@ public class WebNotificationServiceImpl implements WebNotificationService {
 
   @Override
   public boolean remove(String notificationId) {
-    return storage.remove(notificationId);
+    NotificationInfo notification = storage.get(notificationId);
+    try {
+      return storage.remove(notificationId);
+    } finally {
+      String username = notification.getTo();
+      sendWebNotificationUpdate(username);
+    }
   }
 
   @Override
   public void hidePopover(String notificationId) {
     storage.hidePopover(notificationId);
+    NotificationInfo notification = storage.get(notificationId);
+    String username = notification.getTo();
+    sendWebNotificationUpdate(username);
   }
 
   @Override
   public void resetNumberOnBadge(String userId) {
     storage.resetNumberOnBadge(userId);
-    WebNotificationSender.sendJsonMessage(userId, new MessageInfo().setNumberOnBadge(0));
+    sendWebNotificationUpdate(userId, 0);
   }
 
   @Override
@@ -148,7 +178,7 @@ public class WebNotificationServiceImpl implements WebNotificationService {
       resetNumberOnBadge(username);
     } else {
       storage.resetNumberOnBadge(plugins, username);
-      WebNotificationSender.sendJsonMessage(username, new MessageInfo());
+      sendWebNotificationUpdate(username, 0);
     }
   }
 
@@ -197,6 +227,18 @@ public class WebNotificationServiceImpl implements WebNotificationService {
       }
     }
     return null;
+  }
+
+  private void sendWebNotificationUpdate(String username) {
+    if (StringUtils.isNotBlank(username)) {
+      int badgeNumber = storage.getNumberOnBadge(username);
+      sendWebNotificationUpdate(username, badgeNumber);
+    }
+  }
+
+  private void sendWebNotificationUpdate(String username, int badgeNumber) {
+    WebNotificationSender.sendJsonMessage(username,
+                                          new MessageInfo().setNumberOnBadge(badgeNumber));
   }
 
 }
