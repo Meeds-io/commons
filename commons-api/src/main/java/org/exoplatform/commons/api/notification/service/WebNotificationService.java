@@ -38,7 +38,17 @@ public interface WebNotificationService {
    * @since PLF 4.2
    */
   void save(NotificationInfo notification);
-  
+
+  /**
+   * Update an existing notification message.
+   * 
+   * @param notification the notification
+   * @param moveTop After updating, MUST move the notification to top of list
+   * @LevelAPI Platform
+   * @since PLF 4.2
+   */
+  void update(NotificationInfo notification, boolean moveTop);
+
   /**
    * Get the notificationInfo for the provided id
    *
@@ -167,5 +177,15 @@ public interface WebNotificationService {
    * @param plugins {@link List} of {@link PluginKey} ids
    */
   void resetNumberOnBadge(List<String> plugins, String username);
+
+  /**
+   * Gets the notification by the given conditions
+   * 
+   * @param pluginId
+   * @param activityId
+   * @param userId
+   * @return {@link NotificationInfo}
+   */
+  NotificationInfo getUnreadNotification(String pluginId, String activityId, String userId);
 
 }
