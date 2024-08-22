@@ -29,26 +29,28 @@ public class ImageResizeServiceImpl implements ImageResizeService {
 
   private static final Log LOG = ExoLogger.getLogger(ImageResizeServiceImpl.class);
 
-
   @Override
-  public byte[] scaleImage(byte[] image, int width, int height, boolean fitExact, boolean ultraQuality) throws Exception {
+  public byte[] scaleImage(byte[] image,
+                           int width,
+                           int height,
+                           boolean fitExact,
+                           boolean ultraQuality) throws Exception {
     if (width == 0 && height == 0) {
       return image;
     }
     Scalr.Method resizeMethod = ultraQuality ? Scalr.Method.ULTRA_QUALITY : Scalr.Method.QUALITY;
     BufferedImage bufferedImage = toBufferedImage(image);
-    // Image could not be loaded using ImageIO API
-    if(bufferedImage == null) {
+    if (bufferedImage == null) {
+      LOG.warn("Image could not be loaded using ImageIO API, original image will be returned instead of {}x{}", width, height);
       return image;
     }
     int originWidth = bufferedImage.getWidth();
     int originHeight = bufferedImage.getHeight();
 
-    if (width>originWidth || height>originHeight) {
-      //we don't want to increase image size, so return original image
+    if (!fitExact && (width > originWidth || height > originHeight)) {
+      // we don't want to increase image size, so return original image
       return image;
     }
-
 
     if (width == 0) {
       bufferedImage = Scalr.resize(bufferedImage, resizeMethod, Scalr.Mode.FIT_TO_HEIGHT, width, height, Scalr.OP_ANTIALIAS);
@@ -57,19 +59,20 @@ public class ImageResizeServiceImpl implements ImageResizeService {
     } else if (fitExact) {
       bufferedImage = Scalr.resize(bufferedImage, resizeMethod, Scalr.Mode.FIT_EXACT, width, height, Scalr.OP_ANTIALIAS);
     } else {
-      float ratio = (float)originHeight / (float)originWidth;
-      int calculatedTargetHeight= Math.round(width * ratio);
+      float ratio = (float) originHeight / (float) originWidth;
+      int calculatedTargetHeight = Math.round(width * ratio);
 
       Scalr.Mode fitMode = width > height ? Scalr.Mode.FIT_TO_WIDTH : Scalr.Mode.FIT_TO_HEIGHT;
       if (calculatedTargetHeight < height) {
-        fitMode=Scalr.Mode.FIT_TO_HEIGHT;
+        fitMode = Scalr.Mode.FIT_TO_HEIGHT;
       }
       bufferedImage = Scalr.resize(bufferedImage, resizeMethod, fitMode, width, height, Scalr.OP_ANTIALIAS);
     }
 
     byte[] response = toByteArray(bufferedImage);
-    if (response.length > image.length) {
-      //if the original image is smaller in weight from the resized image, we must keep the original image
+    if (!fitExact && response.length > image.length) {
+      // if the original image is smaller in weight from the resized image, we
+      // must keep the original image
       return image;
     } else {
       return response;
@@ -81,7 +84,7 @@ public class ImageResizeServiceImpl implements ImageResizeService {
       ByteArrayInputStream bis = new ByteArrayInputStream(imageBytes);
       return ImageIO.read(bis);
     } catch (Exception e) {
-      LOG.error("Unable to read image",e);
+      LOG.error("Unable to read image", e);
       return null;
     }
   }
