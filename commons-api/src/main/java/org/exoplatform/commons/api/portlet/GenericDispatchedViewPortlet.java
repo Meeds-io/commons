@@ -10,6 +10,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.gatein.portal.controller.resource.ResourceScope;
 
 import org.exoplatform.portal.application.PortalRequestContext;
+import org.exoplatform.portal.webui.application.UIPortlet;
 import org.exoplatform.web.application.JavascriptManager;
 import org.exoplatform.web.application.RequestContext;
 
@@ -63,6 +64,7 @@ public class GenericDispatchedViewPortlet extends GenericPortlet {
         request.setAttribute(entry.getKey(), entry.getValue());
       }
     }
+    request.setAttribute("portletStorageId", UIPortlet.getCurrentUIPortlet().getStorageId());
     prd.include(request, response);
     if (useJSManagerLoading) {
       PortalRequestContext portalRequestContext = (PortalRequestContext) RequestContext.getCurrentInstance();
