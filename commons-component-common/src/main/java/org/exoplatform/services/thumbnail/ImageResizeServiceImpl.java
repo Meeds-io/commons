@@ -24,8 +24,10 @@ import java.util.Iterator;
 import javax.imageio.IIOImage;
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
+import javax.imageio.ImageWriteParam;
 import javax.imageio.ImageWriter;
 import javax.imageio.metadata.IIOMetadata;
+import javax.imageio.plugins.jpeg.JPEGImageWriteParam;
 import javax.imageio.stream.ImageInputStream;
 
 import org.imgscalr.Scalr;
@@ -119,7 +121,11 @@ public class ImageResizeServiceImpl implements ImageResizeService {
     writer.setOutput(ImageIO.createImageOutputStream(byteArrayOutputStream));
 
     IIOMetadata metadata = sourceImageReader.getImageMetadata(0);
-    writer.write(new IIOImage(targetBufferedImage, null, metadata));
+    ImageWriteParam param = writer.getDefaultWriteParam();
+    if (param instanceof JPEGImageWriteParam) {
+      ((JPEGImageWriteParam) param).setOptimizeHuffmanTables(true);
+    }
+    writer.write(null,new IIOImage(targetBufferedImage, null, metadata), param);
     writer.dispose();
     return byteArrayOutputStream.toByteArray();
   }
