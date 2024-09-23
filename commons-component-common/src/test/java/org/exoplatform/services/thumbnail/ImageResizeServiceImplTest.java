@@ -195,4 +195,21 @@ public class ImageResizeServiceImplTest {
       fail();
     }
   }
+
+  @Test
+  public void testResizeJpegWithNotSupportedMetadata() throws Exception {
+
+    File
+        fileImage =
+        new File(getClass().getClassLoader().getResource("images/illustration_with_non_supported_metadata.jpeg").getFile());
+    byte[] testFileImage = Files.readAllBytes(fileImage.toPath());
+    try {
+      byte[] resizedImage = imageResizeService.scaleImage(testFileImage, 250, 150, false, true);
+      assertEquals(resizedImage.length, testFileImage.length);
+    } catch (Exception e) {
+      fail("ScaleImage throws an error, and we do not catch it");
+    }
+
+  }
+
 }
