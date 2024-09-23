@@ -237,8 +237,13 @@
 				currentOffset ? currentOffset + ( editor.config.indentUnit || 'px' ) : ''
 			);
 
-			if ( element.getAttribute( 'style' ) === '' )
+			if ( element.getAttribute( 'style' ) !== '' ) {
+				let currentStyle = element.getAttribute('style');
+				currentStyle = currentStyle.substring(0, currentStyle.length - 1 ).concat(' !important;')
+				element.setAttribute('style', currentStyle);
+			} else {
 				element.removeAttribute( 'style' );
+			}
 		}
 
 		CKEDITOR.dom.element.setMarker( this.database, element, 'indent_processed', 1 );
