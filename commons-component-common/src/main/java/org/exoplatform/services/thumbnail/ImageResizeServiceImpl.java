@@ -76,16 +76,19 @@ public class ImageResizeServiceImpl implements ImageResizeService {
       }
       bufferedImage = Scalr.resize(bufferedImage, resizeMethod, fitMode, width, height, Scalr.OP_ANTIALIAS);
     }
+    try {
+      byte[] response = toByteArray(bufferedImage, imageReader);
 
-
-    byte[] response = toByteArray(bufferedImage, imageReader);
-
-    if (!fitExact && response.length > image.length) {
-      // if the original image is smaller in weight from the resized image, we
-      // must keep the original image
+      if (!fitExact && response.length > image.length) {
+        // if the original image is smaller in weight from the resized image, we
+        // must keep the original image
+        return image;
+      } else {
+        return response;
+      }
+    } catch (IOException e) {
+      LOG.error("Unable to read image to resize, return original size",e);
       return image;
-    } else {
-      return response;
     }
   }
 
