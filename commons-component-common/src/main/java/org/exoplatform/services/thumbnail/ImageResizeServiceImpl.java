@@ -79,22 +79,28 @@ public class ImageResizeServiceImpl implements ImageResizeService {
       bufferedImage = Scalr.resize(bufferedImage, resizeMethod, fitMode, width, height, Scalr.OP_ANTIALIAS);
     }
 
-    ImageReader imageReader = getImageReader(image);
-    byte[] response = toByteArray(bufferedImage, imageReader);
-    if (response.length == 0) {
-      response = toByteArray(bufferedImage);
-      // Use PNG Image Readear instead of Gif
-      imageReader = getImageReader(response);
-      response = toByteArray(bufferedImage, imageReader);
+    try {
+      ImageReader imageReader = getImageReader(image);
+      byte[] response = toByteArray(bufferedImage, imageReader);
+      if (response.length == 0) {
+        response = toByteArray(bufferedImage);
+        // Use PNG Image Readear instead of Gif
+        imageReader = getImageReader(response);
+        response = toByteArray(bufferedImage, imageReader);
+      }
+      if (!fitExact && (response.length == 0 || response.length > image.length)) {
+        // if the original image is smaller in weight from the resized image, we
+        // must keep the original image
+        return image;
+      } else {
+        return response;
+      }
+    } catch (IOException e) {
+      LOG.error("Unable to read image to resize, return original size",e);
+      return image;
     }
 
-    if (!fitExact && (response.length == 0 || response.length > image.length)) {
-      // if the original image is smaller in weight from the resized image, we
-      // must keep the original image
-      return image;
-    } else {
-      return response;
-    }
+
   }
 
   private ImageReader getImageReader(byte[] bytes) throws IOException {
