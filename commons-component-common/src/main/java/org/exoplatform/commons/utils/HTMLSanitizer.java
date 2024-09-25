@@ -157,6 +157,8 @@ abstract public class HTMLSanitizer {
                                                                                                                                         "onmouseup")
                                                                                                                                 .matching(HISTORY_BACK)
                                                                                                                                 .onElements("a")
+                                                                                                                                .allowStandardUrlProtocols()
+                                                                                                                                .allowUrlProtocols("tel","ftp")
                                                                                                                                 .requireRelNofollowOnLinks()
                                                                                                                                 .allowAttributes("src")
                                                                                                                                 .matching(ONSITE_OR_OFFSITE_URL)
