@@ -23,7 +23,7 @@
   <parent>
     <artifactId>commons</artifactId>
     <groupId>io.meeds.commons</groupId>
-    <version>7.0.x-exo-SNAPSHOT</version>
+    <version>7.0.0-exo-20240925</version>
   </parent>
   <artifactId>commons-component-upgrade</artifactId>
   <name>Meeds:: PLF:: Commons - Transparent Upgrade Framework</name>
