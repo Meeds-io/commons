@@ -23,7 +23,7 @@
   <parent>
     <artifactId>commons</artifactId>
     <groupId>io.meeds.commons</groupId>
-    <version>7.0.x-meed-SNAPSHOT</version>
+    <version>7.0.0-meed-20240929</version>
   </parent>
   <artifactId>commons-component-common</artifactId>
   <packaging>jar</packaging>
