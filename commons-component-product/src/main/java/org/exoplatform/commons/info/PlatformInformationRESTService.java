@@ -30,6 +30,7 @@ import org.exoplatform.portal.config.UserACL;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 import org.exoplatform.services.rest.resource.ResourceContainer;
+import org.exoplatform.services.security.ConversationState;
 
 /**
  * @author <a href="mailto:anouar.chattouna@exoplatform.com">Anouar
@@ -72,7 +73,7 @@ public class PlatformInformationRESTService implements ResourceContainer {
       String plfProfile = ExoContainer.getProfiles().toString().trim();
       String runningProfile = plfProfile.substring(1, plfProfile.length() - 1);
       JsonPlatformInfo jsonPlatformInfo = new JsonPlatformInfo();
-      if (userACL.isUserInGroup(userACL.getAdminGroups())) {
+      if (userACL.isAdministrator(ConversationState.getCurrent().getIdentity())) {
         jsonPlatformInfo.setPlatformVersion(platformInformations.getVersion());
         jsonPlatformInfo.setPlatformBuildNumber(platformInformations.getBuildNumber());
         jsonPlatformInfo.setPlatformRevision(platformInformations.getRevision());
