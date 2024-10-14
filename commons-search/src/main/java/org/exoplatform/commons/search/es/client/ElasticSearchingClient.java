@@ -39,14 +39,56 @@ public class ElasticSearchingClient extends ElasticClient {
     initHttpClient();
   }
 
+  public String countRequest(String esQuery, String index) {
+    return sendRequest(esQuery, index, "/_count");
+  }
+
   public String sendRequest(String esQuery, String index) {
+    return sendRequest(esQuery, index, "/_search");
+  }
+
+  @Override
+  protected String getEsUsernameProperty() {
+    return PropertyManager.getProperty(ES_SEARCH_CLIENT_PROPERTY_USERNAME);
+  }
+
+  @Override
+  protected String getEsPasswordProperty() {
+    return PropertyManager.getProperty(ES_SEARCH_CLIENT_PROPERTY_PASSWORD);
+  }
+
+  @Override
+  protected HttpClientConnectionManager getClientConnectionManager() {
+    PoolingHttpClientConnectionManager connectionManager = new PoolingHttpClientConnectionManager();
+    connectionManager.setDefaultMaxPerRoute(getMaxConnections());
+    return connectionManager;
+  }
+
+  @Override
+  protected int getMaxConnections() {
+    if (maxPoolConnections <= 0) {
+      String maxConnectionsValue = PropertyManager.getProperty(ES_SEARCH_CLIENT_PROPERTY_MAX_CONNECTIONS);
+      if (StringUtils.isNotBlank(maxConnectionsValue) && StringUtils.isNumeric(maxConnectionsValue.trim())) {
+        maxPoolConnections = Integer.parseInt(maxConnectionsValue.trim());
+      }
+      if (maxPoolConnections <= 0) {
+        LOG.info("Using default HTTP max connections for property {}={}.",
+                 ES_SEARCH_CLIENT_PROPERTY_MAX_CONNECTIONS,
+                 DEFAULT_MAX_HTTP_POOL_CONNECTIONS);
+        maxPoolConnections = DEFAULT_MAX_HTTP_POOL_CONNECTIONS;
+      }
+    }
+    return maxPoolConnections;
+  }
+
+  private String sendRequest(String esQuery, String index, String uri) {
     long startTime = System.currentTimeMillis();
     StringBuilder url = new StringBuilder();
     url.append(urlClient);
     if (StringUtils.isNotBlank(index)) {
       url.append("/" + index);
     }
-    url.append("/_search");
+    url.append(uri);
     ElasticResponse elasticResponse = sendHttpPostRequest(url.toString(), esQuery);
     String response = elasticResponse.getMessage();
     int statusCode = elasticResponse.getStatusCode();
@@ -82,40 +124,6 @@ public class ElasticSearchingClient extends ElasticClient {
       }
     }
     return response;
-  }
-
-  @Override
-  protected String getEsUsernameProperty() {
-    return PropertyManager.getProperty(ES_SEARCH_CLIENT_PROPERTY_USERNAME);
-  }
-
-  @Override
-  protected String getEsPasswordProperty() {
-    return PropertyManager.getProperty(ES_SEARCH_CLIENT_PROPERTY_PASSWORD);
-  }
-
-  @Override
-  protected HttpClientConnectionManager getClientConnectionManager() {
-    PoolingHttpClientConnectionManager connectionManager = new PoolingHttpClientConnectionManager();
-    connectionManager.setDefaultMaxPerRoute(getMaxConnections());
-    return connectionManager;
-  }
-
-  @Override
-  protected int getMaxConnections() {
-    if (maxPoolConnections <= 0) {
-      String maxConnectionsValue = PropertyManager.getProperty(ES_SEARCH_CLIENT_PROPERTY_MAX_CONNECTIONS);
-      if (StringUtils.isNotBlank(maxConnectionsValue) && StringUtils.isNumeric(maxConnectionsValue.trim())) {
-        maxPoolConnections = Integer.parseInt(maxConnectionsValue.trim());
-      }
-      if (maxPoolConnections <= 0) {
-        LOG.info("Using default HTTP max connections for property {}={}.",
-                 ES_SEARCH_CLIENT_PROPERTY_MAX_CONNECTIONS,
-                 DEFAULT_MAX_HTTP_POOL_CONNECTIONS);
-        maxPoolConnections = DEFAULT_MAX_HTTP_POOL_CONNECTIONS;
-      }
-    }
-    return maxPoolConnections;
   }
 
   protected void resetMaxConnections() {
