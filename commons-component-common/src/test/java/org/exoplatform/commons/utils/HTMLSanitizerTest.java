@@ -117,4 +117,11 @@ public class HTMLSanitizerTest {
     }
     assertEquals("https://www.economie.gouv.fr/entreprises/changement-janvier-2022?xtor&#61;ES-29-[BIE_292_20220106]-20220106-[https://www.economie.gouv.fr/entreprises/changement-janvier-2022]", sanitized);
   }
+
+  @Test
+  public void testAllowPhoneLinks() throws Exception {
+    String input = "<a class=\"class\" href=\"tel:+21612345678\" target=\"_self\">link</a>";
+    String sanitized = HTMLSanitizer.sanitize(input);
+    assertEquals("<a class=\"class\" href=\"tel:&#43;21612345678\" rel=\"nofollow\">link</a>", sanitized);
+  }
 }
