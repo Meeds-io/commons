@@ -12,6 +12,14 @@
                "asciifolding"
             ]
          },
+         "ngram_analyzer":{
+            "type":"custom",
+            "tokenizer":"ngram_tokenizer",
+            "filter":[
+               "lowercase",
+               "asciifolding"
+            ]
+         },
          "letter_lowercase_asciifolding":{
             "type":"custom",
             "tokenizer":"letter",
@@ -37,6 +45,17 @@
             ],
             "char_filter": [
                "html_strip"
+            ]
+         }
+      },
+      "tokenizer":{
+         "ngram_tokenizer":{
+            "type":"ngram",
+            "min_gram": 3,
+            "max_gram": 3,
+            "token_chars":[
+               "letter",
+               "digit"
             ]
          }
       }
