@@ -731,17 +731,22 @@ public class ElasticIndexingOperationProcessor extends IndexingOperationProcesso
 
       boolean needsUpgrade = false;
       if (StringUtils.isNotBlank(previousIndex)) {
+        if (connector.getPreviousIndices() != null) {
+          previousIndex = connector.getPreviousIndices()
+                                   .stream()
+                                   .filter(i -> elasticIndexingClient.sendIsIndexExistsRequest(i))
+                                   .findFirst()
+                                   .orElse(previousIndex);
+          connector.setPreviousIndex(previousIndex);
+        }
         // Need to check the upgrade status (incomplete/ not run == new index doesn't exist or indexAlias is not added to new index)
         needsUpgrade = elasticIndexingClient.sendIsIndexExistsRequest(previousIndex)
                 && (!elasticIndexingClient.sendIsIndexExistsRequest(index)
                 || !elasticIndexingClient.sendGetIndexAliasesRequest(index).contains(indexAlias));
       }
 
-      if(needsUpgrade) {
-        if(!indexUpgrading.containsKey(indexAlias)) {
-          indexUpgrading.put(indexAlias, new HashSet<>());
-        }
-        indexUpgrading.get(indexAlias).add(entry.getKey());
+      if (needsUpgrade) {
+        indexUpgrading.computeIfAbsent(indexAlias, k -> new HashSet<>()).add(entry.getKey());
       }
     }
     for (Map.Entry<String, IndexingServiceConnector> entry : getConnectors().entrySet()) {

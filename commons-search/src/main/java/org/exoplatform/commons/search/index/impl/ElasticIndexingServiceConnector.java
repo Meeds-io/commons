@@ -17,6 +17,8 @@
 package org.exoplatform.commons.search.index.impl;
 
 import java.io.InputStream;
+import java.util.Arrays;
+import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
 import org.json.simple.JSONObject;
@@ -30,6 +32,8 @@ import org.exoplatform.container.xml.InitParams;
 import org.exoplatform.container.xml.PropertiesParam;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
+
+import lombok.Getter;
 
 /**
  * Created by The eXo Platform SAS
@@ -48,19 +52,31 @@ public abstract class ElasticIndexingServiceConnector extends IndexingServiceCon
 
   private static final String  MAPPING_FILE_PATH_PARAM       = "mapping.file.path";
 
-  protected String indexAlias;
-  protected String currentIndex;
-  protected String previousIndex;
-  protected String mapping;
-  protected boolean reindexOnUpgrade;
-  protected Integer shards = SHARDS_NUMBER_DEFAULT;
-  protected Integer replicas = REPLICAS_NUMBER_DEFAULT;
+  protected String             indexAlias;
+
+  protected String             currentIndex;
+
+  protected String             previousIndex;
+
+  @Getter
+  protected List<String>       previousIndices;
+
+  protected String             mapping;
+
+  protected boolean            reindexOnUpgrade;
+
+  protected Integer            shards                        = SHARDS_NUMBER_DEFAULT;
+
+  protected Integer            replicas                      = REPLICAS_NUMBER_DEFAULT;
 
   protected ElasticIndexingServiceConnector(InitParams initParams) {
     PropertiesParam param = initParams.getPropertiesParam("constructor.params");
 
     this.currentIndex = param.getProperty("index_current");
     this.previousIndex = param.getProperty("index_previous");
+    if (StringUtils.contains(this.previousIndex, ",")) {
+      this.previousIndices = Arrays.asList(this.previousIndex.split(","));
+    }
     String reindexOnUpgradeString = param.getProperty("reindexOnUpgrade");
     if (StringUtils.isBlank(this.currentIndex)) {
       throw new IllegalStateException("Connector ES index name is mandatory.");

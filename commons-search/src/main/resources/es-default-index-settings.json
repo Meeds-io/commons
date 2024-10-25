@@ -2,6 +2,7 @@
    "number_of_shards": shard.number,
    "number_of_replicas": replica.number,
    "max_regex_length": max_regex.length,
+   "max_ngram_diff" : "50",
    "analysis":{
       "analyzer":{
          "default":{
@@ -38,6 +39,28 @@
             "char_filter": [
                "html_strip"
             ]
+         },
+         "ngram_analyzer":{
+            "type":"custom",
+            "tokenizer":"ngram_tokenizer",
+            "filter":[
+               "lowercase",
+               "asciifolding"
+            ]
+         },
+         "ngram_analyzer_search": {
+           "tokenizer": "lowercase"
+         }
+      },
+      "tokenizer":{
+         "ngram_tokenizer":{
+           "type": "ngram",
+           "min_gram": 1,
+           "max_gram": 50,
+           "token_chars": [
+             "letter",
+             "digit"
+           ]
          }
       }
    }
