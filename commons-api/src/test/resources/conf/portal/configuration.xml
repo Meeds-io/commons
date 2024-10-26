@@ -36,7 +36,7 @@
     <component-plugin>
       <name>DefaultRequestHandler</name>
       <set-method>register</set-method>
-      <type>org.exoplatform.portal.application.DefaultRequestHandler</type>
+      <type>org.exoplatform.web.handler.DefaultRequestHandler</type>
     </component-plugin>
     <component-plugin>
       <name>StaticResourceRequestHandler</name>
