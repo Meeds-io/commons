@@ -62,7 +62,7 @@ public class CommonsUtilsMockingTest {
   @Test
   public void testShouldReturnDefaultPortalSite() {
     UserPortalConfigService userPortalConfigService = mock(UserPortalConfigService.class);
-    when(userPortalConfigService.getDefaultPortal()).thenReturn("intranet");
+    when(userPortalConfigService.getMetaPortal()).thenReturn("intranet");
 
     COMMONS_UTILS.when(() -> CommonsUtils.getService(UserPortalConfigService.class)).thenReturn(userPortalConfigService);
     COMMONS_UTILS.when(() -> CommonsUtils.getCurrentSite()).thenCallRealMethod();
@@ -75,7 +75,7 @@ public class CommonsUtilsMockingTest {
   @Test
   public void testShouldReturnCurrentSite() {
     UserPortalConfigService userPortalConfig = mock(UserPortalConfigService.class);
-    when(userPortalConfig.getDefaultPortal()).thenReturn("intranet");
+    when(userPortalConfig.getMetaPortal()).thenReturn("intranet");
 
     PortalRequestContext requestContext = mock(PortalRequestContext.class);
 
@@ -102,7 +102,7 @@ public class CommonsUtilsMockingTest {
 
   public void testShouldReturnDefaultPortalOwner() {
     UserPortalConfigService userPortalConfig = mock(UserPortalConfigService.class);
-    when(userPortalConfig.getDefaultPortal()).thenReturn("intranet");
+    when(userPortalConfig.getMetaPortal()).thenReturn("intranet");
 
     COMMONS_UTILS.when(() -> CommonsUtils.getService(UserPortalConfigService.class)).thenReturn(userPortalConfig);
     COMMONS_UTILS.when(() -> CommonsUtils.getCurrentSite()).thenCallRealMethod();
@@ -113,7 +113,7 @@ public class CommonsUtilsMockingTest {
 
   public void testShouldReturnCurrentPortalOwner() {
     UserPortalConfigService userPortalConfig = mock(UserPortalConfigService.class);
-    when(userPortalConfig.getDefaultPortal()).thenReturn("intranet");
+    when(userPortalConfig.getMetaPortal()).thenReturn("intranet");
 
     PortalRequestContext requestContext = mock(PortalRequestContext.class);
 
