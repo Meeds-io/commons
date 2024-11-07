@@ -17,13 +17,15 @@
     <!-- NOTIFICATIONS -->
     <!-- email notifications -->
     <changeSet author="notifications" id="1.0.0-1">
+        <validCheckSum>9:2e516209209ef65c50085d41176a839b</validCheckSum>
+        <validCheckSum>9:965aaf6d18b4f47e44f7b053a7494bc5</validCheckSum>
         <createTable tableName="NTF_EMAIL_NOTIFS">
             <column name="EMAIL_NOTIF_ID" type="BIGINT" autoIncrement="${autoIncrement}" startWith="1">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="PK_NTF_EMAIL_NOTIF_ID"/>
             </column>
-            <column name="SENDER" type="NVARCHAR(200)">
+            <column name="SENDER" type="VARCHAR(200)">
             </column>
-            <column name="TYPE" type="NVARCHAR(550)">
+            <column name="TYPE" type="VARCHAR(550)">
                 <constraints nullable="false"/>
             </column>
             <column name="CREATION_DATE" type="TIMESTAMP">
@@ -34,11 +36,13 @@
             </column>
         </createTable>
         <modifySql dbms="mysql">
-            <append value=" ENGINE=INNODB CHARSET=UTF8 COLLATE utf8_general_ci"/>
+            <append value=" ENGINE=INNODB CHARSET=UTF8MB4 COLLATE utf8mb4_0900_ai_ci"/>
         </modifySql>
     </changeSet>
 
     <changeSet author="notifications" id="1.0.0-2">
+        <validCheckSum>9:33a9806af1ccaba1686876fe0c421618</validCheckSum>
+        <validCheckSum>9:163099d723289e85059894ba83823787</validCheckSum>
         <createTable tableName="NTF_EMAIL_NOTIFS_PARAMS">
             <column name="EMAIL_NOTIF_PARAMS_ID" type="BIGINT" autoIncrement="${autoIncrement}" startWith="1">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="PK_NTF_EMAIL_NOTIF_PARAMS_ID"/>
@@ -46,17 +50,19 @@
             <column name="EMAIL_NOTIF_ID" type="BIGINT">
                 <constraints nullable="false"/>
             </column>
-            <column name="PARAM_NAME" type="NVARCHAR(550)">
+            <column name="PARAM_NAME" type="VARCHAR(550)">
                 <constraints nullable="false"/>
             </column>
             <column name="PARAM_VALUE" type="CLOB"/>
         </createTable>
         <modifySql dbms="mysql">
-            <append value=" ENGINE=INNODB CHARSET=UTF8 COLLATE utf8_general_ci"/>
+            <append value=" ENGINE=INNODB CHARSET=UTF8MB4 COLLATE utf8mb4_0900_ai_ci"/>
         </modifySql>
     </changeSet>
 
     <changeSet author="notifications" id="1.0.0-3">
+        <validCheckSum>9:669299a6a4d87e87f29636251a403e1e</validCheckSum>
+        <validCheckSum>9:6cad8dd8155f01d00c5a75bac818a0d0</validCheckSum>
         <createTable tableName="NTF_EMAIL_NOTIFS_DIGEST">
             <column name="EMAIL_NOTIF_DIGEST_ID" type="BIGINT" autoIncrement="${autoIncrement}" startWith="1">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="PK_NTF_EMAIL_NOTIF_DIGEST_ID"/>
@@ -64,10 +70,10 @@
             <column name="EMAIL_NOTIF_ID" type="BIGINT">
                 <constraints nullable="false"/>
             </column>
-            <column name="DIGEST_TYPE" type="NVARCHAR(550)"/>
+            <column name="DIGEST_TYPE" type="VARCHAR(550)"/>
         </createTable>
         <modifySql dbms="mysql">
-            <append value=" ENGINE=INNODB CHARSET=UTF8 COLLATE utf8_general_ci"/>
+            <append value=" ENGINE=INNODB CHARSET=UTF8MB4 COLLATE utf8mb4_0900_ai_ci"/>
         </modifySql>
     </changeSet>
 
@@ -100,13 +106,15 @@
 
     <!-- web notifications -->
     <changeSet author="notifications" id="1.0.0-9">
+        <validCheckSum>9:0548de92228335a6568c473b0fd240b2</validCheckSum>
+        <validCheckSum>9:22fb8e1abf149ffdd0c30f3b70d66272</validCheckSum>
         <createTable tableName="NTF_WEB_NOTIFS">
             <column name="WEB_NOTIF_ID" type="BIGINT" autoIncrement="${autoIncrement}" startWith="1">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="PK_NTF_WEB_NOTIF_ID"/>
             </column>
-            <column name="SENDER" type="NVARCHAR(200)">
+            <column name="SENDER" type="VARCHAR(200)">
             </column>
-            <column name="TYPE" type="NVARCHAR(550)">
+            <column name="TYPE" type="VARCHAR(550)">
                 <constraints nullable="false"/>
             </column>
             <column name="CREATION_DATE" type="TIMESTAMP">
@@ -116,11 +124,13 @@
             </column>
         </createTable>
         <modifySql dbms="mysql">
-            <append value=" ENGINE=INNODB CHARSET=UTF8 COLLATE utf8_general_ci"/>
+            <append value=" ENGINE=INNODB CHARSET=UTF8MB4 COLLATE utf8mb4_0900_ai_ci"/>
         </modifySql>
     </changeSet>
 
     <changeSet author="notifications" id="1.0.0-10">
+        <validCheckSum>9:75af9d0a5a9f30a2cd17c09a3bb49ec9</validCheckSum>
+        <validCheckSum>9:33f693dccc9422606e4674338a270bad</validCheckSum>
         <createTable tableName="NTF_WEB_NOTIFS_PARAMS">
             <column name="WEB_NOTIF_PARAMS_ID" type="BIGINT" autoIncrement="${autoIncrement}" startWith="1">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="PK_NTF_WEB_NOTIF_PARAMS_ID"/>
@@ -128,17 +138,19 @@
             <column name="WEB_NOTIF_ID" type="BIGINT">
                 <constraints nullable="false"/>
             </column>
-            <column name="PARAM_NAME" type="NVARCHAR(550)">
+            <column name="PARAM_NAME" type="VARCHAR(550)">
                 <constraints nullable="false"/>
             </column>
             <column name="PARAM_VALUE" type="CLOB"/>
         </createTable>
         <modifySql dbms="mysql">
-            <append value=" ENGINE=INNODB CHARSET=UTF8 COLLATE utf8_general_ci"/>
+            <append value=" ENGINE=INNODB CHARSET=UTF8MB4 COLLATE utf8mb4_0900_ai_ci"/>
         </modifySql>
     </changeSet>
 
     <changeSet author="notifications" id="1.0.0-11">
+        <validCheckSum>9:d5ac5263345943f65d3e7c0d64afc2b4</validCheckSum>
+        <validCheckSum>9:50880a817d800922586eeb2793fe99ff</validCheckSum>
         <createTable tableName="NTF_WEB_NOTIFS_USERS">
             <column name="WEB_NOTIFS_USERS_ID" type="BIGINT" autoIncrement="${autoIncrement}" startWith="1">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="PK_NTF_WEB_NOTIFS_USERS_ID"/>
@@ -146,7 +158,7 @@
             <column name="WEB_NOTIF_ID" type="BIGINT">
                 <constraints nullable="false"/>
             </column>
-            <column name="RECEIVER" type="NVARCHAR(200)"/>
+            <column name="RECEIVER" type="VARCHAR(200)"/>
             <column name="UPDATE_DATE" type="TIMESTAMP">
                 <constraints nullable="false"/>
             </column>
@@ -155,7 +167,7 @@
             <column name="RESET_NUMBER_BADGE" type="BOOLEAN"/>
         </createTable>
         <modifySql dbms="mysql">
-            <append value=" ENGINE=INNODB CHARSET=UTF8 COLLATE utf8_general_ci"/>
+            <append value=" ENGINE=INNODB CHARSET=UTF8MB4 COLLATE utf8mb4_0900_ai_ci"/>
         </modifySql>
     </changeSet>
 
@@ -186,20 +198,22 @@
 
     <!-- email queue -->
     <changeSet author="notifications" id="1.0.0-17">
+        <validCheckSum>9:ff15ba20d6e71959b9a07038e9bc4337</validCheckSum>
+        <validCheckSum>9:47185b3b5a91c9fdc02492d79e314956</validCheckSum>
         <createTable tableName="EMAIL_QUEUE">
             <column name="EMAIL_ID" type="BIGINT" autoIncrement="${autoIncrement}" startWith="1">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="PK_EMAIL_ID"/>
             </column>
             <column name="CREATION_DATE" type="TIMESTAMP"/>
-            <column name="TYPE" type="NVARCHAR(550)"/>
-            <column name="SENDER" type="NVARCHAR(200)"/>
-            <column name="RECEIVER" type="NVARCHAR(200)"/>
-            <column name="SUBJECT" type="NVARCHAR(550)"/>
+            <column name="TYPE" type="VARCHAR(550)"/>
+            <column name="SENDER" type="VARCHAR(200)"/>
+            <column name="RECEIVER" type="VARCHAR(200)"/>
+            <column name="SUBJECT" type="VARCHAR(550)"/>
             <column name="BODY" type="CLOB"/>
-            <column name="FOOTER" type="NVARCHAR(550)"/>
+            <column name="FOOTER" type="VARCHAR(550)"/>
         </createTable>
         <modifySql dbms="mysql">
-            <append value=" ENGINE=INNODB CHARSET=UTF8 COLLATE utf8_general_ci"/>
+            <append value=" ENGINE=INNODB CHARSET=UTF8MB4 COLLATE utf8mb4_0900_ai_ci"/>
         </modifySql>
     </changeSet>
 
@@ -208,9 +222,10 @@
     </changeSet>
 
     <changeSet author="notifications" id="1.0.0-19">
+        <validCheckSum>9:8bb23da7c0fbc25dc8c5b974b7f45440</validCheckSum>
         <addNotNullConstraint tableName="NTF_WEB_NOTIFS_USERS"
                               columnName="RECEIVER"
-                              columnDataType="NVARCHAR(200)"
+                              columnDataType="VARCHAR(200)"
                               defaultNullValue=""/>
     </changeSet>
 
@@ -233,5 +248,15 @@
       <createSequence sequenceName="SEQ_NTF_WEB_USERS" startValue="1" />
       <createSequence sequenceName="SEQ_NTF_EMAIL_QUEUE" startValue="1" />
     </changeSet>
-
+    <changeSet author="notifications" id="1.0.0-22" >
+        <sql dbms="mysql">
+            ALTER TABLE NTF_EMAIL_NOTIFS CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
+            ALTER TABLE NTF_EMAIL_NOTIFS_PARAMS CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
+            ALTER TABLE NTF_EMAIL_NOTIFS_DIGEST CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
+            ALTER TABLE NTF_WEB_NOTIFS CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
+            ALTER TABLE NTF_WEB_NOTIFS_PARAMS CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
+            ALTER TABLE NTF_WEB_NOTIFS_USERS CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
+            ALTER TABLE EMAIL_QUEUE CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
+        </sql>
+    </changeSet>
 </databaseChangeLog>
