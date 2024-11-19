@@ -346,6 +346,10 @@ abstract public class HTMLSanitizer {
                                                                                                                                         "exo-wiki-include-page",
                                                                                                                                         "iframe")
                                                                                                                                 .allowAttributes("page-name").onElements("exo-wiki-include-page")
+                                                                                                                                .allowElements("figcaption")
+                                                                                                                                .allowAttributes("class")
+                                                                                                                                .matching(HTML_CLASS)
+                                                                                                                                .onElements("figcaption")
                                                                                                                                  //Allows the named elements for xwiki input
                                                                                                                                 .allowElements("wikiimage","wikilink","wikimacro")
                                                                                                                                 .allowAttributes("wikiparam")
