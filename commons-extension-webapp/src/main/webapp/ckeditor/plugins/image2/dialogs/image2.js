@@ -405,6 +405,16 @@ CKEDITOR.dialog.add( 'image2', function( editor ) {
 
 			// Get the natural height of the image.
 			preLoadedHeight = domHeight = natural.height;
+
+			// set the preloaded values if no defined values
+			if (!widget?.data?.width) {
+				widget.setData( 'width',  preLoadedWidth);
+			}
+
+			if (!widget?.data?.height) {
+				widget.setData( 'height',  preLoadedHeight);
+			}
+
 		},
 		contents: [
 			{
