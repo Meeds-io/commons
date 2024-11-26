@@ -77,6 +77,7 @@
 
   img {
     margin: @imageMargin !important;
+    vertical-align: middle !important;
   }
 
   blockquote {
@@ -172,6 +173,14 @@
 
   p, li, blockquote {
     font-size: @normalFontSize;
+  }
+
+  figure {
+    display: inline-block !important;
+  }
+
+  figure figcaption {
+    text-align: center;
   }
 
 }
