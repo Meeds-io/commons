@@ -43,9 +43,9 @@ import org.exoplatform.commons.notification.impl.DigestWeeklyPlugin;
 import org.exoplatform.commons.notification.impl.NotificationContextImpl;
 import org.exoplatform.commons.notification.job.NotificationJob;
 import org.exoplatform.commons.notification.template.TemplateUtils;
+import org.exoplatform.commons.utils.TimeConvertUtils;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
-import org.exoplatform.webui.utils.TimeConvertUtils;
 
 public class DigestorServiceImpl implements DigestorService {
   private static final Log LOG = ExoLogger.getLogger(DigestorServiceImpl.class);
