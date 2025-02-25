@@ -15,12 +15,9 @@ CKEDITOR.eXoPath = CKEDITOR.basePath.substr(0, CKEDITOR.basePath.indexOf("ckedit
 
 CKEDITOR.editorConfig = function( config ){
   // config to add custom plugin  
-  CKEDITOR.plugins.addExternal('content','/eXoWCMResources/eXoPlugins/content/','plugin.js');
   CKEDITOR.plugins.addExternal('simpleLink','/commons-extension/eXoPlugins/simpleLink/','plugin.js');
-  CKEDITOR.plugins.addExternal('acceptInline','/eXoWCMResources/eXoPlugins/acceptInline/','plugin.js');
-  CKEDITOR.plugins.addExternal('cancelInline','/eXoWCMResources/eXoPlugins/cancelInline/','plugin.js');
 
-	config.extraPlugins = 'content,acceptInline,cancelInline,onchange,syntaxhighlight';
+	config.extraPlugins = 'onchange,syntaxhighlight';
 	config.removePlugins = 'scayt';
 	config.toolbarCanCollapse = false;
 	config.skin = 'moono-exo,/commons-extension/ckeditor/skins/moono-exo/';
@@ -56,43 +53,6 @@ CKEDITOR.editorConfig = function( config ){
 		'/',
 		['Blockquote','-','Link','Unlink', 'ShowBlocks'],		
 		['Styles','Format','Font','FontSize','-','Maximize']
-	] ;
-	config.toolbar_Comment = [
-  		['Bold','Italic','Underline','Strike','-','NumberedList','BulletedList','Outdent','Indent'],
-  		['JustifyLeft','JustifyCenter','JustifyRight','JustifyBlock'],
-  		'/',
-  		['Blockquote','-','Link','Unlink', 'ShowBlocks'],		
-  		['Styles','Format','Font','FontSize','-','Maximize']
-  	] ;
-	
-	config.toolbar_InlineEdit = [
-		['Cut','Copy','Paste','PasteText','PasteFromWord','-','Find','Replace','SelectAll','-','Undo','Redo'],
-		['Flash','Table','SpecialChar', 'content.btn', 'Image'],
-                ['Bold','Italic','Underline','Strike','-','JustifyLeft','JustifyCenter','JustifyRight','JustifyBlock'],
-		'/',
-                ['NumberedList','BulletedList','-','TextColor','BGColor','-','RemoveFormat'],		
-		['Link','Unlink','Anchor'],		
-		['Styles','Format','Font','FontSize'],
-		['-','acceptInline.btn','cancelInline.btn']
-	] ;
-	config.toolbar_InlineEditTitle = [
-		['Bold','Italic','Underline','Strike'],    		
-		['-','JustifyLeft','JustifyCenter','JustifyRight','JustifyBlock','Blockquote'],
-    		['-','Styles','Format','Font','FontSize']
-	] ;
-
-	config.toolbar_Forum = [
-		['Source','Maximize','-','Cut','Copy','PasteText','-','Undo','Redo','-','Bold','Italic','Underline'],
-		['JustifyLeft','JustifyCenter','JustifyRight','JustifyBlock'],
-		['NumberedList','BulletedList','Outdent','Indent','-','TextColor'],
-		['Link','Unlink','-','Blockquote', 'Syntaxhighlight','Smiley']
-	] ;
-
-	config.toolbar_FAQ = [
-		['Maximize','-','Cut','Copy','PasteText','-','Undo','Redo','-','Bold','Italic','Underline'],
-		['JustifyLeft','JustifyCenter','JustifyRight','JustifyBlock'],	
-		['NumberedList','BulletedList','Outdent','Indent','-','TextColor'],
-		['Blockquote', 'Syntaxhighlight']
 	] ;
 
 };
