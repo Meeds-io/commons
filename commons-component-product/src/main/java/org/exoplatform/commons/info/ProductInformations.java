@@ -61,6 +61,8 @@ public class ProductInformations implements Startable {
   public static final String  PRODUCT_NAME                          = "product.name";
 
   public static final String  PRODUCT_LINK                          = "product.link";
+  
+  public static final String  PRODUCT_EDITION                       = "product.edition";
 
   public static final String  PRODUCT_GROUP_ID                      = "product.groupId";
 
@@ -213,6 +215,16 @@ public class ProductInformations implements Startable {
       throw new MissingProductInformationException(PRODUCT_LINK);
     }
     return productInformationProperties.getProperty(PRODUCT_LINK);
+  }
+  
+  /**
+   * @return the current product's edition.
+   */
+  public String getProductEdition() throws MissingProductInformationException {
+    if (!productInformationProperties.containsKey(PRODUCT_EDITION)) {
+      throw new MissingProductInformationException(PRODUCT_EDITION);
+    }
+    return productInformationProperties.getProperty(PRODUCT_EDITION);
   }
 
   /**
