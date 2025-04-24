@@ -45,6 +45,32 @@
 		};
 	}
 
+	function updateTableCelluleSpacing(table, spacingValue) {
+		var style = table.getAttribute('style') || '';
+		style = style
+			.replace(/border-collapse\s*:\s*[^;]+;?/gi, '')
+			.replace(/border-spacing\s*:\s*[^;]+;?/gi, '')
+			.trim();
+
+		if (spacingValue) {
+			style += (style ? ' ' : '') + `border-collapse: separate; border-spacing: ${spacingValue}px;`;
+		}
+		table.setAttribute('style', style);
+	}
+
+	function updateTableCellulePadding(table, paddingValue) {
+		var cells = table?.$?.querySelectorAll('td, th');
+		for (var i = 0; i < cells.length; i++) {
+			var cellStyle = cells[i].getAttribute('style') || '';
+			// Remove any existing padding
+			cellStyle = cellStyle.replace(/padding\s*:\s*[^;]+;?/gi, '').trim();
+			if (paddingValue) {
+				cellStyle += (cellStyle ? ' ' : '') + `padding: ${paddingValue}px;`;
+			}
+			cells[i].setAttribute('style', cellStyle);
+		}
+	}
+
 	function tableDialog( editor, command ) {
 		var makeElement = function( name ) {
 				return new CKEDITOR.dom.element( name, editor.document );
@@ -250,6 +276,7 @@
 					info.txtHeight ? table.setStyle( 'height', info.txtHeight ) : table.removeStyle( 'height' );
 					info.txtWidth ? table.setStyle( 'width', info.txtWidth ) : table.removeStyle( 'width' );
 
+					updateTableCellulePadding(table, table.getAttribute('cellpadding'))
 					if ( !table.getAttribute( 'style' ) )
 						table.removeAttribute( 'style' );
 				}
@@ -462,10 +489,13 @@
 								this.setValue( selectedTable.getAttribute( 'cellSpacing' ) || '' );
 							},
 							commit: function( data, selectedTable ) {
-								if ( this.getValue() )
+								if ( this.getValue() ) {
 									selectedTable.setAttribute( 'cellSpacing', this.getValue() );
-								else
+									updateTableCelluleSpacing(selectedTable, this.getValue());
+								} else {
 									selectedTable.removeAttribute( 'cellSpacing' );
+									updateTableCelluleSpacing(selectedTable, 0);
+								}
 							}
 						},
 						{
@@ -480,10 +510,13 @@
 								this.setValue( selectedTable.getAttribute( 'cellPadding' ) || '' );
 							},
 							commit: function( data, selectedTable ) {
-								if ( this.getValue() )
+								if ( this.getValue() ) {
 									selectedTable.setAttribute( 'cellPadding', this.getValue() );
-								else
+									updateTableCellulePadding(selectedTable, this.getValue());
+								} else {
 									selectedTable.removeAttribute( 'cellPadding' );
+									updateTableCellulePadding(selectedTable, null);
+								}
 							}
 						} ]
 					} ]
