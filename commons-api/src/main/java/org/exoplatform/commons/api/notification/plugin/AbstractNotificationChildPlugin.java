@@ -16,16 +16,19 @@
  */
 package org.exoplatform.commons.api.notification.plugin;
 
-import groovy.text.Template;
-
 import java.util.ArrayList;
 import java.util.List;
 
 import org.exoplatform.commons.api.notification.NotificationContext;
 import org.exoplatform.commons.api.notification.model.NotificationInfo;
+import org.exoplatform.container.ExoContainerContext;
 import org.exoplatform.container.xml.InitParams;
 import org.exoplatform.container.xml.ValueParam;
 import org.exoplatform.container.xml.ValuesParam;
+import org.exoplatform.portal.config.UserACL;
+import org.exoplatform.services.security.Identity;
+
+import groovy.text.Template;
 
 public abstract class AbstractNotificationChildPlugin extends BaseNotificationPlugin {
   private static final String PARENT_ID_KEY = "parentIds";
@@ -65,7 +68,12 @@ public abstract class AbstractNotificationChildPlugin extends BaseNotificationPl
   protected String getLanguage(NotificationInfo message) {
     return NotificationPluginUtils.getLanguage(message.getTo());
   }
-  
+
+  protected Identity getUserIdentity(NotificationInfo message) {
+    return ExoContainerContext.getService(UserACL.class)
+                              .getUserIdentity(message.getTo());
+  }
+
   @Override
   protected NotificationInfo makeNotification(NotificationContext ctx) {
     throw new UnsupportedOperationException("The children plugin " + getId() + " unsupported method makeNotification.");
@@ -96,4 +104,5 @@ public abstract class AbstractNotificationChildPlugin extends BaseNotificationPl
   public void setTemplatePath(String templatePath) {
     this.templatePath = templatePath;
   }
+
 }
