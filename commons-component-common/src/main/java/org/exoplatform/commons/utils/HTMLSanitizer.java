@@ -18,7 +18,6 @@
  */
 package org.exoplatform.commons.utils;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
@@ -31,7 +30,6 @@ import org.owasp.html.*;
 
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
-import com.google.common.base.Throwables;
 
 /**
  * Prevent XSS/XEE attacks by encoding user HTML inputs. This class will be used
@@ -141,6 +139,8 @@ abstract public class HTMLSanitizer {
                                                                                                                                 .globally()
                                                                                                                                 .allowAttributes("data-role")
                                                                                                                                 .globally()
+                                                                                                                                .allowAttributes("data-object")
+                                                                                                                                .globally()
                                                                                                                                 .allowAttributes("nohref")
                                                                                                                                 .onElements("a")
                                                                                                                                 .allowAttributes("target")
@@ -162,6 +162,8 @@ abstract public class HTMLSanitizer {
                                                                                                                                 .requireRelNofollowOnLinks()
                                                                                                                                 .allowAttributes("src")
                                                                                                                                 .matching(ONSITE_OR_OFFSITE_URL)
+                                                                                                                                .onElements("img")
+                                                                                                                                .allowAttributes("archived_cke_uploadId")
                                                                                                                                 .onElements("img")
                                                                                                                                 .allowAttributes("src")
                                                                                                                                 .matching(ONSITE_OR_OFFSITE_URL)
@@ -344,6 +346,7 @@ abstract public class HTMLSanitizer {
                                                                                                                                         "ins",
                                                                                                                                         "exo-wiki-children-pages",
                                                                                                                                         "exo-wiki-include-page",
+                                                                                                                                        "content-link",
                                                                                                                                         "iframe")
                                                                                                                                 .allowAttributes("page-name").onElements("exo-wiki-include-page")
                                                                                                                                 .allowElements("figcaption")
@@ -365,6 +368,8 @@ abstract public class HTMLSanitizer {
                                                                                                                                 .globally()
                                                                                                                                 .allowAttributes("v-identity-popover")
                                                                                                                                 .globally()
+                                                                                                                                .allowAttributes("is")
+                                                                                                                                .globally()
                                                                                                                                 .allowElements("caption")
                                                                                                                                 .toFactory();
 
@@ -374,28 +379,19 @@ abstract public class HTMLSanitizer {
    * 
    * @param html The <code>String</code> object
    * @return The sanitized HTML to store in DB layer
-   * @throws Exception
    */
-  public static String sanitize(String html) throws Exception {
+  public static String sanitize(String html) {
     StringBuilder sb = new StringBuilder();
     // Set up an output channel to receive the sanitized HTML.
     HtmlStreamRenderer renderer = HtmlStreamRenderer.create(sb,
-    // Receives notifications on a failure to write to the output.
-                                                            new Handler<IOException>() {
-                                                              public void handle(IOException ex) {
-                                                                Throwables.propagate(ex);
-                                                              }
-                                                            },
                                                             // Our HTML parser
                                                             // is very lenient,
                                                             // but this receives
                                                             // notifications on
                                                             // truly bizarre
                                                             // inputs.
-                                                            new Handler<String>() {
-                                                              public void handle(String x) {
-                                                                throw new AssertionError(x);
-                                                              }
+                                                            x -> {
+                                                              throw new AssertionError(x);
                                                             });
 
     // Use the policy defined above to sanitize the HTML.

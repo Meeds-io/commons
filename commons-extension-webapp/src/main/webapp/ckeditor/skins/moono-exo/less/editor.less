@@ -117,10 +117,13 @@
 }
 .cke_chrome {
   .border-radius(5px);
-  border:1px solid @borderColor;
+  border: 1px solid currentColor;
   display:block;
   padding:0;
   visibility:inherit;
+  &.cke_focus {
+    border: 2px solid @primaryColor;
+  }
 }
 .cke_inner {
   -webkit-touch-callout:none;
