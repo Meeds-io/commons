@@ -43,6 +43,7 @@ import org.exoplatform.commons.notification.impl.jpa.web.dao.WebUsersDAO;
 import org.exoplatform.commons.notification.impl.jpa.web.entity.WebNotifEntity;
 import org.exoplatform.commons.notification.impl.jpa.web.entity.WebParamsEntity;
 import org.exoplatform.commons.notification.impl.jpa.web.entity.WebUsersEntity;
+import org.exoplatform.container.component.RequestLifeCycle;
 import org.exoplatform.services.listener.ListenerService;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
@@ -143,6 +144,7 @@ public class JPAWebNotificationStorage implements WebNotificationStorage {
       for (WebNotifEntity webNotifEntity : notifEntities) {
         webParamsDAO.deleteAll(new ArrayList<>(webNotifEntity.getParameters()));
       }
+      RequestLifeCycle.restartTransaction();
       webNotifDAO.deleteAll(notifEntities);
     }
     return removed;

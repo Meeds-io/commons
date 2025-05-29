@@ -25,30 +25,18 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.NamedQueries;
 import jakarta.persistence.NamedQuery;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 
-import org.exoplatform.commons.api.persistence.ExoEntity;
-
-/**
- * Created by The eXo Platform SAS
- * Author : eXoPlatform
- *          exo@exoplatform.com
- * Mar 07, 2017
- */
 @Entity(name = "NotificationsMailDigestEntity")
-@ExoEntity
 @Table(name = "NTF_EMAIL_NOTIFS_DIGEST")
-@NamedQueries({
-  @NamedQuery(name = "NotificationsMailDigestEntity.deleteAllDigestsOfType", query = "DELETE FROM NotificationsMailDigestEntity m " +
-      "WHERE m.type= :digestType"),
-  @NamedQuery(name = "NotificationsMailDigestEntity.deleteDigestsOfTypeByNotificationsIds", query = "DELETE FROM NotificationsMailDigestEntity m " +
-      "WHERE m.type= :digestType " +
-      "AND m.notification.id IN (:notificationIds) "),
-    @NamedQuery(name = "NotificationsMailDigestEntity.deleteAllDigests", query = "DELETE FROM NotificationsMailDigestEntity m ")
-})
+@NamedQuery(name = "NotificationsMailDigestEntity.deleteAllDigestsOfType", query = "DELETE FROM NotificationsMailDigestEntity m " +
+  "WHERE m.type= :digestType")
+@NamedQuery(name = "NotificationsMailDigestEntity.deleteDigestsOfTypeByNotificationsIds", query = "DELETE FROM NotificationsMailDigestEntity m " +
+  "WHERE m.type= :digestType " +
+  "AND m.notification.id IN (:notificationIds) ")
+@NamedQuery(name = "NotificationsMailDigestEntity.deleteAllDigests", query = "DELETE FROM NotificationsMailDigestEntity m ")
 public class MailDigestEntity {
   @Id
   @Column(name = "EMAIL_NOTIF_DIGEST_ID")

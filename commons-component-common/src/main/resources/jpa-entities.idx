@@ -1,0 +1,7 @@
+org.exoplatform.commons.notification.impl.jpa.email.entity.MailParamEntity
+org.exoplatform.commons.notification.impl.jpa.email.entity.MailNotifEntity
+org.exoplatform.commons.notification.impl.jpa.email.entity.MailQueueEntity
+org.exoplatform.commons.notification.impl.jpa.email.entity.MailDigestEntity
+org.exoplatform.commons.notification.impl.jpa.web.entity.WebUsersEntity
+org.exoplatform.commons.notification.impl.jpa.web.entity.WebNotifEntity
+org.exoplatform.commons.notification.impl.jpa.web.entity.WebParamsEntity
