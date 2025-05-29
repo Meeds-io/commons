@@ -21,15 +21,19 @@ package org.exoplatform.commons.utils;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 import org.apache.commons.collections.CollectionUtils;
-import org.owasp.html.*;
+import org.owasp.html.CssSchema;
+import org.owasp.html.HtmlPolicyBuilder;
+import org.owasp.html.HtmlSanitizer;
+import org.owasp.html.HtmlStreamEventReceiver;
+import org.owasp.html.HtmlStreamRenderer;
 
-import com.google.common.base.Function;
-import com.google.common.base.Predicate;
+import com.google.javascript.jscomp.jarjar.com.google.common.collect.ImmutableMap;
+import com.google.javascript.jscomp.jarjar.com.google.common.collect.ImmutableSet;
 
 /**
  * Prevent XSS/XEE attacks by encoding user HTML inputs. This class will be used
@@ -400,11 +404,7 @@ abstract public class HTMLSanitizer {
   }
 
   private static Predicate<String> matchesEither(final Pattern a, final Pattern b) {
-    return new Predicate<String>() {
-      public boolean apply(String s) {
-        return a.matcher(s).matches() || b.matcher(s).matches();
-      }
-    };
+    return s -> a.matcher(s).matches() || b.matcher(s).matches();
   }
 
 }
