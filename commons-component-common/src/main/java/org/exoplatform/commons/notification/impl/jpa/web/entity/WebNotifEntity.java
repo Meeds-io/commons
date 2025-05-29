@@ -4,8 +4,6 @@ import java.util.Calendar;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.exoplatform.commons.api.persistence.ExoEntity;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -16,14 +14,7 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 
-/**
- * Created by The eXo Platform SAS
- * Author : eXoPlatform
- *          exo@exoplatform.com
- * Mar 07, 2017
- */
 @Entity(name = "NotificationsWebNotifEntity")
-@ExoEntity
 @Table(name = "NTF_WEB_NOTIFS")
 public class WebNotifEntity {
   @Id

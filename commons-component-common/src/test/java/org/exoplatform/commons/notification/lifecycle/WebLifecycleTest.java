@@ -285,6 +285,7 @@ public class WebLifecycleTest extends BaseCommonsTestCase {
   private void cleanData() {
     webUsersDAO.deleteAll();
     webParamsDAO.deleteAll();
+    restartTransaction();
     webNotifDAO.deleteAll();
 
     restartTransaction();

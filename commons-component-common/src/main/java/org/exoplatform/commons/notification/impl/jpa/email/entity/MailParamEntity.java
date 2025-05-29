@@ -22,28 +22,15 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.NamedQueries;
 import jakarta.persistence.NamedQuery;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 
-import org.exoplatform.commons.api.persistence.ExoEntity;
-
-/**
- * Created by The eXo Platform SAS
- * Author : eXoPlatform
- *          exo@exoplatform.com
- * Mar 07, 2017
- */
 @Entity(name = "NotificationsMailParamsEntity")
-@ExoEntity
 @Table(name = "NTF_EMAIL_NOTIFS_PARAMS")
-@NamedQueries({
-  @NamedQuery(name = "NotificationsMailParamsEntity.deleteParamsOfNotifications", query = "DELETE FROM NotificationsMailParamsEntity m " +
-      "WHERE m.notification.id IN ( :notifications ) ")
-})
+@NamedQuery(name = "NotificationsMailParamsEntity.deleteParamsOfNotifications", query = "DELETE FROM NotificationsMailParamsEntity m " +
+    "WHERE m.notification.id IN ( :notifications ) ")
 public class MailParamEntity {
   @Id
   @Column(name = "EMAIL_NOTIF_PARAMS_ID")
