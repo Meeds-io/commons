@@ -4,49 +4,39 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.NamedQueries;
 import jakarta.persistence.NamedQuery;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 
-import org.apache.commons.lang3.StringUtils;
-
-import org.exoplatform.commons.api.persistence.ExoEntity;
-
-/**
- * Created by The eXo Platform SAS Author : eXoPlatform exo@exoplatform.com Mar
- * 07, 2017
- */
 @Entity(name = "NotificationsMailNotifEntity")
-@ExoEntity
 @Table(name = "NTF_EMAIL_NOTIFS")
-@NamedQueries({
-    @NamedQuery(name = "NotificationsMailNotifEntity.getNotifsByPluginAndDay", query = "SELECT distinct(m) FROM NotificationsMailNotifEntity m " +
-        "JOIN m.digests d " +
-        "LEFT OUTER JOIN FETCH m.parameters p " +
-        "WHERE DAY(m.creationDate)= :day " +
-        "AND MONTH(m.creationDate)= :month " +
-        "AND YEAR(m.creationDate)= :year " +
-        "AND m.type= :pluginId " +
-        "AND d.type= 'daily' " +
-        "ORDER BY m.order ASC, m.creationDate DESC"),
-    @NamedQuery(name = "NotificationsMailNotifEntity.getNotifsByPluginAndWeek", query = "SELECT distinct(m) FROM NotificationsMailNotifEntity m " +
-        "JOIN m.digests d " +
-        "LEFT OUTER JOIN FETCH m.parameters p " +
-        "WHERE m.creationDate> :date " +
-        "AND m.type= :pluginId " +
-        "AND d.type= 'weekly' " +
-        "ORDER BY m.order ASC, m.creationDate DESC"),
-    @NamedQuery(name = "NotificationsMailNotifEntity.getAllNotificationsWithoutDigests", query = "SELECT distinct(m) FROM NotificationsMailNotifEntity m " +
-        "WHERE m.digests IS EMPTY")
-})
+@NamedQuery(name = "NotificationsMailNotifEntity.getNotifsByPluginAndDay", query = "SELECT distinct(m) FROM NotificationsMailNotifEntity m " +
+    "JOIN m.digests d " +
+    "LEFT OUTER JOIN FETCH m.parameters p " +
+    "WHERE DAY(m.creationDate)= :day " +
+    "AND MONTH(m.creationDate)= :month " +
+    "AND YEAR(m.creationDate)= :year " +
+    "AND m.type= :pluginId " +
+    "AND d.type= 'daily' " +
+    "ORDER BY m.order ASC, m.creationDate DESC")
+@NamedQuery(name = "NotificationsMailNotifEntity.getNotifsByPluginAndWeek", query = "SELECT distinct(m) FROM NotificationsMailNotifEntity m " +
+    "JOIN m.digests d " +
+    "LEFT OUTER JOIN FETCH m.parameters p " +
+    "WHERE m.creationDate> :date " +
+    "AND m.type= :pluginId " +
+    "AND d.type= 'weekly' " +
+    "ORDER BY m.order ASC, m.creationDate DESC")
+@NamedQuery(name = "NotificationsMailNotifEntity.getAllNotificationsWithoutDigests", query = "SELECT distinct(m) FROM NotificationsMailNotifEntity m " +
+    "WHERE m.digests IS EMPTY")
 public class MailNotifEntity {
   @Id
   @Column(name = "EMAIL_NOTIF_ID")

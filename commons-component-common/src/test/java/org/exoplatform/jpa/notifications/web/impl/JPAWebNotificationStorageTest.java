@@ -34,6 +34,7 @@ public class JPAWebNotificationStorageTest extends BaseNotificationTestCase {
   public void tearDown() throws Exception {
     webParamsDAO.deleteAll();
     webUsersDAO.deleteAll();
+    restartTransaction();
     webNotifDAO.deleteAll();
     super.tearDown();
   }
