@@ -115,17 +115,27 @@ public class CommonsDAOJPAImplTest extends BaseCommonsTestCase {
 
   private void cleanDB() {
     settingsDAO.deleteAll();
+    restartTransaction();
     settingScopeDAO.deleteAll();
+    restartTransaction();
     settingContextDAO.deleteAll();
+    restartTransaction();
 
     mailParamsDAO.deleteAll();
+    restartTransaction();
     mailDigestDAO.deleteAll();
+    restartTransaction();
     mailNotifDAO.deleteAll();
+    restartTransaction();
 
     webParamsDAO.deleteAll();
+    restartTransaction();
     webUsersDAO.deleteAll();
+    restartTransaction();
     webNotifDAO.deleteAll();
+    restartTransaction();
 
     mailQueueDAO.deleteAll();
+    restartTransaction();
   }
 }

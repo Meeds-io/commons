@@ -58,8 +58,11 @@ public class JPANotificationServiceTest extends BaseTest {
 
   @Override
   public void tearDown() throws Exception {
+    restartTransaction();
     mailParamDAO.deleteAll();
+    restartTransaction();
     mailDigestDAO.deleteAll();
+    restartTransaction();
     mailNotifDAO.deleteAll();
     super.tearDown();
   }
@@ -230,6 +233,7 @@ public class JPANotificationServiceTest extends BaseTest {
     assertEquals(1, list.size());
 
     context.append(NotificationJob.JOB_DAILY, true);
+    restartTransaction();
     notificationDataStorage.removeMessageAfterSent(context);
 
     context = NotificationContextImpl.cloneInstance();

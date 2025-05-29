@@ -18,29 +18,28 @@
  */
 package org.exoplatform.commons.search.domain;
 
-import org.exoplatform.commons.api.persistence.ExoEntity;
-
-import jakarta.persistence.*;
 import java.io.Serializable;
 import java.util.Date;
 
-/**
- * Created by The eXo Platform SAS
- * Author : Thibault Clement
- * tclement@exoplatform.com
- * 7/22/15
- */
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.NamedQuery;
+import jakarta.persistence.SequenceGenerator;
+import jakarta.persistence.Table;
+import jakarta.persistence.Temporal;
+import jakarta.persistence.TemporalType;
+
 @Entity
-@ExoEntity
 @Table(name = "ES_INDEXING_QUEUE")
-@NamedQueries({
-    @NamedQuery(name = "IndexingOperation.deleteAllIndexingOperationsHavingIdLessThanOrEqual",
-        query = "DELETE FROM IndexingOperation q WHERE q.id <= :id"),
-    @NamedQuery(name = "IndexingOperation.deleteAllByEntityIndex",
-        query = "DELETE FROM IndexingOperation q WHERE q.entityIndex = :entityIndex"),
-    @NamedQuery(name = "IndexingOperation.findAll",
-        query = "SELECT q FROM IndexingOperation q ORDER BY q.id")
-})
+@NamedQuery(name = "IndexingOperation.deleteAllIndexingOperationsHavingIdLessThanOrEqual",
+    query = "DELETE FROM IndexingOperation q WHERE q.id <= :id")
+@NamedQuery(name = "IndexingOperation.deleteAllByEntityIndex",
+    query = "DELETE FROM IndexingOperation q WHERE q.entityIndex = :entityIndex")
+@NamedQuery(name = "IndexingOperation.findAll",
+    query = "SELECT q FROM IndexingOperation q ORDER BY q.id")
 public class IndexingOperation implements Serializable {
 
   private static final long serialVersionUID = -2647286678124583999L;
