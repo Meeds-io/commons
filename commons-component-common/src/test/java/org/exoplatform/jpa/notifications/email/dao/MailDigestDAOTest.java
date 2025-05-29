@@ -78,6 +78,7 @@ public class MailDigestDAOTest extends CommonsDAOJPAImplTest {
     //when
     context = NotificationContextImpl.cloneInstance();
     context.append(NotificationJob.JOB_WEEKLY, true);
+    restartTransaction();
     notificationDataStorage.removeMessageAfterSent(context);
     EntityManagerHolder.get().clear();
     mailNotifEntity1 = mailNotifDAO.find(mailNotifEntity1.getId());
