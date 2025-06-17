@@ -64,6 +64,7 @@ public class JPAPluginSettingServiceImpl extends AbstractService implements Plug
   private static final Context       CHANNEL_CONTEXT                      = Context.GLOBAL.id("NotificationChannelSetting");
 
   private static final Scope         CHANNEL_SCOPE                        = Scope.APPLICATION.id("NotificationChannelSetting");
+  private static final Scope         CHANNEL_DEFAULT_VALUE_SCOPE                        = Scope.APPLICATION.id("NotificationChannelSettingDefaultValue");
 
   private static final String        NAME_SPACES                          = "exo:";
 
@@ -188,6 +189,16 @@ public class JPAPluginSettingServiceImpl extends AbstractService implements Plug
   }
 
   @Override
+  public void saveChannelDefaultValue(String channelId, boolean enable) {
+    settingService.set(CHANNEL_CONTEXT, CHANNEL_DEFAULT_VALUE_SCOPE, channelId, SettingValue.create(String.valueOf(enable)));
+    try {
+      listenerService.broadcast(NOTIFICATION_CHANNEL_STATUS_MODIFIED, channelId, null);
+    } catch (Exception e) {
+      LOG.warn("Error broadcasting channel status modification", e);
+    }
+  }
+
+  @Override
   public void saveEmailSender(String name, String email) {
     if (!NotificationUtils.isValidNotificationSenderName(name)) {
       throw new IllegalArgumentException("invalidSenderName");
@@ -219,6 +230,12 @@ public class JPAPluginSettingServiceImpl extends AbstractService implements Plug
   public boolean isChannelActive(String channelId) {
     SettingValue<?> activeSettingValue = settingService.get(CHANNEL_CONTEXT, CHANNEL_SCOPE, channelId);
     return activeSettingValue == null || activeSettingValue.getValue() == null || StringUtils.equals(activeSettingValue.getValue().toString(), "true");
+  }
+
+  @Override
+  public boolean getDefaultChannelValue(String channelId) {
+    SettingValue<?> channelDefaultValue = settingService.get(CHANNEL_CONTEXT, CHANNEL_DEFAULT_VALUE_SCOPE, channelId);
+    return channelDefaultValue == null || channelDefaultValue.getValue() == null || StringUtils.equals(channelDefaultValue.getValue().toString(), "true");
   }
 
   @Override
