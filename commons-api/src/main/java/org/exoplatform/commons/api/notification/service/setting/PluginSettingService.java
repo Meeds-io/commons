@@ -72,6 +72,22 @@ public interface PluginSettingService {
   void saveChannelStatus(String channelId, boolean enable);
 
   /**
+   * Saves a default value for a given Channel
+   *
+   * @param channelId Channel identifier
+   * @param enable status whether enabled or not
+   */
+  void saveChannelDefaultValue(String channelId, boolean enable);
+
+  /**
+   * Get notification channel default value
+   *
+   * @param channelId Channel identifier
+   * @return true is active by default else inactive
+   */
+  boolean getDefaultChannelValue(String channelId);
+
+  /**
    * Saves email notification sender settings
    * 
    * @param name Company name
