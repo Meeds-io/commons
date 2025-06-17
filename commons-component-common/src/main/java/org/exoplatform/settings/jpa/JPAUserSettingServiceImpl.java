@@ -167,6 +167,7 @@ public class JPAUserSettingServiceImpl extends AbstractService implements UserSe
     UserSetting userSettings = getDefaultSettings();
     userSettings.setUserId(userId);
     userSettings.setEnabled(isUserEnabled(userId));
+    userSettings.applyDefaultValues();
 
     Map<Scope, Map<String, SettingValue<String>>> userNotificationSettings = settingService.getSettingsByContext(USER.id(userId));
     if (userNotificationSettings == null || userNotificationSettings.isEmpty()) {
@@ -257,17 +258,13 @@ public class JPAUserSettingServiceImpl extends AbstractService implements UserSe
   public UserSetting getDefaultSettings() { // NOSONAR
     if (defaultSetting == null || PropertyManager.isDevelopping()) {
       defaultSetting = UserSetting.getInstance();
-      List<String> activeChannels = getDefaultSettingActiveChannels();
-      if (CollectionUtils.isEmpty(activeChannels)) {
         for (AbstractChannel channel : channelManager.getChannels()) {
           if (pluginSettingService.isChannelActive(channel.getId())) {
             defaultSetting.setChannelActive(channel.getId());
           }
+          defaultSetting.setChannelDefaultValueActive(channel.getId(),pluginSettingService.getDefaultChannelValue(channel.getId()));
         }
-      } else {
-        defaultSetting.getChannelActives().addAll(activeChannels);
-      }
-      //
+
       List<PluginInfo> plugins = pluginSettingService.getAllPlugins();
       for (PluginInfo pluginInfo : plugins) {
         List<String> pluginChannels = pluginSettingService.getPluginChannels(pluginInfo.getType());
@@ -380,12 +377,6 @@ public class JPAUserSettingServiceImpl extends AbstractService implements UserSe
       return NotificationUtils.stringToSet(getValues(value));
     }
     return defaultValue;
-  }
-
-  private List<String> getDefaultSettingActiveChannels() {
-    String activeChannels = System.getProperty("exo.notification.channels", "");
-    List<String> activeChannelsList = activeChannels.isEmpty() ? Collections.emptyList() : Arrays.asList(activeChannels.split(","));
-    return activeChannelsList.stream().filter(channelId -> pluginSettingService.isChannelActive(channelId)).toList();
   }
 
   private void fillDefaultSettingsOfUser(String username) {
