@@ -244,4 +244,24 @@ public class JPAUserSettingServiceTest extends BaseTest {
     model.setWeeklyPlugins(weekly);
     return model;
   }
+
+  public void testChannelDefaultValue() throws Exception {
+    String username = "testChannelDefaultValue";
+    User user = new UserImpl(username);
+    organizationService.getUserHandler().createUser(user, false);
+
+    UserSetting userSetting = userSettingService.get(username);
+    assertNotNull(userSetting);
+
+    //set channel default value to false for users
+    pluginSettingServiceImpl.saveChannelDefaultValue(CHANNEL_ID, false);
+
+    //channel is still active
+    assertTrue(pluginSettingServiceImpl.isChannelActive(CHANNEL_ID));
+
+    //user setting is still default settings
+    userSetting = userSettingService.get(username);
+    Set<String> channelActives = userSetting.getChannelActives();
+    assertFalse(channelActives.contains(CHANNEL_ID));
+  }
 }

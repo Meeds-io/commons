@@ -54,6 +54,8 @@ public class UserSetting {
 
   private Map<String, List<String>> channelPlugins;
 
+  private Map<String, Boolean> channelDefaultValue;
+
   private List<String>              dailyPlugins;
 
   private List<String>              weeklyPlugins;
@@ -67,6 +69,7 @@ public class UserSetting {
   public UserSetting() {
     this.channelActives = newSet(null);
     this.channelPlugins = newMap(null);
+    this.channelDefaultValue = new HashMap<>();
     //
     this.dailyPlugins = newList(null);
     this.weeklyPlugins = newList(null);
@@ -86,6 +89,18 @@ public class UserSetting {
     this.lastReadDate = lastReadDate;
   }
 
+  public void setChannelDefaultValueActive(String channelId, boolean value) {
+    if (channelDefaultValue == null) {
+      channelDefaultValue = new HashMap<>();
+    }
+    channelDefaultValue.put(channelId,value);
+  }
+  public Map<String, Boolean> getChannelDefaultValue () {
+    if (channelDefaultValue == null) {
+      channelDefaultValue = new HashMap<>();
+    }
+    return channelDefaultValue;
+  }
   public Set<String> getChannelActives() {
     if (channelActives == null) {
       channelActives = newSet(null);
@@ -295,6 +310,9 @@ public class UserSetting {
     for (Entry<String, List<String>> entry : channelPlugins.entrySet()) {
       setting.setChannelPlugins(entry.getKey(), newList(entry.getValue()));
     }
+    for (Entry<String, Boolean> entry : channelDefaultValue.entrySet()) {
+      setting.setChannelDefaultValueActive(entry.getKey(), entry.getValue());
+    }
     setting.setUserId(userId);
     setting.setMutedSpaces(mutedSpaces);
     return setting;
@@ -354,4 +372,17 @@ public class UserSetting {
     return Collections.synchronizedSet(set == null ? new HashSet<>() : new HashSet<>(set));
   }
 
+  public void applyDefaultValues() {
+    Set<String> currentActiveChannel = newSet(channelActives);
+    currentActiveChannel.forEach(channelId -> {
+      if (channelDefaultValue.containsKey(channelId)) {
+        boolean defaultValue = channelDefaultValue.get(channelId);
+        if (defaultValue) {
+          setChannelActive(channelId);
+        } else {
+          removeChannelActive(channelId);
+        }
+      }
+    });
+  }
 }
