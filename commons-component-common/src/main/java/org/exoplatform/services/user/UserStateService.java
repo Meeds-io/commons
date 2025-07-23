@@ -21,6 +21,11 @@ package org.exoplatform.services.user;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import org.exoplatform.commons.api.settings.SettingService;
+import org.exoplatform.commons.api.settings.SettingValue;
+import org.exoplatform.commons.api.settings.data.Context;
+import org.exoplatform.commons.api.settings.data.Scope;
+import org.exoplatform.ws.frameworks.cometd.ContinuationService;
 import org.mortbay.cometd.continuation.EXoContinuationBayeux;
 
 import org.exoplatform.services.cache.CacheService;
@@ -38,12 +43,23 @@ public class UserStateService {
 
   private static final int               DEFAULT_OFFLINE_DELAY = 60000;
 
+  private static final Scope             USER_STATE_SCOPE      = Scope.APPLICATION.id("userStateScope");
+  
+  private static final String            USER_STATUS           = "userStatus";
+
+  public static final String             COMETD_CHANNEL        = "/meeds/Application/UserState";
+
+  public static final String             USER_STATUS_UPDATED   = "user-status-updated";
+
   private final ExoCache<String, String> userStateCache;
 
-  private final EXoContinuationBayeux    eXoContinuationBayeux;
+  private final ContinuationService      continuationService;
 
-  public UserStateService(EXoContinuationBayeux eXoContinuationBayeux, CacheService cacheService) {
-    this.eXoContinuationBayeux = eXoContinuationBayeux;
+  private final SettingService           settingService;
+
+  public UserStateService(ContinuationService continuationService, CacheService cacheService, SettingService settingService) {
+    this.continuationService = continuationService;
+    this.settingService = settingService;
     this.userStateCache = cacheService.getCacheInstance(USER_STATE_CACHE_NAME);
   }
 
@@ -52,7 +68,7 @@ public class UserStateService {
    */
   public List<UserStateModel> online() {
     long lastActivity = System.currentTimeMillis();
-    Set<String> connectedUserIds = eXoContinuationBayeux.getConnectedUserIds();
+    Set<String> connectedUserIds = continuationService.getConnectedUserIds();
     return connectedUserIds.stream()
                            .map(userId -> {
                              String status = userStateCache.get(userId);
@@ -74,7 +90,7 @@ public class UserStateService {
    * @return true if user is still connected else false
    */
   public boolean isOnline(String userId) {
-    return eXoContinuationBayeux.isPresent(userId);
+    return continuationService.isPresent(userId);
   }
 
   /**
@@ -84,13 +100,19 @@ public class UserStateService {
    * @return {@link UserStateModel}
    */
   public UserStateModel getUserState(String userId) {
-    boolean online = eXoContinuationBayeux.isPresent(userId);
+    boolean online = continuationService.isPresent(userId);
     if (!online) {
       return new UserStateModel(userId, 0, STATUS_OFFLINE);
     }
     String status = userStateCache.get(userId);
     if (status == null) {
-      status = DEFAULT_STATUS;
+      SettingValue<?> settingValue = settingService.get(Context.USER.id(userId), USER_STATE_SCOPE, USER_STATUS);
+      if (settingValue != null && settingValue.getValue() != null) {
+        status = settingValue.getValue().toString();
+        userStateCache.put(userId, status);
+      } else {
+        status = DEFAULT_STATUS;
+      }
     }
     return new UserStateModel(userId, System.currentTimeMillis(), status);
   }
@@ -114,6 +136,10 @@ public class UserStateService {
    */
   public void saveStatus(String userId, String status) {
     userStateCache.put(userId, status);
+    settingService.set(Context.USER.id(userId), USER_STATE_SCOPE, USER_STATUS, SettingValue.create(String.valueOf(status)));
+    UserStateWSMessage message = new UserStateWSMessage(new UserStateModel(userId, System.currentTimeMillis(), status),
+                                                        USER_STATUS_UPDATED);
+    continuationService.sendBroadcastMessage(COMETD_CHANNEL, message.toString());
   }
 
   /**
