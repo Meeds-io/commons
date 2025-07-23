@@ -60,7 +60,6 @@ public class UserStateServiceTest extends BaseCommonsTestCase {
   public void testGetUserState() throws Exception {
     //
     loginUser("mary", true);
-    doNothing().when(continuationService).sendBroadcastMessage(anyString(), any(), anyString());
     when(continuationService.isPresent("mary")).thenReturn(true);
 
     assertEquals(UserStateService.DEFAULT_STATUS, userStateService.getUserState("mary").getStatus());
