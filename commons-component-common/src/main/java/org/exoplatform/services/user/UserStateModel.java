@@ -18,9 +18,14 @@
  */
 package org.exoplatform.services.user;
 
+import lombok.Data;
+import org.exoplatform.ws.frameworks.json.impl.JsonException;
+import org.exoplatform.ws.frameworks.json.impl.JsonGeneratorImpl;
+
 import java.io.Serializable;
 import java.util.Objects;
 
+@Data
 public class UserStateModel implements Serializable {
   private static final long serialVersionUID = -416451728545284362L;
 
@@ -42,39 +47,7 @@ public class UserStateModel implements Serializable {
     this.lastActivity = lastActivity;
     this.status = status;
   }
-
-  public String getUserId() {
-    return this.userId;
-  }
-
-  public void setUserId(String userId) {
-    this.userId = userId;
-  }
-
-  /**
-   * @deprecated not needed field anymore
-   */
-  @Deprecated
-  public long getLastActivity() {
-    return this.lastActivity;
-  }
-
-  /**
-   * @deprecated not needed field anymore
-   */
-  @Deprecated
-  public void setLastActivity(long lastActivity) {
-    this.lastActivity = lastActivity;
-  }
-
-  public String getStatus() {
-    return this.status;
-  }
-
-  public void setStatus(String status) {
-    this.status = status;
-  }
-
+  
   public UserStateModel clone() {
     return new UserStateModel(this.getUserId(), this.getLastActivity(), this.getStatus());
   }
@@ -95,4 +68,5 @@ public class UserStateModel implements Serializable {
   public int hashCode() {
     return Objects.hash(userId, lastActivity, status);
   }
+
 }
