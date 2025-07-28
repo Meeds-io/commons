@@ -18,24 +18,27 @@
  */
 package org.exoplatform.services.user;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
 import java.util.*;
 
+import org.exoplatform.commons.api.settings.SettingService;
+import org.exoplatform.ws.frameworks.cometd.ContinuationService;
 import org.mortbay.cometd.continuation.EXoContinuationBayeux;
 
 import org.exoplatform.commons.testing.BaseCommonsTestCase;
 import org.exoplatform.services.cache.CacheService;
 import org.exoplatform.services.security.*;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.*;
+
 public class UserStateServiceTest extends BaseCommonsTestCase {
 
-  private String                SUPER_USER = "root";
+  private String              SUPER_USER = "root";
 
-  private EXoContinuationBayeux eXoContinuationBayeux;
+  private ContinuationService continuationService;
 
-  private UserStateService      userStateService;
+  private UserStateService    userStateService;
 
   @Override
   public void setUp() throws Exception {
@@ -43,8 +46,10 @@ public class UserStateServiceTest extends BaseCommonsTestCase {
     //
     loginUser(SUPER_USER, false);
 
-    eXoContinuationBayeux = mock(EXoContinuationBayeux.class);
-    userStateService = new UserStateService(eXoContinuationBayeux, getService(CacheService.class));
+    continuationService = mock(ContinuationService.class);
+    userStateService = new UserStateService(continuationService,
+                                            getService(CacheService.class),
+                                            getService(SettingService.class));
   }
 
   protected void tearDown() throws Exception {
@@ -55,19 +60,20 @@ public class UserStateServiceTest extends BaseCommonsTestCase {
   public void testGetUserState() throws Exception {
     //
     loginUser("mary", true);
-    when(eXoContinuationBayeux.isPresent("mary")).thenReturn(true);
+    doNothing().when(continuationService).sendBroadcastMessage(anyString(), any(), anyString());
+    when(continuationService.isPresent("mary")).thenReturn(true);
 
     assertEquals(UserStateService.DEFAULT_STATUS, userStateService.getUserState("mary").getStatus());
 
     //
     loginUser("demo", false);
-    when(eXoContinuationBayeux.isPresent("demo")).thenReturn(true);
+    when(continuationService.isPresent("demo")).thenReturn(true);
 
     // get status of user Mary by current user Demo
     assertEquals(UserStateService.DEFAULT_STATUS, userStateService.getUserState("demo").getStatus());
     assertEquals(UserStateService.DEFAULT_STATUS, userStateService.getUserState("mary").getStatus());
 
-    when(eXoContinuationBayeux.isPresent("demo")).thenReturn(false);
+    when(continuationService.isPresent("demo")).thenReturn(false);
     assertEquals(UserStateService.STATUS_OFFLINE, userStateService.getUserState("demo").getStatus());
   }
 
@@ -77,7 +83,7 @@ public class UserStateServiceTest extends BaseCommonsTestCase {
                                                   date,
                                                   UserStateService.STATUS_OFFLINE);
     userStateService.save(userModel);
-    when(eXoContinuationBayeux.getConnectedUserIds()).thenReturn(Collections.singleton(SUPER_USER));
+    when(continuationService.getConnectedUserIds()).thenReturn(Collections.singleton(SUPER_USER));
 
     //
     List<UserStateModel> onlines = userStateService.online();
@@ -95,22 +101,22 @@ public class UserStateServiceTest extends BaseCommonsTestCase {
   public void testLastLogin() {
     assertNull(userStateService.lastLogin());
     loginUser("user1", true);
-    when(eXoContinuationBayeux.getConnectedUserIds()).thenReturn(Collections.singleton("user1"));
+    when(continuationService.getConnectedUserIds()).thenReturn(Collections.singleton("user1"));
     assertEquals("user1", userStateService.lastLogin().getUserId());
 
     loginUser("user2", true);
-    when(eXoContinuationBayeux.getConnectedUserIds()).thenReturn(new LinkedHashSet<>(Arrays.asList("user1", "user2")));
+    when(continuationService.getConnectedUserIds()).thenReturn(new LinkedHashSet<>(Arrays.asList("user1", "user2")));
     assertEquals("user2", userStateService.lastLogin().getUserId());
   }
 
   public void testIsOnline() throws Exception {
-    when(eXoContinuationBayeux.isPresent(SUPER_USER)).thenReturn(true);
+    when(continuationService.isPresent(SUPER_USER)).thenReturn(true);
 
     assertTrue(userStateService.isOnline(SUPER_USER));
 
     assertFalse(userStateService.isOnline("demo"));
 
-    when(eXoContinuationBayeux.isPresent("demo")).thenReturn(true);
+    when(continuationService.isPresent("demo")).thenReturn(true);
 
     assertTrue(userStateService.isOnline("demo"));
   }

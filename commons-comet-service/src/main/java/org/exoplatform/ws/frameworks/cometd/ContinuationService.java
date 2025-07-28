@@ -20,6 +20,7 @@ package org.exoplatform.ws.frameworks.cometd;
 
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.Set;
 
 import org.cometd.bayeux.server.ServerSession;
 import org.cometd.server.ServerChannelImpl;
@@ -152,5 +153,8 @@ public class ContinuationService {
   public String getUserToken(String eXoId) {
     return bayeux.getUserToken(eXoId);
   }
-
+  
+  public Set<String> getConnectedUserIds() {
+    return bayeux.getConnectedUserIds();
+  }
 }
