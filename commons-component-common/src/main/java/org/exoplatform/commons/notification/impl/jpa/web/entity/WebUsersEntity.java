@@ -18,96 +18,96 @@
  */
 package org.exoplatform.commons.notification.impl.jpa.web.entity;
 
-import org.exoplatform.commons.api.persistence.ExoEntity;
-
-import jakarta.persistence.*;
 import java.util.Calendar;
 
-/**
- * Created by The eXo Platform SAS
- * Author : eXoPlatform
- *          exo@exoplatform.com
- * Mar 07, 2017
- */
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.NamedQuery;
+import jakarta.persistence.SequenceGenerator;
+import jakarta.persistence.Table;
+
 @Entity(name = "NotificationsWebUsersEntity")
-@ExoEntity
 @Table(name = "NTF_WEB_NOTIFS_USERS")
-@NamedQueries({
-  @NamedQuery(name = "NotificationsWebUsersEntity.getNumberOnBadge", query = "SELECT COUNT(u) FROM NotificationsWebUsersEntity u " +
-      "WHERE u.receiver = :userId " +
-      "AND u.resetNumberOnBadge = FALSE "),
-    @NamedQuery(
-        name = "NotificationsWebUsersEntity.countUnreadByPlugin",
-        query = "SELECT w.type, COUNT(u) FROM NotificationsWebUsersEntity u " +
-          " INNER JOIN u.webNotification w " +
-          " WHERE u.receiver = :userId " +
-          " AND u.read = FALSE" +
-          " GROUP BY w.type"),
-    @NamedQuery(name = "NotificationsWebUsersEntity.findNotifsWithBadge", query = "SELECT u FROM NotificationsWebUsersEntity u " +
-        "WHERE u.receiver = :userId " +
-        "AND u.resetNumberOnBadge = FALSE "),
-    @NamedQuery(
-    name = "NotificationsWebUsersEntity.findNotifsWithBadgeByPlugins",
-    query = "SELECT u FROM NotificationsWebUsersEntity u " +
-        " INNER JOIN u.webNotification w " +
-        " ON w.type IN (:pluginIds)" +
-        " WHERE u.receiver = :userId " +
-        " AND u.resetNumberOnBadge = FALSE "),
-    @NamedQuery(
-      name = "NotificationsWebUsersEntity.findUnreadByUserAndPlugins",
-      query = "SELECT u FROM NotificationsWebUsersEntity u " +
-        " INNER JOIN u.webNotification w " +
-        " ON w.type IN (:pluginIds)" +
-        " WHERE u.receiver = :userId " +
-        " AND u.read = FALSE "),
-    @NamedQuery(name = "NotificationsWebUsersEntity.markWebNotifsAsReadByUser", query = "UPDATE NotificationsWebUsersEntity u " +
-        "SET u.read = TRUE " +
-        "WHERE u.receiver = :userId " +
-        "AND u.read = FALSE "),
-    @NamedQuery(
-      name = "NotificationsWebUsersEntity.findWebNotifsByPluginFilter",
-      query = "SELECT distinct(u) FROM NotificationsWebUsersEntity u " +
-        " INNER JOIN u.webNotification w " +
-        " ON w.type IN (:pluginIds)" +
-        " WHERE u.receiver = :userId " +
-        " AND u.showPopover= :isOnPopover " +
-        " ORDER BY u.updateDate DESC "
-    ),
-    @NamedQuery(
-      name = "NotificationsWebUsersEntity.findNotificationsByTypeAndParams",
-      query = "SELECT distinct(u) FROM NotificationsWebUsersEntity u " +
-        " INNER JOIN u.webNotification w" +
-        " ON w.type IN (:pluginIds)" +
-        " INNER JOIN w.parameters p" +
-        " ON p.name = :paramName" +
-        " AND p.value = :paramValue" +
-        " WHERE u.receiver = :receiver" +
-        " ORDER BY u.updateDate DESC "),
-    @NamedQuery(name = "NotificationsWebUsersEntity.findWebNotifsByUserFilter", query = "SELECT u FROM NotificationsWebUsersEntity u " +
-        "JOIN FETCH u.webNotification w " +
-        "WHERE u.receiver = :userId " +
-        "ORDER BY u.updateDate DESC "),
-    @NamedQuery(name = "NotificationsWebUsersEntity.findWebNotifsByPopoverFilter", query = "SELECT u FROM NotificationsWebUsersEntity u " +
-        "JOIN FETCH u.webNotification w " +
-        "WHERE u.receiver = :userId " +
-        "AND u.showPopover= :isOnPopover " +
-        "ORDER BY u.updateDate DESC "),
-    @NamedQuery(name = "NotificationsWebUsersEntity.findUnreadNotification", query = "SELECT u FROM NotificationsWebUsersEntity u " +
-        "JOIN FETCH u.webNotification w " +
-        "JOIN u.webNotification.parameters  p " +
-        "WHERE w.type= :pluginId " +
-        "AND p.name = :paramName " +
-        "AND p.value LIKE :paramValue " +
-        "AND u.receiver = :userId " +
-        "AND u.read = FALSE " +
-        "ORDER BY u.updateDate DESC "),
-    @NamedQuery(name = "NotificationsWebUsersEntity.findWebNotifsOfUserByLastUpdatedDate", query = "SELECT u FROM NotificationsWebUsersEntity u " +
-        "WHERE u.receiver = :userId " +
-        "AND u.updateDate < :calendar "),
-    @NamedQuery(name = "NotificationsWebUsersEntity.findWebNotifsByLastUpdatedDate", query = "SELECT u FROM NotificationsWebUsersEntity u " +
-        "JOIN FETCH u.webNotification w " +
-        "WHERE u.updateDate < :calendar ")
-})
+@NamedQuery(name = "NotificationsWebUsersEntity.getNumberOnBadge", query = "SELECT COUNT(u) FROM NotificationsWebUsersEntity u " +
+  "WHERE u.receiver = :userId " +
+  "AND u.resetNumberOnBadge = FALSE ")
+@NamedQuery(
+    name = "NotificationsWebUsersEntity.countUnreadByPlugin",
+    query = "SELECT w.type, COUNT(u) FROM NotificationsWebUsersEntity u " +
+      " INNER JOIN u.webNotification w " +
+      " WHERE u.receiver = :userId " +
+      " AND u.read = FALSE" +
+      " GROUP BY w.type")
+@NamedQuery(name = "NotificationsWebUsersEntity.findNotifsWithBadge", query = "SELECT u FROM NotificationsWebUsersEntity u " +
+    "WHERE u.receiver = :userId " +
+    "AND u.resetNumberOnBadge = FALSE ")
+@NamedQuery(
+name = "NotificationsWebUsersEntity.findNotifsWithBadgeByPlugins",
+query = "SELECT u FROM NotificationsWebUsersEntity u " +
+    " INNER JOIN u.webNotification w " +
+    " ON w.type IN (:pluginIds)" +
+    " WHERE u.receiver = :userId " +
+    " AND u.resetNumberOnBadge = FALSE ")
+@NamedQuery(
+  name = "NotificationsWebUsersEntity.findUnreadByUserAndPlugins",
+  query = "SELECT u FROM NotificationsWebUsersEntity u " +
+    " INNER JOIN u.webNotification w " +
+    " ON w.type IN (:pluginIds)" +
+    " WHERE u.receiver = :userId " +
+    " AND u.read = FALSE ")
+@NamedQuery(name = "NotificationsWebUsersEntity.markWebNotifsAsReadByUser", query = "UPDATE NotificationsWebUsersEntity u " +
+    "SET u.read = TRUE " +
+    "WHERE u.receiver = :userId " +
+    "AND u.read = FALSE ")
+@NamedQuery(
+  name = "NotificationsWebUsersEntity.findWebNotifsByPluginFilter",
+  query = "SELECT distinct(u) FROM NotificationsWebUsersEntity u " +
+    " INNER JOIN u.webNotification w " +
+    " ON w.type IN (:pluginIds)" +
+    " WHERE u.receiver = :userId " +
+    " AND u.showPopover= :isOnPopover " +
+    " ORDER BY u.updateDate DESC "
+)
+@NamedQuery(
+  name = "NotificationsWebUsersEntity.findNotificationsByTypeAndParams",
+  query = "SELECT distinct(u) FROM NotificationsWebUsersEntity u " +
+    " INNER JOIN u.webNotification w" +
+    " ON w.type IN (:pluginIds)" +
+    " INNER JOIN w.parameters p" +
+    " ON p.name = :paramName" +
+    " AND p.value = :paramValue" +
+    " WHERE u.receiver = :receiver" +
+    " ORDER BY u.updateDate DESC ")
+@NamedQuery(name = "NotificationsWebUsersEntity.findWebNotifsByUserFilter", query = "SELECT u FROM NotificationsWebUsersEntity u " +
+    "JOIN FETCH u.webNotification w " +
+    "WHERE u.receiver = :userId " +
+    "ORDER BY u.updateDate DESC ")
+@NamedQuery(name = "NotificationsWebUsersEntity.findWebNotifsByPopoverFilter", query = "SELECT u FROM NotificationsWebUsersEntity u " +
+    "JOIN FETCH u.webNotification w " +
+    "WHERE u.receiver = :userId " +
+    "AND u.showPopover= :isOnPopover " +
+    "ORDER BY u.updateDate DESC ")
+@NamedQuery(name = "NotificationsWebUsersEntity.findUnreadNotification", query = "SELECT u FROM NotificationsWebUsersEntity u " +
+    "JOIN FETCH u.webNotification w " +
+    "JOIN u.webNotification.parameters  p " +
+    "WHERE w.type= :pluginId " +
+    "AND p.name = :paramName " +
+    "AND p.value LIKE :paramValue " +
+    "AND u.receiver = :userId " +
+    "AND u.read = FALSE " +
+    "ORDER BY u.updateDate DESC ")
+@NamedQuery(name = "NotificationsWebUsersEntity.findWebNotifsOfUserByLastUpdatedDate", query = "SELECT u FROM NotificationsWebUsersEntity u " +
+    "WHERE u.receiver = :userId " +
+    "AND u.updateDate < :calendar ")
+@NamedQuery(name = "NotificationsWebUsersEntity.findWebNotifsByLastUpdatedDate", query = "SELECT u FROM NotificationsWebUsersEntity u " +
+    "JOIN FETCH u.webNotification w " +
+    "WHERE u.updateDate < :calendar ")
 public class WebUsersEntity {
   @Id
   @Column(name = "WEB_NOTIFS_USERS_ID")

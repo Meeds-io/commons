@@ -45,24 +45,6 @@
     </dependency>
   </dependencies>
   <build>
-    <resources>
-      <resource>
-        <directory>src/main/java</directory>
-        <includes>
-          <include>**/*.xml</include>
-        </includes>
-      </resource>
-      <resource>
-        <directory>src/main/resources</directory>
-        <includes>
-          <include>**/*.properties</include>
-          <include>**/*.xml</include>
-          <include>**/*.gtmpl</include>
-          <include>**/*.Processor</include>
-          <include>**/*.Integrator</include>
-        </includes>
-      </resource>
-    </resources>
     <plugins>
       <plugin>
         <groupId>io.openapitools.swagger</groupId>

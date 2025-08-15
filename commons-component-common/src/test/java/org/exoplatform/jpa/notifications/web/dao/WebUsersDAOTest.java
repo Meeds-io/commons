@@ -39,6 +39,7 @@ public class WebUsersDAOTest extends CommonsDAOJPAImplTest {
     super.setUp();
     webUsersDAO.deleteAll();
     webParamsDAO.deleteAll();
+    restartTransaction();
     webNotifDAO.deleteAll();
   }
 
@@ -46,6 +47,7 @@ public class WebUsersDAOTest extends CommonsDAOJPAImplTest {
   public void tearDown()  {
     webUsersDAO.deleteAll();
     webParamsDAO.deleteAll();
+    restartTransaction();
     webNotifDAO.deleteAll();
   }
 
