@@ -48,9 +48,7 @@ public class UserStateService {
   private static final String            USER_STATUS           = "userStatus";
 
   public static final String             COMETD_CHANNEL        = "/meeds/Application/UserState";
-
-  public static final String             USER_STATUS_UPDATED   = "user-status-updated";
-
+  
   private final ExoCache<String, String> userStateCache;
 
   private final ContinuationService      continuationService;
@@ -137,9 +135,6 @@ public class UserStateService {
   public void saveStatus(String userId, String status) {
     userStateCache.put(userId, status);
     settingService.set(Context.USER.id(userId), USER_STATE_SCOPE, USER_STATUS, SettingValue.create(String.valueOf(status)));
-    UserStateWSMessage message = new UserStateWSMessage(new UserStateModel(userId, System.currentTimeMillis(), status),
-                                                        USER_STATUS_UPDATED);
-    continuationService.sendBroadcastMessage(COMETD_CHANNEL, message.toString());
   }
 
   /**
