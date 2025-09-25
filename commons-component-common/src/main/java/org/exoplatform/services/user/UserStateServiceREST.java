@@ -38,7 +38,7 @@ public class UserStateServiceREST implements ResourceContainer {
 
   @GET
   @Produces(MediaType.APPLICATION_JSON)
-  @Path("/status/")
+  @Path("/status")
   @RolesAllowed("users")
   public Response online() {
     List<UserStateModel> usersOnline = userService.online();
@@ -47,7 +47,7 @@ public class UserStateServiceREST implements ResourceContainer {
 
   @GET
   @Produces(MediaType.APPLICATION_JSON)
-  @Path("/status/{userId}/")
+  @Path("/status/{userId}")
   @RolesAllowed("users")
   public Response getStatus(@PathParam("userId")
   String userId) {
@@ -70,7 +70,7 @@ public class UserStateServiceREST implements ResourceContainer {
   }
 
   @PUT
-  @Path("/status/{userId}/")
+  @Path("/status/{userId}")
   @RolesAllowed("users")
   @Deprecated
   public Response setStatus(
