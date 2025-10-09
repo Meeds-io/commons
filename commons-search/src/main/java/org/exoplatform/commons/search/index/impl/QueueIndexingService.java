@@ -26,13 +26,18 @@ import org.exoplatform.commons.search.dao.IndexingOperationDAO;
 import org.exoplatform.commons.search.domain.IndexingOperation;
 import org.exoplatform.commons.search.domain.OperationType;
 import org.exoplatform.commons.search.index.IndexingService;
+import org.exoplatform.services.listener.ListenerService;
 
 public class QueueIndexingService implements IndexingService {
 
   private final IndexingOperationDAO indexingOperationDAO;
 
-  public QueueIndexingService(IndexingOperationDAO indexingOperationDAO) {
+  private final ListenerService      listenerService;
+
+  public QueueIndexingService(IndexingOperationDAO indexingOperationDAO,
+                              ListenerService listenerService) {
     this.indexingOperationDAO = indexingOperationDAO;
+    this.listenerService = listenerService;
   }
 
   @Override
@@ -63,7 +68,7 @@ public class QueueIndexingService implements IndexingService {
     }
     addToIndexingQueue(connectorName, id, OperationType.DELETE);
   }
-  
+
   /**
    * Add a new operation to the create queue
    * @param connectorName Name of the connector
@@ -72,26 +77,13 @@ public class QueueIndexingService implements IndexingService {
    * @LevelAPI Experimental
    */
   private void addToIndexingQueue(String connectorName, String entityId, OperationType operation) {
-    if (operation==null) {
+    if (operation == null) {
       throw new IllegalArgumentException("Operation cannot be null");
+    } else if (operation == OperationType.DELETE_ALL) {
+      throw new IllegalArgumentException("Operation 'DELETE_ALL' isn't handled");
     }
-    switch (operation) {
-      //A new type of document need to be initialise
-      case INIT: indexingOperationDAO.create(getIndexingOperation(connectorName, OperationType.INIT, entityId));
-        break;
-      //A new entity need to be indexed
-      case CREATE: indexingOperationDAO.create(getIndexingOperation(connectorName, OperationType.CREATE, entityId));
-        break;
-      //An existing entity need to be updated in the create
-      case UPDATE: indexingOperationDAO.create(getIndexingOperation(connectorName, OperationType.UPDATE, entityId));
-        break;
-      //An existing entity need to be deleted from the create
-      case DELETE: indexingOperationDAO.create(getIndexingOperation(connectorName, OperationType.DELETE, entityId));
-        break;
-      //All entities of a specific type need to be deleted
-      default:
-        throw new IllegalArgumentException(operation+" is not an accepted operation for the Indexing Queue");
-    }
+    indexingOperationDAO.create(getIndexingOperation(connectorName, operation, entityId));
+    listenerService.broadcast("indexing.operation.%s".formatted(operation.name().toLowerCase()), connectorName, entityId);
   }
 
   private IndexingOperation getIndexingOperation(String connector, OperationType operation, String entityId) {
@@ -104,6 +96,7 @@ public class QueueIndexingService implements IndexingService {
 
   /**
    * Clear the indexQueue
+   *
    * @LevelAPI Experimental
    */
   public void clearIndexingQueue() {
