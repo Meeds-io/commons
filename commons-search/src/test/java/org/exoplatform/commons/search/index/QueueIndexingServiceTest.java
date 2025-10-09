@@ -22,6 +22,8 @@ import org.exoplatform.commons.search.dao.IndexingOperationDAO;
 import org.exoplatform.commons.search.domain.IndexingOperation;
 import org.exoplatform.commons.search.domain.OperationType;
 import org.exoplatform.commons.search.index.impl.QueueIndexingService;
+import org.exoplatform.services.listener.ListenerService;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -43,16 +45,21 @@ public class QueueIndexingServiceTest {
 
   //Naming Convention Used: methodUnderTest_conditionEncounter_resultExpected
 
-  private QueueIndexingService queueIndexingService;
+  private QueueIndexingService   queueIndexingService;
+
   @Mock
-  private IndexingOperationDAO indexingOperationDAO;
+  private ListenerService        listenerService;
+
+  @Mock
+  private IndexingOperationDAO   indexingOperationDAO;
+
   @Captor
   private ArgumentCaptor<String> stringCaptor;
 
   @Before
   public void initMocks() {
     MockitoAnnotations.initMocks(this);
-    queueIndexingService = new QueueIndexingService(indexingOperationDAO);
+    queueIndexingService = new QueueIndexingService(indexingOperationDAO, listenerService);
   }
 
   @After
