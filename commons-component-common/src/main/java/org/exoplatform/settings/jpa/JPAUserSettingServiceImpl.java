@@ -23,16 +23,13 @@ import static org.exoplatform.settings.jpa.JPAPluginSettingServiceImpl.NOTIFICAT
 import static org.exoplatform.settings.jpa.JPAPluginSettingServiceImpl.NOTIFICATION_PLUGIN_STATUS_MODIFIED;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import org.exoplatform.commons.api.notification.NotificationContext;
@@ -202,7 +199,7 @@ public class JPAUserSettingServiceImpl extends AbstractService implements UserSe
           continue;
         }
         if (EXO_IS_ACTIVE.equals(key)) {
-          userSettings.setChannelActives(getSetFromValue(value, channelActives));
+          userSettings.setChannelActives(NotificationUtils.stringToSet(getValues(value)));
           channelActives.forEach(channelId -> {
             if (!userSettings.getChannelActives().contains(channelId)
                 && getUserSetting(userId,
@@ -364,16 +361,6 @@ public class JPAUserSettingServiceImpl extends AbstractService implements UserSe
         value = UserSetting.EMAIL_CHANNEL;
       }
       return NotificationUtils.stringToList(getValues(value));
-    }
-    return defaultValue;
-  }
-
-  private Set<String> getSetFromValue(String value, Set<String> defaultValue) {
-    if (StringUtils.isNotBlank(value) && !"false".equals(value)) {
-      if ("true".equals(value)) {
-        value = UserSetting.EMAIL_CHANNEL;
-      }
-      return NotificationUtils.stringToSet(getValues(value));
     }
     return defaultValue;
   }
