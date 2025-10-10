@@ -59,6 +59,7 @@
 									// undid/copied sth to fast) the content will be loaded on the next initialization.
 									that.setData( 'loadOnReady', false );
 									editor.fire( 'updateSnapshot' );
+                                    ensureFollowingBlock( that );
 								}
 							} );
 						}
@@ -117,7 +118,26 @@
 					dtd[ name ].oembed = 1;
 				}
 			}
-		}
+		},
+        
+	    ensureFollowingBlock: function( widget ) {
+            let editor = widget.editor,
+                element = widget.element,
+                next = element.getNext();
+            if ( !next || next.type !== CKEDITOR.NODE_ELEMENT || next.getName() === 'br' || editor.blockless ) {
+                let filler = editor.document.createElement( editor.config.autoParagraph || 'p' );
+                filler.setHtml( CKEDITOR.env.needsBrFiller ? '<br />' : '&nbsp;' );
+                element.insertAfter( filler );
+                if ( editor.getSelection().getSelectedElement() === element ) {
+                    editor.getSelection().selectElement( filler );
+                    let range = editor.getSelection().getRanges()[ 0 ];
+                    range.selectNodeContents( filler );
+                    range.collapse( true );
+                    editor.getSelection().selectRanges( [ range ] );
+                }
+                editor.fire( 'saveSnapshot' );
+            }
+        }
 	} );
 
 } )();
