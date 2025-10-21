@@ -16,7 +16,7 @@
 		},
 
 		init: function( editor ) {
-			var widgetDefinition = CKEDITOR.plugins.embedBase.createWidgetBaseDefinition( editor ),
+			let widgetDefinition = CKEDITOR.plugins.embedBase.createWidgetBaseDefinition( editor ),
 				origInit = widgetDefinition.init;
 
 			CKEDITOR.tools.extend( widgetDefinition, {
@@ -33,7 +33,7 @@
 				),
 
 				init: function() {
-					var that = this;
+					let that = this;
 
 					origInit.call( this );
 
@@ -71,7 +71,7 @@
 						return;
 					}
 
-					var text = element.children[ 0 ],
+					let text = element.children[ 0 ],
 						div;
 
 					if ( text && text.type == CKEDITOR.NODE_TEXT && text.value ) {
@@ -88,7 +88,7 @@
 				},
 
 				downcast: function( element ) {
-					var ret = new CKEDITOR.htmlParser.element( 'oembed' );
+					let ret = new CKEDITOR.htmlParser.element( 'oembed' );
 					ret.add( new CKEDITOR.htmlParser.text( encodeURIComponent(this.data.url) ) );
 
 					// Transfer widget classes from widget element back to data (https://dev.ckeditor.com/ticket/13199).
@@ -100,12 +100,83 @@
 				}
 			}, true );
 
-			editor.widgets.add( 'embedSemantic', widgetDefinition );
-		},
+            editor.widgets.add('embedSemantic', widgetDefinition);
+            editor.widgets.on('instanceCreated', function(evt) {
+				let widget = evt.data;
+				if (widget.name !== 'embedSemantic') return;
 
+				widget.on('ready', function() {
+					let wrapper = widget.wrapper ? widget.wrapper.$ : null;
+					if (!wrapper) return;
+
+					if (wrapper.querySelector('.cke-embed-add-line-btn')) return;
+
+					let btn = document.createElement('button');
+					btn.textContent = '↵';
+					btn.title = 'Ajouter une ligne en dessous';
+					btn.className = 'cke-embed-add-line-btn';
+					Object.assign(btn.style, {
+						position: 'absolute',
+						right: '6px',
+						bottom: '6px',
+						fontSize: '13px',
+						lineHeight: '14px',
+						width: '22px',
+						height: '22px',
+						textAlign: 'center',
+						background: '#fff',
+						border: '1px solid #ccc',
+						borderRadius: '4px',
+						cursor: 'pointer',
+						boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
+						display: 'none',
+						zIndex: 9999
+					});
+
+					wrapper.style.position = 'relative';
+					wrapper.appendChild(btn);
+
+					function toggleAddLineButton() {
+						let next = widget.wrapper.getNext();
+						if (next && (next.getName() === 'p' || next.getName() === 'span')) {
+							btn.style.display = 'none';
+						} else {
+							btn.style.display = 'block';
+						}
+					}
+
+					wrapper.addEventListener('mouseenter', toggleAddLineButton);
+					wrapper.addEventListener('mouseleave', function() {
+						btn.style.display = 'none';
+					});
+
+					btn.addEventListener('click', function(e) {
+						e.preventDefault();
+						e.stopPropagation();
+
+						let wrapperEl = widget.wrapper;
+						if (!wrapperEl) return;
+
+						let next = wrapperEl.getNext();
+						if (!next || next.getName() !== 'p') {
+							let newParagraph = editor.document.createElement('p');
+							newParagraph.setHtml('<br>'); // Ligne vide <br>
+							wrapperEl.insertAfter(newParagraph);
+							let range = editor.createRange();
+							range.moveToElementEditStart(newParagraph);
+							editor.getSelection().selectRanges([range]);
+							editor.focus();
+						}
+
+						editor.fire('saveSnapshot');
+						toggleAddLineButton();
+					});
+				});
+			});
+    	},
 		// Extends CKEDITOR.dtd so editor accepts <oembed> tag.
 		registerOembedTag: function() {
-			var dtd = CKEDITOR.dtd,
+			let dtd = CKEDITOR.dtd,
 				name;
 
 			// The oembed tag may contain text only.
@@ -118,26 +189,6 @@
 					dtd[ name ].oembed = 1;
 				}
 			}
-		},
-        
-	    ensureFollowingBlock: function( widget ) {
-            let editor = widget.editor,
-                element = widget.element,
-                next = element.getNext();
-            if ( !next || next.type !== CKEDITOR.NODE_ELEMENT || next.getName() === 'br' || editor.blockless ) {
-                let filler = editor.document.createElement( editor.config.autoParagraph || 'p' );
-                filler.setHtml( CKEDITOR.env.needsBrFiller ? '<br />' : '&nbsp;' );
-                element.insertAfter( filler );
-                if ( editor.getSelection().getSelectedElement() === element ) {
-                    editor.getSelection().selectElement( filler );
-                    let range = editor.getSelection().getRanges()[ 0 ];
-                    range.selectNodeContents( filler );
-                    range.collapse( true );
-                    editor.getSelection().selectRanges( [ range ] );
-                }
-                editor.fire( 'saveSnapshot' );
-            }
-        }
-	} );
-
-} )();
+		}
+    });
+})();
