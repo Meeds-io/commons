@@ -7,6 +7,7 @@
 	'use strict';
 
 	CKEDITOR.plugins.add( 'embedsemantic', {
+		lang: ['en','fr'],
 		icons: 'embedsemantic', // %REMOVE_LINE_CORE%
 		hidpi: true, // %REMOVE_LINE_CORE%
 		requires: 'embedbase',
@@ -113,7 +114,7 @@
 
 					let btn = document.createElement('button');
 					btn.textContent = '↵';
-					btn.title = 'Ajouter une ligne en dessous';
+					btn.title = editor.lang.embedsemantic.button;
 					btn.className = 'cke-embed-add-line-btn';
 					Object.assign(btn.style, {
 						position: 'absolute',
@@ -153,21 +154,16 @@
 					btn.addEventListener('click', function(e) {
 						e.preventDefault();
 						e.stopPropagation();
-
 						let wrapperEl = widget.wrapper;
 						if (!wrapperEl) return;
-
-						let next = wrapperEl.getNext();
-						if (!next || next.getName() !== 'p') {
-							let newParagraph = editor.document.createElement('p');
-							newParagraph.setHtml('<br>'); // Ligne vide <br>
-							wrapperEl.insertAfter(newParagraph);
-							let range = editor.createRange();
-							range.moveToElementEditStart(newParagraph);
-							editor.getSelection().selectRanges([range]);
-							editor.focus();
-						}
-
+						let parent = wrapperEl.getParent();
+						let newParagraph = editor.document.createElement('p');
+						newParagraph.setHtml('<br>');
+						parent.append(newParagraph);
+						let range = editor.createRange();
+						range.moveToElementEditStart(newParagraph);
+						editor.getSelection().selectRanges([range]);
+						editor.focus();
 						editor.fire('saveSnapshot');
 						toggleAddLineButton();
 					});
