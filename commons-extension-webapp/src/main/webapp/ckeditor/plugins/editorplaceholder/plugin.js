@@ -47,8 +47,7 @@
 		 */
 		styles: '[' + ATTRIBUTE_NAME + ']::before {' +
 				'position: absolute;' +
-				'opacity: .8;' +
-				'color: #aaa;' +
+				'color: #707070;' +
 				'content: attr( ' + ATTRIBUTE_NAME + ' );' +
 			'}' +
 			'.cke_wysiwyg_div[' + ATTRIBUTE_NAME + ']::before {' +
