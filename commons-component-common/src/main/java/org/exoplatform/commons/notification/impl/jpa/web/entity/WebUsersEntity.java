@@ -108,6 +108,9 @@ query = "SELECT u FROM NotificationsWebUsersEntity u " +
 @NamedQuery(name = "NotificationsWebUsersEntity.findWebNotifsByLastUpdatedDate", query = "SELECT u FROM NotificationsWebUsersEntity u " +
     "JOIN FETCH u.webNotification w " +
     "WHERE u.updateDate < :calendar ")
+@NamedQuery(name = "NotificationsWebUsersEntity.countWebNotifsByLastUpdatedDate", query = "SELECT count(u) FROM NotificationsWebUsersEntity u " +
+    "JOIN u.webNotification w " +
+    "WHERE u.updateDate < :calendar ")
 public class WebUsersEntity {
   @Id
   @Column(name = "WEB_NOTIFS_USERS_ID")
