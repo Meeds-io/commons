@@ -18,13 +18,7 @@
  */
 package org.exoplatform.commons.notification.impl.jpa.web;
 
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import org.apache.commons.collections.CollectionUtils;
@@ -50,7 +44,7 @@ import org.exoplatform.services.log.Log;
 
 public class JPAWebNotificationStorage implements WebNotificationStorage {
 
-  private static final Log         LOG                             = ExoLogger.getLogger(JPAWebNotificationStorage.class);
+  private static final Log         LOG = ExoLogger.getLogger(JPAWebNotificationStorage.class);
 
   private final UserSettingService userSettingService;
 
@@ -83,18 +77,14 @@ public class JPAWebNotificationStorage implements WebNotificationStorage {
   @Override
   @ExoTransactional
   public List<NotificationInfo> get(WebNotificationFilter filter, int offset, int limit) {
-    return webUsersDAO.findWebNotificationsByFilter(filter, offset, limit)
-                      .stream()
-                      .map(n -> {
-                        try {
-                          return this.convertWebNotifEntityToNotificationInfo(n);
-                        } catch (Exception e) {
-                          LOG.warn("Error while converting Web Notification Entity {} to DTO", n, e);
-                          return null;
-                        }
-                      })
-                      .filter(Objects::nonNull)
-                      .toList();
+    return webUsersDAO.findWebNotificationsByFilter(filter, offset, limit).stream().map(n -> {
+      try {
+        return this.convertWebNotifEntityToNotificationInfo(n);
+      } catch (Exception e) {
+        LOG.warn("Error while converting Web Notification Entity {} to DTO", n, e);
+        return null;
+      }
+    }).filter(Objects::nonNull).toList();
   }
 
   @Override
@@ -125,29 +115,38 @@ public class JPAWebNotificationStorage implements WebNotificationStorage {
   @Override
   @ExoTransactional
   public boolean remove(long seconds) {
-    boolean removed = false;
     Calendar cal = Calendar.getInstance();
     long delayTime = System.currentTimeMillis() - (seconds * 1000);
     cal.setTimeInMillis(delayTime);
+    int webUserNotisCount = webUsersDAO.countWebNotifsByLastUpdatedDate(cal);
+    int processedNotifs = 0;
+    int batch = 100;
     List<WebNotifEntity> notifEntities = new ArrayList<>();
-    List<WebUsersEntity> webUserNotifs = webUsersDAO.findWebNotifsByLastUpdatedDate(cal);
-    for (WebUsersEntity webUsersEntity : webUserNotifs) {
-      WebNotifEntity notification = webUsersEntity.getNotification();
-      if (!notifEntities.contains(notification)) {
-        notifEntities.add(notification);
+    while (webUserNotisCount > processedNotifs) {
+      List<WebUsersEntity> webUserNotifs = webUsersDAO.findWebNotifsByLastUpdatedDate(cal, -1, batch);
+      for (WebUsersEntity webUsersEntity : webUserNotifs) {
+        WebNotifEntity notification = webUsersEntity.getNotification();
+        if (!notifEntities.contains(notification)) {
+          notifEntities.add(notification);
+        }
+        webUsersDAO.delete(webUsersEntity);
+        processedNotifs++;
+        listenerService.broadcast(NOTIFICATION_WEB_DELETED_EVENT, String.valueOf(notification.getId()), null);
       }
-      webUsersDAO.delete(webUsersEntity);
-      listenerService.broadcast(NOTIFICATION_WEB_DELETED_EVENT, String.valueOf(notification.getId()), null);
-    }
-    removed = !notifEntities.isEmpty();
-    if (removed) {
-      for (WebNotifEntity webNotifEntity : notifEntities) {
-        webParamsDAO.deleteAll(new ArrayList<>(webNotifEntity.getParameters()));
+      if (!notifEntities.isEmpty() && (notifEntities.size() >= 100 || webUserNotisCount == processedNotifs)) {
+        for (WebNotifEntity webNotifEntity : notifEntities) {
+          try {
+            webNotifDAO.delete(webNotifDAO.find(webNotifEntity.getId()));
+          } catch (jakarta.persistence.RollbackException rollbackException) {
+            LOG.warn("Could not deleting the notification {}, proceeding to delete the following one", webNotifEntity.getId());
+          }
+        }
+        RequestLifeCycle.restartTransaction();
+        notifEntities = new ArrayList<>();
+        LOG.info("Deleted {} / {} web notifications of users", processedNotifs, webUserNotisCount);
       }
-      RequestLifeCycle.restartTransaction();
-      webNotifDAO.deleteAll(notifEntities);
     }
-    return removed;
+    return false;
   }
 
   @Override
@@ -418,8 +417,8 @@ public class JPAWebNotificationStorage implements WebNotificationStorage {
     Map<String, String> ownerParameters =
                                         parameters.stream()
                                                   .collect(Collectors.toMap(WebParamsEntity::getName,
-                                                                            value -> value.getValue() == null ? "" :
-                                                                                                              value.getValue(),
+                                                                            value -> value.getValue() == null ? ""
+                                                                                                              : value.getValue(),
                                                                             (v1, v2) -> v2));
     // FIXME: Start:: Delete when all Web notifs migrated to use Vue based
     // templates
