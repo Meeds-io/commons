@@ -163,9 +163,30 @@ public class WebUsersDAO extends GenericDAOJPAImpl<WebUsersEntity, Long> {
 
   @ExoTransactional
   public List<WebUsersEntity> findWebNotifsByLastUpdatedDate(Calendar date) {
-    return getEntityManager().createNamedQuery("NotificationsWebUsersEntity.findWebNotifsByLastUpdatedDate", WebUsersEntity.class)
-                             .setParameter(DATE_PARAM, date)
-                             .getResultList();
+    return findWebNotifsByLastUpdatedDate(date, 0, 0);
+  }
+
+  @ExoTransactional
+  public List<WebUsersEntity> findWebNotifsByLastUpdatedDate(Calendar date, int offset, int limit) {
+    TypedQuery<WebUsersEntity> entities =
+                                        getEntityManager().createNamedQuery("NotificationsWebUsersEntity.findWebNotifsByLastUpdatedDate",
+                                                                            WebUsersEntity.class)
+                                                          .setParameter(DATE_PARAM, date);
+    if (offset > 0) {
+      entities.setFirstResult(offset);
+    }
+    if (limit > 0) {
+      entities.setMaxResults(limit);
+    }
+    return entities.getResultList();
+  }
+
+  @ExoTransactional
+  public int countWebNotifsByLastUpdatedDate(Calendar date) {
+    TypedQuery<Long> query = getEntityManager().createNamedQuery("NotificationsWebUsersEntity.countWebNotifsByLastUpdatedDate",
+                                                                 Long.class)
+                                               .setParameter(DATE_PARAM, date);
+    return query.getSingleResult().intValue();
   }
 
   @ExoTransactional
