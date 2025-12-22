@@ -22,7 +22,7 @@
   <parent>
     <artifactId>commons</artifactId>
     <groupId>io.meeds.commons</groupId>
-    <version>7.1.1-exo</version>
+    <version>7.1.1-exo-patched</version>
   </parent>
   <artifactId>commons-component-common</artifactId>
   <packaging>jar</packaging>
