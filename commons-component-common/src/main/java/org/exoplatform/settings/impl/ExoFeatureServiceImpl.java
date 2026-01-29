@@ -18,22 +18,31 @@
  */
 package org.exoplatform.settings.impl;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
+import org.picocontainer.Startable;
 
-import org.exoplatform.commons.api.settings.*;
+import org.exoplatform.commons.api.settings.ExoFeatureService;
+import org.exoplatform.commons.api.settings.FeaturePlugin;
+import org.exoplatform.commons.api.settings.SettingService;
+import org.exoplatform.commons.api.settings.SettingValue;
 import org.exoplatform.commons.api.settings.data.Context;
 import org.exoplatform.commons.api.settings.data.Scope;
-import org.exoplatform.management.annotations.*;
+import org.exoplatform.management.annotations.Impact;
+import org.exoplatform.management.annotations.ImpactType;
+import org.exoplatform.management.annotations.Managed;
+import org.exoplatform.management.annotations.ManagedDescription;
+import org.exoplatform.management.annotations.ManagedName;
 import org.exoplatform.management.jmx.annotations.NameTemplate;
 import org.exoplatform.management.jmx.annotations.Property;
 import org.exoplatform.management.rest.annotations.RESTEndpoint;
+import org.exoplatform.portal.config.UserACL;
 import org.exoplatform.services.listener.ListenerService;
-import org.exoplatform.services.organization.Membership;
-import org.exoplatform.services.organization.OrganizationService;
-import org.exoplatform.services.security.IdentityRegistry;
-import org.picocontainer.Startable;
 
 @Managed
 @ManagedDescription("eXo Feature Service")
@@ -50,9 +59,7 @@ public class ExoFeatureServiceImpl implements ExoFeatureService, Startable {
 
   private SettingService             settingService;
 
-  private OrganizationService        organizationService;
-
-  private IdentityRegistry           identityRegistry;
+  private UserACL                    userAcl;
 
   private ListenerService            listenerService;
 
@@ -61,12 +68,10 @@ public class ExoFeatureServiceImpl implements ExoFeatureService, Startable {
   private Map<String, FeaturePlugin> plugins            = new HashMap<>();
 
   public ExoFeatureServiceImpl(SettingService settingService,
-                               IdentityRegistry identityRegistry,
-                               OrganizationService organizationService,
+                               UserACL userAcl,
                                ListenerService listenerService) {
     this.settingService = settingService;
-    this.organizationService = organizationService;
-    this.identityRegistry = identityRegistry;
+    this.userAcl = userAcl;
     this.listenerService = listenerService;
   }
 
@@ -158,33 +163,11 @@ public class ExoFeatureServiceImpl implements ExoFeatureService, Startable {
       String membershipType = permissionParts[0];
       String group = permissionParts[1];
 
-      org.exoplatform.services.security.Identity identity = identityRegistry.getIdentity(username);
-      if (identity != null) {
-        return identity.isMemberOf(group, membershipType);
-      } else {
-        try {
-          Collection<Membership> memberships = organizationService.getMembershipHandler()
-                                                                  .findMembershipsByUserAndGroup(username, group);
-          return memberships != null
-              && memberships.stream().anyMatch(membership -> StringUtils.equals(membership.getMembershipType(), membershipType));
-        } catch (Exception e) {
-          throw new IllegalStateException("Error getting memberships of user " + username, e);
-        }
-      }
-
+      org.exoplatform.services.security.Identity identity = userAcl.getUserIdentity(username);
+      return identity != null && identity.isMemberOf(group, membershipType);
     } else if (permissionExpression.contains("/")) {
-      org.exoplatform.services.security.Identity identity = identityRegistry.getIdentity(username);
-      if (identity != null) {
-        return identity.isMemberOf(permissionExpression);
-      }
-      try {
-        Collection<Membership> memberships = organizationService.getMembershipHandler()
-                                                                .findMembershipsByUserAndGroup(username, permissionExpression);
-        return memberships != null && !memberships.isEmpty();
-      } catch (Exception e) {
-        throw new IllegalStateException("Error getting memberships of user " + username, e);
-      }
-
+      org.exoplatform.services.security.Identity identity = userAcl.getUserIdentity(username);
+      return identity != null && identity.isMemberOf(permissionExpression);
     } else {
       return StringUtils.equals(username, permissionExpression);
     }
