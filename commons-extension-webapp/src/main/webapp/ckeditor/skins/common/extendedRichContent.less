@@ -62,12 +62,20 @@
     margin-bottom: 10px !important;
     border-style: solid;
     border-color: var(--allPagesBlackColor, #000);
+    max-width: 100% !important;
+    width: 100% !important;
+    table-layout: fixed;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
 
     td, th {
       line-height: @normalLineHeight;
       font-size: @normalFontSize;
       padding: 5px;
       border: inherit;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
 
       p:last-child {
         margin-bottom: 0 !important;
