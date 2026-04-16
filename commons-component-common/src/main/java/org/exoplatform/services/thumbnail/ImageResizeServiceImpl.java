@@ -43,7 +43,7 @@ public class ImageResizeServiceImpl implements ImageResizeService {
   private static final Log LOG = ExoLogger.getLogger(ImageResizeServiceImpl.class);
 
   @Override
-  public byte[] scaleImage(byte[] image,
+  public byte[] scaleImage(byte[] image, // NOSONAR
                            int width,
                            int height,
                            boolean fitExact,
@@ -66,11 +66,26 @@ public class ImageResizeServiceImpl implements ImageResizeService {
     }
 
     if (width == 0) {
-      bufferedImage = Scalr.resize(bufferedImage, resizeMethod, Scalr.Mode.FIT_TO_HEIGHT, width, height, Scalr.OP_ANTIALIAS);
+      BufferedImage originalBufferedImage = bufferedImage;
+      try {
+        bufferedImage = Scalr.resize(bufferedImage, resizeMethod, Scalr.Mode.FIT_TO_HEIGHT, width, height, Scalr.OP_ANTIALIAS);
+      } finally {
+        flush(originalBufferedImage);
+      }
     } else if (height == 0) {
-      bufferedImage = Scalr.resize(bufferedImage, resizeMethod, Scalr.Mode.FIT_TO_WIDTH, width, height, Scalr.OP_ANTIALIAS);
+      BufferedImage originalBufferedImage = bufferedImage;
+      try {
+        bufferedImage = Scalr.resize(bufferedImage, resizeMethod, Scalr.Mode.FIT_TO_WIDTH, width, height, Scalr.OP_ANTIALIAS);
+      } finally {
+        flush(originalBufferedImage);
+      }
     } else if (fitExact) {
-      bufferedImage = Scalr.resize(bufferedImage, resizeMethod, Scalr.Mode.FIT_EXACT, width, height, Scalr.OP_ANTIALIAS);
+      BufferedImage originalBufferedImage = bufferedImage;
+      try {
+        bufferedImage = Scalr.resize(bufferedImage, resizeMethod, Scalr.Mode.FIT_EXACT, width, height, Scalr.OP_ANTIALIAS);
+      } finally {
+        flush(originalBufferedImage);
+      }
     } else {
       float ratio = (float) originHeight / (float) originWidth;
       int calculatedTargetHeight = Math.round(width * ratio);
@@ -79,7 +94,12 @@ public class ImageResizeServiceImpl implements ImageResizeService {
       if (calculatedTargetHeight < height) {
         fitMode = Scalr.Mode.FIT_TO_HEIGHT;
       }
-      bufferedImage = Scalr.resize(bufferedImage, resizeMethod, fitMode, width, height, Scalr.OP_ANTIALIAS);
+      BufferedImage originalBufferedImage = bufferedImage;
+      try {
+        bufferedImage = Scalr.resize(bufferedImage, resizeMethod, fitMode, width, height, Scalr.OP_ANTIALIAS);
+      } finally {
+        flush(originalBufferedImage);
+      }
     }
 
     try {
@@ -99,10 +119,9 @@ public class ImageResizeServiceImpl implements ImageResizeService {
         return response;
       }
     } catch (IOException e) {
-      LOG.error("Unable to read image to resize, return original size",e);
+      LOG.error("Unable to read image to resize, return original size", e);
       return image;
     }
-
 
   }
 
@@ -124,6 +143,12 @@ public class ImageResizeServiceImpl implements ImageResizeService {
     }
   }
 
+  private void flush(BufferedImage originalBufferedImage) {
+    // call on the src to free up native resources and make it easier for
+    // the GC to collect the unused image.
+    originalBufferedImage.flush();
+  }
+
   private byte[] toByteArray(BufferedImage targetBufferedImage, ImageReader sourceImageReader) throws IOException {
     ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
     ImageWriter writer = ImageIO.getImageWriter(sourceImageReader);
@@ -131,10 +156,10 @@ public class ImageResizeServiceImpl implements ImageResizeService {
 
     IIOMetadata metadata = sourceImageReader.getImageMetadata(0);
     ImageWriteParam param = writer.getDefaultWriteParam();
-    if (param instanceof JPEGImageWriteParam) {
-      ((JPEGImageWriteParam) param).setOptimizeHuffmanTables(true);
+    if (param instanceof JPEGImageWriteParam jpegImageWriteParam) {
+      jpegImageWriteParam.setOptimizeHuffmanTables(true);
     }
-    writer.write(null,new IIOImage(targetBufferedImage, null, metadata), param);
+    writer.write(null, new IIOImage(targetBufferedImage, null, metadata), param);
     writer.dispose();
     return byteArrayOutputStream.toByteArray();
   }
