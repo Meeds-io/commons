@@ -20,13 +20,11 @@ package org.exoplatform.commons.notification.impl.jpa.email.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.NamedQuery;
-import jakarta.persistence.SequenceGenerator;
+import io.meeds.common.persistence.PortableSequence;
 import jakarta.persistence.Table;
 
 @Entity(name = "NotificationsMailDigestEntity")
@@ -40,8 +38,7 @@ import jakarta.persistence.Table;
 public class MailDigestEntity {
   @Id
   @Column(name = "EMAIL_NOTIF_DIGEST_ID")
-  @SequenceGenerator(name="SEQ_NTF_EMAIL_DIGEST", sequenceName="SEQ_NTF_EMAIL_DIGEST", allocationSize = 1)
-  @GeneratedValue(strategy=GenerationType.AUTO, generator="SEQ_NTF_EMAIL_DIGEST")
+  @PortableSequence(name = "SEQ_NTF_EMAIL_DIGEST")
   private long id;
 
   @ManyToOne

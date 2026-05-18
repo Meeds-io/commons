@@ -39,13 +39,7 @@ import java.util.regex.Pattern;
 import org.cometd.bayeux.server.BayeuxServer;
 import org.cometd.client.http.jetty.JettyHttpClientTransport;
 import org.cometd.oort.Oort;
-import org.cometd.oort.OortConfigServlet;
-import org.cometd.oort.OortMulticastConfigServlet;
-import org.cometd.oort.OortStaticConfigServlet;
 import org.cometd.oort.Seti;
-import org.cometd.oort.SetiServlet;
-import org.cometd.server.CometDServlet;
-import org.cometd.client.websocket.javax.WebSocketTransport;
 import org.eclipse.jetty.client.HttpClient;
 import org.exoplatform.commons.utils.PropertyManager;
 import org.exoplatform.container.ExoContainer;
@@ -54,6 +48,12 @@ import org.exoplatform.container.RootContainer.PortalContainerPostInitTask;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 import org.exoplatform.ws.frameworks.cometd.ServletContextWrapper;
+import org.cometd.oort.jakarta.OortConfigServlet;
+import org.cometd.oort.jakarta.OortMulticastConfigServlet;
+import org.cometd.oort.jakarta.OortStaticConfigServlet;
+import org.cometd.oort.jakarta.SetiServlet;
+import org.cometd.server.http.jakarta.CometDServlet;
+import org.cometd.server.websocket.jakarta.WebSocketTransport;
 
 public class EXoContinuationCometdServlet extends CometDServlet {
 
@@ -79,7 +79,7 @@ public class EXoContinuationCometdServlet extends CometDServlet {
   
   public static String OORT_CONFIG_TYPE = "oort.configType";
   public static String OORT_CONFIG_CLOUD = "oort.cloud";
-  public static String OORT_CONFIG_URL = "oort.cloud";
+  public static String OORT_CONFIG_URL = "oort.url";
 
   public static String EXO_OORT_CONFIG_TYPE = PREFIX + OORT_CONFIG_TYPE;
   public static String EXO_OORT_CONFIG_CLOUD = PREFIX + OORT_CONFIG_CLOUD;
@@ -279,8 +279,9 @@ public class EXoContinuationCometdServlet extends CometDServlet {
   public class OortStaticConfig extends OortStaticConfigServlet {
     private static final long serialVersionUID = 1054209695244836363L;
 
+    
     @Override
-    protected void configureCloud(ServletConfig config, Oort oort) throws Exception {
+    protected void configureCloud(ServletConfig config, Oort oort) {
       if (clusterEnabled) {
         super.configureCloud(config, oort);
       }
@@ -349,7 +350,7 @@ public class EXoContinuationCometdServlet extends CometDServlet {
 
         configs = keys.toArray(new String[keys.size()]);
       }
-      Set<String> names = new HashSet<String>();
+      Set<String> names = new HashSet<>();
       names.addAll(Collections.list(delegate.getInitParameterNames()));
       names.addAll(Arrays.asList(configs));
 

@@ -27,12 +27,10 @@ import org.apache.commons.lang3.StringUtils;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.NamedQuery;
 import jakarta.persistence.OneToMany;
-import jakarta.persistence.SequenceGenerator;
+import io.meeds.common.persistence.PortableSequence;
 import jakarta.persistence.Table;
 
 @Entity(name = "NotificationsMailNotifEntity")
@@ -58,8 +56,7 @@ import jakarta.persistence.Table;
 public class MailNotifEntity {
   @Id
   @Column(name = "EMAIL_NOTIF_ID")
-  @SequenceGenerator(name = "SEQ_NTF_EMAIL_NOTIF", sequenceName = "SEQ_NTF_EMAIL_NOTIF", allocationSize = 1)
-  @GeneratedValue(strategy = GenerationType.AUTO, generator = "SEQ_NTF_EMAIL_NOTIF")
+  @PortableSequence(name = "SEQ_NTF_EMAIL_NOTIF")
   private long                  id;
 
   @Column(name = "SENDER")
