@@ -49,11 +49,7 @@
     </dependency>
     <dependency>
       <groupId>org.cometd.java</groupId>
-      <artifactId>cometd-java-server-websocket-javax</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.cometd.java</groupId>
-      <artifactId>cometd-java-server-websocket-common</artifactId>
+      <artifactId>cometd-java-server-common</artifactId>
     </dependency>
     <dependency>
       <groupId>org.cometd.java</groupId>
@@ -61,12 +57,21 @@
     </dependency>
     <dependency>
       <groupId>org.cometd.java</groupId>
-      <artifactId>cometd-java-oort</artifactId>
+      <artifactId>cometd-java-server-http-jakarta</artifactId>
     </dependency>
     <dependency>
       <groupId>org.cometd.java</groupId>
-      <artifactId>cometd-java-server-common</artifactId>
+      <artifactId>cometd-java-server-websocket-jakarta</artifactId>
     </dependency>
+    <dependency>
+      <groupId>org.cometd.java</groupId>
+      <artifactId>cometd-java-oort-jakarta</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.cometd.java</groupId>
+      <artifactId>cometd-java-client-websocket-jakarta</artifactId>
+    </dependency>
+
     <dependency>
       <groupId>org.eclipse.jetty</groupId>
       <artifactId>jetty-util-ajax</artifactId>

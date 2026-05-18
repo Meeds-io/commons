@@ -17,7 +17,10 @@
  along with this program; if not, write to the Free Software Foundation,
  Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project
+  xmlns="http://maven.apache.org/POM/4.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <artifactId>commons</artifactId>
@@ -30,7 +33,7 @@
   <dependencies>
     <dependency>
       <groupId>org.cometd.javascript</groupId>
-      <artifactId>cometd-javascript-jquery</artifactId>
+      <artifactId>cometd-javascript-common</artifactId>
       <type>war</type>
       <scope>provided</scope>
     </dependency>
@@ -39,15 +42,36 @@
     <finalName>cometd</finalName>
     <plugins>
       <plugin>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>unpack-cometd-javascript</id>
+            <phase>generate-resources</phase>
+            <goals>
+              <goal>unpack</goal>
+            </goals>
+            <configuration>
+              <artifactItems>
+                <artifactItem>
+                  <groupId>org.cometd.javascript</groupId>
+                  <artifactId>cometd-javascript-common</artifactId>
+                  <type>war</type>
+                  <outputDirectory>${project.build.directory}/cometd-js</outputDirectory>
+                </artifactItem>
+              </artifactItems>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>com.github.eirslett</groupId>
+        <artifactId>frontend-maven-plugin</artifactId>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-war-plugin</artifactId>
         <configuration>
-          <overlays>
-            <overlay />
-            <overlay>
-              <groupId>org.cometd.javascript</groupId>
-              <artifactId>cometd-javascript-jquery</artifactId>
-            </overlay>
-          </overlays>
+          <packagingExcludes>js/src/**</packagingExcludes>
         </configuration>
       </plugin>
     </plugins>

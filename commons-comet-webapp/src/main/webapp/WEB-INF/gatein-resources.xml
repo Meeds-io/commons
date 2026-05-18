@@ -17,49 +17,30 @@
  along with this program; if not, write to the Free Software Foundation,
  Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 -->
-<gatein-resources xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.exoplatform.org/xml/ns/gatein_resources_1_5 http://www.exoplatform.org/xml/ns/gatein_resources_1_5" xmlns="http://www.exoplatform.org/xml/ns/gatein_resources_1_5">
+<gatein-resources
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.exoplatform.org/xml/ns/gatein_resources_1_5 http://www.exoplatform.org/xml/ns/gatein_resources_1_5"
+  xmlns="http://www.exoplatform.org/xml/ns/gatein_resources_1_5">
 
 	<module>
 		<name>commons-cometd3</name>		
 		<as>cCometD</as>
     <load-group>cometdGRP</load-group>
 		<script>
-			<path>/javascript/eXo/commons/commons-cometd3.js</path>
+			<path>/js/cometd-integration.js</path>
 		</script>
-		<depends>
-			<module>jquery</module>
-		</depends>
-		<depends>
-			<module>jquery_cometd</module>
-		</depends>
+    <depends>
+      <module>cometd</module>
+    </depends>
 	</module>
 
 	<module>
 		<name>cometd</name>
+    <as>CometD</as>
     <load-group>cometdGRP</load-group>
-		<script>
-			<adapter>
-				(function() {
-				<include>/js/cometd/cometd.min.js</include>
-				return org.cometd;
-				})();
-			</adapter>
-		</script>
-	</module>
-
-	<module>
-		<name>jquery_cometd</name>
-    <load-group>cometdGRP</load-group>
-		<script>
-			<path>/js/jquery/jquery.cometd.js</path>
-		</script>
-		<depends>
-			<module>jquery</module>
-			<as>jQuery</as>
-		</depends>
-		<depends>
-			<module>cometd</module>
-		</depends>
+    <script>
+      <path>/js/lib/cometd-bundle.js</path>
+    </script>
 	</module>
 
 </gatein-resources>
