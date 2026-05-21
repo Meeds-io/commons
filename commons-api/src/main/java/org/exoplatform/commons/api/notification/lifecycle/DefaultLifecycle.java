@@ -44,7 +44,7 @@ public final class DefaultLifecycle extends AbstractNotificationLifecycle {
     for (String userId : userIds) {
       UserSetting userSetting = userService.get(userId);
       if (!userSetting.isEnabled()
-          || !userSetting.isChannelGloballyActive(channelId)
+          || (!userSetting.isChannelGloballyActive(channelId) && !channelId.equals("SPACE_WEB_CHANNEL"))
           || !userSetting.isActive(channelId, pluginId)
           || (userSetting.isSpaceMuted(notification.getSpaceId()) && pluginConfig.isMutable())) {
         continue;
