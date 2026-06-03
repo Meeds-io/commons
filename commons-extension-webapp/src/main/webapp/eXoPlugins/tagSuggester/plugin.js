@@ -37,6 +37,13 @@ require(['SHARED/jquery', 'SHARED/tagSuggester'],function($) {
       // Define the function that will be fired when the command is executed.
         exec: function( editor ) {
           editor.insertText('#');
+          setTimeout(() => {
+            const editable = editor.editable?.() || editor.element;
+            const $editable = $(editable.$ || editable);
+            $editable.trigger('input').trigger('keyup').trigger('focus');
+            const atwhoData = $editable.data('atwho');
+            atwhoData?.['#']?.controller?.view?.show();
+          }, 50);
           document.dispatchEvent(new CustomEvent('editor-option-added', {detail: 'useHash'}));
         }
       });
