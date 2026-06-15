@@ -254,6 +254,14 @@ public class JPAWebNotificationStorage implements WebNotificationStorage {
   }
 
   @Override
+  public void updateNotificationParameters(String notificationId, Map<String, String> ownerParameters) {
+    WebUsersEntity webUsersEntity = webUsersDAO.find(parseNotificationId(notificationId));
+    if (webUsersEntity != null) {
+      updateNotificationParameters(webUsersEntity.getNotification(), ownerParameters, false);
+    }
+  }
+
+  @Override
   @ExoTransactional
   public int getNumberOnBadge(String userId) {
     return webUsersDAO.getNumberOnBadge(userId);
