@@ -94,6 +94,12 @@ public class CachedWebNotificationStorage implements WebNotificationStorage {
   }
 
   @Override
+  public void updateNotificationParameters(String notificationId, Map<String, String> ownerParameters) {
+    storage.updateNotificationParameters(notificationId, ownerParameters);
+    futureWebNotificationCache.remove(WebNotifInfoCacheKey.key(notificationId));
+  }
+
+  @Override
   public void markRead(String notificationId) {
     storage.markRead(notificationId);
     updateRead(notificationId);
