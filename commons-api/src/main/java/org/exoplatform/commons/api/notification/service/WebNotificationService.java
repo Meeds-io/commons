@@ -52,6 +52,14 @@ public interface WebNotificationService {
   void update(NotificationInfo notification, boolean moveTop);
 
   /**
+   * Updates Notification Owner Parameters
+   * 
+   * @param notificationId the notification id
+   * @param ownerParameters parameters to save for the notification
+   */
+  void updateNotificationParameters(String notificationId, Map<String, String> ownerParameters);
+
+  /**
    * Get the notificationInfo for the provided id
    *
    *

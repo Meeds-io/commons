@@ -82,6 +82,11 @@ public class WebNotificationServiceImpl implements WebNotificationService {
   }
 
   @Override
+  public void updateNotificationParameters(String notificationId, Map<String, String> ownerParameters) {
+    storage.updateNotificationParameters(notificationId, ownerParameters);
+  }
+
+  @Override
   public NotificationInfo getUnreadNotification(String pluginId, String activityId, String userId) {
     return storage.getUnreadNotification(pluginId, activityId, userId);
   }

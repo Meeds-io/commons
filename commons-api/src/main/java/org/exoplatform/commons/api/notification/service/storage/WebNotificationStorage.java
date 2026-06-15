@@ -55,6 +55,16 @@ public interface WebNotificationStorage {
   void update(NotificationInfo notification, boolean moveTop);
 
   /**
+   * Update an existing notification notification parameters
+   * 
+   * @param notificationId the Notification Id
+   * @param ownerParameters parameters to save
+   */
+  default void updateNotificationParameters(String notificationId, Map<String, String> ownerParameters) {
+    throw new UnsupportedOperationException();
+  }
+
+  /**
    * Marks the notification to be read by the userId
    * 
    * @param notificationId the Notification Id
