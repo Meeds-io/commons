@@ -22,7 +22,7 @@
   <parent>
     <artifactId>commons</artifactId>
     <groupId>io.meeds.commons</groupId>
-    <version>7.1.3-exo</version>
+    <version>7.1.3-exo-patched</version>
   </parent>
   <artifactId>commons-component-upgrade</artifactId>
   <name>Meeds:: PLF:: Commons - Transparent Upgrade Framework</name>
