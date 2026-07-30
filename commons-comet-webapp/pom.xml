@@ -22,7 +22,7 @@
   <parent>
     <artifactId>commons</artifactId>
     <groupId>io.meeds.commons</groupId>
-    <version>7.3.x-SNAPSHOT</version>
+    <version>7.3.0-20260730</version>
   </parent>
   <artifactId>commons-comet-webapp</artifactId>
   <packaging>war</packaging>
