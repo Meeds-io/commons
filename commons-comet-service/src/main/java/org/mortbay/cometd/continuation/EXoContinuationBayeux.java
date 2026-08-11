@@ -155,8 +155,16 @@ public class EXoContinuationBayeux extends BayeuxServerImpl implements Disposabl
     return (clientIDs.get(eXoID) != null && clientIDs.get(eXoID).contains(clientID));
   }
 
+  /**
+   * @param  eXoID the id of the target client
+   * @return       whether that client currently holds a CometD session.
+   *               {@code false} when CometD is not initialized yet: {@code seti}
+   *               is only assigned when the cometd servlet starts, so any caller
+   *               reached before that — a listener firing during another addon's
+   *               boot, for instance — must not blow up.
+   */
   public boolean isPresent(String eXoID) {
-    return seti.isPresent(eXoID);
+    return seti != null && seti.isPresent(eXoID);
   }
 
   /**
@@ -195,6 +203,14 @@ public class EXoContinuationBayeux extends BayeuxServerImpl implements Disposabl
    * @param id The id of the message (or null for a random id).
    */
   public void sendMessage(String eXoID, String channel, Object data, String id) {
+    if (seti == null) {
+      // CometD not initialized yet; nothing is connected, so there is no one to
+      // deliver to. Same reasoning as isPresent(String).
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Dropping message on channel " + channel + " for " + eXoID + ": CometD isn't initialized yet");
+      }
+      return;
+    }
     seti.sendMessage(eXoID, channel, data);
   }
 
