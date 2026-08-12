@@ -107,6 +107,7 @@ public class JPAWebNotificationStorage implements WebNotificationStorage {
     if (webUsersEntity != null) {
       webUsersDAO.delete(webUsersEntity);
       listenerService.broadcast(NOTIFICATION_WEB_DELETED_EVENT, notificationId, null);
+      broadcastBadgeUpdated(webUsersEntity.getReceiver());
       return true;
     }
     return false;
@@ -166,6 +167,10 @@ public class JPAWebNotificationStorage implements WebNotificationStorage {
         return false;
       }
     }
+    if (removed) {
+      // Once for the whole batch rather than per deleted notification
+      broadcastBadgeUpdated(userId);
+    }
     return removed;
   }
 
@@ -209,6 +214,7 @@ public class JPAWebNotificationStorage implements WebNotificationStorage {
                           String.valueOf(webUsersEntity.isShowPopover()));
       updateNotificationParameters(webUsersEntity.getNotification(), ownerParameters, false);
       // FIXME: End
+      broadcastBadgeUpdated(webUsersEntity.getReceiver());
     }
   }
 
@@ -218,6 +224,7 @@ public class JPAWebNotificationStorage implements WebNotificationStorage {
     webUsersDAO.markAllRead(username);
     userSettingService.saveLastReadDate(username, System.currentTimeMillis());
     listenerService.broadcast(NOTIFICATION_WEB_READ_ALL_EVENT, username, null);
+    broadcastBadgeUpdated(username);
   }
 
   @Override
@@ -230,6 +237,7 @@ public class JPAWebNotificationStorage implements WebNotificationStorage {
       });
       webUsersDAO.updateAll(notifsWithBadge);
       notifsWithBadge.forEach(n -> listenerService.broadcast(NOTIFICATION_WEB_READ_EVENT, String.valueOf(n.getId()), null));
+      broadcastBadgeUpdated(username);
     }
   }
 
@@ -281,6 +289,7 @@ public class JPAWebNotificationStorage implements WebNotificationStorage {
         webUsersEntity.setResetNumberOnBadge(true);
       }
       webUsersDAO.updateAll(notifsWithBadge);
+      broadcastBadgeUpdated(userId);
     }
   }
 
@@ -290,6 +299,7 @@ public class JPAWebNotificationStorage implements WebNotificationStorage {
     if (CollectionUtils.isNotEmpty(notifsWithBadge)) {
       notifsWithBadge.forEach(n -> n.setResetNumberOnBadge(true));
       webUsersDAO.updateAll(notifsWithBadge);
+      broadcastBadgeUpdated(username);
     }
   }
 
@@ -365,6 +375,33 @@ public class JPAWebNotificationStorage implements WebNotificationStorage {
       webUsersDAO.update(webUsersEntity);
     }
     listenerService.broadcast(NOTIFICATION_WEB_SAVED_EVENT, notification.getId(), isNew);
+    // Reached by both save(NotificationInfo) and update(NotificationInfo,
+    // boolean), which funnel here — so the badge event is raised once, not twice
+    broadcastBadgeUpdated(webUsersEntity.getReceiver());
+  }
+
+  /**
+   * Announces that a user's notification badge counter may have changed.
+   * <p>
+   * Centralized on purpose: the counter is altered by a handful of unrelated
+   * operations — a notification saved or updated, one removed, a whole batch
+   * purged, all of them marked read, the popover hidden, or the counter reset
+   * when the user opens the drawer — and every one of them must raise the same
+   * event. Consumers displaying that counter elsewhere, such as the Application
+   * Center badge on the notification centre tile, then need to know about one
+   * event rather than about each operation.
+   * <p>
+   * Kept out of {@code WebNotificationService}: several services call this
+   * storage directly rather than going through it, so the service layer is not
+   * an exhaustive interception point.
+   *
+   * @param username the user whose counter changed, ignored when blank
+   */
+  private void broadcastBadgeUpdated(String username) {
+    if (StringUtils.isBlank(username)) {
+      return;
+    }
+    listenerService.broadcast(NOTIFICATION_WEB_BADGE_UPDATED_EVENT, username, null);
   }
 
   private void updateNotificationParameters(WebNotifEntity webNotifEntity, Map<String, String> ownerParameters, boolean isNew) {
