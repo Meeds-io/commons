@@ -26,8 +26,13 @@ import org.exoplatform.commons.notification.impl.jpa.web.JPAWebNotificationStora
 import org.exoplatform.commons.notification.impl.jpa.web.dao.*;
 import org.exoplatform.commons.notification.plugin.PluginTest;
 import org.exoplatform.commons.persistence.impl.EntityManagerHolder;
+import org.exoplatform.services.listener.Event;
+import org.exoplatform.services.listener.Listener;
+import org.exoplatform.services.listener.ListenerService;
 import org.exoplatform.services.security.ConversationState;
 import org.exoplatform.services.security.Identity;
+
+import static org.exoplatform.commons.api.notification.service.storage.WebNotificationStorage.NOTIFICATION_WEB_BADGE_UPDATED_EVENT;
 
 public class JPAWebNotificationStorageTest extends BaseNotificationTestCase {
 
@@ -240,5 +245,80 @@ public class JPAWebNotificationStorageTest extends BaseNotificationTestCase {
     // success get
     assertEquals(1, webNotificationStorage.get(referenceFilter, 0, 10).size());
     assertEquals(info.getId(), gotList.get(0).getId());
+  }
+
+  /**
+   * The badge number counts rows whose reset flag is false, and markRead sets
+   * it — so it changes the number exactly as hidePopover does and must tell
+   * whoever displays that number elsewhere.
+   */
+  public void testMarkReadBroadcastsBadgeUpdate() throws Exception {
+    String userId = "root";
+    userIds.add(userId);
+    List<String> notifiedUsers = listenToBadgeUpdates();
+    webNotificationStorage.save(makeWebNotificationInfo(userId));
+    NotificationInfo notif = webNotificationStorage.get(new WebNotificationFilter(userId), 0, 10).get(0);
+    notifiedUsers.clear();
+
+    webNotificationStorage.markRead(notif.getId());
+
+    assertTrue("markRead must announce the badge change", notifiedUsers.contains(userId));
+  }
+
+  /**
+   * This is the overload the lifetime-cleanup job calls. Deleting rows that
+   * were still counted changes their owners' badge, so every distinct receiver
+   * of the batch has to be told — once, not once per notification.
+   */
+  public void testRemoveByLifetimeBroadcastsOncePerReceiver() throws Exception {
+    String firstUser = "root";
+    String secondUser = "demo";
+    userIds.add(firstUser);
+    userIds.add(secondUser);
+    webNotificationStorage.save(makeWebNotificationInfo(firstUser));
+    webNotificationStorage.save(makeWebNotificationInfo(firstUser));
+    webNotificationStorage.save(makeWebNotificationInfo(secondUser));
+    restartTransaction();
+    List<String> notifiedUsers = listenToBadgeUpdates();
+
+    webNotificationStorage.remove(0);
+
+    assertEquals("each receiver must be told exactly once per batch",
+                 1,
+                 notifiedUsers.stream().filter(firstUser::equals).count());
+    assertEquals(1, notifiedUsers.stream().filter(secondUser::equals).count());
+  }
+
+  /**
+   * The per-user overload already batched its broadcast; this pins that it
+   * still fires, and only for the user whose notifications were removed.
+   */
+  public void testRemoveForUserBroadcastsOnce() throws Exception {
+    String userId = "root";
+    userIds.add(userId);
+    webNotificationStorage.save(makeWebNotificationInfo(userId));
+    webNotificationStorage.save(makeWebNotificationInfo(userId));
+    restartTransaction();
+    List<String> notifiedUsers = listenToBadgeUpdates();
+
+    webNotificationStorage.remove(userId, 0);
+
+    assertEquals(1, notifiedUsers.stream().filter(userId::equals).count());
+  }
+
+  /**
+   * Collects the usernames announced on the badge event, so a test can assert
+   * who was told and how many times.
+   */
+  private List<String> listenToBadgeUpdates() {
+    List<String> notifiedUsers = new ArrayList<>();
+    getService(ListenerService.class).addListener(NOTIFICATION_WEB_BADGE_UPDATED_EVENT,
+                                                  new Listener<String, Object>() {
+                                                    @Override
+                                                    public void onEvent(Event<String, Object> event) throws Exception {
+                                                      notifiedUsers.add(event.getSource());
+                                                    }
+                                                  });
+    return notifiedUsers;
   }
 }
