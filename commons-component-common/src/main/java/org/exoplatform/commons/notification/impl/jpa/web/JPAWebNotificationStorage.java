@@ -164,18 +164,23 @@ public class JPAWebNotificationStorage implements WebNotificationStorage {
     calendar.setTimeInMillis(timeInMilliseconds);
 
     boolean removed = false;
-    for (WebUsersEntity webUsersEntity : webUsersDAO.findWebNotifsOfUserByLastUpdatedDate(userId, calendar)) {
-      try {
-        webUsersDAO.delete(webUsersEntity);
-        removed = true;
-      } catch (Exception e) {
-        LOG.error("Failed to remove notification with id '" + webUsersEntity.getId() + "' for the user id: " + userId, e);
-        return false;
+    try {
+      for (WebUsersEntity webUsersEntity : webUsersDAO.findWebNotifsOfUserByLastUpdatedDate(userId, calendar)) {
+        try {
+          webUsersDAO.delete(webUsersEntity);
+          removed = true;
+        } catch (Exception e) {
+          LOG.error("Failed to remove notification with id '" + webUsersEntity.getId() + "' for the user id: " + userId, e);
+          return false;
+        }
       }
-    }
-    if (removed) {
-      // Once for the whole batch rather than per deleted notification
-      broadcastBadgeUpdated(userId);
+    } finally {
+      // Once for the whole batch rather than per deleted notification, and in a
+      // finally because a failure midway still leaves the earlier deletions —
+      // and therefore a changed counter — behind
+      if (removed) {
+        broadcastBadgeUpdated(userId);
+      }
     }
     return removed;
   }

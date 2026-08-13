@@ -42,9 +42,16 @@ public interface WebNotificationStorage {
    * <p>
    * Unlike the events above, which carry a <em>notification</em> id, this one
    * carries the <strong>username</strong> as source — which is what a consumer
-   * displaying that counter somewhere else needs. It is raised
-   * <strong>after</strong> the cached counter has been invalidated, so a
-   * listener re-reading it is guaranteed a fresh value.
+   * displaying that counter somewhere else needs.
+   * <p>
+   * <strong>Freshness is eventual, not immediate.</strong> The event is raised
+   * from the storage, inside its own transaction and before the caching
+   * decorator invalidates the counter, so a listener re-reading
+   * {@code getNumberOnBadge} straight away may still get the pre-change value.
+   * Consumers are expected to be asynchronous and to bound their own staleness
+   * — the Application Center badge, for instance, re-reads through its REST
+   * endpoint and falls back on its cache TTL. Do not rely on this event as a
+   * happens-after barrier for the cached counter.
    */
   static final String      NOTIFICATION_WEB_BADGE_UPDATED_EVENT = "notification.web.badgeUpdated";
 
