@@ -125,6 +125,7 @@ public class JPAWebNotificationStorage implements WebNotificationStorage {
     List<WebNotifEntity> notifEntities = new ArrayList<>();
     while (webUserNotisCount > processedNotifs) {
       List<WebUsersEntity> webUserNotifs = webUsersDAO.findWebNotifsByLastUpdatedDate(cal, -1, batch);
+      Set<String> receivers = new HashSet<>();
       for (WebUsersEntity webUsersEntity : webUserNotifs) {
         WebNotifEntity notification = webUsersEntity.getNotification();
         if (!notifEntities.contains(notification)) {
@@ -132,8 +133,13 @@ public class JPAWebNotificationStorage implements WebNotificationStorage {
         }
         webUsersDAO.delete(webUsersEntity);
         processedNotifs++;
+        receivers.add(webUsersEntity.getReceiver());
         listenerService.broadcast(NOTIFICATION_WEB_DELETED_EVENT, String.valueOf(notification.getId()), null);
       }
+      // This is the overload the cleanup job calls, and a deleted row that was
+      // still counted changes its receiver's badge. Broadcast once per receiver
+      // per batch rather than once per deleted notification.
+      receivers.forEach(this::broadcastBadgeUpdated);
       if (!notifEntities.isEmpty() && (notifEntities.size() >= 100 || webUserNotisCount == processedNotifs)) {
         for (WebNotifEntity webNotifEntity : notifEntities) {
           try {
@@ -192,6 +198,9 @@ public class JPAWebNotificationStorage implements WebNotificationStorage {
       ownerParameters.put(NotificationMessageUtils.READ_PORPERTY.getKey(), String.valueOf(webUsersEntity.isRead()));
       updateNotificationParameters(webUsersEntity.getNotification(), ownerParameters, false);
       // FIXME: End
+      // Resetting the badge flag above changes the counted number, exactly as
+      // hidePopover does
+      broadcastBadgeUpdated(webUsersEntity.getReceiver());
     }
   }
 
