@@ -36,6 +36,11 @@ import static org.exoplatform.commons.api.notification.service.storage.WebNotifi
 
 public class JPAWebNotificationStorageTest extends BaseNotificationTestCase {
 
+  /** Shared by the single badge listener registered for this class. */
+  private static final List<String>  BADGE_NOTIFIED_USERS = new ArrayList<>();
+
+  private static boolean            badgeListenerRegistered;
+
   private JPAWebNotificationStorage webNotificationStorage;
 
   private WebNotifDAO               webNotifDAO;
@@ -307,18 +312,83 @@ public class JPAWebNotificationStorageTest extends BaseNotificationTestCase {
   }
 
   /**
+   * A new notification arriving is the main case: it raises the counter, and
+   * WebLifecycle reaches this storage directly without going through the
+   * service, which is why the event lives here rather than a layer up.
+   */
+  public void testSaveBroadcastsBadgeUpdateOnce() throws Exception {
+    String userId = "root";
+    userIds.add(userId);
+    List<String> notifiedUsers = listenToBadgeUpdates();
+
+    webNotificationStorage.save(makeWebNotificationInfo(userId));
+
+    assertEquals(1, notifiedUsers.stream().filter(userId::equals).count());
+  }
+
+  /** Marking everything read zeroes the counter, so it has to be announced. */
+  public void testMarkAllReadBroadcastsBadgeUpdate() throws Exception {
+    String userId = "demo";
+    userIds.add(userId);
+    webNotificationStorage.save(makeWebNotificationInfo(userId));
+    ConversationState.setCurrent(new ConversationState(new Identity(userId)));
+    List<String> notifiedUsers = listenToBadgeUpdates();
+
+    webNotificationStorage.markAllRead(userId);
+
+    assertTrue("markAllRead must announce the badge change", notifiedUsers.contains(userId));
+  }
+
+  /**
+   * hidePopover performs the same reset as markRead, and was the one path that
+   * already announced it — pinned so the pair cannot drift apart again.
+   */
+  public void testHidePopoverBroadcastsBadgeUpdate() throws Exception {
+    String userId = "root";
+    userIds.add(userId);
+    webNotificationStorage.save(makeWebNotificationInfo(userId));
+    NotificationInfo notif = webNotificationStorage.get(new WebNotificationFilter(userId), 0, 10).get(0);
+    List<String> notifiedUsers = listenToBadgeUpdates();
+
+    webNotificationStorage.hidePopover(notif.getId());
+
+    assertTrue("hidePopover must announce the badge change", notifiedUsers.contains(userId));
+  }
+
+  /** Removing a single notification changes the count of its owner only. */
+  public void testRemoveByIdBroadcastsBadgeUpdate() throws Exception {
+    String userId = "root";
+    userIds.add(userId);
+    webNotificationStorage.save(makeWebNotificationInfo(userId));
+    NotificationInfo notif = webNotificationStorage.get(new WebNotificationFilter(userId), 0, 10).get(0);
+    List<String> notifiedUsers = listenToBadgeUpdates();
+
+    webNotificationStorage.remove(notif.getId());
+
+    assertEquals(1, notifiedUsers.stream().filter(userId::equals).count());
+  }
+
+  /**
    * Collects the usernames announced on the badge event, so a test can assert
    * who was told and how many times.
+   * <p>
+   * ListenerService exposes no removal, and the container is shared across
+   * tests, so the listener is registered exactly once for the whole class and
+   * the collected usernames are reset per test rather than piling up a new
+   * listener on every call.
    */
   private List<String> listenToBadgeUpdates() {
-    List<String> notifiedUsers = new ArrayList<>();
-    getService(ListenerService.class).addListener(NOTIFICATION_WEB_BADGE_UPDATED_EVENT,
-                                                  new Listener<String, Object>() {
-                                                    @Override
-                                                    public void onEvent(Event<String, Object> event) throws Exception {
-                                                      notifiedUsers.add(event.getSource());
-                                                    }
-                                                  });
-    return notifiedUsers;
+    if (!badgeListenerRegistered) {
+      getService(ListenerService.class).addListener(NOTIFICATION_WEB_BADGE_UPDATED_EVENT,
+                                                    new Listener<String, Object>() {
+                                                      @Override
+                                                      public void onEvent(Event<String, Object> event) throws Exception {
+                                                        BADGE_NOTIFIED_USERS.add(event.getSource());
+                                                      }
+                                                    });
+      badgeListenerRegistered = true;
+    }
+    BADGE_NOTIFIED_USERS.clear();
+    return BADGE_NOTIFIED_USERS;
   }
 }
