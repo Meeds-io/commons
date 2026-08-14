@@ -107,6 +107,7 @@ public class JPAWebNotificationStorage implements WebNotificationStorage {
     if (webUsersEntity != null) {
       webUsersDAO.delete(webUsersEntity);
       listenerService.broadcast(NOTIFICATION_WEB_DELETED_EVENT, notificationId, null);
+      broadcastBadgeUpdated(webUsersEntity.getReceiver());
       return true;
     }
     return false;
@@ -124,6 +125,7 @@ public class JPAWebNotificationStorage implements WebNotificationStorage {
     List<WebNotifEntity> notifEntities = new ArrayList<>();
     while (webUserNotisCount > processedNotifs) {
       List<WebUsersEntity> webUserNotifs = webUsersDAO.findWebNotifsByLastUpdatedDate(cal, -1, batch);
+      Set<String> receivers = new HashSet<>();
       for (WebUsersEntity webUsersEntity : webUserNotifs) {
         WebNotifEntity notification = webUsersEntity.getNotification();
         if (!notifEntities.contains(notification)) {
@@ -131,8 +133,13 @@ public class JPAWebNotificationStorage implements WebNotificationStorage {
         }
         webUsersDAO.delete(webUsersEntity);
         processedNotifs++;
+        receivers.add(webUsersEntity.getReceiver());
         listenerService.broadcast(NOTIFICATION_WEB_DELETED_EVENT, String.valueOf(notification.getId()), null);
       }
+      // This is the overload the cleanup job calls, and a deleted row that was
+      // still counted changes its receiver's badge. Broadcast once per receiver
+      // per batch rather than once per deleted notification.
+      receivers.forEach(this::broadcastBadgeUpdated);
       if (!notifEntities.isEmpty() && (notifEntities.size() >= 100 || webUserNotisCount == processedNotifs)) {
         for (WebNotifEntity webNotifEntity : notifEntities) {
           try {
@@ -157,13 +164,22 @@ public class JPAWebNotificationStorage implements WebNotificationStorage {
     calendar.setTimeInMillis(timeInMilliseconds);
 
     boolean removed = false;
-    for (WebUsersEntity webUsersEntity : webUsersDAO.findWebNotifsOfUserByLastUpdatedDate(userId, calendar)) {
-      try {
-        webUsersDAO.delete(webUsersEntity);
-        removed = true;
-      } catch (Exception e) {
-        LOG.error("Failed to remove notification with id '" + webUsersEntity.getId() + "' for the user id: " + userId, e);
-        return false;
+    try {
+      for (WebUsersEntity webUsersEntity : webUsersDAO.findWebNotifsOfUserByLastUpdatedDate(userId, calendar)) {
+        try {
+          webUsersDAO.delete(webUsersEntity);
+          removed = true;
+        } catch (Exception e) {
+          LOG.error("Failed to remove notification with id '" + webUsersEntity.getId() + "' for the user id: " + userId, e);
+          return false;
+        }
+      }
+    } finally {
+      // Once for the whole batch rather than per deleted notification, and in a
+      // finally because a failure midway still leaves the earlier deletions —
+      // and therefore a changed counter — behind
+      if (removed) {
+        broadcastBadgeUpdated(userId);
       }
     }
     return removed;
@@ -187,6 +203,9 @@ public class JPAWebNotificationStorage implements WebNotificationStorage {
       ownerParameters.put(NotificationMessageUtils.READ_PORPERTY.getKey(), String.valueOf(webUsersEntity.isRead()));
       updateNotificationParameters(webUsersEntity.getNotification(), ownerParameters, false);
       // FIXME: End
+      // Resetting the badge flag above changes the counted number, exactly as
+      // hidePopover does
+      broadcastBadgeUpdated(webUsersEntity.getReceiver());
     }
   }
 
@@ -209,6 +228,7 @@ public class JPAWebNotificationStorage implements WebNotificationStorage {
                           String.valueOf(webUsersEntity.isShowPopover()));
       updateNotificationParameters(webUsersEntity.getNotification(), ownerParameters, false);
       // FIXME: End
+      broadcastBadgeUpdated(webUsersEntity.getReceiver());
     }
   }
 
@@ -218,6 +238,7 @@ public class JPAWebNotificationStorage implements WebNotificationStorage {
     webUsersDAO.markAllRead(username);
     userSettingService.saveLastReadDate(username, System.currentTimeMillis());
     listenerService.broadcast(NOTIFICATION_WEB_READ_ALL_EVENT, username, null);
+    broadcastBadgeUpdated(username);
   }
 
   @Override
@@ -230,6 +251,7 @@ public class JPAWebNotificationStorage implements WebNotificationStorage {
       });
       webUsersDAO.updateAll(notifsWithBadge);
       notifsWithBadge.forEach(n -> listenerService.broadcast(NOTIFICATION_WEB_READ_EVENT, String.valueOf(n.getId()), null));
+      broadcastBadgeUpdated(username);
     }
   }
 
@@ -281,6 +303,7 @@ public class JPAWebNotificationStorage implements WebNotificationStorage {
         webUsersEntity.setResetNumberOnBadge(true);
       }
       webUsersDAO.updateAll(notifsWithBadge);
+      broadcastBadgeUpdated(userId);
     }
   }
 
@@ -290,6 +313,7 @@ public class JPAWebNotificationStorage implements WebNotificationStorage {
     if (CollectionUtils.isNotEmpty(notifsWithBadge)) {
       notifsWithBadge.forEach(n -> n.setResetNumberOnBadge(true));
       webUsersDAO.updateAll(notifsWithBadge);
+      broadcastBadgeUpdated(username);
     }
   }
 
@@ -365,6 +389,33 @@ public class JPAWebNotificationStorage implements WebNotificationStorage {
       webUsersDAO.update(webUsersEntity);
     }
     listenerService.broadcast(NOTIFICATION_WEB_SAVED_EVENT, notification.getId(), isNew);
+    // Reached by both save(NotificationInfo) and update(NotificationInfo,
+    // boolean), which funnel here — so the badge event is raised once, not twice
+    broadcastBadgeUpdated(webUsersEntity.getReceiver());
+  }
+
+  /**
+   * Announces that a user's notification badge counter may have changed.
+   * <p>
+   * Centralized on purpose: the counter is altered by a handful of unrelated
+   * operations — a notification saved or updated, one removed, a whole batch
+   * purged, all of them marked read, the popover hidden, or the counter reset
+   * when the user opens the drawer — and every one of them must raise the same
+   * event. Consumers displaying that counter elsewhere, such as the Application
+   * Center badge on the notification centre tile, then need to know about one
+   * event rather than about each operation.
+   * <p>
+   * Kept out of {@code WebNotificationService}: several services call this
+   * storage directly rather than going through it, so the service layer is not
+   * an exhaustive interception point.
+   *
+   * @param username the user whose counter changed, ignored when blank
+   */
+  private void broadcastBadgeUpdated(String username) {
+    if (StringUtils.isBlank(username)) {
+      return;
+    }
+    listenerService.broadcast(NOTIFICATION_WEB_BADGE_UPDATED_EVENT, username, null);
   }
 
   private void updateNotificationParameters(WebNotifEntity webNotifEntity, Map<String, String> ownerParameters, boolean isNew) {

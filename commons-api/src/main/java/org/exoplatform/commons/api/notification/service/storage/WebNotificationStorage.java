@@ -35,6 +35,27 @@ public interface WebNotificationStorage {
   static final String      NOTIFICATION_WEB_READ_ALL_EVENT = "notification.web.readAll";
 
   /**
+   * Raised whenever a user's badge counter may have changed, whatever the
+   * operation that caused it: a notification saved, updated, removed, all of
+   * them marked read, or the counter reset when the user opens the notification
+   * drawer.
+   * <p>
+   * Unlike the events above, which carry a <em>notification</em> id, this one
+   * carries the <strong>username</strong> as source — which is what a consumer
+   * displaying that counter somewhere else needs.
+   * <p>
+   * <strong>Freshness is eventual, not immediate.</strong> The event is raised
+   * from the storage, inside its own transaction and before the caching
+   * decorator invalidates the counter, so a listener re-reading
+   * {@code getNumberOnBadge} straight away may still get the pre-change value.
+   * Consumers are expected to be asynchronous and to bound their own staleness
+   * — the Application Center badge, for instance, re-reads through its REST
+   * endpoint and falls back on its cache TTL. Do not rely on this event as a
+   * happens-after barrier for the cached counter.
+   */
+  static final String      NOTIFICATION_WEB_BADGE_UPDATED_EVENT = "notification.web.badgeUpdated";
+
+  /**
    * Creates the new notification message to the specified user.
    * The userId gets from the notification#getTo().
    * 
