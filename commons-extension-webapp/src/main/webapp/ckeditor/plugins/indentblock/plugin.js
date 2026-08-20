@@ -16,7 +16,7 @@
 		TRISTATE_OFF = CKEDITOR.TRISTATE_OFF;
 
 	CKEDITOR.plugins.add( 'indentblock', {
-		requires: 'indent',
+		requires: 'indent,list',
 		init: function( editor ) {
 			var globalHelpers = CKEDITOR.plugins.indent,
 				classes = editor.config.indentClasses;
@@ -26,6 +26,202 @@
 				indentblock: new commandDefinition( editor, 'indentblock', true ),
 				outdentblock: new commandDefinition( editor, 'outdentblock' )
 			} );
+
+			var mixedListContext = { ol: 1, ul: 1 },
+				mixedClassNameRegex = classes ? new RegExp( '(?:^|\\s+)(' + classes.join( '|' ) + ')(?=$|\\s)' ) : null;
+
+			editor.on( 'pluginsLoaded', function() {
+				hookMixedSelectionIndent( editor.getCommand( 'indent' ), true );
+				hookMixedSelectionIndent( editor.getCommand( 'outdent' ), false );
+			} );
+
+			function hookMixedSelectionIndent( command, isIndent ) {
+				if ( !command ) {
+					return;
+				}
+
+				command.on( 'exec', function( evt ) {
+					if ( evt.data.done ) {
+						return;
+					}
+
+					var selection = editor.getSelection(),
+						ranges = selection && selection.getRanges(),
+						handled = false,
+						database = {};
+
+					if ( !ranges || !ranges.length ) {
+						return;
+					}
+
+					editor.fire( 'lockSnapshot' );
+
+					for ( var i = 0; i < ranges.length; i++ ) {
+						if ( handleMixedRange( ranges[ i ], isIndent, database ) ) {
+							handled = true;
+						}
+					}
+
+					CKEDITOR.dom.element.clearAllMarkers( database );
+
+					editor.fire( 'unlockSnapshot' );
+
+					if ( handled ) {
+						editor.fire( 'contentDomInvalidated' );
+						evt.data.done = true;
+					}
+				}, null, null, 1 );
+
+				command.on( 'refresh', function( evt ) {
+					var selection = editor.getSelection(),
+						ranges = selection && selection.getRanges(),
+						mixed = false;
+
+					if ( ranges ) {
+						for ( var i = 0; i < ranges.length; i++ ) {
+							if ( isMixedRange( ranges[ i ] ) ) {
+								mixed = true;
+								break;
+							}
+						}
+					}
+
+					if ( mixed ) {
+						if ( !evt.data.states ) {
+							evt.data.states = {};
+						}
+						evt.data.states[ 'mixedSelectionIndent@' + ( isIndent ? 'indent' : 'outdent' ) ] = CKEDITOR.TRISTATE_OFF;
+					}
+				}, null, null, 1 );
+			}
+
+			function analyzeMixedRange( range ) {
+				var blocks = collectTopLevelBlocksInRange( range );
+				if ( !blocks || blocks.length < 2 ) {
+					return null;
+				}
+
+				var hasList = false,
+					hasPlain = false;
+
+				for ( var i = 0; i < blocks.length; i++ ) {
+					if ( blocks[ i ].type != CKEDITOR.NODE_ELEMENT ) {
+						continue;
+					}
+					if ( blocks[ i ].getName() in mixedListContext ) {
+						hasList = true;
+					} else {
+						hasPlain = true;
+					}
+				}
+
+				return { blocks: blocks, hasList: hasList, hasPlain: hasPlain };
+			}
+
+			function isMixedRange( range ) {
+				var info = analyzeMixedRange( range );
+				return !!info && info.hasList && info.hasPlain;
+			}
+
+			function handleMixedRange( range, isIndent, database ) {
+				var info = analyzeMixedRange( range );
+				if ( !info || !info.hasList || !info.hasPlain ) {
+					return false;
+				}
+
+				var blocks = info.blocks;
+
+				for ( var i = 0; i < blocks.length; i++ ) {
+					if ( blocks[ i ].type != CKEDITOR.NODE_ELEMENT ) {
+						continue;
+					}
+
+					if ( !isIndent && blocks[ i ].getName() in mixedListContext && getCurrentIndentOffset( blocks[ i ] ) <= 0 ) {
+						collapseListToParagraphs( editor, blocks[ i ], database );
+						continue;
+					}
+
+					indentElement.call( { editor: editor, isIndent: isIndent, database: database }, blocks[ i ], classes );
+				}
+
+				return true;
+			}
+
+			function collectTopLevelBlocksInRange( range ) {
+				var commonAncestor = range.getCommonAncestor();
+				if ( !commonAncestor ) {
+					return null;
+				}
+
+				while ( commonAncestor && commonAncestor.type != CKEDITOR.NODE_ELEMENT ) {
+					commonAncestor = commonAncestor.getParent();
+				}
+
+				if ( !commonAncestor ) {
+					return null;
+				}
+
+				var startBlock = ascendToChildOf( range.startContainer, commonAncestor ),
+					endBlock = ascendToChildOf( range.endContainer, commonAncestor );
+
+				if ( !startBlock || !endBlock ) {
+					return null;
+				}
+
+				var blocks = [],
+					node = startBlock,
+					guard = 0;
+
+				while ( node ) {
+					blocks.push( node );
+
+					if ( node.equals( endBlock ) || ++guard > 1000 ) {
+						break;
+					}
+
+					node = node.getNext();
+				}
+
+				return blocks;
+			}
+
+			function ascendToChildOf( node, ancestor ) {
+				while ( node ) {
+					var parent = node.getParent && node.getParent();
+					if ( !parent ) {
+						return null;
+					}
+					if ( parent.equals( ancestor ) ) {
+						return node;
+					}
+					node = parent;
+				}
+				return null;
+			}
+
+			function getCurrentIndentOffset( element ) {
+				if ( classes ) {
+					var indentClassMatch = element.$.className.match( mixedClassNameRegex );
+					return indentClassMatch ? CKEDITOR.tools.indexOf( classes, indentClassMatch[ 1 ] ) + 1 : 0;
+				}
+				return getIndent( element ) || 0;
+			}
+
+			function collapseListToParagraphs( editor, listNode, database ) {
+				var listArray = CKEDITOR.plugins.list.listToArray( listNode, database );
+
+				for ( var i = 0; i < listArray.length; i++ ) {
+					listArray[ i ].indent = -1;
+				}
+
+				var newList = CKEDITOR.plugins.list.arrayToList( listArray, database, null, editor.config.enterMode, listNode.getDirection() );
+
+				if ( newList ) {
+					newList.listNode.replace( listNode );
+				} else {
+					listNode.remove();
+				}
+			}
 
 			function commandDefinition() {
 				globalHelpers.specificDefinition.apply( this, arguments );
