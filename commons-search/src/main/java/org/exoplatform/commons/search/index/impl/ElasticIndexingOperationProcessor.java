@@ -81,6 +81,9 @@ public class ElasticIndexingOperationProcessor extends IndexingOperationProcesso
   /** Per index alias, the ES reindex requests already sent (see ReindexESType) */
   private Map<String, Set<String>>           reindexedIndexes                    = new HashMap<>();
 
+  /** Index aliases whose new index was already (re)created for the upgrade */
+  private Set<String>                        upgradeInitializedAliases           = new HashSet<>();
+
   private ExecutorService                    executors                           = Executors.newCachedThreadPool();
 
   private String                             esVersion;
@@ -612,28 +615,37 @@ public class ElasticIndexingOperationProcessor extends IndexingOperationProcesso
     String previousIndex = connector.getPreviousIndex();
 
     if (indexUpgrading.containsKey(indexAlias)) {
-      boolean newIndexExists = elasticIndexingClient.sendIsIndexExistsRequest(index);
-
-      // If the upgrade is incomplete (should point the alias on previous index)
-      boolean aliasExistsOnPreviousIndex = elasticIndexingClient.sendGetIndexAliasesRequest(previousIndex).contains(indexAlias);
-      if(!aliasExistsOnPreviousIndex) {
-        boolean aliasExistsOnCurrentIndex = newIndexExists && elasticIndexingClient.sendGetIndexAliasesRequest(index).contains(indexAlias);
-        // If the alias points to the new index, point it again to the previous one, else add new alias to previous
-        elasticIndexingClient.sendCreateIndexAliasRequest(previousIndex, aliasExistsOnCurrentIndex ? index : null, indexAlias);
+      // Several connectors can share the same alias: the new index must be
+      // (re)created once per alias, otherwise the second connector would see
+      // the index just created by the first one, treat the upgrade as
+      // interrupted and delete it while its reindex is running
+      boolean firstConnectorOfAlias;
+      synchronized (indexUpgrading) {
+        firstConnectorOfAlias = upgradeInitializedAliases.add(indexAlias);
       }
+      if (firstConnectorOfAlias) {
+        boolean newIndexExists = elasticIndexingClient.sendIsIndexExistsRequest(index);
 
-      if (newIndexExists) {
-        // Upgrade was interrupted, so remove it and upgrade again
-        LOG.warn("ES index upgrade '{}' was interrupted, the new index {} will be recreated", previousIndex, index);
-        elasticIndexingClient.sendDeleteIndexRequest(index);
-        // Send request to create index
-        elasticIndexingClient.sendCreateIndexRequest(index, elasticContentRequestBuilder.getCreateIndexRequestContent(connector), connector.getMapping());
-      } else {
-        elasticIndexingClient.sendCreateIndexRequest(index,
-                elasticContentRequestBuilder.getCreateIndexRequestContent(connector), connector.getMapping());
-        if(connector.isNeedIngestPipeline()) {
-          elasticIndexingClient.sendCreateAttachmentPipelineRequest(index, connector.getPipelineName(), connector.getAttachmentProcessor());
+        // If the upgrade is incomplete (should point the alias on previous index)
+        boolean aliasExistsOnPreviousIndex = elasticIndexingClient.sendGetIndexAliasesRequest(previousIndex).contains(indexAlias);
+        if (!aliasExistsOnPreviousIndex) {
+          boolean aliasExistsOnCurrentIndex = newIndexExists && elasticIndexingClient.sendGetIndexAliasesRequest(index).contains(indexAlias);
+          // If the alias points to the new index, point it again to the previous one, else add new alias to previous
+          elasticIndexingClient.sendCreateIndexAliasRequest(previousIndex, aliasExistsOnCurrentIndex ? index : null, indexAlias);
         }
+
+        if (newIndexExists) {
+          // Upgrade was interrupted, so remove it and upgrade again
+          LOG.warn("ES index upgrade '{}' was interrupted, the new index {} will be recreated", previousIndex, index);
+          elasticIndexingClient.sendDeleteIndexRequest(index);
+        }
+        // Send request to create index
+        elasticIndexingClient.sendCreateIndexRequest(index,
+                                                     elasticContentRequestBuilder.getCreateIndexRequestContent(connector),
+                                                     connector.getMapping());
+      }
+      if (connector.isNeedIngestPipeline()) {
+        elasticIndexingClient.sendCreateAttachmentPipelineRequest(index, connector.getPipelineName(), connector.getAttachmentProcessor());
       }
 
       // Init reindex. Once the reindex finished, the index alias will be updated to new index
@@ -800,6 +812,7 @@ public class ElasticIndexingOperationProcessor extends IndexingOperationProcesso
     synchronized (indexUpgrading) {
       indexUpgrading.remove(indexAlias);
       reindexedIndexes.remove(indexAlias);
+      upgradeInitializedAliases.remove(indexAlias);
       if (indexUpgrading.isEmpty()) {
         LOG.info("ES indexes migration finished (except indexes that will be reindexed from DB)");
       }

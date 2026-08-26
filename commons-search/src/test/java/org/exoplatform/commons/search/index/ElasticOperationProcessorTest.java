@@ -185,6 +185,35 @@ public class ElasticOperationProcessorTest {
     assertFalse(elasticIndexingOperationProcessor.isIndexUpgrading("notes_alias"));
   }
 
+  @Test
+  public void start_twoConnectorsOnSameAlias_newIndexCreatedOnceAndNeverDeleted() {
+    // Given: two connectors on the same alias, and an ES where notes_v2 exists
+    // as soon as it has been created
+    ElasticIndexingServiceConnector pageConnector = mockUpgradingConnector("wiki-page");
+    ElasticIndexingServiceConnector versionConnector = mockUpgradingConnector("note-version");
+    elasticIndexingOperationProcessor.addConnector(pageConnector);
+    elasticIndexingOperationProcessor.addConnector(versionConnector);
+    elasticIndexingOperationProcessor.setExecutors(new SameThreadExecutorService());
+    when(elasticIndexingClient.sendGetESVersion()).thenReturn("8.6.0");
+    when(elasticIndexingClient.sendIsIndexExistsRequest("notes_v1")).thenReturn(true);
+    boolean[] newIndexCreated = { false };
+    when(elasticIndexingClient.sendIsIndexExistsRequest("notes_v2")).thenAnswer(invocation -> newIndexCreated[0]);
+    when(elasticIndexingClient.sendCreateIndexRequest(eq("notes_v2"), any(), any())).thenAnswer(invocation -> {
+      newIndexCreated[0] = true;
+      return true;
+    });
+
+    // When
+    elasticIndexingOperationProcessor.start();
+
+    // Then: the second connector must not treat the index created by the
+    // first one as an interrupted upgrade and delete it under the running reindex
+    verify(elasticIndexingClient, times(1)).sendCreateIndexRequest(eq("notes_v2"), any(), any());
+    verify(elasticIndexingClient, never()).sendDeleteIndexRequest("notes_v2");
+    verify(elasticIndexingClient, times(1)).sendCreateIndexAliasRequest("notes_v2", "notes_v1", "notes_alias");
+    verify(elasticIndexingClient, times(1)).sendDeleteIndexRequest("notes_v1");
+  }
+
   private ElasticIndexingServiceConnector mockUpgradingConnector(String name) {
     ElasticIndexingServiceConnector connector = mock(ElasticIndexingServiceConnector.class);
     when(connector.getConnectorName()).thenReturn(name);
