@@ -78,6 +78,9 @@ public class ElasticIndexingOperationProcessor extends IndexingOperationProcesso
 
   private Map<String, Set<String>>           indexUpgrading                      = new HashMap<>();
 
+  /** Per index alias, the ES reindex requests already sent (see ReindexESType) */
+  private Map<String, Set<String>>           reindexedIndexes                    = new HashMap<>();
+
   private ExecutorService                    executors                           = Executors.newCachedThreadPool();
 
   private String                             esVersion;
@@ -752,6 +755,57 @@ public class ElasticIndexingOperationProcessor extends IndexingOperationProcesso
     }
   }
 
+  /**
+   * Replaces the executor used to run the index upgrades. Meant for tests, to
+   * run {@link ReindexESType} synchronously.
+   *
+   * @param executors the executor to use
+   */
+  public void setExecutors(ExecutorService executors) {
+    this.executors = executors;
+  }
+
+  /**
+   * Whether an ES index upgrade is still pending for the given alias.
+   *
+   * @param indexAlias the index alias
+   * @return true if at least one connector of that alias hasn't finished its
+   *         upgrade yet
+   */
+  public boolean isIndexUpgrading(String indexAlias) {
+    synchronized (indexUpgrading) {
+      return indexUpgrading.containsKey(indexAlias);
+    }
+  }
+
+  /**
+   * Marks the upgrade of one connector as finished. Several connectors can
+   * share the same index alias (e.g. notes: pages + page versions), in which
+   * case the alias must be switched only once, after the last of them.
+   *
+   * @return true if no other connector of that alias is still upgrading
+   */
+  private boolean markConnectorUpgraded(String indexAlias, String connectorName) {
+    synchronized (indexUpgrading) {
+      Set<String> pendingConnectors = indexUpgrading.get(indexAlias);
+      if (pendingConnectors == null) {
+        return false;
+      }
+      pendingConnectors.remove(connectorName);
+      return pendingConnectors.isEmpty();
+    }
+  }
+
+  private void removeUpgradedAlias(String indexAlias) {
+    synchronized (indexUpgrading) {
+      indexUpgrading.remove(indexAlias);
+      reindexedIndexes.remove(indexAlias);
+      if (indexUpgrading.isEmpty()) {
+        LOG.info("ES indexes migration finished (except indexes that will be reindexed from DB)");
+      }
+    }
+  }
+
   public class ReindexESType implements Runnable {
 
     private ElasticIndexingServiceConnector indexingServiceConnector;
@@ -765,53 +819,73 @@ public class ElasticIndexingOperationProcessor extends IndexingOperationProcesso
 
     @Override
     public void run() {
+      String indexAlias = indexingServiceConnector.getIndexAlias();
+      String connectorName = indexingServiceConnector.getConnectorName();
+      String currentIndex = indexingServiceConnector.getCurrentIndex();
+      String previousIndex = indexingServiceConnector.getPreviousIndex();
       try {
-          LOG.info("Reindexing index alias {} from old index {} to new index {}",
-                  indexingServiceConnector.getIndexAlias(),
-                  indexingServiceConnector.getPreviousIndex(),
-                  indexingServiceConnector.getCurrentIndex());
-          try {
-            elasticIndexingClient.sendReindexTypeRequest(indexingServiceConnector.getCurrentIndex(), indexingServiceConnector.getPreviousIndex(), indexingServiceConnector.getReindexPipelineName());
-            if(this.indexingServiceConnector.isReindexOnUpgrade()) {
-              ExoContainerContext.setCurrentContainer(exoContainer);
-              reindexAllByEntityIndex(indexingServiceConnector.getConnectorName());
-            }
-            LOG.info("Reindexation finished for index alias {} from old index {} to new index {}",
-                    indexingServiceConnector.getIndexAlias(),
-                    indexingServiceConnector.getPreviousIndex(),
-                    indexingServiceConnector.getCurrentIndex());
-          } catch (Exception e) {
-            LOG.warn("Reindexation using pipeline error for index alias {} from old index {} to new index {}, for type {}. The reindexation will proceed from eXo DB",
-                    indexingServiceConnector.getIndexAlias(),
-                    indexingServiceConnector.getPreviousIndex(),
-                    indexingServiceConnector.getCurrentIndex());
+        LOG.info("Reindexing index alias {} from old index {} to new index {} for connector {}",
+                 indexAlias,
+                 previousIndex,
+                 currentIndex,
+                 connectorName);
+        try {
+          // The ES-side reindex copies the whole index: run it once per
+          // alias/pipeline, even when several connectors share the alias
+          String reindexKey = previousIndex + ">" + currentIndex + "|" + indexingServiceConnector.getReindexPipelineName();
+          boolean reindexRequested;
+          synchronized (indexUpgrading) {
+            reindexRequested = reindexedIndexes.computeIfAbsent(indexAlias, k -> new HashSet<>()).add(reindexKey);
           }
+          if (reindexRequested) {
+            elasticIndexingClient.sendReindexTypeRequest(currentIndex,
+                                                         previousIndex,
+                                                         indexingServiceConnector.getReindexPipelineName());
+          } else {
+            LOG.info("ES reindex from {} to {} already requested by another connector of alias {}, skipping it for connector {}",
+                     previousIndex,
+                     currentIndex,
+                     indexAlias,
+                     connectorName);
+          }
+          if (indexingServiceConnector.isReindexOnUpgrade()) {
+            ExoContainerContext.setCurrentContainer(exoContainer);
+            reindexAllByEntityIndex(connectorName);
+          }
+          LOG.info("Reindexation finished for index alias {} from old index {} to new index {} for connector {}",
+                   indexAlias,
+                   previousIndex,
+                   currentIndex,
+                   connectorName);
+        } catch (Exception e) {
+          LOG.warn("Reindexation using pipeline error for index alias {} from old index {} to new index {}, for connector {}. The reindexation will proceed from eXo DB",
+                   indexAlias,
+                   previousIndex,
+                   currentIndex,
+                   connectorName,
+                   e);
+        }
 
         // This algorithm should be thread safe
-        synchronized (indexUpgrading) {
-          boolean indexMigrationInProgress = indexUpgrading.get(indexingServiceConnector.getIndexAlias()).size() > 1;
+        boolean lastConnectorOfAlias = markConnectorUpgraded(indexAlias, connectorName);
+        if (!lastConnectorOfAlias) {
+          LOG.info("The index {} has some types not completely migrated yet, the old index will be deleted after migration is finished",
+                   previousIndex);
+        } else {
+          LOG.info("Switching index alias {} from old index {} to new index {}", indexAlias, previousIndex, currentIndex);
+          elasticIndexingClient.sendCreateIndexAliasRequest(currentIndex, previousIndex, indexAlias);
 
-          if (indexMigrationInProgress) {
-            LOG.info("The index {} has some types not completely migrated yet, the old index will be deleted after migration is finished",
-                    indexingServiceConnector.getPreviousIndex());
-          } else {
-            LOG.info("Switching index alias {} from old index {} to new index {}", indexingServiceConnector.getIndexAlias(), indexingServiceConnector.getPreviousIndex(), indexingServiceConnector.getCurrentIndex());
-            elasticIndexingClient.sendCreateIndexAliasRequest(indexingServiceConnector.getCurrentIndex(), indexingServiceConnector.getPreviousIndex(), indexingServiceConnector.getIndexAlias());
-
-            indexUpgrading.remove(indexingServiceConnector.getIndexAlias());
-
-            LOG.info("Remove old index {}", indexingServiceConnector.getPreviousIndex());
-            elasticIndexingClient.sendDeleteIndexRequest(indexingServiceConnector.getPreviousIndex());
-
-            if(indexUpgrading.isEmpty()) {
-              LOG.info("ES indexes migration finished (except indexes that will be reindexed from DB)");
-            }
-          }
+          LOG.info("Remove old index {}", previousIndex);
+          elasticIndexingClient.sendDeleteIndexRequest(previousIndex);
         }
       } catch (Exception e) {
-        LOG.error("An error occurred while upgrading index " + indexingServiceConnector.getPreviousIndex(), e);
+        LOG.error("An error occurred while upgrading index {} for connector {}", previousIndex, connectorName, e);
       } finally {
-        indexUpgrading.remove(indexingServiceConnector.getIndexAlias());
+        // Release the slot of this connector even on failure, and drop the
+        // alias entry once no connector of that alias is pending anymore
+        if (markConnectorUpgraded(indexAlias, connectorName)) {
+          removeUpgradedAlias(indexAlias);
+        }
       }
     }
   }
