@@ -126,6 +126,142 @@ public class ElasticOperationProcessorTest {
   }
 
   @Test
+  public void start_twoConnectorsOnSameAlias_aliasSwitchedOnceAfterBoth() {
+    // Given: two connectors sharing the same alias (e.g. notes pages + versions)
+    ElasticIndexingServiceConnector pageConnector = mockUpgradingConnector("wiki-page");
+    ElasticIndexingServiceConnector versionConnector = mockUpgradingConnector("note-version");
+    elasticIndexingOperationProcessor.addConnector(pageConnector);
+    elasticIndexingOperationProcessor.addConnector(versionConnector);
+    elasticIndexingOperationProcessor.setExecutors(new SameThreadExecutorService());
+    when(elasticIndexingClient.sendGetESVersion()).thenReturn("8.6.0");
+    when(elasticIndexingClient.sendIsIndexExistsRequest("notes_v1")).thenReturn(true);
+    when(elasticIndexingClient.sendIsIndexExistsRequest("notes_v2")).thenReturn(false);
+
+    // When
+    elasticIndexingOperationProcessor.start();
+
+    // Then: no NPE, the ES reindex is requested once, the alias is switched
+    // once and the old index deleted once, after both connectors finished
+    verify(elasticIndexingClient, times(1)).sendReindexTypeRequest("notes_v2", "notes_v1", null);
+    verify(elasticIndexingClient, times(1)).sendCreateIndexAliasRequest("notes_v2", "notes_v1", "notes_alias");
+    verify(elasticIndexingClient, times(1)).sendDeleteIndexRequest("notes_v1");
+    assertFalse(elasticIndexingOperationProcessor.isIndexUpgrading("notes_alias"));
+  }
+
+  @Test
+  public void start_twoConnectorsOnSameAlias_firstFinishedDoesNotSwitchAlias() {
+    // Given
+    ElasticIndexingServiceConnector pageConnector = mockUpgradingConnector("wiki-page");
+    ElasticIndexingServiceConnector versionConnector = mockUpgradingConnector("note-version");
+    elasticIndexingOperationProcessor.addConnector(pageConnector);
+    elasticIndexingOperationProcessor.addConnector(versionConnector);
+    List<Runnable> submitted = new ArrayList<>();
+    elasticIndexingOperationProcessor.setExecutors(new SameThreadExecutorService() {
+      @Override
+      public void execute(Runnable command) {
+        submitted.add(command);
+      }
+    });
+    when(elasticIndexingClient.sendGetESVersion()).thenReturn("8.6.0");
+    when(elasticIndexingClient.sendIsIndexExistsRequest("notes_v1")).thenReturn(true);
+    when(elasticIndexingClient.sendIsIndexExistsRequest("notes_v2")).thenReturn(false);
+    elasticIndexingOperationProcessor.start();
+    assertEquals(2, submitted.size());
+
+    // When: only the first connector finishes
+    submitted.get(0).run();
+
+    // Then: alias untouched, upgrade still pending for the second connector
+    verify(elasticIndexingClient, never()).sendCreateIndexAliasRequest("notes_v2", "notes_v1", "notes_alias");
+    verify(elasticIndexingClient, never()).sendDeleteIndexRequest("notes_v1");
+    assertTrue(elasticIndexingOperationProcessor.isIndexUpgrading("notes_alias"));
+
+    // When: the second one finishes
+    submitted.get(1).run();
+
+    // Then
+    verify(elasticIndexingClient, times(1)).sendCreateIndexAliasRequest("notes_v2", "notes_v1", "notes_alias");
+    verify(elasticIndexingClient, times(1)).sendDeleteIndexRequest("notes_v1");
+    assertFalse(elasticIndexingOperationProcessor.isIndexUpgrading("notes_alias"));
+  }
+
+  @Test
+  public void start_twoConnectorsOnSameAlias_newIndexCreatedOnceAndNeverDeleted() {
+    // Given: two connectors on the same alias, and an ES where notes_v2 exists
+    // as soon as it has been created
+    ElasticIndexingServiceConnector pageConnector = mockUpgradingConnector("wiki-page");
+    ElasticIndexingServiceConnector versionConnector = mockUpgradingConnector("note-version");
+    elasticIndexingOperationProcessor.addConnector(pageConnector);
+    elasticIndexingOperationProcessor.addConnector(versionConnector);
+    elasticIndexingOperationProcessor.setExecutors(new SameThreadExecutorService());
+    when(elasticIndexingClient.sendGetESVersion()).thenReturn("8.6.0");
+    when(elasticIndexingClient.sendIsIndexExistsRequest("notes_v1")).thenReturn(true);
+    boolean[] newIndexCreated = { false };
+    when(elasticIndexingClient.sendIsIndexExistsRequest("notes_v2")).thenAnswer(invocation -> newIndexCreated[0]);
+    when(elasticIndexingClient.sendCreateIndexRequest(eq("notes_v2"), any(), any())).thenAnswer(invocation -> {
+      newIndexCreated[0] = true;
+      return true;
+    });
+
+    // When
+    elasticIndexingOperationProcessor.start();
+
+    // Then: the second connector must not treat the index created by the
+    // first one as an interrupted upgrade and delete it under the running reindex
+    verify(elasticIndexingClient, times(1)).sendCreateIndexRequest(eq("notes_v2"), any(), any());
+    verify(elasticIndexingClient, never()).sendDeleteIndexRequest("notes_v2");
+    verify(elasticIndexingClient, times(1)).sendCreateIndexAliasRequest("notes_v2", "notes_v1", "notes_alias");
+    verify(elasticIndexingClient, times(1)).sendDeleteIndexRequest("notes_v1");
+  }
+
+  private ElasticIndexingServiceConnector mockUpgradingConnector(String name) {
+    ElasticIndexingServiceConnector connector = mock(ElasticIndexingServiceConnector.class);
+    when(connector.getConnectorName()).thenReturn(name);
+    when(connector.getIndexAlias()).thenReturn("notes_alias");
+    when(connector.getCurrentIndex()).thenReturn("notes_v2");
+    when(connector.getPreviousIndex()).thenReturn("notes_v1");
+    lenient().when(connector.isReindexOnUpgrade()).thenReturn(false);
+    lenient().when(connector.getMapping()).thenReturn("anyMapping");
+    return connector;
+  }
+
+  /** Runs submitted tasks synchronously, on the caller thread */
+  private static class SameThreadExecutorService extends java.util.concurrent.AbstractExecutorService {
+    private boolean shutdown;
+
+    @Override
+    public void execute(Runnable command) {
+      command.run();
+    }
+
+    @Override
+    public void shutdown() {
+      shutdown = true;
+    }
+
+    @Override
+    public List<Runnable> shutdownNow() {
+      shutdown = true;
+      return Collections.emptyList();
+    }
+
+    @Override
+    public boolean isShutdown() {
+      return shutdown;
+    }
+
+    @Override
+    public boolean isTerminated() {
+      return shutdown;
+    }
+
+    @Override
+    public boolean awaitTermination(long timeout, java.util.concurrent.TimeUnit unit) {
+      return true;
+    }
+  }
+
+  @Test
   public void addConnector_ifNewConnector_connectorAdded() {
     //Given
     assertEquals(0, elasticIndexingOperationProcessor.getConnectors().size());
