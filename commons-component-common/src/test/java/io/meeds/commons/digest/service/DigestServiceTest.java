@@ -18,56 +18,199 @@
  */
 package io.meeds.commons.digest.service;
 
-import org.exoplatform.commons.api.settings.SettingService;
-import org.exoplatform.commons.api.settings.SettingValue;
-import org.exoplatform.commons.api.settings.data.Context;
-import org.exoplatform.commons.api.settings.data.Scope;
-import org.exoplatform.jpa.BaseTest;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
-import io.meeds.commons.digest.DigestService;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
-public class DigestServiceTest extends BaseTest {
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.junit.MockitoJUnitRunner;
+import org.springframework.dao.DataIntegrityViolationException;
 
-  private static final Scope  DIGEST_SCOPE       = Scope.APPLICATION.id("NotificationDigestSetting");
+import io.meeds.commons.digest.model.DigestUserSettings;
+import io.meeds.commons.digest.plugin.DigestCategoryProvider;
 
-  private static final String DIGEST_ALLOWED_KEY = "exo:digestAllowed";
+/**
+ * Checks the rules the service adds on top of the storages: what a valid choice
+ * is, what happens to the categories of an uninstalled addon, and in which
+ * order the two storages are written.
+ */
+@RunWith(MockitoJUnitRunner.class)
+public class DigestServiceTest {
 
-  private DigestService       digestService;
+  private static final String     USERNAME  = "digestUser";
 
-  private SettingService      settingService;
+  private static final String     TIME_ZONE = "Europe/Paris";
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    settingService = getService(SettingService.class);
-    settingService.remove(Context.GLOBAL, DIGEST_SCOPE, DIGEST_ALLOWED_KEY);
-    // The bean is started by the Spring context (SocialApplication scans
-    // io.meeds.commons.digest); here it is instantiated directly against the
-    // real SettingService of the test container
-    digestService = new DigestServiceImpl(settingService);
+  @Mock
+  private DigestSettingStorage    settingStorage;
+
+  @Mock
+  private DigestEnrollmentStorage enrollmentStorage;
+
+  private DigestServiceImpl       digestService;
+
+  @Before
+  public void setUp() {
+    digestService = new DigestServiceImpl(settingStorage, enrollmentStorage, categoryProviders());
   }
 
-  @Override
-  protected void tearDown() throws Exception {
-    settingService.remove(Context.GLOBAL, DIGEST_SCOPE, DIGEST_ALLOWED_KEY);
-    super.tearDown();
+  @Test
+  public void testCategoriesAreReturnedInDisplayOrder() {
+    List<DigestCategoryProvider> categories = digestService.getCategories();
+    assertEquals(Arrays.asList("feed", "spaces"), categories.stream().map(DigestCategoryProvider::getId).toList());
   }
 
-  public void testDigestIsNotAllowedByDefault() {
-    assertFalse(digestService.isDigestAllowed());
+  @Test
+  public void testSaveRejectsNoSettings() {
+    assertThrows(IllegalArgumentException.class, () -> digestService.saveUserSettings(USERNAME, null, TIME_ZONE));
+    verifyNothingWasSaved();
   }
 
-  public void testSaveDigestAllowed() {
-    digestService.saveDigestAllowed(true);
-    assertTrue(digestService.isDigestAllowed());
+  @Test
+  public void testSaveRejectsAFrequencyEnabledWithoutCategory() {
+    DigestUserSettings settings = new DigestUserSettings(true, Collections.emptyList(), false, Collections.emptyList());
+    assertThrows(IllegalArgumentException.class, () -> digestService.saveUserSettings(USERNAME, settings, TIME_ZONE));
+    verifyNothingWasSaved();
+  }
 
-    // The value must be really persisted, readable outside the service
-    SettingValue<?> settingValue = settingService.get(Context.GLOBAL, DIGEST_SCOPE, DIGEST_ALLOWED_KEY);
-    assertNotNull(settingValue);
-    assertEquals("true", String.valueOf(settingValue.getValue()));
+  @Test
+  public void testSaveRejectsAFrequencyLeftWithNoInstalledCategory() {
+    DigestUserSettings settings = new DigestUserSettings(true,
+                                                         Collections.singletonList("uninstalled"),
+                                                         false,
+                                                         Collections.emptyList());
+    assertThrows(IllegalArgumentException.class, () -> digestService.saveUserSettings(USERNAME, settings, TIME_ZONE));
+    verifyNothingWasSaved();
+  }
 
-    digestService.saveDigestAllowed(false);
-    assertFalse(digestService.isDigestAllowed());
+  @Test
+  public void testSaveLeavesOutTheCategoriesOfAnUninstalledAddon() {
+    // The user enabled the tasks category before the addon was uninstalled: he
+    // must still be able to save, without the category that doesn't exist
+    digestService.saveUserSettings(USERNAME,
+                                   new DigestUserSettings(true,
+                                                          Arrays.asList("spaces", "uninstalled"),
+                                                          false,
+                                                          Collections.singletonList("uninstalled")),
+                                   TIME_ZONE);
+
+    DigestUserSettings saved = captureSavedSettings();
+    assertEquals(Collections.singletonList("spaces"), saved.getDailyCategories());
+    assertEquals(Collections.emptyList(), saved.getWeeklyCategories());
+  }
+
+  @Test
+  public void testSaveKeepsEachCategoryOnce() {
+    digestService.saveUserSettings(USERNAME,
+                                   new DigestUserSettings(true,
+                                                          Arrays.asList("spaces", "feed", "spaces"),
+                                                          false,
+                                                          Collections.emptyList()),
+                                   TIME_ZONE);
+
+    assertEquals(Arrays.asList("spaces", "feed"), captureSavedSettings().getDailyCategories());
+  }
+
+  @Test
+  public void testSaveEnrollsBeforeWritingTheSettings() {
+    digestService.saveUserSettings(USERNAME, dailyOn(), TIME_ZONE);
+
+    // The settings don't belong to any transaction: writing them before a
+    // failing enrollment would leave the user with a digest the job ignores
+    InOrder inOrder = Mockito.inOrder(enrollmentStorage, settingStorage);
+    inOrder.verify(enrollmentStorage).enroll(eq(USERNAME), any(), eq(TIME_ZONE));
+    inOrder.verify(settingStorage).saveUserSettings(eq(USERNAME), any());
+  }
+
+  @Test
+  public void testSaveDoesNotWriteTheSettingsWhenTheEnrollmentFails() {
+    doThrow(new IllegalStateException("Database is down")).when(enrollmentStorage).enroll(any(), any(), any());
+
+    assertThrows(IllegalStateException.class, () -> digestService.saveUserSettings(USERNAME, dailyOn(), TIME_ZONE));
+
+    verify(settingStorage, never()).saveUserSettings(any(), any());
+  }
+
+  @Test
+  public void testSaveEnrollsAgainWhenTheSameUserIsSavedTwiceAtOnce() {
+    doThrow(new DataIntegrityViolationException("Duplicate USER_ID")).doNothing()
+                                                                    .when(enrollmentStorage)
+                                                                    .enroll(any(), any(), any());
+
+    digestService.saveUserSettings(USERNAME, dailyOn(), TIME_ZONE);
+
+    // The row the concurrent save created is now updated instead of inserted
+    verify(enrollmentStorage, times(2)).enroll(eq(USERNAME), any(), eq(TIME_ZONE));
+    verify(settingStorage).saveUserSettings(eq(USERNAME), any());
+  }
+
+  @Test
+  public void testReadLeavesOutTheCategoriesOfAnUninstalledAddon() {
+    when(settingStorage.getUserSettings(USERNAME)).thenReturn(new DigestUserSettings(true,
+                                                                                     Arrays.asList("spaces", "uninstalled"),
+                                                                                     false,
+                                                                                     Collections.emptyList()));
+
+    assertEquals(Collections.singletonList("spaces"), digestService.getUserSettings(USERNAME).getDailyCategories());
+  }
+
+  private DigestUserSettings dailyOn() {
+    return new DigestUserSettings(true, Collections.singletonList("spaces"), false, Collections.emptyList());
+  }
+
+  private DigestUserSettings captureSavedSettings() {
+    ArgumentCaptor<DigestUserSettings> captor = ArgumentCaptor.forClass(DigestUserSettings.class);
+    verify(settingStorage).saveUserSettings(eq(USERNAME), captor.capture());
+    return captor.getValue();
+  }
+
+  private void verifyNothingWasSaved() {
+    verify(settingStorage, never()).saveUserSettings(any(), any());
+    verify(enrollmentStorage, never()).enroll(any(), any(), any());
+  }
+
+  private List<DigestCategoryProvider> categoryProviders() {
+    return Arrays.asList(categoryProvider("spaces", 20), categoryProvider("feed", 10));
+  }
+
+  private DigestCategoryProvider categoryProvider(String id, int order) {
+    return new DigestCategoryProvider() {
+      @Override
+      public String getId() {
+        return id;
+      }
+
+      @Override
+      public String getLabelKey() {
+        return "digest.category." + id;
+      }
+
+      @Override
+      public int getOrder() {
+        return order;
+      }
+
+      @Override
+      public List<String> getPluginIds() {
+        return Collections.singletonList(id + "Plugin");
+      }
+    };
   }
 
 }
