@@ -32,6 +32,13 @@
         <type>org.exoplatform.services.idgenerator.impl.IDGeneratorServiceImpl</type>
     </component>
 
+    <!-- Holds the digest categories the installed addons contribute. Declared
+         in the Kernel, whose container is shared by every webapp, so that an
+         addon reaches the digest whether or not it uses Spring -->
+    <component>
+        <type>io.meeds.commons.digest.DigestCategoryRegistry</type>
+    </component>
+
     <!-- Data Initialization -->
     <external-component-plugins>
         <target-component>org.exoplatform.commons.api.persistence.DataInitializer</target-component>

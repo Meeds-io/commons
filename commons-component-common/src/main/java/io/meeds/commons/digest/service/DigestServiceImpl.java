@@ -19,16 +19,15 @@
 package io.meeds.commons.digest.service;
 
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.commons.collections.CollectionUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
+import io.meeds.commons.digest.DigestCategoryRegistry;
 import io.meeds.commons.digest.DigestService;
 import io.meeds.commons.digest.model.DigestUserSettings;
 import io.meeds.commons.digest.plugin.DigestCategoryProvider;
@@ -40,14 +39,14 @@ public class DigestServiceImpl implements DigestService {
 
   private final DigestEnrollmentStorage      enrollmentStorage;
 
-  private final List<DigestCategoryProvider> categoryProviders;
+  private final DigestCategoryRegistry       categoryRegistry;
 
   public DigestServiceImpl(DigestSettingStorage settingStorage,
                            DigestEnrollmentStorage enrollmentStorage,
-                           @Autowired(required = false) List<DigestCategoryProvider> categoryProviders) {
+                           DigestCategoryRegistry categoryRegistry) {
     this.settingStorage = settingStorage;
     this.enrollmentStorage = enrollmentStorage;
-    this.categoryProviders = categoryProviders == null ? Collections.emptyList() : categoryProviders;
+    this.categoryRegistry = categoryRegistry;
   }
 
   @Override
@@ -85,9 +84,7 @@ public class DigestServiceImpl implements DigestService {
 
   @Override
   public List<DigestCategoryProvider> getCategories() {
-    return categoryProviders.stream()
-                            .sorted(Comparator.comparingInt(DigestCategoryProvider::getOrder))
-                            .toList();
+    return categoryRegistry.getCategoryProviders();
   }
 
   private void enroll(String username, DigestUserSettings settings, String timeZone) {
@@ -101,9 +98,10 @@ public class DigestServiceImpl implements DigestService {
   }
 
   private DigestUserSettings keepInstalledCategories(DigestUserSettings settings) {
-    Set<String> installedCategories = categoryProviders.stream()
-                                                       .map(DigestCategoryProvider::getId)
-                                                       .collect(Collectors.toSet());
+    Set<String> installedCategories = categoryRegistry.getCategoryProviders()
+                                                      .stream()
+                                                      .map(DigestCategoryProvider::getId)
+                                                      .collect(Collectors.toSet());
     return new DigestUserSettings(settings.isDaily(),
                                   keepInstalledCategories(settings.getDailyCategories(), installedCategories),
                                   settings.isWeekly(),

@@ -28,9 +28,14 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+
+import org.exoplatform.container.xml.InitParams;
+import org.exoplatform.container.xml.ValueParam;
+import org.exoplatform.container.xml.ValuesParam;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -42,7 +47,9 @@ import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.dao.DataIntegrityViolationException;
 
+import io.meeds.commons.digest.DigestCategoryRegistry;
 import io.meeds.commons.digest.model.DigestUserSettings;
+import io.meeds.commons.digest.plugin.DigestCategoryPlugin;
 import io.meeds.commons.digest.plugin.DigestCategoryProvider;
 
 /**
@@ -67,7 +74,10 @@ public class DigestServiceTest {
 
   @Before
   public void setUp() {
-    digestService = new DigestServiceImpl(settingStorage, enrollmentStorage, categoryProviders());
+    DigestCategoryRegistry categoryRegistry = new DigestCategoryRegistry();
+    categoryRegistry.addCategoryProvider(categoryPlugin("spaces", 20, "SpaceInvitationPlugin"));
+    categoryRegistry.addCategoryProvider(categoryPlugin("feed", 10, "PostActivityPlugin"));
+    digestService = new DigestServiceImpl(settingStorage, enrollmentStorage, categoryRegistry);
   }
 
   @Test
@@ -185,32 +195,23 @@ public class DigestServiceTest {
     verify(enrollmentStorage, never()).enroll(any(), any(), any());
   }
 
-  private List<DigestCategoryProvider> categoryProviders() {
-    return Arrays.asList(categoryProvider("spaces", 20), categoryProvider("feed", 10));
+  private DigestCategoryPlugin categoryPlugin(String id, int order, String pluginId) {
+    InitParams params = new InitParams();
+    params.addParam(valueParam("id", id));
+    params.addParam(valueParam("labelKey", "digest.category." + id));
+    params.addParam(valueParam("order", String.valueOf(order)));
+    ValuesParam pluginIds = new ValuesParam();
+    pluginIds.setName("pluginIds");
+    pluginIds.setValues(new ArrayList<>(List.of(pluginId)));
+    params.addParam(pluginIds);
+    return new DigestCategoryPlugin(params);
   }
 
-  private DigestCategoryProvider categoryProvider(String id, int order) {
-    return new DigestCategoryProvider() {
-      @Override
-      public String getId() {
-        return id;
-      }
-
-      @Override
-      public String getLabelKey() {
-        return "digest.category." + id;
-      }
-
-      @Override
-      public int getOrder() {
-        return order;
-      }
-
-      @Override
-      public List<String> getPluginIds() {
-        return Collections.singletonList(id + "Plugin");
-      }
-    };
+  private ValueParam valueParam(String name, String value) {
+    ValueParam valueParam = new ValueParam();
+    valueParam.setName(name);
+    valueParam.setValue(value);
+    return valueParam;
   }
 
 }
