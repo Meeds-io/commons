@@ -61,12 +61,9 @@
     </createIndex>
   </changeSet>
 
-  <changeSet author="digest" id="1.0.0-3" dbms="oracle,postgresql">
-    <createSequence sequenceName="SEQ_NTF_DIGEST_USER_ID" startValue="1"/>
-  </changeSet>
-
-  <!-- Since Hibernate 5.6, hsqldb also generates the ids through a sequence -->
-  <changeSet author="digest" id="1.0.0-4" dbms="hsqldb">
+  <!-- hsqldb is in the list because since Hibernate 5.6 it also generates the
+       ids through a sequence, and not only oracle and postgresql -->
+  <changeSet author="digest" id="1.0.0-3" dbms="oracle,postgresql,hsqldb">
     <createSequence sequenceName="SEQ_NTF_DIGEST_USER_ID" startValue="1"/>
   </changeSet>
 
