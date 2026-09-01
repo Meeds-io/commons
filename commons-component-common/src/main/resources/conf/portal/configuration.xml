@@ -21,6 +21,16 @@
   xsi:schemaLocation="http://www.exoplatform.org/xml/ns/kernel_1_2.xsd http://www.exoplatform.org/xml/ns/kernel_1_2.xsd"
   xmlns="http://www.exoplatform.org/xml/ns/kernel_1_2.xsd">
 
+  <!-- Holds the digest categories the installed addons contribute. Declared
+       in the Kernel and at the portal container level on purpose: the Kernel
+       container is shared by every webapp, so an addon reaches the digest
+       whether or not it uses Spring, and the external-component-plugins the
+       addons declare live in portal configurations, which only apply to a
+       component owned by the portal container -->
+  <component>
+    <type>io.meeds.commons.digest.DigestCategoryRegistry</type>
+  </component>
+
   <component>
     <type>org.exoplatform.commons.notification.impl.jpa.email.dao.MailParamDAO</type>
   </component>
