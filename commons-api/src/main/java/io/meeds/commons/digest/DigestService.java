@@ -18,11 +18,16 @@
  */
 package io.meeds.commons.digest;
 
+import java.util.List;
+
+import io.meeds.commons.digest.model.DigestUserSettings;
+import io.meeds.commons.digest.plugin.DigestCategoryProvider;
+
 /**
  * Service holding the settings of the digest mail notifications feature. The
  * digest is independent from the notification channels: it only relies on its
- * own settings, starting with the platform-wide administrator switch that
- * allows users to configure their digest.
+ * own settings, the platform wide administrator switch and the choices of each
+ * user.
  */
 public interface DigestService {
 
@@ -40,5 +45,36 @@ public interface DigestService {
    * @param allowed true to allow users to configure their digest
    */
   void saveDigestAllowed(boolean allowed);
+
+  /**
+   * @param username the user to read the choices of
+   * @return the digest choices of the user, both frequencies off with no
+   *         category when he never saved any. The categories of the addons
+   *         uninstalled since his last save are left out.
+   */
+  DigestUserSettings getUserSettings(String username);
+
+  /**
+   * Saves the digest choices of a user and keeps the digest sender job work
+   * list in sync: the user is enrolled when he enables a frequency, and removed
+   * when both frequencies end up off. A frequency switched on starts covering
+   * the notifications received from now on.
+   *
+   * @param username the user saving his choices
+   * @param settings the chosen frequencies and their categories
+   * @param timeZone the user profile timezone, used to send the digest at the
+   *                 right local hour, the server one is used when null
+   * @throws IllegalArgumentException when a frequency is enabled with no
+   *           category. The categories that no installed addon provides are
+   *           left out instead of being rejected, so that uninstalling an addon
+   *           never keeps a user from saving his choices.
+   */
+  void saveUserSettings(String username, DigestUserSettings settings, String timeZone);
+
+  /**
+   * @return the categories the user can choose from, in display order. Only the
+   *         categories of the installed addons are returned.
+   */
+  List<DigestCategoryProvider> getCategories();
 
 }
