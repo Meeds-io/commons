@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ This file is part of the Meeds project (https://meeds.io/).
+
+ Copyright (C) 2020 - 2026 Meeds Association contact@meeds.io
+
+ This program is free software; you can redistribute it and/or
+ modify it under the terms of the GNU Lesser General Public
+ License as published by the Free Software Foundation; either
+ version 3 of the License, or (at your option) any later version.
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ Lesser General Public License for more details.
+
+ You should have received a copy of the GNU Lesser General Public License
+ along with this program; if not, write to the Free Software Foundation,
+ Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+-->
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.3.xsd">
+
+  <!-- Managing both DB that use sequences and db that use auto increment -->
+  <property name="autoIncrement" value="true" dbms="mysql,mssql,h2,hsqldb"/>
+  <property name="autoIncrement" value="false" dbms="oracle,postgresql"/>
+
+  <changeSet author="digest" id="1.0.0-1">
+    <createTable tableName="NTF_DIGEST_USERS">
+      <column name="ID" type="BIGINT" autoIncrement="${autoIncrement}" startWith="1">
+        <constraints nullable="false" primaryKey="true" primaryKeyName="PK_NTF_DIGEST_USERS"/>
+      </column>
+      <column name="USER_ID" type="NVARCHAR(200)">
+        <constraints nullable="false" unique="true" uniqueConstraintName="UK_NTF_DIGEST_USERS_USER_ID"/>
+      </column>
+      <column name="DAILY" type="BOOLEAN" defaultValueBoolean="false">
+        <constraints nullable="false"/>
+      </column>
+      <column name="WEEKLY" type="BOOLEAN" defaultValueBoolean="false">
+        <constraints nullable="false"/>
+      </column>
+      <column name="TIMEZONE" type="NVARCHAR(100)"/>
+      <column name="DAILY_LAST_SENT" type="TIMESTAMP"/>
+      <column name="WEEKLY_LAST_SENT" type="TIMESTAMP"/>
+    </createTable>
+    <modifySql dbms="mysql">
+      <append value=" ENGINE=INNODB CHARSET=UTF8 COLLATE utf8_general_ci"/>
+    </modifySql>
+  </changeSet>
+
+  <!-- The digest sender job selects the users to serve with these two indexes -->
+  <changeSet author="digest" id="1.0.0-2">
+    <createIndex tableName="NTF_DIGEST_USERS" indexName="IDX_NTF_DIGEST_USERS_DAILY">
+      <column name="DAILY"/>
+      <column name="DAILY_LAST_SENT"/>
+    </createIndex>
+    <createIndex tableName="NTF_DIGEST_USERS" indexName="IDX_NTF_DIGEST_USERS_WEEKLY">
+      <column name="WEEKLY"/>
+      <column name="WEEKLY_LAST_SENT"/>
+    </createIndex>
+  </changeSet>
+
+  <!-- hsqldb is in the list because since Hibernate 5.6 it also generates the
+       ids through a sequence, and not only oracle and postgresql -->
+  <changeSet author="digest" id="1.0.0-3" dbms="oracle,postgresql,hsqldb">
+    <createSequence sequenceName="SEQ_NTF_DIGEST_USER_ID" startValue="1"/>
+  </changeSet>
+
+</databaseChangeLog>
