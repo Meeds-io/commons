@@ -18,45 +18,110 @@
  */
 package io.meeds.commons.digest.service;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.apache.commons.collections.CollectionUtils;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
-import org.exoplatform.commons.api.settings.SettingService;
-import org.exoplatform.commons.api.settings.SettingValue;
-import org.exoplatform.commons.api.settings.data.Context;
-import org.exoplatform.commons.api.settings.data.Scope;
-
+import io.meeds.commons.digest.DigestCategoryRegistry;
 import io.meeds.commons.digest.DigestService;
+import io.meeds.commons.digest.model.DigestUserSettings;
+import io.meeds.commons.digest.plugin.DigestCategoryProvider;
 
-/**
- * Stores the digest settings through {@link SettingService}, whose cache is
- * in-memory and cluster-coherent: a change saved on one server applies
- * immediately on every server.
- */
 @Service
 public class DigestServiceImpl implements DigestService {
 
-  private static final Scope   DIGEST_SCOPE       = Scope.APPLICATION.id("NotificationDigestSetting");
+  private final DigestSettingStorage         settingStorage;
 
-  private static final String  DIGEST_ALLOWED_KEY = "exo:digestAllowed";
+  private final DigestEnrollmentStorage      enrollmentStorage;
 
-  private final SettingService settingService;
+  private final DigestCategoryRegistry       categoryRegistry;
 
-  public DigestServiceImpl(SettingService settingService) {
-    this.settingService = settingService;
+  public DigestServiceImpl(DigestSettingStorage settingStorage,
+                           DigestEnrollmentStorage enrollmentStorage,
+                           DigestCategoryRegistry categoryRegistry) {
+    this.settingStorage = settingStorage;
+    this.enrollmentStorage = enrollmentStorage;
+    this.categoryRegistry = categoryRegistry;
   }
 
   @Override
   public boolean isDigestAllowed() {
-    // Reads go through SettingService on purpose: its cache
-    // (commons.SettingService ExoCache) is in-memory AND cluster-coherent,
-    // so an admin change on one server applies immediately on all servers
-    SettingValue<?> settingValue = settingService.get(Context.GLOBAL, DIGEST_SCOPE, DIGEST_ALLOWED_KEY);
-    return settingValue != null && Boolean.parseBoolean(String.valueOf(settingValue.getValue()));
+    return settingStorage.isDigestAllowed();
   }
 
   @Override
   public void saveDigestAllowed(boolean allowed) {
-    settingService.set(Context.GLOBAL, DIGEST_SCOPE, DIGEST_ALLOWED_KEY, SettingValue.create(String.valueOf(allowed)));
+    settingStorage.saveDigestAllowed(allowed);
+  }
+
+  @Override
+  public DigestUserSettings getUserSettings(String username) {
+    // The categories of an addon uninstalled since the last save don't exist
+    // any more, the user must never be shown, nor blocked by, a choice he can't
+    // act on
+    return keepInstalledCategories(settingStorage.getUserSettings(username));
+  }
+
+  @Override
+  public void saveUserSettings(String username, DigestUserSettings settings, String timeZone) {
+    if (settings == null) {
+      throw new IllegalArgumentException("Digest settings are mandatory");
+    }
+    DigestUserSettings cleanedSettings = keepInstalledCategories(settings);
+    validate(cleanedSettings);
+    // The work list of the job is written first, and in its own transaction:
+    // the settings go through the SettingService, which no transaction rolls
+    // back, so writing them last is the only way to never end up with a user
+    // seeing a digest enabled that the job doesn't know about
+    enroll(username, cleanedSettings, timeZone);
+    settingStorage.saveUserSettings(username, cleanedSettings);
+  }
+
+  @Override
+  public List<DigestCategoryProvider> getCategories() {
+    return categoryRegistry.getCategoryProviders();
+  }
+
+  private void enroll(String username, DigestUserSettings settings, String timeZone) {
+    try {
+      enrollmentStorage.enroll(username, settings, timeZone);
+    } catch (DataIntegrityViolationException e) {
+      // Two saves of the same user at once, the row this one wanted to create
+      // has just been created by the other: enrolling again now updates it
+      enrollmentStorage.enroll(username, settings, timeZone);
+    }
+  }
+
+  private DigestUserSettings keepInstalledCategories(DigestUserSettings settings) {
+    Set<String> installedCategories = categoryRegistry.getCategoryProviders()
+                                                      .stream()
+                                                      .map(DigestCategoryProvider::getId)
+                                                      .collect(Collectors.toSet());
+    return new DigestUserSettings(settings.isDaily(),
+                                  keepInstalledCategories(settings.getDailyCategories(), installedCategories),
+                                  settings.isWeekly(),
+                                  keepInstalledCategories(settings.getWeeklyCategories(), installedCategories));
+  }
+
+  private List<String> keepInstalledCategories(List<String> categories, Set<String> installedCategories) {
+    if (CollectionUtils.isEmpty(categories)) {
+      return Collections.emptyList();
+    }
+    return categories.stream().distinct().filter(installedCategories::contains).toList();
+  }
+
+  private void validate(DigestUserSettings settings) {
+    if (settings.isDaily() && settings.getDailyCategories().isEmpty()) {
+      throw new IllegalArgumentException("Daily digest can't be enabled without category");
+    }
+    if (settings.isWeekly() && settings.getWeeklyCategories().isEmpty()) {
+      throw new IllegalArgumentException("Weekly digest can't be enabled without category");
+    }
   }
 
 }

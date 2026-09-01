@@ -32,6 +32,13 @@
         <type>org.exoplatform.services.idgenerator.impl.IDGeneratorServiceImpl</type>
     </component>
 
+    <!-- Holds the digest categories the installed addons contribute. Declared
+         in the Kernel, whose container is shared by every webapp, so that an
+         addon reaches the digest whether or not it uses Spring -->
+    <component>
+        <type>io.meeds.commons.digest.DigestCategoryRegistry</type>
+    </component>
+
     <!-- Data Initialization -->
     <external-component-plugins>
         <target-component>org.exoplatform.commons.api.persistence.DataInitializer</target-component>
@@ -44,6 +51,7 @@
                     <name>changelogs</name>
                     <description>Change logs of commons</description>
                     <value>db/changelog/notifications.db.changelog-1.0.0.xml</value>
+                    <value>db/changelog/digest.db.changelog-1.0.0.xml</value>
                 </values-param>
             </init-params>
         </component-plugin>
