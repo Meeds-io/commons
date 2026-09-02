@@ -20,6 +20,8 @@ package io.meeds.commons.digest;
 
 import java.util.List;
 
+import org.exoplatform.commons.api.notification.model.NotificationInfo;
+
 import io.meeds.commons.digest.model.DigestUserSettings;
 import io.meeds.commons.digest.plugin.DigestCategoryProvider;
 
@@ -76,5 +78,19 @@ public interface DigestService {
    *         categories of the installed addons are returned.
    */
   List<DigestCategoryProvider> getCategories();
+
+  /**
+   * Stores a notification for the digests of its recipients. For each
+   * recipient, the item is stored only when the administrator switch is on and
+   * the category of the notification belongs to the daily list of a recipient
+   * whose daily digest is on, or to his weekly list with his weekly digest on.
+   * A notification whose plugin belongs to no installed category is ignored,
+   * so are broadcast-to-everyone notifications. One stored row per recipient,
+   * shared by his two frequencies, holding ids only: the email text is built
+   * fresh at send time.
+   *
+   * @param notification the notification the dispatcher just processed
+   */
+  void capture(NotificationInfo notification);
 
 }

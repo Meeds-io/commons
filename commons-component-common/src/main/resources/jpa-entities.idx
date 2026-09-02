@@ -6,3 +6,4 @@ org.exoplatform.commons.notification.impl.jpa.web.entity.WebUsersEntity
 org.exoplatform.commons.notification.impl.jpa.web.entity.WebNotifEntity
 org.exoplatform.commons.notification.impl.jpa.web.entity.WebParamsEntity
 io.meeds.commons.digest.entity.DigestUserEntity
+io.meeds.commons.digest.entity.DigestItemEntity

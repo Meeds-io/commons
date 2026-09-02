@@ -25,6 +25,15 @@ import org.exoplatform.commons.api.notification.model.NotificationInfo;
 
 
 public interface NotificationService {
+
+  /**
+   * Event broadcast for every notification entering {@link #process}, before
+   * and independently from the channel dispatch, carrying the
+   * {@link NotificationInfo} as data. The digest capture listens to it; a
+   * listener failure never affects the notification itself.
+   */
+  String NOTIFICATION_PROCESSED_EVENT = "notification.processed";
+
   /**
    * Processes information when a notification message is created.
    * 

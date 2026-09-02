@@ -18,35 +18,52 @@
  */
 package io.meeds.commons.digest.service;
 
+import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
+import org.exoplatform.commons.api.notification.model.NotificationInfo;
+
 import io.meeds.commons.digest.DigestCategoryRegistry;
 import io.meeds.commons.digest.DigestService;
+import io.meeds.commons.digest.dao.DigestItemDAO;
+import io.meeds.commons.digest.entity.DigestItemEntity;
 import io.meeds.commons.digest.model.DigestUserSettings;
 import io.meeds.commons.digest.plugin.DigestCategoryProvider;
 
 @Service
 public class DigestServiceImpl implements DigestService {
 
+  /**
+   * A value longer than this is no identifier: it is not stored, the email
+   * text is built fresh at send time anyway
+   */
+  private static final int                   PARAM_VALUE_MAX_LENGTH = 255;
+
   private final DigestSettingStorage         settingStorage;
 
   private final DigestEnrollmentStorage      enrollmentStorage;
 
-  private final DigestCategoryRegistry       categoryRegistry;
+  private final DigestCategoryRegistry      categoryRegistry;
+
+  private final DigestItemDAO                digestItemDAO;
 
   public DigestServiceImpl(DigestSettingStorage settingStorage,
                            DigestEnrollmentStorage enrollmentStorage,
-                           DigestCategoryRegistry categoryRegistry) {
+                           DigestCategoryRegistry categoryRegistry,
+                           DigestItemDAO digestItemDAO) {
     this.settingStorage = settingStorage;
     this.enrollmentStorage = enrollmentStorage;
     this.categoryRegistry = categoryRegistry;
+    this.digestItemDAO = digestItemDAO;
   }
 
   @Override
@@ -85,6 +102,95 @@ public class DigestServiceImpl implements DigestService {
   @Override
   public List<DigestCategoryProvider> getCategories() {
     return categoryRegistry.getCategoryProviders();
+  }
+
+  @Override
+  public void capture(NotificationInfo notification) {
+    if (notification == null || notification.getKey() == null || !isDigestAllowed()) {
+      return;
+    }
+    if (notification.isSendAll() || notification.isSendAllInternals()) {
+      // The digest is about what happened to me, never about announcements to
+      // everyone
+      return;
+    }
+    String pluginId = notification.getKey().getId();
+    String category = findCategory(pluginId);
+    if (category == null || CollectionUtils.isEmpty(notification.getSendToUserIds())) {
+      return;
+    }
+    Instant itemDate = Instant.now();
+    String params = serialize(notification.getOwnerParameter());
+    notification.getSendToUserIds()
+                .stream()
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .filter(recipient -> !notification.isExcluded(recipient))
+                .filter(recipient -> wantsCategory(recipient, category))
+                .forEach(recipient -> digestItemDAO.save(new DigestItemEntity(null,
+                                                                              recipient,
+                                                                              pluginId,
+                                                                              category,
+                                                                              itemDate,
+                                                                              params)));
+  }
+
+  /**
+   * First half of the double check: the category lists are applied here at
+   * capture, and again at send time. Unchecking a category applies immediately,
+   * checking one applies from now on.
+   */
+  private boolean wantsCategory(String recipient, String category) {
+    DigestUserSettings settings = getUserSettings(recipient);
+    return settings.isDaily() && settings.getDailyCategories().contains(category)
+        || settings.isWeekly() && settings.getWeeklyCategories().contains(category);
+  }
+
+  private String findCategory(String pluginId) {
+    return categoryRegistry.getCategoryProviders()
+                           .stream()
+                           .filter(category -> category.getPluginIds().contains(pluginId))
+                           .map(DigestCategoryProvider::getId)
+                           .findFirst()
+                           .orElse(null);
+  }
+
+  /**
+   * Ids only, as a small JSON object: the values that are no identifiers are
+   * left out, names and titles are looked up fresh at send time.
+   */
+  private String serialize(Map<String, String> ownerParameters) {
+    if (ownerParameters == null || ownerParameters.isEmpty()) {
+      return null;
+    }
+    StringBuilder json = new StringBuilder("{");
+    ownerParameters.entrySet()
+                   .stream()
+                   .filter(parameter -> StringUtils.isNotBlank(parameter.getKey()))
+                   .filter(parameter -> parameter.getValue() != null
+                       && parameter.getValue().length() <= PARAM_VALUE_MAX_LENGTH)
+                   .forEach(parameter -> json.append(json.length() > 1 ? "," : "")
+                                             .append('"')
+                                             .append(escape(parameter.getKey()))
+                                             .append("\":\"")
+                                             .append(escape(parameter.getValue()))
+                                             .append('"'));
+    return json.append('}').toString();
+  }
+
+  private String escape(String value) {
+    StringBuilder escaped = new StringBuilder(value.length());
+    for (char character : value.toCharArray()) {
+      if (character == '"' || character == '\\') {
+        escaped.append('\\');
+        escaped.append(character);
+      } else if (character < 0x20) {
+        escaped.append(String.format("\\u%04x", (int) character));
+      } else {
+        escaped.append(character);
+      }
+    }
+    return escaped.toString();
   }
 
   private void enroll(String username, DigestUserSettings settings, String timeZone) {
