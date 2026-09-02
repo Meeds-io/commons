@@ -48,6 +48,9 @@ public class DigestServiceImpl implements DigestService {
    */
   private static final int                   PARAM_VALUE_MAX_LENGTH = 255;
 
+  /** The size of the PARAMS column: an oversized JSON is dropped, never truncated */
+  private static final int                   PARAMS_MAX_LENGTH      = 2000;
+
   private final DigestSettingStorage         settingStorage;
 
   private final DigestEnrollmentStorage      enrollmentStorage;
@@ -119,20 +122,27 @@ public class DigestServiceImpl implements DigestService {
     if (category == null || CollectionUtils.isEmpty(notification.getSendToUserIds())) {
       return;
     }
-    Instant itemDate = Instant.now();
+    Instant itemDate = notification.getDateCreated() == null ? Instant.now()
+                                                              : notification.getDateCreated().toInstant();
     String params = serialize(notification.getOwnerParameter());
-    notification.getSendToUserIds()
-                .stream()
-                .filter(StringUtils::isNotBlank)
-                .distinct()
-                .filter(recipient -> !notification.isExcluded(recipient))
-                .filter(recipient -> wantsCategory(recipient, category))
-                .forEach(recipient -> digestItemDAO.save(new DigestItemEntity(null,
-                                                                              recipient,
-                                                                              pluginId,
-                                                                              category,
-                                                                              itemDate,
-                                                                              params)));
+    // One saveAll, one transaction: either every enrolled recipient gets his
+    // row or none does — the capture never half succeeds
+    List<DigestItemEntity> items = notification.getSendToUserIds()
+                                               .stream()
+                                               .filter(StringUtils::isNotBlank)
+                                               .distinct()
+                                               .filter(recipient -> !notification.isExcluded(recipient))
+                                               .filter(recipient -> wantsCategory(recipient, category))
+                                               .map(recipient -> new DigestItemEntity(null,
+                                                                                      recipient,
+                                                                                      pluginId,
+                                                                                      category,
+                                                                                      itemDate,
+                                                                                      params))
+                                               .toList();
+    if (!items.isEmpty()) {
+      digestItemDAO.saveAll(items);
+    }
   }
 
   /**
@@ -175,7 +185,10 @@ public class DigestServiceImpl implements DigestService {
                                              .append("\":\"")
                                              .append(escape(parameter.getValue()))
                                              .append('"'));
-    return json.append('}').toString();
+    json.append('}');
+    // An oversized JSON would make the whole insert fail: send time rebuilds
+    // everything from ids anyway, dropping it only costs some line details
+    return json.length() > PARAMS_MAX_LENGTH ? null : json.toString();
   }
 
   private String escape(String value) {

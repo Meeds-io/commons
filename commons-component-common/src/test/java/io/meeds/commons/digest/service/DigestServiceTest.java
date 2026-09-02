@@ -197,9 +197,10 @@ public class DigestServiceTest {
 
     digestService.capture(notification("SpaceInvitationPlugin", "mary", "john"));
 
-    ArgumentCaptor<DigestItemEntity> captor = ArgumentCaptor.forClass(DigestItemEntity.class);
-    verify(digestItemDAO, times(1)).save(captor.capture());
-    DigestItemEntity item = captor.getValue();
+    ArgumentCaptor<List<DigestItemEntity>> captor = ArgumentCaptor.forClass(List.class);
+    verify(digestItemDAO, times(1)).saveAll(captor.capture());
+    assertEquals(1, captor.getValue().size());
+    DigestItemEntity item = captor.getValue().get(0);
     assertEquals("mary", item.getUserId());
     assertEquals("SpaceInvitationPlugin", item.getPluginId());
     assertEquals("spaces", item.getCategory());
@@ -210,14 +211,14 @@ public class DigestServiceTest {
   public void testCaptureStoresNothingWhenTheAdminSwitchIsOff() {
     when(settingStorage.isDigestAllowed()).thenReturn(false);
     digestService.capture(notification("SpaceInvitationPlugin", "mary"));
-    verify(digestItemDAO, never()).save(any());
+    verify(digestItemDAO, never()).saveAll(any());
   }
 
   @Test
   public void testCaptureIgnoresAPluginOfNoInstalledCategory() {
     when(settingStorage.isDigestAllowed()).thenReturn(true);
     digestService.capture(notification("LikePlugin", "mary"));
-    verify(digestItemDAO, never()).save(any());
+    verify(digestItemDAO, never()).saveAll(any());
   }
 
   @Test
@@ -228,7 +229,7 @@ public class DigestServiceTest {
                                                                                   false,
                                                                                   Collections.emptyList()));
     digestService.capture(notification("SpaceInvitationPlugin", "mary"));
-    verify(digestItemDAO, never()).save(any());
+    verify(digestItemDAO, never()).saveAll(any());
   }
 
   @Test
@@ -239,14 +240,14 @@ public class DigestServiceTest {
                                                                                   true,
                                                                                   Collections.singletonList("spaces")));
     digestService.capture(notification("SpaceInvitationPlugin", "mary"));
-    verify(digestItemDAO, times(1)).save(any());
+    verify(digestItemDAO, times(1)).saveAll(any());
   }
 
   @Test
   public void testCaptureIgnoresBroadcastsToEveryone() {
     when(settingStorage.isDigestAllowed()).thenReturn(true);
     digestService.capture(notification("SpaceInvitationPlugin", "mary").setSendAll(true));
-    verify(digestItemDAO, never()).save(any());
+    verify(digestItemDAO, never()).saveAll(any());
   }
 
   @Test
@@ -259,7 +260,9 @@ public class DigestServiceTest {
 
     digestService.capture(notification);
 
-    verify(digestItemDAO, times(1)).save(any());
+    ArgumentCaptor<List<DigestItemEntity>> captor = ArgumentCaptor.forClass(List.class);
+    verify(digestItemDAO, times(1)).saveAll(captor.capture());
+    assertEquals(1, captor.getValue().size());
   }
 
   @Test
@@ -272,15 +275,15 @@ public class DigestServiceTest {
 
     digestService.capture(notification);
 
-    ArgumentCaptor<DigestItemEntity> captor = ArgumentCaptor.forClass(DigestItemEntity.class);
-    verify(digestItemDAO).save(captor.capture());
-    assertEquals("{\"spaceId\":\"42\"}", captor.getValue().getParams());
+    ArgumentCaptor<List<DigestItemEntity>> captor = ArgumentCaptor.forClass(List.class);
+    verify(digestItemDAO).saveAll(captor.capture());
+    assertEquals("{\"spaceId\":\"42\"}", captor.getValue().get(0).getParams());
   }
 
   @Test
   public void testCaptureSurvivesANullNotification() {
     digestService.capture(null);
-    verify(digestItemDAO, never()).save(any());
+    verify(digestItemDAO, never()).saveAll(any());
   }
 
   private NotificationInfo notification(String pluginId, String... recipients) {
