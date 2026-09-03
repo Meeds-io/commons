@@ -67,4 +67,44 @@
     <createSequence sequenceName="SEQ_NTF_DIGEST_USER_ID" startValue="1"/>
   </changeSet>
 
+  <changeSet author="digest" id="1.0.0-5">
+    <createTable tableName="NTF_DIGEST_ITEMS">
+      <column name="ID" type="BIGINT" autoIncrement="${autoIncrement}" startWith="1">
+        <constraints nullable="false" primaryKey="true" primaryKeyName="PK_NTF_DIGEST_ITEMS"/>
+      </column>
+      <column name="USER_ID" type="NVARCHAR(200)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="PLUGIN_ID" type="NVARCHAR(200)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="CATEGORY" type="NVARCHAR(100)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="ITEM_DATE" type="TIMESTAMP">
+        <constraints nullable="false"/>
+      </column>
+      <column name="PARAMS" type="NVARCHAR(2000)"/>
+    </createTable>
+    <modifySql dbms="mysql">
+      <append value=" ENGINE=INNODB CHARSET=UTF8 COLLATE utf8_general_ci"/>
+    </modifySql>
+  </changeSet>
+
+  <!-- (USER_ID, ITEM_DATE) serves the assembly of one user digest, (ITEM_DATE)
+       serves the safety cleanup -->
+  <changeSet author="digest" id="1.0.0-6">
+    <createIndex tableName="NTF_DIGEST_ITEMS" indexName="IDX_NTF_DIGEST_ITEMS_USER">
+      <column name="USER_ID"/>
+      <column name="ITEM_DATE"/>
+    </createIndex>
+    <createIndex tableName="NTF_DIGEST_ITEMS" indexName="IDX_NTF_DIGEST_ITEMS_DATE">
+      <column name="ITEM_DATE"/>
+    </createIndex>
+  </changeSet>
+
+  <changeSet author="digest" id="1.0.0-7" dbms="oracle,postgresql,hsqldb">
+    <createSequence sequenceName="SEQ_NTF_DIGEST_ITEM_ID" startValue="1"/>
+  </changeSet>
+
 </databaseChangeLog>
