@@ -214,6 +214,21 @@ public class DigestMailBuilderTest {
   }
 
   @Test
+  public void testNullArgumentIsAnEmptyPlaceholderAndArgumentsAreNeverReExpanded() {
+    when(labelResolver.resolve(anyString(), anyString(), any())).thenReturn("[{0}] [{1}] [{2}]");
+    registry.addLineProvider(new DigestLinePlugin(TestLinePlugin.params("SpaceInvitationPlugin")) {
+      @Override
+      public DigestLine buildLine(DigestItem item, DigestLineContext context) {
+        return DigestLine.of("key", "{2}", null, "third");
+      }
+    });
+    List<DigestItemEntity> items = List.of(item(1, "SpaceInvitationPlugin", "spaces", "spaceId", "1"));
+    MessageInfo message = builder.build(user, DigestFrequency.DAILY, settings(List.of("spaces"), List.of()), items, FROM, UNTIL);
+    assertNotNull(message);
+    assertTrue(message.getBody().contains("[{2}] [] [third]"));
+  }
+
+  @Test
   public void testTemplateThatCannotBeLoadedIsAnErrorNotAnEmptyEmail() {
     DigestMailBuilder blind = new DigestMailBuilder(registry, labelResolver, recipientResolver, new DigestMailRenderer(() -> ""), 2, 3);
     List<DigestItemEntity> items = List.of(item(1, "SpaceInvitationPlugin", "spaces", "spaceId", "1"));
@@ -297,7 +312,7 @@ public class DigestMailBuilderTest {
       return DigestLine.of("digest.line." + item.getPluginId(), item.getPluginId(), objectId).withUrl("https://object/" + objectId);
     }
 
-    private static InitParams params(String... pluginIds) {
+    static InitParams params(String... pluginIds) {
       InitParams params = new InitParams();
       params.addParameter(pluginIds(pluginIds));
       return params;

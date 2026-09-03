@@ -27,6 +27,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.StringEscapeUtils;
@@ -61,6 +63,8 @@ public class DigestMailBuilder {
   private static final Logger           LOG               = LoggerFactory.getLogger(DigestMailBuilder.class);
 
   private static final String           MESSAGE_PLUGIN_ID = "digest";
+
+  private static final Pattern          PLACEHOLDER       = Pattern.compile("\\{(\\d+)\\}");
 
   private final DigestCategoryRegistry  categoryRegistry;
 
@@ -226,11 +230,20 @@ public class DigestMailBuilder {
    * apostrophes single and never learn a quoting rule.
    */
   static String format(String pattern, Object... args) {
-    String result = pattern;
-    for (int i = 0; i < args.length; i++) {
-      result = StringUtils.replace(result, "{" + i + "}", String.valueOf(args[i]));
+    if (pattern == null) {
+      return "";
     }
-    return result;
+    // One pass over the pattern: an argument holding "{1}" is text, never a
+    // placeholder to expand
+    Matcher matcher = PLACEHOLDER.matcher(pattern);
+    StringBuilder result = new StringBuilder();
+    while (matcher.find()) {
+      int index = Integer.parseInt(matcher.group(1));
+      String value = index < args.length && args[index] != null ? String.valueOf(args[index]) : matcher.group();
+      matcher.appendReplacement(result, Matcher.quoteReplacement(value));
+    }
+    matcher.appendTail(result);
+    return result.toString();
   }
 
   private static String escape(String value) {

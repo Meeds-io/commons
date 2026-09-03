@@ -116,8 +116,10 @@ public class DigestServiceImpl implements DigestService {
     if (category == null || CollectionUtils.isEmpty(notification.getSendToUserIds())) {
       return;
     }
-    Instant itemDate = notification.getDateCreated() == null ? Instant.now()
-                                                              : notification.getDateCreated().toInstant();
+    // The moment the row is written, not the moment the notification was
+    // created: the capture is asynchronous, and a row written during a run of
+    // the sender must belong to the next window, never to the one being served
+    Instant itemDate = Instant.now();
     String params = DigestParamsCodec.serialize(notification.getOwnerParameter());
     // One saveAll, one transaction: either every enrolled recipient gets his
     // row or none does — the capture never half succeeds

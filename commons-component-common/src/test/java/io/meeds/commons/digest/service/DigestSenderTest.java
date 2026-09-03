@@ -18,6 +18,7 @@
  */
 package io.meeds.commons.digest.service;
 
+import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -31,6 +32,7 @@ import static org.mockito.Mockito.when;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -80,13 +82,16 @@ public class DigestSenderTest {
 
   private DigestUserSettings    settings;
 
+  private final AtomicInteger   containerRuns = new AtomicInteger();
+
   @Before
   public void setUp() throws Exception {
     // One thread and no container: the tasks run inline, the assertions are
-    // deterministic
+    // deterministic; the container runs are counted, one per task
     sender = new DigestSender(settingStorage, scheduleStorage, dueCalculator, mailBuilder, queueMessage, 1, 8) {
       @Override
       protected void runInContainer(Runnable task) {
+        containerRuns.incrementAndGet();
         task.run();
       }
     };
@@ -124,6 +129,9 @@ public class DigestSenderTest {
 
     sender.processDueDigests();
 
+    // cleanup, candidates, and ONE task for the user holding both frequencies:
+    // two tasks would run in parallel with more threads and race each other
+    assertEquals(3, containerRuns.get());
     InOrder order = inOrder(scheduleStorage, queueMessage);
     order.verify(scheduleStorage).claim(eq(7L), eq(DigestFrequency.DAILY), eq(PREVIOUS), any());
     order.verify(queueMessage).put(any());

@@ -18,23 +18,44 @@
  */
 package io.meeds.commons.digest.job;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 
 import io.meeds.commons.digest.DigestService;
+import jakarta.annotation.PreDestroy;
 
 /**
  * The one scheduled job of the digest, hourly by default. Glue only: it hands
  * the run to the service. It never stops, whatever the administrator switch
  * says: the switch decides whether emails are produced, the job keeps the
- * watermarks and the waiting items in order.
+ * watermarks and the waiting items in order. The run happens on its own
+ * thread: the Spring scheduler thread is shared with the other jobs of the
+ * webapp, and a run serving thousands of users must not delay them. One run at
+ * a time: a run still going when the next hour comes is left alone, the hour
+ * after serves what is due.
  */
 @Configuration
 @EnableScheduling
 public class DigestSenderJob {
 
-  private final DigestService digestService;
+  private static final Logger   LOG     = LoggerFactory.getLogger(DigestSenderJob.class);
+
+  private final DigestService   digestService;
+
+  private final ExecutorService runner  = Executors.newSingleThreadExecutor(task -> {
+                                          Thread thread = new Thread(task, "digest-sender");
+                                          thread.setDaemon(true);
+                                          return thread;
+                                        });
+
+  private final AtomicBoolean   running = new AtomicBoolean();
 
   public DigestSenderJob(DigestService digestService) {
     this.digestService = digestService;
@@ -42,7 +63,24 @@ public class DigestSenderJob {
 
   @Scheduled(cron = "${exo.notification.digest.job.expression:0 0 * * * ?}")
   public void run() {
-    digestService.processDueDigests();
+    if (!running.compareAndSet(false, true)) {
+      LOG.warn("The previous digest run is still going, this occurrence of the job is skipped");
+      return;
+    }
+    runner.execute(() -> {
+      try {
+        digestService.processDueDigests();
+      } catch (Exception e) {
+        LOG.error("The digest run failed", e);
+      } finally {
+        running.set(false);
+      }
+    });
+  }
+
+  @PreDestroy
+  public void stop() {
+    runner.shutdownNow();
   }
 
 }

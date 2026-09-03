@@ -175,7 +175,8 @@ public class DigestSender {
         }
       }
     } catch (Exception e) {
-      LOG.warn("The {} digest of {} can't be sent now, it will be retried at the next run", frequency, username, e);
+      LOG.warn("The {} digest of {} can't be sent now, it will be retried at the next run: {}", frequency, username, e.getMessage());
+      LOG.debug("Digest failure of {}", username, e);
       if (!scheduleStorage.release(user.getId(), frequency, now, previous)) {
         LOG.error("The {} occurrence of {} could not be given back, its items will be sent with the next digest or cleaned up",
                   frequency,

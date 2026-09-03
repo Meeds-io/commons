@@ -18,6 +18,7 @@
  */
 package io.meeds.commons.digest.model;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -53,11 +54,12 @@ public class DigestLine {
 
   /**
    * @param labelKey the wording key
-   * @param args the values of its placeholders, in order
+   * @param args the values of its placeholders, in order; a null value is an
+   *          empty placeholder, never an error
    * @return the line, without link yet: see {@link #withUrl(String)}
    */
   public static DigestLine of(String labelKey, String... args) {
-    return new DigestLine(labelKey, List.of(args), null);
+    return new DigestLine(labelKey, args == null ? Collections.emptyList() : Arrays.asList(args), null);
   }
 
   public DigestLine withUrl(String url) {
