@@ -21,7 +21,9 @@ package io.meeds.commons.digest.service;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -54,7 +56,7 @@ import io.meeds.commons.digest.model.DigestUserSettings;
 @Component
 public class DigestSender {
 
-  private static final Logger         LOG                 = LoggerFactory.getLogger(DigestSender.class);
+  private static final Logger         LOG                    = LoggerFactory.getLogger(DigestSender.class);
 
   /**
    * A user served during the last hour was served by this very run or by the
@@ -94,28 +96,41 @@ public class DigestSender {
   }
 
   public void processDueDigests() {
-    // Milliseconds: the databases don't keep more, and the claim compares the
-    // watermark it wrote with the one it reads back
-    Instant now = Instant.now().truncatedTo(ChronoUnit.MILLIS);
+    // Whole seconds: every database keeps them exactly, so the watermark this
+    // run writes is the one it reads back, whatever the column precision
+    Instant now = Instant.now().truncatedTo(ChronoUnit.SECONDS);
     runInContainer(() -> cleanup(now));
-    List<Runnable> tasks = new ArrayList<>();
+    // The frequencies of one user are served one after the other by the same
+    // task: the deletion at the end of the first must never race the reading of
+    // the items by the second
+    Map<Long, DueUser> dueUsers = new LinkedHashMap<>();
     runInContainer(() -> {
+      Instant cutoff = now.minus(CANDIDATE_CUTOFF_HOURS, ChronoUnit.HOURS);
       for (DigestFrequency frequency : DigestFrequency.values()) {
-        Instant cutoff = now.minus(CANDIDATE_CUTOFF_HOURS, ChronoUnit.HOURS);
         for (DigestUserEntity user : scheduleStorage.findCandidates(frequency, cutoff)) {
           if (dueCalculator.isDue(user, frequency, now)) {
-            tasks.add(() -> runInContainer(() -> serve(user, frequency, now)));
+            dueUsers.computeIfAbsent(user.getId(), id -> new DueUser(user)).frequencies.add(frequency);
           }
         }
       }
     });
-    if (tasks.isEmpty()) {
+    if (dueUsers.isEmpty()) {
       return;
     }
-    LOG.info("Digest sender: {} occurrences due", tasks.size());
+    LOG.info("Digest sender: {} users due", dueUsers.size());
+    List<Runnable> tasks = new ArrayList<>();
+    for (DueUser dueUser : dueUsers.values()) {
+      tasks.add(() -> runInContainer(() -> {
+        for (DigestFrequency frequency : dueUser.frequencies) {
+          serve(dueUser.user, frequency, now);
+        }
+      }));
+    }
     if (threads == 1) {
       tasks.forEach(Runnable::run);
     } else {
+      // One run at a time by construction (the scheduler is single threaded),
+      // and the claim protects the data even if two runs ever overlapped
       ExecutorService pool = Executors.newFixedThreadPool(threads);
       try {
         tasks.forEach(pool::execute);
@@ -161,7 +176,11 @@ public class DigestSender {
       }
     } catch (Exception e) {
       LOG.warn("The {} digest of {} can't be sent now, it will be retried at the next run", frequency, username, e);
-      scheduleStorage.release(user.getId(), frequency, now, previous);
+      if (!scheduleStorage.release(user.getId(), frequency, now, previous)) {
+        LOG.error("The {} occurrence of {} could not be given back, its items will be sent with the next digest or cleaned up",
+                  frequency,
+                  username);
+      }
       return;
     }
     deleteCoveredItems(user.getId(), username);
@@ -170,7 +189,7 @@ public class DigestSender {
   /**
    * An item is deleted once every frequency the user enabled has passed over
    * it: up to the oldest watermark of his enabled frequencies. Read fresh, the
-   * other frequency may have been claimed meanwhile.
+   * row may have changed since the candidates were listed.
    */
   private void deleteCoveredItems(long id, String username) {
     DigestUserEntity fresh = scheduleStorage.find(id);
@@ -219,6 +238,18 @@ public class DigestSender {
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
       pool.shutdownNow();
+    }
+  }
+
+  /** A due user and the frequencies to serve him, in order */
+  private static final class DueUser {
+
+    private final DigestUserEntity      user;
+
+    private final List<DigestFrequency> frequencies = new ArrayList<>();
+
+    private DueUser(DigestUserEntity user) {
+      this.user = user;
     }
   }
 

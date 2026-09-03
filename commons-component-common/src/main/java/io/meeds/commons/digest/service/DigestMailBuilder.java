@@ -18,7 +18,6 @@
  */
 package io.meeds.commons.digest.service;
 
-import java.text.MessageFormat;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -197,7 +196,7 @@ public class DigestMailBuilder {
       Object[] args = line.getArgs() == null ? new Object[0]
                                              : line.getArgs().stream().map(DigestMailBuilder::escape).toArray();
       Map<String, String> rendered = new HashMap<>();
-      rendered.put("text", new MessageFormat(wording, context.getLocale()).format(args));
+      rendered.put("text", format(wording, args));
       rendered.put("url", StringUtils.isBlank(line.getUrl()) ? "" : escape(line.getUrl()));
       return rendered;
     } catch (Exception e) {
@@ -221,8 +220,17 @@ public class DigestMailBuilder {
     return labelResolver.commons(key, locale);
   }
 
-  private static String format(String pattern, Object... args) {
-    return new MessageFormat(pattern).format(args);
+  /**
+   * Fills the placeholders {0}, {1}... by plain replacement, the convention of
+   * every notification bundle of the platform: translators keep their
+   * apostrophes single and never learn a quoting rule.
+   */
+  static String format(String pattern, Object... args) {
+    String result = pattern;
+    for (int i = 0; i < args.length; i++) {
+      result = StringUtils.replace(result, "{" + i + "}", String.valueOf(args[i]));
+    }
+    return result;
   }
 
   private static String escape(String value) {

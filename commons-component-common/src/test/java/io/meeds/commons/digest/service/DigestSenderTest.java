@@ -23,6 +23,7 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -34,6 +35,7 @@ import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
@@ -101,6 +103,35 @@ public class DigestSenderTest {
     lenient().when(mailBuilder.build(eq(user), eq(DigestFrequency.DAILY), eq(settings), any(), eq(PREVIOUS), any()))
              .thenReturn(new MessageInfo());
     lenient().when(queueMessage.put(any())).thenReturn(true);
+    lenient().when(scheduleStorage.release(anyLong(), any(), any(), any())).thenReturn(true);
+  }
+
+  @Test
+  public void testBothFrequenciesOfOneUserAreServedOneAfterTheOther() throws Exception {
+    // Friday: the daily and the weekly of the same user are due. The weekly
+    // must read its items before the daily deletes what both have covered
+    Instant weeklyPrevious = PREVIOUS.minusSeconds(3600 * 24 * 6);
+    DigestUserEntity both = new DigestUserEntity(7L, USERNAME, true, true, "Europe/Paris", PREVIOUS, weeklyPrevious);
+    DigestUserSettings bothSettings = new DigestUserSettings(true, List.of("spaces"), true, List.of("spaces"));
+    when(scheduleStorage.findCandidates(eq(DigestFrequency.DAILY), any())).thenReturn(List.of(both));
+    when(scheduleStorage.findCandidates(eq(DigestFrequency.WEEKLY), any())).thenReturn(List.of(both));
+    when(dueCalculator.isDue(eq(both), any(), any())).thenReturn(true);
+    when(scheduleStorage.claim(eq(7L), any(), any(), any())).thenReturn(true);
+    when(scheduleStorage.find(7L)).thenReturn(both);
+    when(settingStorage.getUserSettings(USERNAME)).thenReturn(bothSettings);
+    when(scheduleStorage.findItems(eq(USERNAME), any(), any())).thenReturn(List.of(new DigestItemEntity()));
+    when(mailBuilder.build(eq(both), any(), eq(bothSettings), any(), any(), any())).thenReturn(new MessageInfo());
+
+    sender.processDueDigests();
+
+    InOrder order = inOrder(scheduleStorage, queueMessage);
+    order.verify(scheduleStorage).claim(eq(7L), eq(DigestFrequency.DAILY), eq(PREVIOUS), any());
+    order.verify(queueMessage).put(any());
+    order.verify(scheduleStorage).deleteCoveredItems(eq(USERNAME), any());
+    order.verify(scheduleStorage).claim(eq(7L), eq(DigestFrequency.WEEKLY), eq(weeklyPrevious), any());
+    order.verify(scheduleStorage).findItems(eq(USERNAME), eq(weeklyPrevious), any());
+    order.verify(queueMessage).put(any());
+    order.verify(scheduleStorage).deleteCoveredItems(eq(USERNAME), any());
   }
 
   @Test

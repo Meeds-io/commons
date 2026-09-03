@@ -78,10 +78,13 @@ public class DigestScheduleStorage {
    * Gives an occurrence back after a failure: the watermark returns to its
    * previous value, so the next run serves the user again instead of losing his
    * items.
+   *
+   * @return true when the watermark went back, false when it no longer held the
+   *         claimed value
    */
   @Transactional
-  public void release(long userId, DigestFrequency frequency, Instant claimed, Instant previous) {
-    updateWatermark(userId, frequency, claimed, previous);
+  public boolean release(long userId, DigestFrequency frequency, Instant claimed, Instant previous) {
+    return updateWatermark(userId, frequency, claimed, previous) == 1;
   }
 
   /**

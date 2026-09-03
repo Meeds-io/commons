@@ -18,6 +18,7 @@
  */
 package io.meeds.commons.digest.service;
 
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -35,7 +36,11 @@ public final class DigestParamsCodec {
    */
   static final int PARAM_VALUE_MAX_LENGTH = 255;
 
-  /** The size of the PARAMS column: an oversized JSON is dropped, never truncated */
+  /**
+   * The size of the PARAMS column: when the JSON is too long, the longest
+   * values go first, one by one, until it fits. The ids are the shortest values
+   * of a notification, they are the last to go.
+   */
   static final int PARAMS_MAX_LENGTH      = 2000;
 
   private DigestParamsCodec() {
@@ -44,29 +49,43 @@ public final class DigestParamsCodec {
 
   /**
    * @param ownerParameters the parameters the notification plugin stored
-   * @return the JSON to store, null when there is nothing worth storing or when
-   *         it wouldn't fit in the column
+   * @return the JSON to store, null when there is nothing worth storing
    */
   public static String serialize(Map<String, String> ownerParameters) {
     if (ownerParameters == null || ownerParameters.isEmpty()) {
       return null;
     }
+    Map<String, String> kept = new LinkedHashMap<>();
+    ownerParameters.forEach((key, value) -> {
+      if (StringUtils.isNotBlank(key) && value != null && value.length() <= PARAM_VALUE_MAX_LENGTH) {
+        kept.put(key, value);
+      }
+    });
+    String json = toJson(kept);
+    // An oversized JSON would make the whole insert fail: the long values (a
+    // description, a list of names) go first, the ids stay and send time
+    // rebuilds everything from them anyway
+    while (json.length() > PARAMS_MAX_LENGTH && !kept.isEmpty()) {
+      String longest = kept.entrySet()
+                           .stream()
+                           .max(Comparator.comparingInt(entry -> entry.getValue().length()))
+                           .map(Map.Entry::getKey)
+                           .orElseThrow();
+      kept.remove(longest);
+      json = toJson(kept);
+    }
+    return kept.isEmpty() ? null : json;
+  }
+
+  private static String toJson(Map<String, String> params) {
     StringBuilder json = new StringBuilder("{");
-    ownerParameters.entrySet()
-                   .stream()
-                   .filter(parameter -> StringUtils.isNotBlank(parameter.getKey()))
-                   .filter(parameter -> parameter.getValue() != null
-                       && parameter.getValue().length() <= PARAM_VALUE_MAX_LENGTH)
-                   .forEach(parameter -> json.append(json.length() > 1 ? "," : "")
-                                             .append('"')
-                                             .append(escape(parameter.getKey()))
-                                             .append("\":\"")
-                                             .append(escape(parameter.getValue()))
-                                             .append('"'));
-    json.append('}');
-    // An oversized JSON would make the whole insert fail: send time rebuilds
-    // everything from ids anyway, dropping it only costs some line details
-    return json.length() > PARAMS_MAX_LENGTH ? null : json.toString();
+    params.forEach((key, value) -> json.append(json.length() > 1 ? "," : "")
+                                       .append('"')
+                                       .append(escape(key))
+                                       .append("\":\"")
+                                       .append(escape(value))
+                                       .append('"'));
+    return json.append('}').toString();
   }
 
   /**

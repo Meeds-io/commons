@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Supplier;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 
 import org.exoplatform.commons.notification.template.TemplateUtils;
@@ -34,7 +35,8 @@ import lombok.SneakyThrows;
 /**
  * Renders the digest email template. The layout lives in the template, the
  * words come already translated and escaped in the binding: the template never
- * looks anything up.
+ * looks anything up. A template that can't be loaded is an error, never an
+ * empty email: the occurrence is then given back and retried.
  */
 @Component
 public class DigestMailRenderer {
@@ -63,7 +65,13 @@ public class DigestMailRenderer {
   @SneakyThrows
   private synchronized Template getTemplate() {
     if (template == null) {
-      template = new GStringTemplateEngine().createTemplate(templateLoader.get());
+      String text = templateLoader.get();
+      if (StringUtils.isBlank(text)) {
+        // Not cached: the next occurrence tries again, a fixed deployment heals
+        // without a restart
+        throw new IllegalStateException("The digest email template " + TEMPLATE_PATH + " can't be loaded");
+      }
+      template = new GStringTemplateEngine().createTemplate(text);
     }
     return template;
   }

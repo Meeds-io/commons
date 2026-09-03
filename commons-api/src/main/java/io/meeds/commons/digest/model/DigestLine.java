@@ -28,10 +28,11 @@ import lombok.NoArgsConstructor;
 /**
  * One line of a digest email, built by the addon owning the notification type.
  * It holds text only, never HTML: the wording is a translation key of the
- * addon notification bundle, its placeholders are filled with the given
- * arguments, and the layout is the job of the email template. The arguments are
- * escaped by the digest before being put in the email, the addon gives them
- * raw.
+ * addon notification bundle, its placeholders {0}, {1}... are replaced by the
+ * given arguments in order (plain replacement, the same convention as the
+ * other notification bundles: no quoting rule, apostrophes stay single), and
+ * the layout is the job of the email template. The arguments are escaped by
+ * the digest before being put in the email, the addon gives them raw.
  */
 @Data
 @NoArgsConstructor
@@ -50,8 +51,18 @@ public class DigestLine {
   /** The absolute link to the object the line is about */
   private String       url;
 
-  public static DigestLine of(String labelKey, String url, String... args) {
-    return new DigestLine(labelKey, List.of(args), url);
+  /**
+   * @param labelKey the wording key
+   * @param args the values of its placeholders, in order
+   * @return the line, without link yet: see {@link #withUrl(String)}
+   */
+  public static DigestLine of(String labelKey, String... args) {
+    return new DigestLine(labelKey, List.of(args), null);
+  }
+
+  public DigestLine withUrl(String url) {
+    this.url = url;
+    return this;
   }
 
 }

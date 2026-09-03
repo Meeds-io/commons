@@ -22,6 +22,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -106,7 +107,7 @@ public class DigestMailBuilderTest {
       case "Notification.digest.subject.daily" -> "Your daily recap on {0} - {1} updates";
       case "Notification.digest.subject.weekly" -> "Your weekly recap on {0} - {1} updates";
       case "Notification.digest.greeting" -> "Hi {0},";
-      case "Notification.digest.intro.daily" -> "Here''s what happened today on {0}:";
+      case "Notification.digest.intro.daily" -> "Here's what happened today on {0}:";
       case "Notification.digest.intro.weekly" -> "Your week from {1} to {2} on {0}:";
       case "Notification.digest.more" -> "+ {0} more";
       case "Notification.digest.viewAll" -> "View all on {0}";
@@ -204,6 +205,23 @@ public class DigestMailBuilderTest {
   }
 
   @Test
+  public void testWordingsKeepTheirApostrophesAndUnknownPlaceholders() {
+    when(labelResolver.resolve(anyString(), anyString(), any())).thenReturn("{0} a commenté l'activité {1} de {2}");
+    List<DigestItemEntity> items = List.of(item(1, "SpaceInvitationPlugin", "spaces", "spaceId", "1"));
+    MessageInfo message = builder.build(user, DigestFrequency.DAILY, settings(List.of("spaces"), List.of()), items, FROM, UNTIL);
+    assertNotNull(message);
+    assertTrue(message.getBody().contains("SpaceInvitationPlugin a commenté l'activité 1 de {2}"));
+  }
+
+  @Test
+  public void testTemplateThatCannotBeLoadedIsAnErrorNotAnEmptyEmail() {
+    DigestMailBuilder blind = new DigestMailBuilder(registry, labelResolver, recipientResolver, new DigestMailRenderer(() -> ""), 2, 3);
+    List<DigestItemEntity> items = List.of(item(1, "SpaceInvitationPlugin", "spaces", "spaceId", "1"));
+    assertThrows(IllegalStateException.class,
+                 () -> blind.build(user, DigestFrequency.DAILY, settings(List.of("spaces"), List.of()), items, FROM, UNTIL));
+  }
+
+  @Test
   public void testRecipientWithoutEmailGetsNothing() {
     when(recipientResolver.getEmail(USERNAME)).thenReturn(null);
     List<DigestItemEntity> items = List.of(item(1, "SpaceInvitationPlugin", "spaces", "spaceId", "1"));
@@ -276,7 +294,7 @@ public class DigestMailBuilderTest {
       if (FAILING.equals(objectId)) {
         throw new IllegalStateException("addon failure");
       }
-      return DigestLine.of("digest.line." + item.getPluginId(), "https://object/" + objectId, item.getPluginId(), objectId);
+      return DigestLine.of("digest.line." + item.getPluginId(), item.getPluginId(), objectId).withUrl("https://object/" + objectId);
     }
 
     private static InitParams params(String... pluginIds) {

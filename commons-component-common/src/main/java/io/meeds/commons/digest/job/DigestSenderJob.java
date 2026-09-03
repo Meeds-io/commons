@@ -18,7 +18,6 @@
  */
 package io.meeds.commons.digest.job;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -35,8 +34,11 @@ import io.meeds.commons.digest.DigestService;
 @EnableScheduling
 public class DigestSenderJob {
 
-  @Autowired
-  private DigestService digestService;
+  private final DigestService digestService;
+
+  public DigestSenderJob(DigestService digestService) {
+    this.digestService = digestService;
+  }
 
   @Scheduled(cron = "${exo.notification.digest.job.expression:0 0 * * * ?}")
   public void run() {

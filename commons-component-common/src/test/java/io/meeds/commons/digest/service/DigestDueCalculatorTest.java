@@ -82,6 +82,22 @@ public class DigestDueCalculatorTest {
   }
 
   @Test
+  public void testDailyIsNeverSentBeforeTheSendHourAfterAnOptIn() {
+    // Opt-in at 10:00, then the hourly runs of the night and the next morning:
+    // nothing before the next day 18:00, and the day after works the same
+    DigestUserEntity user = user(PARIS, at(PARIS, "2026-09-03T10:00"), null);
+    for (int hour = 0; hour < 18; hour++) {
+      Instant run = at(PARIS, String.format("2026-09-04T%02d:00", hour)).toInstant();
+      assertFalse("run at " + run, calculator.isDue(user, DigestFrequency.DAILY, run));
+    }
+    assertTrue(calculator.isDue(user, DigestFrequency.DAILY, at(PARIS, "2026-09-04T18:00").toInstant()));
+    DigestUserEntity served = user(PARIS, at(PARIS, "2026-09-04T18:00"), null);
+    assertFalse(calculator.isDue(served, DigestFrequency.DAILY, at(PARIS, "2026-09-05T00:00").toInstant()));
+    assertFalse(calculator.isDue(served, DigestFrequency.DAILY, at(PARIS, "2026-09-05T17:00").toInstant()));
+    assertTrue(calculator.isDue(served, DigestFrequency.DAILY, at(PARIS, "2026-09-05T18:00").toInstant()));
+  }
+
+  @Test
   public void testWeeklyIsDueOnTheSendDayOnly() {
     DigestUserEntity user = user(PARIS, null, at(PARIS, "2026-08-28T18:05"));
     assertFalse(calculator.isDue(user, DigestFrequency.WEEKLY, at(PARIS, "2026-09-03T18:00").toInstant()));

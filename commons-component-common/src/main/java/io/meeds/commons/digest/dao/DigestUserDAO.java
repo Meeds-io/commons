@@ -32,6 +32,12 @@ import io.meeds.commons.digest.entity.DigestUserEntity;
 @Repository
 public interface DigestUserDAO extends JpaRepository<DigestUserEntity, Long> {
 
+  String UPDATE_DAILY_WATERMARK_QUERY  =
+                                      "UPDATE DigestUser u SET u.dailyLastSent = :value WHERE u.id = :id AND u.dailyLastSent = :expected";
+
+  String UPDATE_WEEKLY_WATERMARK_QUERY =
+                                      "UPDATE DigestUser u SET u.weeklyLastSent = :value WHERE u.id = :id AND u.weeklyLastSent = :expected";
+
   DigestUserEntity findByUserId(String userId);
 
   void deleteByUserId(String userId);
@@ -48,11 +54,11 @@ public interface DigestUserDAO extends JpaRepository<DigestUserEntity, Long> {
    * exactly one gets 1 row updated and the other 0.
    */
   @Modifying
-  @Query("UPDATE DigestUser u SET u.dailyLastSent = :value WHERE u.id = :id AND u.dailyLastSent = :expected")
+  @Query(UPDATE_DAILY_WATERMARK_QUERY)
   int updateDailyWatermark(@Param("id") long id, @Param("expected") Instant expected, @Param("value") Instant value);
 
   @Modifying
-  @Query("UPDATE DigestUser u SET u.weeklyLastSent = :value WHERE u.id = :id AND u.weeklyLastSent = :expected")
+  @Query(UPDATE_WEEKLY_WATERMARK_QUERY)
   int updateWeeklyWatermark(@Param("id") long id, @Param("expected") Instant expected, @Param("value") Instant value);
 
 }

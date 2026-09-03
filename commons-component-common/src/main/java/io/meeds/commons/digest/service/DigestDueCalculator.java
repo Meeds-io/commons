@@ -34,10 +34,11 @@ import io.meeds.commons.digest.model.DigestFrequency;
 
 /**
  * Answers "is this user due now?" in his own local calendar, in Java and not
- * in SQL, so that the rule is the same on every database. The rule: the send
- * hour of the send day has passed since his watermark, and he was not served
- * yet today in his local calendar. Consequences, all wanted: at most one daily
- * digest per local day and one weekly per local week; a run missed at the
+ * in SQL, so that the rule is the same on every database. The rule: the most
+ * recent scheduled occurrence (the send hour of the send day) has passed since
+ * his watermark, and his watermark is not from that occurrence's day already.
+ * Consequences, all wanted: at most one daily digest per local day and one
+ * weekly per local week, always at the send hour or later; a run missed at the
  * send hour is caught up by the next run; a frequency switched on today sends
  * its first digest tomorrow; a timezone change never causes a second email the
  * same local day.
@@ -77,9 +78,10 @@ public class DigestDueCalculator {
     if (!watermark.isBefore(lastOccurrence.toInstant())) {
       return false;
     }
-    // Served today already, in his current local calendar: never twice the
-    // same local day, whatever the timezone changes
-    return watermark.atZone(zone).toLocalDate().isBefore(today);
+    // A watermark from the occurrence's own day (served, or switched on, that
+    // day) means that occurrence is done: never twice the same local day, and
+    // never before the send hour, whatever the timezone changes
+    return watermark.atZone(zone).toLocalDate().isBefore(lastOccurrence.toLocalDate());
   }
 
   /**

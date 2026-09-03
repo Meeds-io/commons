@@ -52,16 +52,24 @@ public class DigestParamsCodecTest {
   public void testNothingWorthStoringGivesNull() {
     assertNull(DigestParamsCodec.serialize(null));
     assertNull(DigestParamsCodec.serialize(Map.of()));
-    assertEquals("{}", DigestParamsCodec.serialize(Map.of("tooLong", "x".repeat(DigestParamsCodec.PARAM_VALUE_MAX_LENGTH + 1))));
+    assertNull(DigestParamsCodec.serialize(Map.of("tooLong", "x".repeat(DigestParamsCodec.PARAM_VALUE_MAX_LENGTH + 1))));
   }
 
   @Test
-  public void testOversizedJsonIsDroppedNotTruncated() {
+  public void testOversizedJsonLosesItsLongestValuesAndKeepsTheIds() {
+    // A task notification: a dozen long values and two ids
     Map<String, String> params = new LinkedHashMap<>();
-    for (int i = 0; i < 20; i++) {
-      params.put("p" + i, "v".repeat(200));
+    params.put("taskId", "42");
+    for (int i = 0; i < 12; i++) {
+      params.put("long" + i, "v".repeat(250));
     }
-    assertNull(DigestParamsCodec.serialize(params));
+    params.put("creator", "john");
+    String json = DigestParamsCodec.serialize(params);
+    assertTrue(json.length() <= DigestParamsCodec.PARAMS_MAX_LENGTH);
+    Map<String, String> stored = DigestParamsCodec.parse(json);
+    assertEquals("42", stored.get("taskId"));
+    assertEquals("john", stored.get("creator"));
+    assertTrue(stored.size() < params.size());
   }
 
   @Test

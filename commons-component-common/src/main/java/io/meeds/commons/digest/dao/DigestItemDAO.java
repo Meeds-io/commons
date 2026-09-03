@@ -32,6 +32,12 @@ import io.meeds.commons.digest.entity.DigestItemEntity;
 @Repository
 public interface DigestItemDAO extends JpaRepository<DigestItemEntity, Long> {
 
+  String DELETE_COVERED_QUERY    = "DELETE FROM DigestItem i WHERE i.userId = :userId AND i.itemDate <= :until";
+
+  String DELETE_OLDER_THAN_QUERY = "DELETE FROM DigestItem i WHERE i.itemDate < :before";
+
+  String DELETE_ORPHANS_QUERY    = "DELETE FROM DigestItem i WHERE i.userId NOT IN (SELECT u.userId FROM DigestUser u)";
+
   /** Tells whether the same notification is already waiting for this recipient */
   boolean existsByUserIdAndPluginIdAndParams(String userId, String pluginId, String params);
 
@@ -48,17 +54,17 @@ public interface DigestItemDAO extends JpaRepository<DigestItemEntity, Long> {
 
   /** Deletes the items every enabled frequency of the recipient has covered */
   @Modifying
-  @Query("DELETE FROM DigestItem i WHERE i.userId = :userId AND i.itemDate <= :until")
+  @Query(DELETE_COVERED_QUERY)
   int deleteCovered(@Param("userId") String userId, @Param("until") Instant until);
 
   /** Safety cleanup: items older than the retention, whatever happened */
   @Modifying
-  @Query("DELETE FROM DigestItem i WHERE i.itemDate < :before")
+  @Query(DELETE_OLDER_THAN_QUERY)
   int deleteOlderThan(@Param("before") Instant before);
 
   /** Safety cleanup: items of users who have no digest enabled any more */
   @Modifying
-  @Query("DELETE FROM DigestItem i WHERE i.userId NOT IN (SELECT u.userId FROM DigestUser u)")
+  @Query(DELETE_ORPHANS_QUERY)
   int deleteOrphans();
 
 }
