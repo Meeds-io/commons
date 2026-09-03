@@ -281,6 +281,55 @@ public class DigestServiceTest {
   }
 
   @Test
+  public void testCaptureNeverStoresWhatTheRecipientDidHimself() {
+    when(settingStorage.isDigestAllowed()).thenReturn(true);
+    when(settingStorage.getUserSettings("mary")).thenReturn(dailyOn());
+    lenient().when(settingStorage.getUserSettings("john")).thenReturn(dailyOn());
+    // john created the event he is attending: the digest is about what
+    // happened to him, not about what he did
+    NotificationInfo notification = notification("SpaceInvitationPlugin", "mary", "john").setFrom("john");
+
+    digestService.capture(notification);
+
+    ArgumentCaptor<List<DigestItemEntity>> captor = ArgumentCaptor.forClass(List.class);
+    verify(digestItemDAO).saveAll(captor.capture());
+    assertEquals(1, captor.getValue().size());
+    assertEquals("mary", captor.getValue().get(0).getUserId());
+  }
+
+  @Test
+  public void testCaptureStoresTheSameNotificationOnlyOnce() {
+    when(settingStorage.isDigestAllowed()).thenReturn(true);
+    when(settingStorage.getUserSettings("mary")).thenReturn(dailyOn());
+    // The invitation was cancelled and sent again: the first one still waits
+    when(digestItemDAO.existsByUserIdAndPluginIdAndParams("mary", "SpaceInvitationPlugin", "{\"spaceId\":\"42\"}"))
+                                                                                                                  .thenReturn(true);
+
+    digestService.capture(notification("SpaceInvitationPlugin", "mary"));
+
+    verify(digestItemDAO, never()).saveAll(any());
+  }
+
+  @Test
+  public void testDiscardForgetsTheWaitingItemsAboutTheObject() {
+    List<DigestItemEntity> waiting = List.of(new DigestItemEntity());
+    when(digestItemDAO.findByUserIdAndPluginIdAndParamsContaining("mary", "SpaceInvitationPlugin", "\"spaceId\":\"42\""))
+                                                                                                                       .thenReturn(waiting);
+
+    digestService.discard("mary", "SpaceInvitationPlugin", "spaceId", "42");
+
+    verify(digestItemDAO).deleteAll(waiting);
+  }
+
+  @Test
+  public void testDiscardDoesNothingWithoutMatchingItem() {
+    when(digestItemDAO.findByUserIdAndPluginIdAndParamsContaining(any(), any(), any())).thenReturn(Collections.emptyList());
+    digestService.discard("mary", "SpaceInvitationPlugin", "spaceId", "42");
+    digestService.discard(null, "SpaceInvitationPlugin", "spaceId", "42");
+    verify(digestItemDAO, never()).deleteAll(any());
+  }
+
+  @Test
   public void testCaptureSurvivesANullNotification() {
     digestService.capture(null);
     verify(digestItemDAO, never()).saveAll(any());

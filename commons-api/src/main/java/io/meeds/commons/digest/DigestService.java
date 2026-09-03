@@ -93,4 +93,19 @@ public interface DigestService {
    */
   void capture(NotificationInfo notification);
 
+  /**
+   * Forgets the waiting items of a recipient about one object, when the thing
+   * that caused them is undone before the digest goes out — an invitation
+   * cancelled, a join request withdrawn. It mirrors the removal of the on-site
+   * notifications the addons already do in these cases: the digest must not
+   * announce what no longer exists.
+   *
+   * @param username the recipient
+   * @param pluginId the notification type
+   * @param parameterName the stored parameter identifying the object, for
+   *          example spaceId
+   * @param parameterValue its value
+   */
+  void discard(String username, String pluginId, String parameterName, String parameterValue);
+
 }

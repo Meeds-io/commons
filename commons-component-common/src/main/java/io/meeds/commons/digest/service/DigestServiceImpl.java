@@ -132,7 +132,15 @@ public class DigestServiceImpl implements DigestService {
                                                .filter(StringUtils::isNotBlank)
                                                .distinct()
                                                .filter(recipient -> !notification.isExcluded(recipient))
+                                               // The digest is about what happened to me, never
+                                               // about what I did myself
+                                               .filter(recipient -> !StringUtils.equals(recipient, notification.getFrom()))
                                                .filter(recipient -> wantsCategory(recipient, category))
+                                               // The same notification fired again, like an
+                                               // invitation cancelled and sent anew, must not
+                                               // fill the digest with the same line twice
+                                               .filter(recipient -> params == null
+                                                   || !digestItemDAO.existsByUserIdAndPluginIdAndParams(recipient, pluginId, params))
                                                .map(recipient -> new DigestItemEntity(null,
                                                                                       recipient,
                                                                                       pluginId,
@@ -142,6 +150,19 @@ public class DigestServiceImpl implements DigestService {
                                                .toList();
     if (!items.isEmpty()) {
       digestItemDAO.saveAll(items);
+    }
+  }
+
+  @Override
+  public void discard(String username, String pluginId, String parameterName, String parameterValue) {
+    if (StringUtils.isBlank(username) || StringUtils.isBlank(pluginId) || StringUtils.isBlank(parameterName)
+        || parameterValue == null) {
+      return;
+    }
+    String fragment = "\"" + escape(parameterName) + "\":\"" + escape(parameterValue) + "\"";
+    List<DigestItemEntity> items = digestItemDAO.findByUserIdAndPluginIdAndParamsContaining(username, pluginId, fragment);
+    if (!items.isEmpty()) {
+      digestItemDAO.deleteAll(items);
     }
   }
 

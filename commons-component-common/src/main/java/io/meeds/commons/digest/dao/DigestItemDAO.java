@@ -18,6 +18,8 @@
  */
 package io.meeds.commons.digest.dao;
 
+import java.util.List;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -25,5 +27,11 @@ import io.meeds.commons.digest.entity.DigestItemEntity;
 
 @Repository
 public interface DigestItemDAO extends JpaRepository<DigestItemEntity, Long> {
+
+  /** Tells whether the same notification is already waiting for this recipient */
+  boolean existsByUserIdAndPluginIdAndParams(String userId, String pluginId, String params);
+
+  /** The waiting items of a recipient about one object, matched on a parameter */
+  List<DigestItemEntity> findByUserIdAndPluginIdAndParamsContaining(String userId, String pluginId, String paramsFragment);
 
 }
