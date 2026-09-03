@@ -23,6 +23,7 @@ import static org.junit.Assert.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -47,7 +48,12 @@ import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.dao.DataIntegrityViolationException;
 
+import org.exoplatform.commons.api.notification.model.NotificationInfo;
+import org.exoplatform.commons.api.notification.model.PluginKey;
+
 import io.meeds.commons.digest.DigestCategoryRegistry;
+import io.meeds.commons.digest.dao.DigestItemDAO;
+import io.meeds.commons.digest.entity.DigestItemEntity;
 import io.meeds.commons.digest.model.DigestUserSettings;
 import io.meeds.commons.digest.plugin.DigestCategoryPlugin;
 import io.meeds.commons.digest.plugin.DigestCategoryProvider;
@@ -70,6 +76,9 @@ public class DigestServiceTest {
   @Mock
   private DigestEnrollmentStorage enrollmentStorage;
 
+  @Mock
+  private DigestItemDAO           digestItemDAO;
+
   private DigestServiceImpl       digestService;
 
   @Before
@@ -77,7 +86,7 @@ public class DigestServiceTest {
     DigestCategoryRegistry categoryRegistry = new DigestCategoryRegistry();
     categoryRegistry.addCategoryProvider(categoryPlugin("spaces", 20, "SpaceInvitationPlugin"));
     categoryRegistry.addCategoryProvider(categoryPlugin("feed", 10, "PostActivityPlugin"));
-    digestService = new DigestServiceImpl(settingStorage, enrollmentStorage, categoryRegistry);
+    digestService = new DigestServiceImpl(settingStorage, enrollmentStorage, categoryRegistry, digestItemDAO);
   }
 
   @Test
@@ -178,6 +187,163 @@ public class DigestServiceTest {
                                                                                      Collections.emptyList()));
 
     assertEquals(Collections.singletonList("spaces"), digestService.getUserSettings(USERNAME).getDailyCategories());
+  }
+
+  @Test
+  public void testCaptureStoresOneRowPerEnrolledRecipient() {
+    when(settingStorage.isDigestAllowed()).thenReturn(true);
+    when(settingStorage.getUserSettings("mary")).thenReturn(dailyOn());
+    when(settingStorage.getUserSettings("john")).thenReturn(offSettings());
+
+    digestService.capture(notification("SpaceInvitationPlugin", "mary", "john"));
+
+    ArgumentCaptor<List<DigestItemEntity>> captor = ArgumentCaptor.forClass(List.class);
+    verify(digestItemDAO, times(1)).saveAll(captor.capture());
+    assertEquals(1, captor.getValue().size());
+    DigestItemEntity item = captor.getValue().get(0);
+    assertEquals("mary", item.getUserId());
+    assertEquals("SpaceInvitationPlugin", item.getPluginId());
+    assertEquals("spaces", item.getCategory());
+    assertEquals("{\"spaceId\":\"42\"}", item.getParams());
+  }
+
+  @Test
+  public void testCaptureStoresNothingWhenTheAdminSwitchIsOff() {
+    when(settingStorage.isDigestAllowed()).thenReturn(false);
+    digestService.capture(notification("SpaceInvitationPlugin", "mary"));
+    verify(digestItemDAO, never()).saveAll(any());
+  }
+
+  @Test
+  public void testCaptureIgnoresAPluginOfNoInstalledCategory() {
+    when(settingStorage.isDigestAllowed()).thenReturn(true);
+    digestService.capture(notification("LikePlugin", "mary"));
+    verify(digestItemDAO, never()).saveAll(any());
+  }
+
+  @Test
+  public void testCaptureIgnoresARecipientWhoUnselectedTheCategory() {
+    when(settingStorage.isDigestAllowed()).thenReturn(true);
+    when(settingStorage.getUserSettings("mary")).thenReturn(new DigestUserSettings(true,
+                                                                                  Collections.singletonList("feed"),
+                                                                                  false,
+                                                                                  Collections.emptyList()));
+    digestService.capture(notification("SpaceInvitationPlugin", "mary"));
+    verify(digestItemDAO, never()).saveAll(any());
+  }
+
+  @Test
+  public void testCaptureServesTheWeeklyListToo() {
+    when(settingStorage.isDigestAllowed()).thenReturn(true);
+    when(settingStorage.getUserSettings("mary")).thenReturn(new DigestUserSettings(false,
+                                                                                  Collections.emptyList(),
+                                                                                  true,
+                                                                                  Collections.singletonList("spaces")));
+    digestService.capture(notification("SpaceInvitationPlugin", "mary"));
+    verify(digestItemDAO, times(1)).saveAll(any());
+  }
+
+  @Test
+  public void testCaptureIgnoresBroadcastsToEveryone() {
+    when(settingStorage.isDigestAllowed()).thenReturn(true);
+    digestService.capture(notification("SpaceInvitationPlugin", "mary").setSendAll(true));
+    verify(digestItemDAO, never()).saveAll(any());
+  }
+
+  @Test
+  public void testCaptureIgnoresExcludedAndDuplicatedRecipients() {
+    when(settingStorage.isDigestAllowed()).thenReturn(true);
+    when(settingStorage.getUserSettings("mary")).thenReturn(dailyOn());
+    NotificationInfo notification = notification("SpaceInvitationPlugin", "mary", "mary", "john");
+    notification.exclude("john");
+    lenient().when(settingStorage.getUserSettings("john")).thenReturn(dailyOn());
+
+    digestService.capture(notification);
+
+    ArgumentCaptor<List<DigestItemEntity>> captor = ArgumentCaptor.forClass(List.class);
+    verify(digestItemDAO, times(1)).saveAll(captor.capture());
+    assertEquals(1, captor.getValue().size());
+  }
+
+  @Test
+  public void testCaptureLeavesOutTheValuesThatAreNoIdentifiers() {
+    when(settingStorage.isDigestAllowed()).thenReturn(true);
+    when(settingStorage.getUserSettings("mary")).thenReturn(dailyOn());
+    NotificationInfo notification = notification("SpaceInvitationPlugin", "mary")
+                                                                                 .with("comment",
+                                                                                       "x".repeat(300));
+
+    digestService.capture(notification);
+
+    ArgumentCaptor<List<DigestItemEntity>> captor = ArgumentCaptor.forClass(List.class);
+    verify(digestItemDAO).saveAll(captor.capture());
+    assertEquals("{\"spaceId\":\"42\"}", captor.getValue().get(0).getParams());
+  }
+
+  @Test
+  public void testCaptureNeverStoresWhatTheRecipientDidHimself() {
+    when(settingStorage.isDigestAllowed()).thenReturn(true);
+    when(settingStorage.getUserSettings("mary")).thenReturn(dailyOn());
+    lenient().when(settingStorage.getUserSettings("john")).thenReturn(dailyOn());
+    // john created the event he is attending: the digest is about what
+    // happened to him, not about what he did
+    NotificationInfo notification = notification("SpaceInvitationPlugin", "mary", "john").setFrom("john");
+
+    digestService.capture(notification);
+
+    ArgumentCaptor<List<DigestItemEntity>> captor = ArgumentCaptor.forClass(List.class);
+    verify(digestItemDAO).saveAll(captor.capture());
+    assertEquals(1, captor.getValue().size());
+    assertEquals("mary", captor.getValue().get(0).getUserId());
+  }
+
+  @Test
+  public void testCaptureStoresTheSameNotificationOnlyOnce() {
+    when(settingStorage.isDigestAllowed()).thenReturn(true);
+    when(settingStorage.getUserSettings("mary")).thenReturn(dailyOn());
+    // The invitation was cancelled and sent again: the first one still waits
+    when(digestItemDAO.existsByUserIdAndPluginIdAndParams("mary", "SpaceInvitationPlugin", "{\"spaceId\":\"42\"}"))
+                                                                                                                  .thenReturn(true);
+
+    digestService.capture(notification("SpaceInvitationPlugin", "mary"));
+
+    verify(digestItemDAO, never()).saveAll(any());
+  }
+
+  @Test
+  public void testDiscardForgetsTheWaitingItemsAboutTheObject() {
+    List<DigestItemEntity> waiting = List.of(new DigestItemEntity());
+    when(digestItemDAO.findByUserIdAndPluginIdAndParamsContaining("mary", "SpaceInvitationPlugin", "\"spaceId\":\"42\""))
+                                                                                                                       .thenReturn(waiting);
+
+    digestService.discard("mary", "SpaceInvitationPlugin", "spaceId", "42");
+
+    verify(digestItemDAO).deleteAll(waiting);
+  }
+
+  @Test
+  public void testDiscardDoesNothingWithoutMatchingItem() {
+    when(digestItemDAO.findByUserIdAndPluginIdAndParamsContaining(any(), any(), any())).thenReturn(Collections.emptyList());
+    digestService.discard("mary", "SpaceInvitationPlugin", "spaceId", "42");
+    digestService.discard(null, "SpaceInvitationPlugin", "spaceId", "42");
+    verify(digestItemDAO, never()).deleteAll(any());
+  }
+
+  @Test
+  public void testCaptureSurvivesANullNotification() {
+    digestService.capture(null);
+    verify(digestItemDAO, never()).saveAll(any());
+  }
+
+  private NotificationInfo notification(String pluginId, String... recipients) {
+    return NotificationInfo.instance()
+                           .key(new PluginKey(pluginId))
+                           .to(new ArrayList<>(Arrays.asList(recipients)))
+                           .with("spaceId", "42");
+  }
+
+  private DigestUserSettings offSettings() {
+    return new DigestUserSettings(false, Collections.emptyList(), false, Collections.emptyList());
   }
 
   private DigestUserSettings dailyOn() {
