@@ -76,12 +76,16 @@ public class NotificationServiceImpl extends AbstractService implements Notifica
   /** */
   private final OrganizationService        organizationService;
 
+  private final ListenerService            listenerService;
+
   public NotificationServiceImpl(ChannelManager channelManager,
                                  UserSettingService userService,
                                  OrganizationService organizationService,
                                  DigestorService digestorService,
                                  MailNotificationStorage storage,
-                                 NotificationContextFactory notificationContextFactory) {
+                                 NotificationContextFactory notificationContextFactory,
+                                 ListenerService listenerService) {
+    this.listenerService = listenerService;
     this.userService = userService;
     this.digestorService = digestorService;
     this.organizationService = organizationService;
@@ -310,7 +314,7 @@ public class NotificationServiceImpl extends AbstractService implements Notifica
    */
   private void broadcastProcessedEvent(NotificationInfo notification) {
     try {
-      CommonsUtils.getService(ListenerService.class).broadcast(NOTIFICATION_PROCESSED_EVENT, this, notification);
+      listenerService.broadcast(NOTIFICATION_PROCESSED_EVENT, this, notification);
     } catch (Exception e) {
       LOG.warn("Error broadcasting the processed event of notification '{}' of plugin '{}'",
                notification.getId(),
