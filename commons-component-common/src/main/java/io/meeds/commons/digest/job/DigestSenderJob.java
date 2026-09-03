@@ -20,6 +20,7 @@ package io.meeds.commons.digest.job;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.slf4j.Logger;
@@ -67,15 +68,27 @@ public class DigestSenderJob {
       LOG.warn("The previous digest run is still going, this occurrence of the job is skipped");
       return;
     }
-    runner.execute(() -> {
-      try {
-        digestService.processDueDigests();
-      } catch (Exception e) {
-        LOG.error("The digest run failed", e);
-      } finally {
-        running.set(false);
-      }
-    });
+    try {
+      runner.execute(() -> {
+        try {
+          digestService.processDueDigests();
+        } catch (Exception e) {
+          LOG.error("The digest run failed", e);
+        } finally {
+          running.set(false);
+        }
+      });
+    } catch (RejectedExecutionException e) {
+      // The webapp is stopping, nothing runs any more
+      running.set(false);
+    }
+  }
+
+  /**
+   * @return true while a run is going
+   */
+  public boolean isRunning() {
+    return running.get();
   }
 
   @PreDestroy

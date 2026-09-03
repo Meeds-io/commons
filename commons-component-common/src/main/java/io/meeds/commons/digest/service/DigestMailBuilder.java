@@ -238,8 +238,10 @@ public class DigestMailBuilder {
     Matcher matcher = PLACEHOLDER.matcher(pattern);
     StringBuilder result = new StringBuilder();
     while (matcher.find()) {
-      int index = Integer.parseInt(matcher.group(1));
-      String value = index < args.length && args[index] != null ? String.valueOf(args[index]) : matcher.group();
+      String digits = matcher.group(1);
+      // An index that is no small number is text, like an unknown index
+      int index = digits.length() <= 3 ? Integer.parseInt(digits) : -1;
+      String value = index >= 0 && index < args.length && args[index] != null ? String.valueOf(args[index]) : matcher.group();
       matcher.appendReplacement(result, Matcher.quoteReplacement(value));
     }
     matcher.appendTail(result);

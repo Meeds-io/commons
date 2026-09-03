@@ -46,7 +46,10 @@ public class DigestItem {
 
   private String              category;
 
-  /** When the notification happened */
+  /**
+   * When the notification was captured for the digest, right after it
+   * happened: the moment its row was written
+   */
   private Instant             date;
 
   /**
