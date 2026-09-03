@@ -79,6 +79,9 @@ public class DigestServiceTest {
   @Mock
   private DigestItemDAO           digestItemDAO;
 
+  @Mock
+  private DigestSender            digestSender;
+
   private DigestServiceImpl       digestService;
 
   @Before
@@ -86,7 +89,7 @@ public class DigestServiceTest {
     DigestCategoryRegistry categoryRegistry = new DigestCategoryRegistry();
     categoryRegistry.addCategoryProvider(categoryPlugin("spaces", 20, "SpaceInvitationPlugin"));
     categoryRegistry.addCategoryProvider(categoryPlugin("feed", 10, "PostActivityPlugin"));
-    digestService = new DigestServiceImpl(settingStorage, enrollmentStorage, categoryRegistry, digestItemDAO);
+    digestService = new DigestServiceImpl(settingStorage, enrollmentStorage, categoryRegistry, digestItemDAO, digestSender);
   }
 
   @Test

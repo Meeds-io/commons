@@ -1,0 +1,31 @@
+<table border="0" cellpadding="0" cellspacing="0" width="600" bgcolor="#ffffff" align="center" style="background-color: #ffffff; font-size: 14px; color: #333333; line-height: 20px; font-family: HelveticaNeue, Helvetica, Arial, sans-serif;">
+  <tr>
+    <td style="padding: 24px 24px 8px 24px;">
+      <p style="margin: 0 0 12px 0;">${greeting}</p>
+      <p style="margin: 0 0 20px 0;">${intro}</p>
+    </td>
+  </tr>
+  <% for (section in sections) { %>
+  <tr>
+    <td style="padding: 0 24px 16px 24px;">
+      <p style="margin: 0 0 6px 0; font-weight: bold; color: #333333;">${section.label} (${section.count})</p>
+      <ul style="margin: 0; padding-left: 20px; color: #333333;">
+        <% for (line in section.lines) { %>
+        <li style="margin: 0 0 4px 0;">
+          <% if (line.url) { %><a href="${line.url}" style="color: #2f5e92; text-decoration: none;">${line.text}</a><% } else { %>${line.text}<% } %>
+        </li>
+        <% } %>
+      </ul>
+      <% if (section.remaining > 0) { %>
+      <p style="margin: 6px 0 0 20px;"><a href="${moreUrl}" style="color: #2f5e92; text-decoration: none;">${section.moreLabel}</a></p>
+      <% } %>
+    </td>
+  </tr>
+  <% } %>
+  <tr>
+    <td style="padding: 16px 24px 24px 24px; border-top: 1px solid #d8d8d8; font-size: 13px;">
+      <p style="margin: 0 0 6px 0;"><a href="${viewAllUrl}" style="color: #2f5e92; text-decoration: none;">${viewAllLabel}</a></p>
+      <p style="margin: 0;"><a href="${manageUrl}" style="color: #999999; text-decoration: none;">${manageLabel}</a></p>
+    </td>
+  </tr>
+</table>

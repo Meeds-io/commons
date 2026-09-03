@@ -21,7 +21,6 @@ package io.meeds.commons.digest.service;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -42,15 +41,6 @@ import io.meeds.commons.digest.plugin.DigestCategoryProvider;
 @Service
 public class DigestServiceImpl implements DigestService {
 
-  /**
-   * A value longer than this is no identifier: it is not stored, the email
-   * text is built fresh at send time anyway
-   */
-  private static final int                   PARAM_VALUE_MAX_LENGTH = 255;
-
-  /** The size of the PARAMS column: an oversized JSON is dropped, never truncated */
-  private static final int                   PARAMS_MAX_LENGTH      = 2000;
-
   private final DigestSettingStorage         settingStorage;
 
   private final DigestEnrollmentStorage      enrollmentStorage;
@@ -59,14 +49,18 @@ public class DigestServiceImpl implements DigestService {
 
   private final DigestItemDAO                digestItemDAO;
 
+  private final DigestSender                 digestSender;
+
   public DigestServiceImpl(DigestSettingStorage settingStorage,
                            DigestEnrollmentStorage enrollmentStorage,
                            DigestCategoryRegistry categoryRegistry,
-                           DigestItemDAO digestItemDAO) {
+                           DigestItemDAO digestItemDAO,
+                           DigestSender digestSender) {
     this.settingStorage = settingStorage;
     this.enrollmentStorage = enrollmentStorage;
     this.categoryRegistry = categoryRegistry;
     this.digestItemDAO = digestItemDAO;
+    this.digestSender = digestSender;
   }
 
   @Override
@@ -124,7 +118,7 @@ public class DigestServiceImpl implements DigestService {
     }
     Instant itemDate = notification.getDateCreated() == null ? Instant.now()
                                                               : notification.getDateCreated().toInstant();
-    String params = serialize(notification.getOwnerParameter());
+    String params = DigestParamsCodec.serialize(notification.getOwnerParameter());
     // One saveAll, one transaction: either every enrolled recipient gets his
     // row or none does — the capture never half succeeds
     List<DigestItemEntity> items = notification.getSendToUserIds()
@@ -159,11 +153,16 @@ public class DigestServiceImpl implements DigestService {
         || parameterValue == null) {
       return;
     }
-    String fragment = "\"" + escape(parameterName) + "\":\"" + escape(parameterValue) + "\"";
+    String fragment = DigestParamsCodec.fragment(parameterName, parameterValue);
     List<DigestItemEntity> items = digestItemDAO.findByUserIdAndPluginIdAndParamsContaining(username, pluginId, fragment);
     if (!items.isEmpty()) {
       digestItemDAO.deleteAll(items);
     }
+  }
+
+  @Override
+  public void processDueDigests() {
+    digestSender.processDueDigests();
   }
 
   /**
@@ -184,47 +183,6 @@ public class DigestServiceImpl implements DigestService {
                            .map(DigestCategoryProvider::getId)
                            .findFirst()
                            .orElse(null);
-  }
-
-  /**
-   * Ids only, as a small JSON object: the values that are no identifiers are
-   * left out, names and titles are looked up fresh at send time.
-   */
-  private String serialize(Map<String, String> ownerParameters) {
-    if (ownerParameters == null || ownerParameters.isEmpty()) {
-      return null;
-    }
-    StringBuilder json = new StringBuilder("{");
-    ownerParameters.entrySet()
-                   .stream()
-                   .filter(parameter -> StringUtils.isNotBlank(parameter.getKey()))
-                   .filter(parameter -> parameter.getValue() != null
-                       && parameter.getValue().length() <= PARAM_VALUE_MAX_LENGTH)
-                   .forEach(parameter -> json.append(json.length() > 1 ? "," : "")
-                                             .append('"')
-                                             .append(escape(parameter.getKey()))
-                                             .append("\":\"")
-                                             .append(escape(parameter.getValue()))
-                                             .append('"'));
-    json.append('}');
-    // An oversized JSON would make the whole insert fail: send time rebuilds
-    // everything from ids anyway, dropping it only costs some line details
-    return json.length() > PARAMS_MAX_LENGTH ? null : json.toString();
-  }
-
-  private String escape(String value) {
-    StringBuilder escaped = new StringBuilder(value.length());
-    for (char character : value.toCharArray()) {
-      if (character == '"' || character == '\\') {
-        escaped.append('\\');
-        escaped.append(character);
-      } else if (character < 0x20) {
-        escaped.append(String.format("\\u%04x", (int) character));
-      } else {
-        escaped.append(character);
-      }
-    }
-    return escaped.toString();
   }
 
   private void enroll(String username, DigestUserSettings settings, String timeZone) {
