@@ -49,6 +49,7 @@ import org.exoplatform.commons.notification.channel.MailChannel;
 import org.exoplatform.commons.notification.impl.AbstractService;
 import org.exoplatform.commons.notification.impl.NotificationContextImpl;
 import org.exoplatform.commons.utils.CommonsUtils;
+import org.exoplatform.services.listener.ListenerService;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 import org.exoplatform.services.organization.OrganizationService;
@@ -75,12 +76,16 @@ public class NotificationServiceImpl extends AbstractService implements Notifica
   /** */
   private final OrganizationService        organizationService;
 
+  private final ListenerService            listenerService;
+
   public NotificationServiceImpl(ChannelManager channelManager,
                                  UserSettingService userService,
                                  OrganizationService organizationService,
                                  DigestorService digestorService,
                                  MailNotificationStorage storage,
-                                 NotificationContextFactory notificationContextFactory) {
+                                 NotificationContextFactory notificationContextFactory,
+                                 ListenerService listenerService) {
+    this.listenerService = listenerService;
     this.userService = userService;
     this.digestorService = digestorService;
     this.organizationService = organizationService;
@@ -103,6 +108,7 @@ public class NotificationServiceImpl extends AbstractService implements Notifica
     //
     NotificationContext ctx = NotificationContextImpl.cloneInstance();
     ctx.setNotificationInfo(notification);
+    broadcastProcessedEvent(notification);
     //
 
     PluginSettingService pluginSettingService = CommonsUtils.getService(PluginSettingService.class);
@@ -297,6 +303,23 @@ public class NotificationServiceImpl extends AbstractService implements Notifica
               + " in queue", e);
         }
       }
+    }
+  }
+
+  /**
+   * Tells whoever wants to know, starting with the digest capture, that a
+   * notification goes out — whatever the channels do with it. A listener
+   * failure is logged and dropped: nothing here may ever make the notification
+   * itself fail.
+   */
+  private void broadcastProcessedEvent(NotificationInfo notification) {
+    try {
+      listenerService.broadcast(NOTIFICATION_PROCESSED_EVENT, this, notification);
+    } catch (Exception e) {
+      LOG.warn("Error broadcasting the processed event of notification '{}' of plugin '{}'",
+               notification.getId(),
+               notification.getKey().getId(),
+               e);
     }
   }
 

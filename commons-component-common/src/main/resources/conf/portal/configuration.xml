@@ -141,4 +141,15 @@
     </component-plugin>
   </external-component-plugins>
 
+  <!-- The digest capture: a small asynchronous listener, apart from the
+       notification path on purpose (a capture failure never affects the
+       notification itself) -->
+  <external-component-plugins>
+    <target-component>org.exoplatform.services.listener.ListenerService</target-component>
+    <component-plugin>
+      <name>notification.processed</name>
+      <set-method>addListener</set-method>
+      <type>io.meeds.commons.digest.listener.DigestCaptureListener</type>
+    </component-plugin>
+  </external-component-plugins>
 </configuration>
