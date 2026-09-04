@@ -177,7 +177,15 @@ public class DigestSender {
         if (frequency == DigestFrequency.DAILY ? settings.isDaily() : settings.isWeekly()) {
           List<DigestItemEntity> items = scheduleStorage.findItems(username, previous, now);
           MessageInfo message = items.isEmpty() ? null : mailBuilder.build(user, frequency, settings, items, previous, now);
-          if (message != null && !queueMessage.put(message)) {
+          if (message == null) {
+            LOG.info("No {} digest for {}: nothing to say since {} ({} waiting items in the window)",
+                     frequency,
+                     username,
+                     previous,
+                     items.size());
+          } else if (queueMessage.put(message)) {
+            LOG.info("The {} digest of {} is in the mail queue: {}", frequency, username, message.getSubject());
+          } else {
             throw new IllegalStateException("The mail queue refused the message");
           }
         }
