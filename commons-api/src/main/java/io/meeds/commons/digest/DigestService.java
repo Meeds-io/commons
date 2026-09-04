@@ -108,4 +108,17 @@ public interface DigestService {
    */
   void discard(String username, String pluginId, String parameterName, String parameterValue);
 
+  /**
+   * One run of the digest sender: cleans the waiting items nobody will ever
+   * read, then serves every user whose daily or weekly digest is due now, in
+   * his own timezone. Serving a user means moving his watermark (the claim,
+   * which makes several servers safe), building his email from the items
+   * received since the previous watermark and putting it in the mail queue,
+   * then deleting the items every enabled frequency has covered. When the
+   * administrator switch is off, the claim and the deletion still happen but no
+   * email is built: switching the digest back on then only digests what happens
+   * from that moment. Meant to be called by the scheduled job, every hour.
+   */
+  void processDueDigests();
+
 }

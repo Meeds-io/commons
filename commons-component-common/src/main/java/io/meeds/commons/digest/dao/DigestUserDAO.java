@@ -18,7 +18,13 @@
  */
 package io.meeds.commons.digest.dao;
 
+import java.time.Instant;
+import java.util.List;
+
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import io.meeds.commons.digest.entity.DigestUserEntity;
@@ -26,8 +32,33 @@ import io.meeds.commons.digest.entity.DigestUserEntity;
 @Repository
 public interface DigestUserDAO extends JpaRepository<DigestUserEntity, Long> {
 
+  String UPDATE_DAILY_WATERMARK_QUERY  =
+                                      "UPDATE DigestUser u SET u.dailyLastSent = :value WHERE u.id = :id AND u.dailyLastSent = :expected";
+
+  String UPDATE_WEEKLY_WATERMARK_QUERY =
+                                      "UPDATE DigestUser u SET u.weeklyLastSent = :value WHERE u.id = :id AND u.weeklyLastSent = :expected";
+
   DigestUserEntity findByUserId(String userId);
 
   void deleteByUserId(String userId);
+
+  /** The daily candidates of the sender job: daily on, watermark old enough */
+  List<DigestUserEntity> findByDailyTrueAndDailyLastSentBefore(Instant cutoff);
+
+  /** The weekly candidates of the sender job: weekly on, watermark old enough */
+  List<DigestUserEntity> findByWeeklyTrueAndWeeklyLastSentBefore(Instant cutoff);
+
+  /**
+   * The guarded update behind the claim: the watermark moves only when it still
+   * has the value the caller read, so that of two workers reading the same row,
+   * exactly one gets 1 row updated and the other 0.
+   */
+  @Modifying
+  @Query(UPDATE_DAILY_WATERMARK_QUERY)
+  int updateDailyWatermark(@Param("id") long id, @Param("expected") Instant expected, @Param("value") Instant value);
+
+  @Modifying
+  @Query(UPDATE_WEEKLY_WATERMARK_QUERY)
+  int updateWeeklyWatermark(@Param("id") long id, @Param("expected") Instant expected, @Param("value") Instant value);
 
 }
