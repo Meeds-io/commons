@@ -154,6 +154,21 @@ public class DigestSenderTest {
   }
 
   @Test
+  public void testUserWhoseSettingsAreGoneIsForgotten() throws Exception {
+    // The account was deleted, its settings purged: both frequencies read off
+    when(settingStorage.getUserSettings(USERNAME)).thenReturn(new DigestUserSettings(false, List.of(), false, List.of()));
+
+    sender.processDueDigests();
+
+    verify(scheduleStorage).claim(eq(7L), eq(DigestFrequency.DAILY), eq(PREVIOUS), any());
+    verify(scheduleStorage).forget(7L, USERNAME);
+    verify(mailBuilder, never()).build(any(), any(), any(), any(), any(), any());
+    verify(queueMessage, never()).put(any());
+    verify(scheduleStorage, never()).deleteCoveredItems(anyString(), any());
+    verify(scheduleStorage, never()).release(anyLong(), any(), any(), any());
+  }
+
+  @Test
   public void testUserNotDueIsLeftAlone() throws Exception {
     when(dueCalculator.isDue(eq(user), eq(DigestFrequency.DAILY), any())).thenReturn(false);
 

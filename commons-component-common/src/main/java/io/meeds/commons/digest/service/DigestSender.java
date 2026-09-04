@@ -164,8 +164,16 @@ public class DigestSender {
     }
     String username = user.getUserId();
     try {
+      DigestUserSettings settings = settingStorage.getUserSettings(username);
+      if (!settings.isDaily() && !settings.isWeekly()) {
+        // A row with no enabled frequency in the settings has no owner any more:
+        // the settings are the truth, and they only vanish with the account (a
+        // deleted user is forgotten here, at his next occurrence)
+        LOG.info("The digest settings of {} are gone, his digest data is deleted", username);
+        scheduleStorage.forget(user.getId(), username);
+        return;
+      }
       if (settingStorage.isDigestAllowed()) {
-        DigestUserSettings settings = settingStorage.getUserSettings(username);
         if (frequency == DigestFrequency.DAILY ? settings.isDaily() : settings.isWeekly()) {
           List<DigestItemEntity> items = scheduleStorage.findItems(username, previous, now);
           MessageInfo message = items.isEmpty() ? null : mailBuilder.build(user, frequency, settings, items, previous, now);

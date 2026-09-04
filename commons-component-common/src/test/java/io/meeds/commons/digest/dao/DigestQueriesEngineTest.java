@@ -134,6 +134,17 @@ public class DigestQueriesEngineTest extends BaseTest {
     assertEquals(List.of(NOW), itemDatesOf("mary"));
   }
 
+  public void testForgettingAUserDeletesAllHisItemsOnly() {
+    persistItem("gone", NOW);
+    persistItem("gone", BEFORE);
+    persistItem("ayoub", NOW);
+
+    int deleted = entityManager.createQuery(DigestItemDAO.DELETE_BY_USER_QUERY).setParameter("userId", "gone").executeUpdate();
+    assertEquals(2, deleted);
+    assertEquals(0, itemDatesOf("gone").size());
+    assertEquals(1, itemDatesOf("ayoub").size());
+  }
+
   public void testOrphanItemsOfUsersWithoutDigestAreDeleted() {
     persistUser("ayoub", NOW, null);
     persistItem("ayoub", NOW);

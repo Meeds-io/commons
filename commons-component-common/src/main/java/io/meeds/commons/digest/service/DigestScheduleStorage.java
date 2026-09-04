@@ -107,6 +107,17 @@ public class DigestScheduleStorage {
   }
 
   /**
+   * Forgets a user whose digest settings are gone (his account was deleted and
+   * his settings purged with it): his work list row and every waiting item, so
+   * the job never serves a ghost again.
+   */
+  @Transactional
+  public void forget(long id, String username) {
+    digestItemDAO.deleteByUser(username);
+    digestUserDAO.deleteById(id);
+  }
+
+  /**
    * The safety cleanup, first step of every run: items of users who have no
    * digest enabled any more, and items older than the retention. The table can
    * never grow forever, whatever happens.

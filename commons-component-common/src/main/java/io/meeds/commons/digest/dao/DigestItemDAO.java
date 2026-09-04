@@ -38,6 +38,8 @@ public interface DigestItemDAO extends JpaRepository<DigestItemEntity, Long> {
 
   String DELETE_ORPHANS_QUERY    = "DELETE FROM DigestItem i WHERE i.userId NOT IN (SELECT u.userId FROM DigestUser u)";
 
+  String DELETE_BY_USER_QUERY    = "DELETE FROM DigestItem i WHERE i.userId = :userId";
+
   /** Tells whether the same notification is already waiting for this recipient */
   boolean existsByUserIdAndPluginIdAndParams(String userId, String pluginId, String params);
 
@@ -66,5 +68,10 @@ public interface DigestItemDAO extends JpaRepository<DigestItemEntity, Long> {
   @Modifying
   @Query(DELETE_ORPHANS_QUERY)
   int deleteOrphans();
+
+  /** Every waiting item of one user, when the user leaves the digest for good */
+  @Modifying
+  @Query(DELETE_BY_USER_QUERY)
+  int deleteByUser(@Param("userId") String userId);
 
 }
