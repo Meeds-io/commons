@@ -28,9 +28,9 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
@@ -46,12 +46,8 @@ public class DigestSenderJobTest {
   @Mock
   private DigestService   digestService;
 
+  @InjectMocks
   private DigestSenderJob job;
-
-  @Before
-  public void setUp() {
-    job = new DigestSenderJob(digestService);
-  }
 
   @After
   public void tearDown() {

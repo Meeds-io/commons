@@ -25,6 +25,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -48,7 +49,8 @@ public class DigestSenderJob {
 
   private static final Logger   LOG     = LoggerFactory.getLogger(DigestSenderJob.class);
 
-  private final DigestService   digestService;
+  @Autowired
+  private DigestService         digestService;
 
   private final ExecutorService runner  = Executors.newSingleThreadExecutor(task -> {
                                           Thread thread = new Thread(task, "digest-sender");
@@ -57,10 +59,6 @@ public class DigestSenderJob {
                                         });
 
   private final AtomicBoolean   running = new AtomicBoolean();
-
-  public DigestSenderJob(DigestService digestService) {
-    this.digestService = digestService;
-  }
 
   @Scheduled(cron = "${exo.notification.digest.job.expression:0 0 * * * ?}")
   public void run() {
