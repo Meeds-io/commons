@@ -29,7 +29,7 @@ import java.util.*;
 import org.junit.*;
 import org.junit.runner.RunWith;
 import org.mockito.*;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import org.exoplatform.commons.persistence.impl.EntityManagerService;
 import org.exoplatform.commons.search.dao.IndexingOperationDAO;

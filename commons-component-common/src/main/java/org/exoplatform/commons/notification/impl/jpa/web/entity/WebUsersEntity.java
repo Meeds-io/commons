@@ -23,13 +23,11 @@ import java.util.Calendar;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.NamedQuery;
-import jakarta.persistence.SequenceGenerator;
+import io.meeds.common.persistence.PortableSequence;
 import jakarta.persistence.Table;
 
 @Entity(name = "NotificationsWebUsersEntity")
@@ -114,8 +112,7 @@ query = "SELECT u FROM NotificationsWebUsersEntity u " +
 public class WebUsersEntity {
   @Id
   @Column(name = "WEB_NOTIFS_USERS_ID")
-  @SequenceGenerator(name="SEQ_NTF_WEB_USERS", sequenceName="SEQ_NTF_WEB_USERS", allocationSize = 1)
-  @GeneratedValue(strategy=GenerationType.AUTO, generator="SEQ_NTF_WEB_USERS")
+  @PortableSequence(name = "SEQ_NTF_WEB_USERS")
   private long id;
 
   @ManyToOne(fetch=FetchType.LAZY)
