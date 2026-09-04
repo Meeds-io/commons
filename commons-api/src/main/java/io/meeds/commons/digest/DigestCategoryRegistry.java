@@ -20,7 +20,9 @@ package io.meeds.commons.digest;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,9 +30,11 @@ import org.slf4j.LoggerFactory;
 import org.exoplatform.container.component.ComponentPlugin;
 
 import io.meeds.commons.digest.plugin.DigestCategoryProvider;
+import io.meeds.commons.digest.plugin.DigestLineProvider;
 
 /**
- * Holds the digest categories the installed addons contribute. It is a kernel
+ * Holds the digest categories the installed addons contribute, and the line
+ * providers building their email lines. It is a kernel
  * component on purpose: the kernel container is shared by every webapp, while
  * each webapp has its own Spring context. A category declared by an addon
  * therefore reaches the digest whatever the addon is made of, which a Spring
@@ -41,6 +45,8 @@ public class DigestCategoryRegistry {
   private static final Logger                LOG               = LoggerFactory.getLogger(DigestCategoryRegistry.class);
 
   private final List<DigestCategoryProvider> categoryProviders = new ArrayList<>();
+
+  private final Map<String, DigestLineProvider> lineProviders = new HashMap<>();
 
   /**
    * Adds the category an addon owns. Called by the kernel for each declared
@@ -56,6 +62,30 @@ public class DigestCategoryRegistry {
       LOG.warn("The digest category plugin {} is ignored, it doesn't implement DigestCategoryProvider",
                plugin == null ? null : plugin.getName());
     }
+  }
+
+  /**
+   * Adds the line provider of an addon, for each notification type it declares.
+   * Called by the kernel for each declared component-plugin.
+   *
+   * @param plugin the line provider to add
+   */
+  public void addLineProvider(ComponentPlugin plugin) {
+    if (plugin instanceof DigestLineProvider lineProvider) {
+      lineProvider.getPluginIds().forEach(pluginId -> lineProviders.put(pluginId, lineProvider));
+    } else {
+      LOG.warn("The digest line plugin {} is ignored, it doesn't implement DigestLineProvider",
+               plugin == null ? null : plugin.getName());
+    }
+  }
+
+  /**
+   * @param pluginId a notification type
+   * @return the provider building the email lines of this type, null when its
+   *         addon declared none
+   */
+  public DigestLineProvider getLineProvider(String pluginId) {
+    return lineProviders.get(pluginId);
   }
 
   /**
