@@ -31,14 +31,11 @@ import io.meeds.commons.digest.entity.DigestItemEntity;
 import io.meeds.commons.digest.entity.DigestUserEntity;
 
 /**
- * Runs the hand-written JPQL statements of the digest DAOs through the real
- * engine, on the kernel persistence unit that knows the two entities: a
- * statement Hibernate refuses, or that behaves differently from what the
- * sender expects, fails here and not at 18:00 in production. The Spring Data
- * repositories themselves are not available in this container, the statements
- * are shared with them through the DAO constants.
+ * Runs the hand-written JPQL of the waiting items DAO (covered items,
+ * retention, orphans, forgotten user) through the real engine, on the kernel
+ * persistence unit: see DigestUserDAOTest for why.
  */
-public class DigestQueriesEngineTest extends BaseTest {
+public class DigestItemDAOTest extends BaseTest {
 
   private static final Instant NOW    = Instant.now().truncatedTo(ChronoUnit.SECONDS);
 
@@ -60,50 +57,6 @@ public class DigestQueriesEngineTest extends BaseTest {
     entityManager.createQuery("DELETE FROM DigestItem").executeUpdate();
     entityManager.createQuery("DELETE FROM DigestUser").executeUpdate();
     super.tearDown();
-  }
-
-  public void testClaimMovesTheWatermarkOnlyWhenItStillHoldsTheReadValue() {
-    DigestUserEntity user = persistUser("ayoub", BEFORE, null);
-
-    int firstClaim = entityManager.createQuery(DigestUserDAO.UPDATE_DAILY_WATERMARK_QUERY)
-                                  .setParameter("id", user.getId())
-                                  .setParameter("expected", BEFORE)
-                                  .setParameter("value", NOW)
-                                  .executeUpdate();
-    int secondClaim = entityManager.createQuery(DigestUserDAO.UPDATE_DAILY_WATERMARK_QUERY)
-                                   .setParameter("id", user.getId())
-                                   .setParameter("expected", BEFORE)
-                                   .setParameter("value", NOW)
-                                   .executeUpdate();
-    assertEquals("The first worker gets the occurrence", 1, firstClaim);
-    assertEquals("The second worker read a stale watermark and gets nothing", 0, secondClaim);
-
-    entityManager.clear();
-    assertEquals(NOW, entityManager.find(DigestUserEntity.class, user.getId()).getDailyLastSent());
-
-    // Giving the occurrence back is the same statement the other way round
-    int release = entityManager.createQuery(DigestUserDAO.UPDATE_DAILY_WATERMARK_QUERY)
-                               .setParameter("id", user.getId())
-                               .setParameter("expected", NOW)
-                               .setParameter("value", BEFORE)
-                               .executeUpdate();
-    assertEquals(1, release);
-  }
-
-  public void testWeeklyClaimIsIndependentFromTheDailyOne() {
-    DigestUserEntity user = persistUser("ayoub", BEFORE, BEFORE);
-
-    int weeklyClaim = entityManager.createQuery(DigestUserDAO.UPDATE_WEEKLY_WATERMARK_QUERY)
-                                   .setParameter("id", user.getId())
-                                   .setParameter("expected", BEFORE)
-                                   .setParameter("value", NOW)
-                                   .executeUpdate();
-    assertEquals(1, weeklyClaim);
-
-    entityManager.clear();
-    DigestUserEntity fresh = entityManager.find(DigestUserEntity.class, user.getId());
-    assertEquals(NOW, fresh.getWeeklyLastSent());
-    assertEquals(BEFORE, fresh.getDailyLastSent());
   }
 
   public void testCoveredItemsAreDeletedUpToTheWatermarkIncluded() {
