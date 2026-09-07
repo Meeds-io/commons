@@ -167,6 +167,13 @@ public class DigestServiceImpl implements DigestService {
     digestSender.processDueDigests();
   }
 
+  @Override
+  public void updateTimeZone(String username, String timeZone) {
+    if (StringUtils.isNotBlank(username)) {
+      enrollmentStorage.updateTimeZone(username, timeZone);
+    }
+  }
+
   /**
    * First half of the double check: the category lists are applied here at
    * capture, and again at send time. Unchecking a category applies immediately,
