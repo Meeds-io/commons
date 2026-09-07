@@ -152,4 +152,17 @@
       <type>io.meeds.commons.digest.listener.DigestCaptureListener</type>
     </component-plugin>
   </external-component-plugins>
+
+  <!-- The platform timezone of a user, saved by social: the copy kept in the
+       digest work list follows, so the next occurrence is computed in the new
+       timezone (the event name is the contract, commons doesn't depend on
+       social) -->
+  <external-component-plugins>
+    <target-component>org.exoplatform.services.listener.ListenerService</target-component>
+    <component-plugin>
+      <name>social.timeZone.saved</name>
+      <set-method>addListener</set-method>
+      <type>io.meeds.commons.digest.listener.DigestTimeZoneListener</type>
+    </component-plugin>
+  </external-component-plugins>
 </configuration>

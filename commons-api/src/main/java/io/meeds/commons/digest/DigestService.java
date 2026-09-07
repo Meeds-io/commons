@@ -121,4 +121,15 @@ public interface DigestService {
    */
   void processDueDigests();
 
+  /**
+   * Refreshes the timezone the digest sender job keeps for a user, when the
+   * platform saved a new one in his profile: the next occurrence is then
+   * computed in that timezone. Nothing happens for a user with no digest
+   * enabled.
+   *
+   * @param username the user whose timezone changed
+   * @param timeZone the new zone id, may be null
+   */
+  void updateTimeZone(String username, String timeZone);
+
 }
