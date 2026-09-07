@@ -223,6 +223,16 @@ public class DigestSenderTest {
   }
 
   @Test
+  public void testQueueRefusingTheRecipientConsumesTheOccurrence() throws Exception {
+    when(queueMessage.put(any())).thenReturn(false);
+
+    sender.processDueDigests();
+
+    verify(scheduleStorage, never()).release(anyLong(), any(), any(), any());
+    verify(scheduleStorage).deleteCoveredItems(eq(USERNAME), any());
+  }
+
+  @Test
   public void testCoveredItemsStopAtTheOldestEnabledWatermark() throws Exception {
     Instant weeklyWatermark = PREVIOUS.minusSeconds(3600 * 24 * 3);
     DigestUserEntity fresh = new DigestUserEntity(7L, USERNAME, true, true, "Europe/Paris", Instant.now(), weeklyWatermark);
