@@ -20,6 +20,8 @@ package io.meeds.commons.digest.service;
 
 import java.time.Instant;
 
+import org.apache.commons.lang3.StringUtils;
+
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -51,6 +53,19 @@ public class DigestEnrollmentStorage {
    * @param settings the chosen frequencies
    * @param timeZone the timezone to send his digest on, may be null
    */
+  /**
+   * Refreshes the timezone copy of an enrolled user; a user without a row has
+   * no digest, nothing to refresh.
+   */
+  @Transactional
+  public void updateTimeZone(String username, String timeZone) {
+    DigestUserEntity digestUser = digestUserDAO.findByUserId(username);
+    if (digestUser != null && !StringUtils.equals(digestUser.getTimeZone(), timeZone)) {
+      digestUser.setTimeZone(timeZone);
+      digestUserDAO.saveAndFlush(digestUser);
+    }
+  }
+
   @Transactional
   public void enroll(String username, DigestUserSettings settings, String timeZone) {
     DigestUserEntity digestUser = digestUserDAO.findByUserId(username);
