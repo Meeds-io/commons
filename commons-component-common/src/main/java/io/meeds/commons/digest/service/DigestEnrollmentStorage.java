@@ -44,16 +44,6 @@ public class DigestEnrollmentStorage {
   }
 
   /**
-   * Enrolls a user in the digest sending, or removes him when he wants no
-   * digest any more. The write is flushed before returning, so that a caller
-   * saving the user settings afterwards only does it once the enrollment really
-   * succeeded.
-   *
-   * @param username the user saving his choices
-   * @param settings the chosen frequencies
-   * @param timeZone the timezone to send his digest on, may be null
-   */
-  /**
    * Refreshes the timezone copy of an enrolled user; a user without a row has
    * no digest, nothing to refresh.
    */
@@ -66,6 +56,16 @@ public class DigestEnrollmentStorage {
     }
   }
 
+  /**
+   * Enrolls a user in the digest sending, or removes him when he wants no
+   * digest any more. The write is flushed before returning, so that a caller
+   * saving the user settings afterwards only does it once the enrollment really
+   * succeeded.
+   *
+   * @param username the user saving his choices
+   * @param settings the chosen frequencies
+   * @param timeZone the timezone to send his digest on, may be null
+   */
   @Transactional
   public void enroll(String username, DigestUserSettings settings, String timeZone) {
     DigestUserEntity digestUser = digestUserDAO.findByUserId(username);
