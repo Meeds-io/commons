@@ -59,9 +59,13 @@ public class DigestRecipientResolver {
     return NotificationPluginUtils.getBrandingPortalName();
   }
 
+  /**
+   * The platform itself (/portal), for the platform name and the "+ N more"
+   * links: a direct link, not the notification redirection which lands on the
+   * home page of the default site (EXO-90020)
+   */
   public String getPlatformUrl() {
-    return CommonsUtils.getCurrentDomain() + "/" + CommonsUtils.getRestContextName()
-        + "/social/notifications/redirectUrl/portal_home/" + NotificationPluginUtils.getPortalName();
+    return CommonsUtils.getCurrentDomain() + "/" + NotificationPluginUtils.getPortalName();
   }
 
   /** The user notification settings page, the same link as the instant emails footer */
