@@ -25,6 +25,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import io.meeds.commons.digest.dao.DigestItemDAO;
 import io.meeds.commons.digest.dao.DigestUserDAO;
 import io.meeds.commons.digest.entity.DigestUserEntity;
 import io.meeds.commons.digest.model.DigestUserSettings;
@@ -39,20 +40,13 @@ public class DigestEnrollmentStorage {
 
   private final DigestUserDAO digestUserDAO;
 
-  public DigestEnrollmentStorage(DigestUserDAO digestUserDAO) {
+  private final DigestItemDAO digestItemDAO;
+
+  public DigestEnrollmentStorage(DigestUserDAO digestUserDAO, DigestItemDAO digestItemDAO) {
     this.digestUserDAO = digestUserDAO;
+    this.digestItemDAO = digestItemDAO;
   }
 
-  /**
-   * Enrolls a user in the digest sending, or removes him when he wants no
-   * digest any more. The write is flushed before returning, so that a caller
-   * saving the user settings afterwards only does it once the enrollment really
-   * succeeded.
-   *
-   * @param username the user saving his choices
-   * @param settings the chosen frequencies
-   * @param timeZone the timezone to send his digest on, may be null
-   */
   /**
    * Refreshes the timezone copy of an enrolled user; a user without a row has
    * no digest, nothing to refresh.
@@ -66,12 +60,25 @@ public class DigestEnrollmentStorage {
     }
   }
 
+  /**
+   * Enrolls a user in the digest sending, or removes him when he wants no
+   * digest any more. The write is flushed before returning, so that a caller
+   * saving the user settings afterwards only does it once the enrollment really
+   * succeeded.
+   *
+   * @param username the user saving his choices
+   * @param settings the chosen frequencies
+   * @param timeZone the timezone to send his digest on, may be null
+   */
   @Transactional
   public void enroll(String username, DigestUserSettings settings, String timeZone) {
     DigestUserEntity digestUser = digestUserDAO.findByUserId(username);
     if (!settings.isDaily() && !settings.isWeekly()) {
-      // The work list keeps only the users having a digest enabled
+      // The work list keeps only the users having a digest enabled, and the
+      // waiting items of a user who leaves go too: a re-enablement starts from
+      // now, so they would never be sent
       if (digestUser != null) {
+        digestItemDAO.deleteByUser(username);
         digestUserDAO.delete(digestUser);
         digestUserDAO.flush();
       }

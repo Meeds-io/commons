@@ -20,6 +20,7 @@ package io.meeds.commons.digest.service;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -30,15 +31,18 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import io.meeds.commons.digest.dao.DigestItemDAO;
 import io.meeds.commons.digest.dao.DigestUserDAO;
 import io.meeds.commons.digest.entity.DigestUserEntity;
+import io.meeds.commons.digest.model.DigestUserSettings;
 
 /**
- * The timezone copy of the work list follows the platform timezone of the
- * user.
+ * The work list follows the choices of the user: his row and his waiting items
+ * leave with him, and the timezone copy follows his platform timezone.
  */
 @RunWith(MockitoJUnitRunner.class)
 public class DigestEnrollmentStorageTest {
@@ -50,11 +54,38 @@ public class DigestEnrollmentStorageTest {
   @Mock
   private DigestUserDAO           digestUserDAO;
 
+  @Mock
+  private DigestItemDAO           digestItemDAO;
+
   private DigestEnrollmentStorage storage;
 
   @Before
   public void setUp() {
-    storage = new DigestEnrollmentStorage(digestUserDAO);
+    storage = new DigestEnrollmentStorage(digestUserDAO, digestItemDAO);
+  }
+
+  @Test
+  public void testLeavingTheDigestDeletesTheRowAndTheWaitingItems() {
+    DigestUserEntity row = new DigestUserEntity(7L, USERNAME, true, true, TIME_ZONE, Instant.now(), Instant.now());
+    when(digestUserDAO.findByUserId(USERNAME)).thenReturn(row);
+
+    storage.enroll(USERNAME, new DigestUserSettings(false, null, false, null), TIME_ZONE);
+
+    // Items first, then the row, then the flush the caller relies on
+    InOrder inOrder = inOrder(digestItemDAO, digestUserDAO);
+    inOrder.verify(digestItemDAO).deleteByUser(USERNAME);
+    inOrder.verify(digestUserDAO).delete(row);
+    inOrder.verify(digestUserDAO).flush();
+  }
+
+  @Test
+  public void testLeavingTheDigestWithoutARowTouchesNothing() {
+    when(digestUserDAO.findByUserId(USERNAME)).thenReturn(null);
+
+    storage.enroll(USERNAME, new DigestUserSettings(false, null, false, null), TIME_ZONE);
+
+    verify(digestItemDAO, never()).deleteByUser(any());
+    verify(digestUserDAO, never()).delete(any());
   }
 
   @Test
