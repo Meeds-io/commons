@@ -46,12 +46,6 @@ public class TemplateTestCase extends BaseTest {
     return new SimpleElement().template("$LAST3_USERS and $COUNT more have joined $PORTAL_NAME.");
   }
 
-  private DigestTemplate makeDigestTemplate() {
-    return new DigestTemplate().digestOne("$USER has joined $PORTAL_NAME")
-                               .digestThree("$USER_LIST has joined $PORTAL_NAME")
-                               .digestMore("$LAST3_USERS and $COUNT more have joined $PORTAL_NAME.");
-  }
-
   public void testNullParameterValue() throws Exception {
     Element instantly = makeDigestMore().addNewLine(true);
     ElementVisitor visitor = SimpleElementVistior.instance();
@@ -119,20 +113,6 @@ public class TemplateTestCase extends BaseTest {
     assertNotNull(got);
 
     assertEquals("root,demo,mary have joined intranet.<br/>", got);
-  }
-
-  public void testDigest() throws Exception {
-    DigestTemplate digest = makeDigestTemplate();
-    ElementVisitor visitor = SimpleElementVistior.instance();
-    TemplateContext context = new TemplateContext();
-
-    context.put("$USER_LIST", "root,demo,mary");
-    context.put("$PORTAL_NAME", "intranet");
-    context.digestType(3);
-
-    String got = digest.accept(visitor.with(context)).out();
-
-    assertEquals("root,demo,mary has joined intranet", got);
   }
 
 }

@@ -23,7 +23,6 @@ import static org.exoplatform.settings.jpa.JPAPluginSettingServiceImpl.NOTIFICAT
 import static org.exoplatform.settings.jpa.JPAPluginSettingServiceImpl.NOTIFICATION_PLUGIN_STATUS_MODIFIED;
 
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -32,7 +31,6 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 
-import org.exoplatform.commons.api.notification.NotificationContext;
 import org.exoplatform.commons.api.notification.channel.AbstractChannel;
 import org.exoplatform.commons.api.notification.channel.ChannelManager;
 import org.exoplatform.commons.api.notification.model.PluginInfo;
@@ -46,7 +44,6 @@ import org.exoplatform.commons.api.settings.data.Context;
 import org.exoplatform.commons.api.settings.data.Scope;
 import org.exoplatform.commons.notification.NotificationUtils;
 import org.exoplatform.commons.notification.impl.AbstractService;
-import org.exoplatform.commons.notification.job.NotificationJob;
 import org.exoplatform.commons.utils.PropertyManager;
 import org.exoplatform.services.listener.Event;
 import org.exoplatform.services.listener.Listener;
@@ -58,6 +55,7 @@ import org.exoplatform.services.organization.User;
 import org.exoplatform.services.organization.UserEventListener;
 
 public class JPAUserSettingServiceImpl extends AbstractService implements UserSettingService {
+
   private static final Log     LOG                = ExoLogger.getLogger(JPAUserSettingServiceImpl.class);
 
   /** Setting Scope on Common Setting **/
@@ -80,14 +78,14 @@ public class JPAUserSettingServiceImpl extends AbstractService implements UserSe
   /**
    * This service must depend on DataInitializer to make sure data
    * structure is created before initializing it
-   * 
+   *
    * @param organizationService {@link OrganizationService}
    * @param settingService {@link SettingService}
    * @param channelManager {@link ChannelManager}
    * @param pluginSettingService {@link PluginSettingService}
    * @param dataInitializer {@link DataInitializer}
    * @param listenerService {@link ListenerService}
-   * @throws Exception 
+   * @throws Exception
    */
   public JPAUserSettingServiceImpl(OrganizationService organizationService,
                                    SettingService settingService,
@@ -100,6 +98,7 @@ public class JPAUserSettingServiceImpl extends AbstractService implements UserSe
     this.channelManager = channelManager;
     this.pluginSettingService = pluginSettingService;
     this.listenerService = listenerService;
+
     listenerService.addListener(NOTIFICATION_CHANNEL_STATUS_MODIFIED, new Listener<String, Object>() {
       @Override
       public void onEvent(Event<String, Object> event) throws Exception {
@@ -123,14 +122,11 @@ public class JPAUserSettingServiceImpl extends AbstractService implements UserSe
   @Override
   public void save(UserSetting model) {
     String userId = model.getUserId();
-    String dailys = NotificationUtils.listToString(model.getDailyPlugins(), VALUE_PATTERN);
-    String weeklys = NotificationUtils.listToString(model.getWeeklyPlugins(), VALUE_PATTERN);
     String channelActives = NotificationUtils.listToString(model.getChannelActives(), VALUE_PATTERN);
     String mutedSpaces = NotificationUtils.listToString(model.getMutedSpaces().stream().map(String::valueOf).toList(),
                                                         VALUE_PATTERN);
 
     // Notification scope
-
     // Save plugins active
     Set<String> channels = model.getAllChannelPlugins().keySet();
     for (String channelId : channels) {
@@ -139,9 +135,11 @@ public class JPAUserSettingServiceImpl extends AbstractService implements UserSe
                       getChannelProperty(channelId),
                       NotificationUtils.listToString(model.getPlugins(channelId), VALUE_PATTERN));
     }
-    saveUserSetting(userId, NOTIFICATION_SCOPE, EXO_DAILY, dailys);
-    saveUserSetting(userId, NOTIFICATION_SCOPE, EXO_WEEKLY, weeklys);
     saveUserSetting(userId, NOTIFICATION_SCOPE, EXO_IS_ACTIVE, channelActives);
+    // The digest choices of the legacy engine (removed in eXIP 7.3.0.22) are not
+    // read any more: the rows a user may still have go away the next time he saves
+    settingService.remove(USER.id(userId), NOTIFICATION_SCOPE, EXO_DAILY);
+    settingService.remove(USER.id(userId), NOTIFICATION_SCOPE, EXO_WEEKLY);
     saveUserSetting(userId, NOTIFICATION_SCOPE, EXO_MUTED_SPACES, mutedSpaces);
     if (model.getLastReadDate() > 0) {
       saveLastReadDate(userId, model.getLastReadDate());
@@ -169,6 +167,7 @@ public class JPAUserSettingServiceImpl extends AbstractService implements UserSe
     if (userNotificationSettings == null || userNotificationSettings.isEmpty()) {
       return userSettings;
     }
+
     List<AbstractChannel> allChannels = channelManager.getChannels();
     Map<String, AbstractChannel> channelPluginByName = allChannels.stream()
                                                                   .collect(Collectors.toMap(channel -> getChannelProperty(channel.getId()),
@@ -184,10 +183,9 @@ public class JPAUserSettingServiceImpl extends AbstractService implements UserSe
           && Boolean.valueOf(enabledSetting.getValue());
       userSettings.setEnabled(isEnabled);
     }
+
     if (userNotificationSettings.containsKey(NOTIFICATION_SCOPE)) {
       Set<String> channelActives = userSettings.getChannelActives();
-      List<String> dailyPlugins = userSettings.getDailyPlugins();
-      List<String> weeklyPlugins = userSettings.getWeeklyPlugins();
       List<String> mutedSpaces = userSettings.getMutedSpaces().stream().map(String::valueOf).toList();
 
       // Notification settings
@@ -210,10 +208,11 @@ public class JPAUserSettingServiceImpl extends AbstractService implements UserSe
           });
         } else if (EXO_LAST_READ_DATE.equals(key)) {
           userSettings.setLastReadDate(Long.parseLong(value));
-        } else if (EXO_DAILY.equals(key)) {
-          userSettings.setDailyPlugins(getArrayListValue(value, dailyPlugins));
-        } else if (EXO_WEEKLY.equals(key)) {
-          userSettings.setWeeklyPlugins(getArrayListValue(value, weeklyPlugins));
+        } else if (EXO_DAILY.equals(key) || EXO_WEEKLY.equals(key)) {
+          // Settings written by the legacy digest engine, removed in eXIP
+          // 7.3.0.22: still present in the database of upgraded platforms,
+          // deliberately ignored
+          continue;
         } else if (EXO_MUTED_SPACES.equals(key)) {
           userSettings.setMutedSpaces(getArrayListValue(value, mutedSpaces).stream().map(Long::parseLong).toList());
         } else if (channelPluginByName.containsKey(key)) {
@@ -260,77 +259,21 @@ public class JPAUserSettingServiceImpl extends AbstractService implements UserSe
           }
           defaultSetting.setChannelDefaultValueActive(channel.getId(),pluginSettingService.getDefaultChannelValue(channel.getId()));
         }
-
       List<PluginInfo> plugins = pluginSettingService.getAllPlugins();
       for (PluginInfo pluginInfo : plugins) {
         List<String> pluginChannels = pluginSettingService.getPluginChannels(pluginInfo.getType());
         for (String defaultConf : pluginInfo.getDefaultConfig()) {
-          for (String channelId : pluginChannels) {
-            if (UserSetting.FREQUENCY.getFrequecy(defaultConf) == UserSetting.FREQUENCY.INSTANTLY) {
+          // The daily and weekly default configurations belonged to the legacy
+          // digest engine, removed in eXIP 7.3.0.22: only instantly counts
+          if (UserSetting.FREQUENCY.getFrequecy(defaultConf) == UserSetting.FREQUENCY.INSTANTLY) {
+            for (String channelId : pluginChannels) {
               defaultSetting.addChannelPlugin(channelId, pluginInfo.getType());
-            } else {
-              defaultSetting.addPlugin(pluginInfo.getType(), UserSetting.FREQUENCY.getFrequecy(defaultConf));
             }
           }
         }
       }
     }
     return defaultSetting.clone();
-  }
-
-  @Override
-  public List<UserSetting> getDigestSettingForAllUser(NotificationContext notificationContext, int offset, int limit) {
-    List<UserSetting> models = new ArrayList<>();
-    Boolean isWeekly = notificationContext.value(NotificationJob.JOB_WEEKLY);
-    String frequency = EXO_DAILY;
-    if (isWeekly != null && isWeekly.booleanValue()) {
-      frequency = EXO_WEEKLY;
-    }
-
-    try {
-      boolean continueSearching = true;
-      while (models.size() < limit && continueSearching) {
-        List<Context> contexts = settingService.getContextsByTypeAndScopeAndSettingName(Context.USER.getName(),
-                                                                                        NOTIFICATION_SCOPE.getName(),
-                                                                                        NOTIFICATION_SCOPE.getId(),
-                                                                                        frequency,
-                                                                                        offset,
-                                                                                        limit);
-        continueSearching = contexts.size() == limit;
-        for (Context context : contexts) {
-          String username = context.getId();
-          UserSetting userSetting = get(username);
-          if (userSetting != null && userSetting.isEnabled()) {
-            models.add(userSetting);
-          }
-        }
-      }
-    } catch (Exception e) {
-      LOG.error("Failed to get all " + frequency + " users have notification messages", e);
-    }
-    return models;
-  }
-
-  @Override
-  public List<UserSetting> getDigestDefaultSettingForAllUser(int offset, int limit) {
-    List<UserSetting> users = new ArrayList<>();
-    try {
-      // Get all users not having EXO_DAILY setting stored in DB.
-      // Not having this setting assumes that users uses default settings
-      // and haven't changed their notification settings.
-      Set<String> userNames = settingService.getEmptyContextsByTypeAndScopeAndSettingName(Context.USER.getName(),
-                                                                                          NOTIFICATION_SCOPE.getName(),
-                                                                                          NOTIFICATION_SCOPE.getId(),
-                                                                                          EXO_DAILY,
-                                                                                          offset,
-                                                                                          limit);
-      for (String userName : userNames) {
-        users.add(new UserSetting().setUserId(userName).setLastUpdateTime(Calendar.getInstance()));
-      }
-    } catch (Exception e) {
-      LOG.error("Failed to get default daily users have notification messages", e);
-    }
-    return users;
   }
 
   @Override
@@ -386,5 +329,4 @@ public class JPAUserSettingServiceImpl extends AbstractService implements UserSe
       LOG.warn("Error broadcasting modification on User Notification Settings '{}'", model, e);
     }
   }
-
 }

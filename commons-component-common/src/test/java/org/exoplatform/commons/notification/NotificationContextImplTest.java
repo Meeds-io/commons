@@ -20,9 +20,13 @@ package org.exoplatform.commons.notification;
 
 import org.exoplatform.commons.api.notification.NotificationContext;
 import org.exoplatform.commons.notification.impl.NotificationContextImpl;
-import org.exoplatform.commons.notification.job.NotificationJob;
+import org.exoplatform.commons.api.notification.model.ArgumentLiteral;
 
 public class NotificationContextImplTest extends BaseNotificationTestCase {
+
+  private static final ArgumentLiteral<Boolean> JOB_DAILY  = new ArgumentLiteral<>(Boolean.class, "jobDaily");
+
+  private static final ArgumentLiteral<Boolean> JOB_WEEKLY = new ArgumentLiteral<>(Boolean.class, "jobWeekly");
   
   @Override
   public void setUp() throws Exception {
@@ -36,22 +40,22 @@ public class NotificationContextImplTest extends BaseNotificationTestCase {
   
   public void testDailyContext() throws Exception {
     NotificationContext context = NotificationContextImpl.cloneInstance();
-    context.append(NotificationJob.JOB_DAILY, true);
-    Boolean value = context.value(NotificationJob.JOB_DAILY);
+    context.append(JOB_DAILY, true);
+    Boolean value = context.value(JOB_DAILY);
     assertNotNull(value);
     assertTrue(value);
-    value = context.value(NotificationJob.JOB_WEEKLY);
+    value = context.value(JOB_WEEKLY);
     assertNotNull(value);
     assertFalse(value);
   }
   
   public void testWeeklyContext() throws Exception {
     NotificationContext context = NotificationContextImpl.cloneInstance();
-    context.append(NotificationJob.JOB_WEEKLY, true);
-    Boolean value = context.value(NotificationJob.JOB_WEEKLY);
+    context.append(JOB_WEEKLY, true);
+    Boolean value = context.value(JOB_WEEKLY);
     assertNotNull(value);
     assertTrue(value);
-    value = context.value(NotificationJob.JOB_DAILY);
+    value = context.value(JOB_DAILY);
     assertNotNull(value);
     assertFalse(value);
   }
