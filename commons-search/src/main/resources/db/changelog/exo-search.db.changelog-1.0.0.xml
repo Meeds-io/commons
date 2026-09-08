@@ -61,4 +61,11 @@
     <createSequence sequenceName="SEQ_ES_INDEXING_QUEUE_ID" startValue="1"/>
   </changeSet>
 
+  <changeSet author="exo-es-search" id="1.0.0-4">
+    <modifyDataType tableName="ES_INDEXING_QUEUE" columnName="ENTITY_ID" newDataType="VARCHAR(255)" />
+    <modifySql dbms="mysql">
+      <replace replace="VARCHAR(255)" with="VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci" />
+    </modifySql>
+  </changeSet>
+
 </databaseChangeLog>
