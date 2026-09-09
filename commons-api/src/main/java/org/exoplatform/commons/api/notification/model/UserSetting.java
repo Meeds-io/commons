@@ -36,7 +36,7 @@ public class UserSetting {
   public static final String EMAIL_CHANNEL = "MAIL_CHANNEL";
 
   public enum FREQUENCY {
-    INSTANTLY, DAILY, WEEKLY;
+    INSTANTLY;
 
     public static FREQUENCY getFrequecy(String name) {
       for (int i = 0; i < values().length; ++i) {
@@ -58,10 +58,6 @@ public class UserSetting {
 
   private Map<String, Boolean> channelDefaultValue;
 
-  private List<String>              dailyPlugins;
-
-  private List<String>              weeklyPlugins;
-
   private List<Long>                mutedSpaces;
 
   private long                      lastReadDate = 0;
@@ -72,9 +68,6 @@ public class UserSetting {
     this.channelActives = newSet(null);
     this.channelPlugins = newMap(null);
     this.channelDefaultValue = new HashMap<>();
-    //
-    this.dailyPlugins = newList(null);
-    this.weeklyPlugins = newList(null);
     this.lastUpdateTime = Calendar.getInstance();
     this.isEnabled = true;
   }
@@ -223,55 +216,27 @@ public class UserSetting {
   }
 
   /**
-   * @return the dailyPlugins
-   */
-  public List<String> getDailyPlugins() {
-    return dailyPlugins;
-  }
-
-  /**
-   * @param dailyPlugins the dailyPlugins to set
-   */
-  public void setDailyPlugins(List<String> dailyPlugins) {
-    this.dailyPlugins = newList(dailyPlugins);
-  }
-
-  /**
-   * @return the weeklyPlugins
-   */
-  public List<String> getWeeklyPlugins() {
-    return weeklyPlugins;
-  }
-
-  /**
-   * @param weeklyPlugins the weeklyPlugins to set
-   */
-  public void setWeeklyPlugins(List<String> weeklyPlugins) {
-    this.weeklyPlugins = newList(weeklyPlugins);
-  }
-
-  /**
-   * @param pluginId the provider's id to add
+   * Adds the plugin to the email channel when the frequency is
+   * {@link FREQUENCY#INSTANTLY}.
+   *
+   * @param pluginId the plugin identifier to add
    * @param frequencyType {@link FREQUENCY} of notification plugin
    */
   public void addPlugin(String pluginId, FREQUENCY frequencyType) {
-    if (frequencyType.equals(FREQUENCY.DAILY)) {
-      addProperty(dailyPlugins, pluginId);
-      weeklyPlugins.remove(pluginId);
-    } else if (frequencyType.equals(FREQUENCY.WEEKLY)) {
-      addProperty(weeklyPlugins, pluginId);
-      dailyPlugins.remove(pluginId);
-    } else if (frequencyType.equals(FREQUENCY.INSTANTLY)) {
+    if (frequencyType == FREQUENCY.INSTANTLY) {
       addChannelPlugin(EMAIL_CHANNEL, pluginId);
     }
   }
 
+  /**
+   * Removes the plugin from the email channel when the frequency is
+   * {@link FREQUENCY#INSTANTLY}.
+   *
+   * @param pluginId the plugin identifier to remove
+   * @param frequencyType {@link FREQUENCY} of notification plugin
+   */
   public void removePlugin(String pluginId, FREQUENCY frequencyType) {
-    if (frequencyType.equals(FREQUENCY.DAILY)) {
-      weeklyPlugins.remove(pluginId);
-    } else if (frequencyType.equals(FREQUENCY.WEEKLY)) {
-      dailyPlugins.remove(pluginId);
-    } else if (frequencyType.equals(FREQUENCY.INSTANTLY)) {
+    if (frequencyType == FREQUENCY.INSTANTLY) {
       removeChannelPlugin(EMAIL_CHANNEL, pluginId);
     }
   }
@@ -288,26 +253,10 @@ public class UserSetting {
     return isEnabled && getPlugins(channelId).contains(pluginId);
   }
 
-  public boolean isInDaily(String pluginId) {
-    return isEnabled && dailyPlugins.contains(pluginId);
-  }
-
-  public boolean isInWeekly(String pluginId) {
-    return isEnabled && weeklyPlugins.contains(pluginId);
-  }
-
-  private void addProperty(List<String> providers, String pluginId) {
-    if (!providers.contains(pluginId)) {
-      providers.add(pluginId);
-    }
-  }
-
   @Override
   public UserSetting clone() { // NOSONAR
     UserSetting setting = getInstance();
     setting.setChannelActives(newSet(channelActives));
-    setting.setDailyPlugins(newList(dailyPlugins));
-    setting.setWeeklyPlugins(newList(weeklyPlugins));
     //
     for (Entry<String, List<String>> entry : channelPlugins.entrySet()) {
       setting.setChannelPlugins(entry.getKey(), newList(entry.getValue()));
@@ -345,9 +294,7 @@ public class UserSetting {
         Objects.equals(channelActives, that.channelActives) &&
         Objects.equals(lastUpdateTime, that.lastUpdateTime) &&
         Objects.equals(userId, that.userId) &&
-        Objects.equals(channelPlugins, that.channelPlugins) &&
-        Objects.equals(dailyPlugins, that.dailyPlugins) &&
-        Objects.equals(weeklyPlugins, that.weeklyPlugins);
+        Objects.equals(channelPlugins, that.channelPlugins);
   }
 
   @Override
@@ -356,8 +303,6 @@ public class UserSetting {
                         lastUpdateTime,
                         userId,
                         channelPlugins,
-                        dailyPlugins,
-                        weeklyPlugins,
                         lastReadDate,
                         isEnabled);
   }

@@ -20,7 +20,6 @@ package org.exoplatform.commons.api.notification.channel.template;
 
 import groovy.text.Template;
 
-import java.io.Writer;
 
 import org.exoplatform.commons.api.notification.NotificationContext;
 import org.exoplatform.commons.api.notification.model.MessageInfo;
@@ -38,14 +37,6 @@ public abstract class AbstractTemplateBuilder {
    */
   protected abstract MessageInfo makeMessage(NotificationContext ctx);
 
-  /**
-   * Makes the Digest message from given NotificationMessage what keep inside NotificationContext
-   * @param ctx
-   * @param writer
-   * @return
-   */
-  protected abstract boolean makeDigest(NotificationContext ctx, Writer writer);
-  
   /**
    * Makes massage
    * @param ctx
@@ -66,16 +57,6 @@ public abstract class AbstractTemplateBuilder {
     }
   }
 
-  /**
-   * Makes digest message
-   * @param ctx
-   * @param writer
-   * @return
-   */
-  public boolean buildDigest(NotificationContext ctx, Writer writer) {
-    return makeDigest(ctx, writer);
-  }
-  
   /**
    * 
    * @param notif
