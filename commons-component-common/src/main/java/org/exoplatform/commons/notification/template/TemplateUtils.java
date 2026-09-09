@@ -70,16 +70,6 @@ public class TemplateUtils {
   }
 
   /**
-   * Render for digest template
-   * 
-   * @param ctx
-   * @return
-   */
-  public static String processDigest(TemplateContext ctx) {
-    return ExoContainerContext.getService(TemplateContentTransformerService.class).processDigest(ctx);
-  }
-
-  /**
    * Loads the Groovy template file
    * 
    * @param templatePath

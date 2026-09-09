@@ -23,8 +23,7 @@ import org.exoplatform.commons.api.notification.channel.ChannelManager;
 import org.exoplatform.commons.api.notification.model.ChannelKey;
 import org.exoplatform.commons.api.notification.model.PluginKey;
 import org.exoplatform.commons.notification.BaseNotificationTestCase;
-import org.exoplatform.commons.notification.impl.DigestDailyPlugin;
-import org.exoplatform.commons.notification.impl.DigestWeeklyPlugin;
+import org.exoplatform.commons.notification.plugin.PluginTest;
 
 public class ChannelManagerTest extends BaseNotificationTestCase {
   private ChannelManager manager;
@@ -47,13 +46,8 @@ public class ChannelManagerTest extends BaseNotificationTestCase {
   public void testGetChannel() throws Exception {
     AbstractChannel channel = manager.getChannel(ChannelKey.key(MailChannel.ID));
     assertTrue(channel != null);
-    //check the daily
-    String actual = channel.getTemplateFilePath(PluginKey.key(DigestDailyPlugin.ID));
-    String expected = "classpath:/groovy/notification/template/provider1.gtmpl";
-    assertEquals(expected, actual);
-    //check the weekly
-    actual = channel.getTemplateFilePath(PluginKey.key(DigestWeeklyPlugin.ID));
-    expected = "classpath:/groovy/notification/template/provider1.gtmpl";
+    String actual = channel.getTemplateFilePath(PluginKey.key(PluginTest.ID));
+    String expected = "classpath:/groovy/notification/template/TestPlugin.gtmpl";
     assertEquals(expected, actual);
   }
 }

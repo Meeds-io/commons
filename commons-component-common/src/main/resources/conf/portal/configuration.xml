@@ -32,15 +32,6 @@
   </component>
 
   <component>
-    <type>org.exoplatform.commons.notification.impl.jpa.email.dao.MailParamDAO</type>
-  </component>
-  <component>
-    <type>org.exoplatform.commons.notification.impl.jpa.email.dao.MailDigestDAO</type>
-  </component>
-  <component>
-    <type>org.exoplatform.commons.notification.impl.jpa.email.dao.MailNotifDAO</type>
-  </component>
-  <component>
     <type>org.exoplatform.commons.notification.impl.jpa.email.dao.MailQueueDAO</type>
   </component>
 
@@ -52,10 +43,6 @@
   </component>
   <component>
     <type>org.exoplatform.commons.notification.impl.jpa.web.dao.WebUsersDAO</type>
-  </component>
-
-  <component>
-    <type>org.exoplatform.commons.notification.impl.jpa.email.JPAMailNotificationStorage</type>
   </component>
 
   <component>

@@ -18,9 +18,6 @@
  */
 package org.exoplatform.commons.notification.lifecycle;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.exoplatform.commons.api.notification.NotificationContext;
 import org.exoplatform.commons.api.notification.channel.template.AbstractTemplateBuilder;
 import org.exoplatform.commons.api.notification.lifecycle.AbstractNotificationLifecycle;
@@ -31,7 +28,6 @@ import org.exoplatform.commons.api.notification.plugin.config.PluginConfig;
 import org.exoplatform.commons.api.notification.service.QueueMessage;
 import org.exoplatform.commons.api.notification.service.setting.PluginSettingService;
 import org.exoplatform.commons.api.notification.service.setting.UserSettingService;
-import org.exoplatform.commons.api.notification.service.storage.MailNotificationStorage;
 import org.exoplatform.commons.notification.NotificationContextFactory;
 import org.exoplatform.commons.notification.NotificationUtils;
 import org.exoplatform.commons.notification.channel.MailChannel;
@@ -41,6 +37,7 @@ import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 
 public class MailLifecycle extends AbstractNotificationLifecycle {
+
   private static final Log LOG = ExoLogger.getLogger(MailLifecycle.class);
 
   private NotificationContextFactory notificationContextFactory;
@@ -59,7 +56,6 @@ public class MailLifecycle extends AbstractNotificationLifecycle {
     UserSettingService userService = CommonsUtils.getService(UserSettingService.class);
     PluginSettingService pluginSettingService = ExoContainerContext.getService(PluginSettingService.class);
     PluginConfig pluginConfig = pluginSettingService.getPluginConfig(pluginId);
-    List<String> userIdPendings = new ArrayList<>();
     for (String userId : userIds) {
       UserSetting userSetting = userService.get(userId);
       if (userSetting == null
@@ -72,37 +68,6 @@ public class MailLifecycle extends AbstractNotificationLifecycle {
       if (userSetting.isActive(MailChannel.ID, pluginId)) {
         send(ctx.setNotificationInfo(notification.clone().setTo(userId)));
       }
-      // handles the daily or weekly
-      if (userSetting.isInDaily(pluginId) || userSetting.isInWeekly(pluginId)) {
-        userIdPendings.add(userId);
-        setValueSendbyFrequency(notification, userSetting, userId);
-      }
-    }
-
-    if (!userIdPendings.isEmpty() || notification.isSendAll()) {
-      store(notification);
-    }
-  }
-  
-  /**
-   * Sets the message to determine which user will be sent daily or weekly
-   * 
-   * @param msg
-   * @param userSetting
-   * @param userId
-   */
-  private void setValueSendbyFrequency(NotificationInfo msg, UserSetting userSetting, String userId) {
-    if (msg.isSendAll()) {
-      return;
-    }
-    //
-    String pluginId = msg.getKey().getId();
-    if (userSetting.isInDaily(pluginId)) {
-      msg.setSendToDaily(userId);
-    }
-    //
-    if (userSetting.isInWeekly(pluginId)) {
-      msg.setSendToWeekly(userId);
     }
   }
 
@@ -110,22 +75,11 @@ public class MailLifecycle extends AbstractNotificationLifecycle {
   public void process(NotificationContext ctx, String userId) {
     LOG.info("Mail Notification process user: " + userId);
   }
-  
-  @Override
-  public void store(NotificationInfo notifInfo) {
-    MailNotificationStorage storage = CommonsUtils.getService(MailNotificationStorage.class);
-    try {
-      storage.save(notifInfo);
-    } catch (Exception e) {
-      LOG.error("Error storing notification", e);
-    }
-  }
-  
+
   @Override
   public void send(NotificationContext ctx) {
     final boolean stats = notificationContextFactory.getStatistics().isStatisticsEnabled();
     NotificationInfo notification = ctx.getNotificationInfo();
-    
     AbstractTemplateBuilder builder = getChannel().getTemplateBuilder(notification.getKey());
     if (builder != null) {
       MessageInfo msg = builder.buildMessage(ctx);
@@ -146,5 +100,4 @@ public class MailLifecycle extends AbstractNotificationLifecycle {
       }
     }
   }
-
 }

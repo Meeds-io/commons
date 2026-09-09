@@ -136,25 +136,6 @@ public class JPAUserSettingServiceTest extends BaseTest {
     super.tearDown();
   }
 
-  public void test_1_GetDefautSetting() throws Exception {
-    for (int i = 0; i < 10; i++) {
-      User user = new UserImpl("userTestSetting_" + i);
-      organizationService.getUserHandler().createUser(user, true);
-      String userName = user.getUserName();
-      teardownUsers.add(userName);
-      restartTransaction();
-    }
-    List<UserSetting> list = userSettingService.getDigestDefaultSettingForAllUser(0, 5);
-    assertEquals(5, list.size());
-
-    list = userSettingService.getDigestDefaultSettingForAllUser(0, 0);
-    assertTrue(list.size() >= 10);
-    Set<String> defaultDigestUsers = list.stream().map(UserSetting::getUserId).collect(Collectors.toSet());
-    for (String username : teardownUsers) {
-      assertTrue(defaultDigestUsers.contains(username));
-    }
-  }
-
   public void testChannelEnablement() throws Exception {
     String username = "testChannelEnablement";
     User user = new UserImpl(username);
@@ -231,7 +212,7 @@ public class JPAUserSettingServiceTest extends BaseTest {
     CommonsUtils.getService(OrganizationService.class).getUserHandler().createUser(u, true);
 
     String pluginId = "TestPlugin";
-    userSettingService.save(createUserSetting("binh", Arrays.asList(pluginId), null, null));
+    userSettingService.save(createUserSetting("binh", Arrays.asList(pluginId)));
     UserSetting userSetting = userSettingService.get("binh");
     assertTrue(userSetting.isEnabled());
     assertTrue(userSetting.isChannelActive(MailChannel.ID, pluginId));
@@ -253,13 +234,11 @@ public class JPAUserSettingServiceTest extends BaseTest {
 
   }
 
-  private UserSetting createUserSetting(String userId, List<String> instantly, List<String> daily, List<String> weekly) {
+  private UserSetting createUserSetting(String userId, List<String> instantly) {
     UserSetting model = new UserSetting();
     model.setUserId(userId);
     model.setChannelActive(MailChannel.ID);
-    model.setDailyPlugins(daily);
     model.setChannelPlugins(MailChannel.ID, instantly);
-    model.setWeeklyPlugins(weekly);
     return model;
   }
 
