@@ -39,12 +39,20 @@ import org.exoplatform.commons.api.notification.service.setting.PluginSettingSer
 import org.exoplatform.commons.notification.template.ResourceBundleConfigDeployer;
 import org.exoplatform.commons.notification.template.TemplateUtils;
 import org.exoplatform.commons.utils.CommonsUtils;
+import org.exoplatform.container.xml.InitParams;
+import org.exoplatform.container.xml.ValuesParam;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 import org.gatein.wci.ServletContainerFactory;
 import org.picocontainer.Startable;
 
 public class NotificationPluginContainer implements PluginContainer, Startable {
+  /**
+   * Notification bundles deployed even when no notification plugin declares
+   * them, such as the bundle holding the words of the digest email
+   */
+  public static final String BUNDLE_PATHS_PARAM = "notification.bundle.paths";
+
   /** logger */
   private static final Log LOG = ExoLogger.getLogger(NotificationPluginContainer.class);
 
@@ -56,18 +64,25 @@ public class NotificationPluginContainer implements PluginContainer, Startable {
   private PluginSettingService                                   pSettingService;
   private ResourceBundleConfigDeployer                           deployer;
   private GStringTemplateEngine gTemplateEngine;
-  
-  public NotificationPluginContainer() {
+
+  private final Set<String>                                      bundlePaths;
+
+  public NotificationPluginContainer(InitParams params) {
     pluginMap = new HashMap<PluginKey, BaseNotificationPlugin>();
     parentChildrenKeysMap = new HashMap<PluginKey, List<PluginKey>>();
     pSettingService = CommonsUtils.getService(PluginSettingService.class);
     deployer = new ResourceBundleConfigDeployer();
     gTemplateEngine = new GStringTemplateEngine();
+    bundlePaths = new HashSet<String>();
+    ValuesParam bundlePathsParam = params == null ? null : params.getValuesParam(BUNDLE_PATHS_PARAM);
+    if (bundlePathsParam != null) {
+      bundlePaths.addAll(bundlePathsParam.getValues());
+    }
   }
 
   @Override
   public void start() {
-    Set<String> datas = new HashSet<String>();
+    Set<String> datas = new HashSet<String>(bundlePaths);
     
     for (BaseNotificationPlugin plugin : pluginMap.values()) {
       boolean isChild = (plugin instanceof AbstractNotificationChildPlugin);

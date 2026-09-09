@@ -141,6 +141,13 @@
   <component profiles="all">
     <key>org.exoplatform.commons.api.notification.service.setting.PluginContainer</key>
     <type>org.exoplatform.commons.notification.impl.setting.NotificationPluginContainer</type>
+    <init-params>
+      <values-param>
+        <name>notification.bundle.paths</name>
+        <description>Notification bundles deployed even when no notification plugin declares them: the words of the digest email live in the commons bundle</description>
+        <value>locale.notification.template.CommonsNotification</value>
+      </values-param>
+    </init-params>
   </component>
 
   <component profiles="all">
