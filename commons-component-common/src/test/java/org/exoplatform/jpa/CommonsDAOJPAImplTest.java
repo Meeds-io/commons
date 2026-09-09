@@ -22,9 +22,6 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
 import org.exoplatform.commons.api.persistence.DataInitializer;
-import org.exoplatform.commons.notification.impl.jpa.email.dao.MailDigestDAO;
-import org.exoplatform.commons.notification.impl.jpa.email.dao.MailNotifDAO;
-import org.exoplatform.commons.notification.impl.jpa.email.dao.MailParamDAO;
 import org.exoplatform.commons.notification.impl.jpa.email.dao.MailQueueDAO;
 import org.exoplatform.commons.notification.impl.jpa.web.dao.WebNotifDAO;
 import org.exoplatform.commons.notification.impl.jpa.web.dao.WebParamsDAO;
@@ -41,11 +38,8 @@ public class CommonsDAOJPAImplTest extends BaseCommonsTestCase {
 
   protected SettingsDAO       settingsDAO;
 
-  protected MailDigestDAO     mailDigestDAO;
 
-  protected MailNotifDAO      mailNotifDAO;
 
-  protected MailParamDAO      mailParamsDAO;
 
   protected MailQueueDAO      mailQueueDAO;
 
@@ -67,9 +61,6 @@ public class CommonsDAOJPAImplTest extends BaseCommonsTestCase {
     settingContextDAO = getService(SettingContextDAO.class);
     settingScopeDAO = getService(SettingScopeDAO.class);
     settingsDAO = getService(SettingsDAO.class);
-    mailDigestDAO = getService(MailDigestDAO.class);
-    mailNotifDAO = getService(MailNotifDAO.class);
-    mailParamsDAO = getService(MailParamDAO.class);
     mailQueueDAO = getService(MailQueueDAO.class);
     webNotifDAO = getService(WebNotifDAO.class);
     webParamsDAO = getService(WebParamsDAO.class);
@@ -83,9 +74,6 @@ public class CommonsDAOJPAImplTest extends BaseCommonsTestCase {
     assertNotNull(settingContextDAO);
     assertNotNull(settingScopeDAO);
     assertNotNull(settingsDAO);
-    assertNotNull(mailDigestDAO);
-    assertNotNull(mailNotifDAO);
-    assertNotNull(mailParamsDAO);
     assertNotNull(mailQueueDAO);
     assertNotNull(webNotifDAO);
     assertNotNull(webParamsDAO);
@@ -121,11 +109,8 @@ public class CommonsDAOJPAImplTest extends BaseCommonsTestCase {
     settingContextDAO.deleteAll();
     restartTransaction();
 
-    mailParamsDAO.deleteAll();
     restartTransaction();
-    mailDigestDAO.deleteAll();
     restartTransaction();
-    mailNotifDAO.deleteAll();
     restartTransaction();
 
     webParamsDAO.deleteAll();

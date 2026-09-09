@@ -22,7 +22,6 @@ import java.util.concurrent.Callable;
 
 import org.quartz.*;
 
-import org.exoplatform.commons.api.notification.model.ArgumentLiteral;
 import org.exoplatform.commons.api.notification.service.NotificationCompletionService;
 import org.exoplatform.commons.notification.NotificationUtils;
 import org.exoplatform.commons.utils.CommonsUtils;
@@ -34,15 +33,6 @@ import org.exoplatform.services.log.Log;
 public abstract class NotificationJob implements Job {
   /** Defines the Logger instance*/
   protected static final Log LOG = ExoLogger.getLogger(NotificationJob.class);
-  
-  /** Define the argument parameter for DAILY job with Boolean type */  
-  public final static ArgumentLiteral<Boolean> JOB_DAILY = new ArgumentLiteral<Boolean>(Boolean.class, "jobDaily");
-  
-  /** Define the argument parameter for DAY OF JOB job with String type */  
-  public final static ArgumentLiteral<String> DAY_OF_JOB = new ArgumentLiteral<String>(String.class, "dayOfJob");
-  
-  /** Define the argument parameter for WEEKLY job with Boolean type */
-  public final static ArgumentLiteral<Boolean> JOB_WEEKLY = new ArgumentLiteral<Boolean>(Boolean.class, "jobWeekly");
 
   private ExoContainer container;
 

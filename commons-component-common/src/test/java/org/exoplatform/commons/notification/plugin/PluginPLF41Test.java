@@ -18,8 +18,6 @@
  */
 package org.exoplatform.commons.notification.plugin;
 
-import java.io.Writer;
-
 import org.exoplatform.commons.api.notification.NotificationContext;
 import org.exoplatform.commons.api.notification.model.MessageInfo;
 import org.exoplatform.commons.api.notification.model.NotificationInfo;
@@ -51,11 +49,6 @@ public class PluginPLF41Test extends AbstractNotificationPlugin {
     String body = TemplateUtils.processGroovy(templateContext);
 
     return messageInfo.subject(subject).body(body).end();
-  }
-
-  @Override
-  protected boolean makeDigest(NotificationContext ctx, Writer writer) {
-    return false;
   }
 
   @Override
