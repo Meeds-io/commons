@@ -19,11 +19,9 @@
 package io.meeds.commons.digest.dao;
 
 import java.time.Instant;
-
 import java.util.List;
 
 import org.springframework.data.domain.Limit;
-
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -42,7 +40,6 @@ public interface DigestUserDAO extends JpaRepository<DigestUserEntity, Long> {
                                       "UPDATE DigestUser u SET u.weeklyLastSent = :value WHERE u.id = :id AND u.weeklyLastSent = :expected";
 
   DigestUserEntity findByUserId(String userId);
-
 
   /**
    * The daily candidates of the sender job: daily on, watermark old enough,
