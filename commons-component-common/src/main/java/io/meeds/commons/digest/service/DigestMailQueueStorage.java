@@ -56,19 +56,19 @@ public class DigestMailQueueStorage {
   }
 
   /**
-   * Queues the message in the transaction of the caller.
+   * Queues the message in the transaction of the caller. The recipient address
+   * is checked upstream by the builder, which skips the recipient instead of
+   * building; an invalid one reaching this point is a programming error, not
+   * a run failure.
    *
    * @param message the digest email
-   * @return true when the message is queued, false when it has no valid
-   *         recipient address (then nothing is written)
+   * @throws IllegalArgumentException when the message has no valid recipient
+   *           address
    */
-  public boolean enqueue(MessageInfo message) {
-    if (message == null || StringUtils.isBlank(message.getTo())) {
-      return false;
-    }
-    if (!NotificationUtils.isValidEmailAddresses(message.getTo())) {
-      LOG.warn("The email {} is not valid for sending the digest", message.getTo());
-      return false;
+  public void enqueue(MessageInfo message) {
+    if (message == null || StringUtils.isBlank(message.getTo()) || !NotificationUtils.isValidEmailAddresses(message.getTo())) {
+      throw new IllegalArgumentException("The digest email has no valid recipient address: "
+          + (message == null ? null : message.getTo()));
     }
     MailQueueEntity entity = new MailQueueEntity();
     entity.setType(message.getPluginId());
@@ -80,7 +80,6 @@ public class DigestMailQueueStorage {
     entity.setCreationDate(Calendar.getInstance());
     mailQueueDAO.save(entity);
     broadcastQueued(message);
-    return true;
   }
 
   /** The same event the legacy queue fires, the queue capacity manager counts it */

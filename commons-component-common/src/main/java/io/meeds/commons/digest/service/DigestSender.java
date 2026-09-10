@@ -31,10 +31,7 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Limit;
 import org.springframework.stereotype.Component;
 
 import org.exoplatform.container.ExoContainer;
@@ -63,8 +60,8 @@ public class DigestSender {
    */
   private static final long                CANDIDATE_CUTOFF_HOURS = 1;
 
-  /** The candidates are read by pages of this size, never the whole table at once */
-  static final int                         CANDIDATE_PAGE_SIZE    = 500;
+  /** The candidates are read by batches of this size, never the whole table at once */
+  static final int                         CANDIDATE_BATCH_SIZE   = 500;
 
   private final DigestScheduleStorage      scheduleStorage;
 
@@ -137,25 +134,32 @@ public class DigestSender {
   }
 
   /**
-   * The indexed query narrows the candidates, page by page; the exact "past
-   * the send hour in his timezone, not served yet today or this week" check is
-   * done here, in Java, portable across databases
+   * The indexed query narrows the candidates, batch by batch on the id (keyset:
+   * a candidate claimed by another node while the scan runs shifts nothing);
+   * the exact "past the send hour in his timezone, not served yet today or this
+   * week" check is done here, in Java, portable across databases
    */
   private void selectDueUsers(Instant now, Map<Long, DueUser> dueUsers) {
     Instant cutoff = now.minus(CANDIDATE_CUTOFF_HOURS, ChronoUnit.HOURS);
+    int batchSize = candidateBatchSize();
     for (DigestFrequency frequency : DigestFrequency.values()) {
-      Pageable pageable = PageRequest.of(0, CANDIDATE_PAGE_SIZE, Sort.by("id"));
-      Page<DigestUserEntity> page;
+      long afterId = 0;
+      List<DigestUserEntity> batch;
       do {
-        page = scheduleStorage.findCandidates(frequency, cutoff, pageable);
-        for (DigestUserEntity user : page.getContent()) {
+        batch = scheduleStorage.findCandidates(frequency, cutoff, afterId, Limit.of(batchSize));
+        for (DigestUserEntity user : batch) {
           if (dueCalculator.isDue(user, frequency, now)) {
             dueUsers.computeIfAbsent(user.getId(), id -> new DueUser(user)).frequencies.add(frequency);
           }
+          afterId = user.getId();
         }
-        pageable = pageable.next();
-      } while (page.hasNext());
+      } while (batch.size() == batchSize);
     }
+  }
+
+  /** How many candidates one query reads; a test lowers it */
+  protected int candidateBatchSize() {
+    return CANDIDATE_BATCH_SIZE;
   }
 
   /**

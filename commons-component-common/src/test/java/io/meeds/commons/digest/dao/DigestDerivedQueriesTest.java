@@ -22,18 +22,18 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Limit;
 import org.springframework.data.jpa.repository.support.JpaRepositoryFactory;
 
 import org.exoplatform.commons.api.notification.model.MessageInfo;
 import org.exoplatform.commons.notification.impl.jpa.email.entity.MailQueueEntity;
 import org.exoplatform.commons.persistence.impl.EntityManagerService;
 import org.exoplatform.jpa.BaseTest;
+import org.exoplatform.services.listener.ListenerService;
 
 import io.meeds.commons.digest.entity.DigestItemEntity;
 import io.meeds.commons.digest.entity.DigestUserEntity;
+import io.meeds.commons.digest.service.DigestMailQueueStorage;
 
 import jakarta.persistence.EntityManager;
 
@@ -129,15 +129,16 @@ public class DigestDerivedQueriesTest extends BaseTest {
     assertNull(userDAO.findByUserId("nobody"));
 
     // The candidates of the sender: frequency on, watermark before the cutoff,
-    // one page at a time, sorted by id so that the pages never overlap
-    Page<DigestUserEntity> daily = userDAO.findByDailyTrueAndDailyLastSentBefore(NOW, PageRequest.of(0, 1, Sort.by("id")));
-    assertEquals(1, daily.getTotalElements());
-    assertEquals("ayoub", daily.getContent().get(0).getUserId());
-    assertFalse(daily.hasNext());
-    Page<DigestUserEntity> weekly = userDAO.findByWeeklyTrueAndWeeklyLastSentBefore(NOW, PageRequest.of(0, 1, Sort.by("id")));
-    assertEquals(2, weekly.getTotalElements());
-    assertTrue(weekly.hasNext());
-    assertEquals("john", userDAO.findByWeeklyTrueAndWeeklyLastSentBefore(NOW, weekly.nextPageable()).getContent().get(0).getUserId());
+    // read by keyset on the id, one batch at a time
+    List<DigestUserEntity> daily = userDAO.findByDailyTrueAndDailyLastSentBeforeAndIdGreaterThanOrderByIdAsc(NOW, 0, Limit.of(1));
+    assertEquals(1, daily.size());
+    assertEquals("ayoub", daily.get(0).getUserId());
+    assertTrue(userDAO.findByDailyTrueAndDailyLastSentBeforeAndIdGreaterThanOrderByIdAsc(NOW, daily.get(0).getId(), Limit.of(1)).isEmpty());
+    List<DigestUserEntity> weekly = userDAO.findByWeeklyTrueAndWeeklyLastSentBeforeAndIdGreaterThanOrderByIdAsc(NOW, 0, Limit.of(1));
+    assertEquals(1, weekly.size());
+    assertEquals("ayoub", weekly.get(0).getUserId());
+    List<DigestUserEntity> nextWeekly = userDAO.findByWeeklyTrueAndWeeklyLastSentBeforeAndIdGreaterThanOrderByIdAsc(NOW, weekly.get(0).getId(), Limit.of(1));
+    assertEquals("john", nextWeekly.get(0).getUserId());
 
     // The claim through the proxy
     assertEquals(1, userDAO.updateDailyWatermark(ayoub.getId(), BEFORE, NOW));
@@ -146,28 +147,35 @@ public class DigestDerivedQueriesTest extends BaseTest {
   }
 
   public void testMailQueueRowIsWrittenTheWayTheSenderJobReadsIt() {
+    // Through the digest writer itself, on the same proxy the Spring context
+    // builds; read back through the named query the legacy queue reader uses
+    DigestMailQueueStorage storage = new DigestMailQueueStorage(mailQueueDAO, getService(ListenerService.class));
+    entityManager.createQuery("DELETE FROM NotificationsMailQueueEntity").executeUpdate();
     MessageInfo message = new MessageInfo().pluginId("digest")
-                                           .from("noreply@example.com")
-                                           .to("ayoub@example.com")
+                                           .from("Platform<noreply@example.com>")
+                                           .to("Ayoub Z<ayoub@example.com>")
                                            .subject("Your daily recap")
                                            .body("<p>hi</p>")
+                                           .footer("footer")
                                            .end();
-    MailQueueEntity row = new MailQueueEntity();
-    row.setType(message.getPluginId());
-    row.setFrom(message.getFrom());
-    row.setTo(message.getTo());
-    row.setSubject(message.getSubject());
-    row.setBody(message.getBody());
-    row.setCreationDate(java.util.Calendar.getInstance());
-    long id = mailQueueDAO.save(row).getId();
+
+    storage.enqueue(message);
     entityManager.flush();
     entityManager.clear();
 
-    MailQueueEntity read = entityManager.find(MailQueueEntity.class, id);
-    assertNotNull(read);
+    List<MailQueueEntity> queued = entityManager.createNamedQuery("NotificationsMailQueueEntity.getMessagesInQueue", MailQueueEntity.class)
+                                                .getResultList();
+    assertEquals(1, queued.size());
+    MailQueueEntity read = queued.get(0);
+    assertTrue(read.getId() > 0);
     assertEquals("digest", read.getType());
-    assertEquals("ayoub@example.com", read.getTo());
-    mailQueueDAO.deleteById(id);
+    assertEquals("Platform<noreply@example.com>", read.getFrom());
+    assertEquals("Ayoub Z<ayoub@example.com>", read.getTo());
+    assertEquals("Your daily recap", read.getSubject());
+    assertEquals("<p>hi</p>", read.getBody());
+    assertEquals("footer", read.getFooter());
+    assertNotNull(read.getCreationDate());
+    mailQueueDAO.deleteById(read.getId());
   }
 
 }

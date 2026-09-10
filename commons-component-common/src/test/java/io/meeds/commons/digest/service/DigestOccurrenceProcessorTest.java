@@ -95,7 +95,6 @@ public class DigestOccurrenceProcessorTest {
     lenient().when(scheduleStorage.findItems(USERNAME, PREVIOUS, NOW)).thenReturn(List.of(new DigestItemEntity()));
     lenient().when(mailBuilder.build(eq(user), eq(DigestFrequency.DAILY), eq(settings), any(), eq(PREVIOUS), eq(NOW)))
              .thenReturn(new MessageInfo());
-    lenient().when(mailQueueStorage.enqueue(any())).thenReturn(true);
   }
 
   @Test
@@ -180,12 +179,16 @@ public class DigestOccurrenceProcessorTest {
   }
 
   @Test
-  public void testRefusedMessageIsAnExceptionSoTheTransactionRollsBack() {
-    when(mailQueueStorage.enqueue(any())).thenReturn(false);
+  public void testUnusableRecipientIsConsumedLikeAnEmptyOccurrenceNotRetried() {
+    // The builder answers null for a recipient with no usable address (a
+    // property of the user, not of the run): the occurrence commits, the
+    // covered items go, nothing is thrown, nothing is retried every hour
+    when(mailBuilder.build(any(), any(), any(), any(), any(), any())).thenReturn(null);
 
-    assertThrows(IllegalStateException.class, () -> processor.serve(user, DigestFrequency.DAILY, NOW));
+    assertTrue(processor.serve(user, DigestFrequency.DAILY, NOW));
 
-    verify(scheduleStorage, never()).deleteCoveredItems(anyString(), any());
+    verify(mailQueueStorage, never()).enqueue(any());
+    verify(scheduleStorage).deleteCoveredItems(eq(USERNAME), any());
   }
 
   @Test

@@ -21,8 +21,7 @@ package io.meeds.commons.digest.service;
 import java.time.Instant;
 import java.util.List;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Limit;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -49,19 +48,20 @@ public class DigestScheduleStorage {
   }
 
   /**
-   * One page of the candidates of a frequency: the frequency is on and the
-   * watermark is older than the cutoff. The exact "due now in his timezone"
-   * check is done in Java by the caller, the query only narrows the set.
+   * One batch of the candidates of a frequency: the frequency is on and the
+   * watermark is older than the cutoff, ids after the last one seen, ascending.
+   * The exact "due now in his timezone" check is done in Java by the caller,
+   * the query only narrows the set.
    *
    * @param frequency daily or weekly
    * @param cutoff the watermark must be before it
-   * @param pageable the page to read, sorted by id so that the pages don't
-   *          overlap
-   * @return the page of candidates
+   * @param afterId only rows with a greater id, 0 for the first batch
+   * @param limit how many rows at most
+   * @return the candidates, by ascending id
    */
-  public Page<DigestUserEntity> findCandidates(DigestFrequency frequency, Instant cutoff, Pageable pageable) {
-    return frequency == DigestFrequency.DAILY ? digestUserDAO.findByDailyTrueAndDailyLastSentBefore(cutoff, pageable)
-                                              : digestUserDAO.findByWeeklyTrueAndWeeklyLastSentBefore(cutoff, pageable);
+  public List<DigestUserEntity> findCandidates(DigestFrequency frequency, Instant cutoff, long afterId, Limit limit) {
+    return frequency == DigestFrequency.DAILY ? digestUserDAO.findByDailyTrueAndDailyLastSentBeforeAndIdGreaterThanOrderByIdAsc(cutoff, afterId, limit)
+                                              : digestUserDAO.findByWeeklyTrueAndWeeklyLastSentBeforeAndIdGreaterThanOrderByIdAsc(cutoff, afterId, limit);
   }
 
   public DigestUserEntity find(long id) {

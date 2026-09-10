@@ -20,6 +20,7 @@ package io.meeds.commons.digest.service;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
@@ -40,15 +41,13 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Limit;
 
 import io.meeds.commons.digest.entity.DigestUserEntity;
 import io.meeds.commons.digest.model.DigestFrequency;
 
 /**
- * One run of the sender: the cleanup first, the candidates read page by page
+ * One run of the sender: the cleanup first, the candidates read batch by batch
  * and checked in Java, one task per due user serving his frequencies in order,
  * and a failing occurrence that never stops the run. What happens inside an
  * occurrence is {@link DigestOccurrenceProcessorTest}.
@@ -75,6 +74,8 @@ public class DigestSenderTest {
 
   private final AtomicInteger       containerRuns = new AtomicInteger();
 
+  private int                       batchSize     = DigestSender.CANDIDATE_BATCH_SIZE;
+
   @Before
   public void setUp() throws Exception {
     // One thread and no container: the tasks run inline, the assertions are
@@ -85,10 +86,15 @@ public class DigestSenderTest {
         containerRuns.incrementAndGet();
         task.run();
       }
+
+      @Override
+      protected int candidateBatchSize() {
+        return batchSize;
+      }
     };
     user = new DigestUserEntity(7L, USERNAME, true, false, "Europe/Paris", PREVIOUS, null);
-    lenient().when(scheduleStorage.findCandidates(eq(DigestFrequency.DAILY), any(), any())).thenReturn(page(user));
-    lenient().when(scheduleStorage.findCandidates(eq(DigestFrequency.WEEKLY), any(), any())).thenReturn(page());
+    lenient().when(scheduleStorage.findCandidates(eq(DigestFrequency.DAILY), any(), anyLong(), any())).thenReturn(List.of(user));
+    lenient().when(scheduleStorage.findCandidates(eq(DigestFrequency.WEEKLY), any(), anyLong(), any())).thenReturn(List.of());
     lenient().when(dueCalculator.isDue(eq(user), eq(DigestFrequency.DAILY), any())).thenReturn(true);
     lenient().when(occurrenceProcessor.serve(any(), any(), any())).thenReturn(true);
   }
@@ -110,8 +116,8 @@ public class DigestSenderTest {
     // must read its items before the daily deletes what both have covered, so
     // the same task serves both, in this order
     DigestUserEntity both = new DigestUserEntity(7L, USERNAME, true, true, "Europe/Paris", PREVIOUS, PREVIOUS.minusSeconds(3600 * 24 * 6));
-    when(scheduleStorage.findCandidates(eq(DigestFrequency.DAILY), any(), any())).thenReturn(page(both));
-    when(scheduleStorage.findCandidates(eq(DigestFrequency.WEEKLY), any(), any())).thenReturn(page(both));
+    when(scheduleStorage.findCandidates(eq(DigestFrequency.DAILY), any(), anyLong(), any())).thenReturn(List.of(both));
+    when(scheduleStorage.findCandidates(eq(DigestFrequency.WEEKLY), any(), anyLong(), any())).thenReturn(List.of(both));
     when(dueCalculator.isDue(eq(both), any(), any())).thenReturn(true);
 
     sender.processDueDigests();
@@ -134,22 +140,23 @@ public class DigestSenderTest {
   }
 
   @Test
-  public void testCandidatesAreReadPageByPage() {
-    // Two pages of candidates: the second one must be read too, and the same
-    // user is never served twice
+  public void testCandidatesAreReadBatchByBatchOnTheirId() {
+    // Batches of one: the scan asks for the ids after the last one seen until a
+    // batch comes back short, and the same user is never served twice
+    batchSize = 1;
     DigestUserEntity second = new DigestUserEntity(8L, "mary", true, false, "Europe/Paris", PREVIOUS, null);
-    Page<DigestUserEntity> firstPage = new PageImpl<>(List.of(user), Pageable.ofSize(1), 2);
-    Page<DigestUserEntity> secondPage = new PageImpl<>(List.of(second), Pageable.ofSize(1).withPage(1), 2);
-    when(scheduleStorage.findCandidates(eq(DigestFrequency.DAILY), any(), any())).thenReturn(firstPage, secondPage);
+    when(scheduleStorage.findCandidates(eq(DigestFrequency.DAILY), any(), anyLong(), any())).thenReturn(List.of(user),
+                                                                                                       List.of(second),
+                                                                                                       List.of());
     when(dueCalculator.isDue(any(), eq(DigestFrequency.DAILY), any())).thenReturn(true);
 
     sender.processDueDigests();
 
-    ArgumentCaptor<Pageable> pages = ArgumentCaptor.forClass(Pageable.class);
-    verify(scheduleStorage, times(2)).findCandidates(eq(DigestFrequency.DAILY), any(), pages.capture());
-    assertEquals(0, pages.getAllValues().get(0).getPageNumber());
-    assertEquals(1, pages.getAllValues().get(1).getPageNumber());
-    assertEquals(DigestSender.CANDIDATE_PAGE_SIZE, pages.getAllValues().get(0).getPageSize());
+    ArgumentCaptor<Long> afterIds = ArgumentCaptor.forClass(Long.class);
+    ArgumentCaptor<Limit> limits = ArgumentCaptor.forClass(Limit.class);
+    verify(scheduleStorage, times(3)).findCandidates(eq(DigestFrequency.DAILY), any(), afterIds.capture(), limits.capture());
+    assertEquals(List.of(0L, 7L, 8L), afterIds.getAllValues());
+    assertEquals(1, limits.getAllValues().get(0).max());
     verify(occurrenceProcessor).serve(eq(user), eq(DigestFrequency.DAILY), any());
     verify(occurrenceProcessor).serve(eq(second), eq(DigestFrequency.DAILY), any());
   }
@@ -159,8 +166,8 @@ public class DigestSenderTest {
     // The transaction of the failing occurrence rolled back on its own: the
     // sender has nothing to give back, it only goes on with the next one
     DigestUserEntity both = new DigestUserEntity(7L, USERNAME, true, true, "Europe/Paris", PREVIOUS, PREVIOUS);
-    when(scheduleStorage.findCandidates(eq(DigestFrequency.DAILY), any(), any())).thenReturn(page(both));
-    when(scheduleStorage.findCandidates(eq(DigestFrequency.WEEKLY), any(), any())).thenReturn(page(both));
+    when(scheduleStorage.findCandidates(eq(DigestFrequency.DAILY), any(), anyLong(), any())).thenReturn(List.of(both));
+    when(scheduleStorage.findCandidates(eq(DigestFrequency.WEEKLY), any(), anyLong(), any())).thenReturn(List.of(both));
     when(dueCalculator.isDue(eq(both), any(), any())).thenReturn(true);
     doThrow(new IllegalStateException("smtp down")).when(occurrenceProcessor).serve(eq(both), eq(DigestFrequency.DAILY), any());
 
@@ -176,10 +183,6 @@ public class DigestSenderTest {
     sender.processDueDigests();
 
     verify(occurrenceProcessor).serve(eq(user), eq(DigestFrequency.DAILY), any());
-  }
-
-  private static Page<DigestUserEntity> page(DigestUserEntity... users) {
-    return new PageImpl<>(List.of(users));
   }
 
 }

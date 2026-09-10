@@ -244,6 +244,16 @@ public class DigestMailBuilderTest {
   }
 
   @Test
+  public void testRecipientWithAnUnusableAddressGetsNothing() {
+    // A "Lastname, Firstname" display name splits into two addresses for the
+    // strict parser the mail queue uses: the recipient is skipped here, once,
+    // instead of being rebuilt and refused every hour by the queue
+    when(recipientResolver.getEmail(USERNAME)).thenReturn("Smith, John<john@example.com>");
+    List<DigestItemEntity> items = List.of(item(1, "SpaceInvitationPlugin", "spaces", "spaceId", "1"));
+    assertNull(builder.build(user, DigestFrequency.DAILY, settings(List.of("spaces"), List.of()), items, FROM, UNTIL));
+  }
+
+  @Test
   public void testLineArgumentsAreEscaped() {
     List<DigestItemEntity> items = List.of(item(1, "SpaceInvitationPlugin", "spaces", "spaceId", "<script>"));
     MessageInfo message = builder.build(user, DigestFrequency.DAILY, settings(List.of("spaces"), List.of()), items, FROM, UNTIL);
