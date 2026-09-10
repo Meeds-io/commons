@@ -121,4 +121,24 @@ public class HTMLSanitizerTest {
     String sanitized = HTMLSanitizer.sanitize(input);
     assertEquals("<a class=\"class\" href=\"tel:&#43;21612345678\" rel=\"nofollow\">link</a>", sanitized);
   }
+
+  @Test
+  public void testAllowTypographicPunctuationInLinks() throws Exception {
+    // Safari copies URLs decoded: spaces, accents and typographic apostrophes (U+2019)
+    // reach the sanitizer raw instead of percent-encoded (EXO-89915); the sanitizer re-encodes spaces
+    String input = "<a href=\"https://www.inria.fr/sites/default/files/2026-04/Charte d\u2019engagement Inria pour l\u2019inclusivit\u00e9 LGBTI+_0.pdf\">link</a>";
+    String sanitized = HTMLSanitizer.sanitize(input);
+    assertEquals("<a href=\"https://www.inria.fr/sites/default/files/2026-04/Charte%20d\u2019engagement%20Inria%20pour%20l\u2019inclusivit\u00e9%20LGBTI&#43;_0.pdf\" rel=\"nofollow\">link</a>",
+                 sanitized);
+
+    input = "<a href=\"/portal/rest/documents/Charte d\u2019engagement \u2013 2026.pdf\">link</a>";
+    sanitized = HTMLSanitizer.sanitize(input);
+    assertEquals("<a href=\"/portal/rest/documents/Charte%20d\u2019engagement%20\u2013%202026.pdf\" rel=\"nofollow\">link</a>", sanitized);
+
+    // the widened character classes must not open the protocol or attribute boundary
+    assertEquals("link", HTMLSanitizer.sanitize("<a href=\"javascript:alert(\u2019x\u2019)\">link</a>"));
+    assertEquals("link", HTMLSanitizer.sanitize("<a href=\"data:text/html,\u2019<script>\u2019\">link</a>"));
+    assertEquals("<a href=\"https://x.fr/a\u2019\" rel=\"nofollow\">link</a>",
+                 HTMLSanitizer.sanitize("<a href=\"https://x.fr/a\u2019\" onmouseover=\"alert(1)\">link</a>"));
+  }
 }
