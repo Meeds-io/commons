@@ -31,66 +31,59 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
 
-import org.exoplatform.commons.api.notification.model.MessageInfo;
-import org.exoplatform.commons.api.notification.service.QueueMessage;
 import org.exoplatform.container.ExoContainer;
 import org.exoplatform.container.ExoContainerContext;
 import org.exoplatform.container.PortalContainer;
 import org.exoplatform.container.component.RequestLifeCycle;
 
-import io.meeds.commons.digest.entity.DigestItemEntity;
 import io.meeds.commons.digest.entity.DigestUserEntity;
 import io.meeds.commons.digest.model.DigestFrequency;
-import io.meeds.commons.digest.model.DigestUserSettings;
 
 /**
- * One run of the digest sender: the safety cleanup, then every due user is
- * claimed, served and cleaned. Several servers may run it at the same time: the
- * claim (a guarded update of the watermark) makes sure an occurrence is served
- * once. The administrator switch gates only the email: when it is off the
- * occurrence is still claimed and the covered items still deleted, exactly as
- * if the user had unchecked every category.
+ * One run of the digest sender job: the safety cleanup, then the selection of
+ * the users due now, then one task per due user serving his frequencies one
+ * after the other, on a small worker pool. Each occurrence is one transaction
+ * of {@link DigestOccurrenceProcessor}: whatever fails in it rolls back, claim
+ * included, and the user is served again at the next run.
  */
 @Component
 public class DigestSender {
 
-  private static final Logger         LOG                    = LoggerFactory.getLogger(DigestSender.class);
+  private static final Logger              LOG                    = LoggerFactory.getLogger(DigestSender.class);
 
   /**
-   * A user served during the last hour was served by this very run or by the
-   * previous one: the pre-filter only prunes those, the exact local calendar
-   * check does the rest
+   * A user served in the last hour can't be due again (the frequencies are
+   * daily at best): the query leaves him out before the exact check in Java
    */
-  private static final long           CANDIDATE_CUTOFF_HOURS = 1;
+  private static final long                CANDIDATE_CUTOFF_HOURS = 1;
 
-  private final DigestSettingStorage  settingStorage;
+  /** The candidates are read by pages of this size, never the whole table at once */
+  static final int                         CANDIDATE_PAGE_SIZE    = 500;
 
-  private final DigestScheduleStorage scheduleStorage;
+  private final DigestScheduleStorage      scheduleStorage;
 
-  private final DigestDueCalculator   dueCalculator;
+  private final DigestDueCalculator        dueCalculator;
 
-  private final DigestMailBuilder     mailBuilder;
+  private final DigestOccurrenceProcessor  occurrenceProcessor;
 
-  private final QueueMessage          queueMessage;
+  private final int                        threads;
 
-  private final int                   threads;
+  private final int                        retentionDays;
 
-  private final int                   retentionDays;
-
-  public DigestSender(DigestSettingStorage settingStorage,
-                      DigestScheduleStorage scheduleStorage,
+  public DigestSender(DigestScheduleStorage scheduleStorage,
                       DigestDueCalculator dueCalculator,
-                      DigestMailBuilder mailBuilder,
-                      QueueMessage queueMessage,
+                      DigestOccurrenceProcessor occurrenceProcessor,
                       @Value("${exo.notification.digest.threads:4}") int threads,
                       @Value("${exo.notification.digest.retention.days:8}") int retentionDays) {
-    this.settingStorage = settingStorage;
     this.scheduleStorage = scheduleStorage;
     this.dueCalculator = dueCalculator;
-    this.mailBuilder = mailBuilder;
-    this.queueMessage = queueMessage;
+    this.occurrenceProcessor = occurrenceProcessor;
     this.threads = Math.max(1, threads);
     this.retentionDays = Math.max(1, retentionDays);
   }
@@ -104,16 +97,7 @@ public class DigestSender {
     // task: the deletion at the end of the first must never race the reading of
     // the items by the second
     Map<Long, DueUser> dueUsers = new LinkedHashMap<>();
-    runInContainer(() -> {
-      Instant cutoff = now.minus(CANDIDATE_CUTOFF_HOURS, ChronoUnit.HOURS);
-      for (DigestFrequency frequency : DigestFrequency.values()) {
-        for (DigestUserEntity user : scheduleStorage.findCandidates(frequency, cutoff)) {
-          if (dueCalculator.isDue(user, frequency, now)) {
-            dueUsers.computeIfAbsent(user.getId(), id -> new DueUser(user)).frequencies.add(frequency);
-          }
-        }
-      }
-    });
+    runInContainer(() -> selectDueUsers(now, dueUsers));
     if (dueUsers.isEmpty()) {
       return;
     }
@@ -153,83 +137,48 @@ public class DigestSender {
   }
 
   /**
-   * Serves one occurrence of one user. The claim comes first; when the email
-   * can't be built or queued, the occurrence is given back so the next run
-   * serves it again: an item is late, never lost.
+   * The indexed query narrows the candidates, page by page; the exact "past
+   * the send hour in his timezone, not served yet today or this week" check is
+   * done here, in Java, portable across databases
    */
-  void serve(DigestUserEntity user, DigestFrequency frequency, Instant now) {
-    Instant previous = frequency == DigestFrequency.DAILY ? user.getDailyLastSent() : user.getWeeklyLastSent();
-    if (!scheduleStorage.claim(user.getId(), frequency, previous, now)) {
-      return;
-    }
-    String username = user.getUserId();
-    try {
-      DigestUserSettings settings = settingStorage.getUserSettings(username);
-      if (!settings.isDaily() && !settings.isWeekly()) {
-        // A row with no enabled frequency in the settings has no owner any more:
-        // the settings are the truth, and they only vanish with the account (a
-        // deleted user is forgotten here, at his next occurrence)
-        LOG.info("The digest settings of {} are gone, his digest data is deleted", username);
-        scheduleStorage.forget(user.getId(), username);
-        return;
-      }
-      if (settingStorage.isDigestAllowed()) {
-        if (frequency == DigestFrequency.DAILY ? settings.isDaily() : settings.isWeekly()) {
-          List<DigestItemEntity> items = scheduleStorage.findItems(username, previous, now);
-          MessageInfo message = items.isEmpty() ? null : mailBuilder.build(user, frequency, settings, items, previous, now);
-          if (message == null) {
-            LOG.info("No {} digest for {}: nothing to say since {} ({} waiting items in the window)",
-                     frequency,
-                     username,
-                     previous,
-                     items.size());
-          } else if (queueMessage.put(message)) {
-            LOG.info("The {} digest of {} is in the mail queue: {}", frequency, username, message.getSubject());
-          } else {
-            throw new IllegalStateException("The mail queue refused the message");
+  private void selectDueUsers(Instant now, Map<Long, DueUser> dueUsers) {
+    Instant cutoff = now.minus(CANDIDATE_CUTOFF_HOURS, ChronoUnit.HOURS);
+    for (DigestFrequency frequency : DigestFrequency.values()) {
+      Pageable pageable = PageRequest.of(0, CANDIDATE_PAGE_SIZE, Sort.by("id"));
+      Page<DigestUserEntity> page;
+      do {
+        page = scheduleStorage.findCandidates(frequency, cutoff, pageable);
+        for (DigestUserEntity user : page.getContent()) {
+          if (dueCalculator.isDue(user, frequency, now)) {
+            dueUsers.computeIfAbsent(user.getId(), id -> new DueUser(user)).frequencies.add(frequency);
           }
         }
-      }
-    } catch (Exception e) {
-      LOG.warn("The {} digest of {} can't be sent now, it will be retried at the next run: {}", frequency, username, e.getMessage());
-      LOG.debug("Digest failure of {}", username, e);
-      if (!scheduleStorage.release(user.getId(), frequency, now, previous)) {
-        LOG.error("The {} occurrence of {} could not be given back, its items will be sent with the next digest or cleaned up",
-                  frequency,
-                  username);
-      }
-      return;
+        pageable = pageable.next();
+      } while (page.hasNext());
     }
-    deleteCoveredItems(user.getId(), username);
   }
 
   /**
-   * An item is deleted once every frequency the user enabled has passed over
-   * it: up to the oldest watermark of his enabled frequencies. Read fresh, the
-   * row may have changed since the candidates were listed.
+   * One occurrence, one transaction. A failure is logged and leaves the
+   * occurrence untouched: the rollback gives it back, the next run serves it
+   * again with everything it covers.
    */
-  private void deleteCoveredItems(long id, String username) {
-    DigestUserEntity fresh = scheduleStorage.find(id);
-    if (fresh == null) {
-      return;
-    }
-    Instant covered = null;
-    if (fresh.isDaily()) {
-      covered = fresh.getDailyLastSent();
-    }
-    if (fresh.isWeekly() && fresh.getWeeklyLastSent() != null
-        && (covered == null || fresh.getWeeklyLastSent().isBefore(covered))) {
-      covered = fresh.getWeeklyLastSent();
-    }
-    if (covered != null) {
-      scheduleStorage.deleteCoveredItems(username, covered);
+  void serve(DigestUserEntity user, DigestFrequency frequency, Instant now) {
+    try {
+      occurrenceProcessor.serve(user, frequency, now);
+    } catch (Exception e) {
+      LOG.warn("The {} digest of {} can't be sent now, it will be retried at the next run: {}",
+               frequency,
+               user.getUserId(),
+               e.getMessage());
+      LOG.debug("Digest failure of {}", user.getUserId(), e);
     }
   }
 
   /**
-   * The scheduler and the worker threads have no container nor request of
-   * their own: each task gets the portal container and a request lifecycle,
-   * like a web request would.
+   * Binds the portal container and a request lifecycle to the current thread,
+   * the way the kernel does for a request: the workers run on a bare pool
+   * thread that has none. The previous container, if any, is restored.
    */
   protected void runInContainer(Runnable task) {
     ExoContainer previous = ExoContainerContext.getCurrentContainerIfPresent();

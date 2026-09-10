@@ -19,9 +19,11 @@
 package io.meeds.commons.digest;
 
 import java.util.List;
+import java.util.Locale;
 
 import org.exoplatform.commons.api.notification.model.NotificationInfo;
 
+import io.meeds.commons.digest.model.DigestCategory;
 import io.meeds.commons.digest.model.DigestUserSettings;
 import io.meeds.commons.digest.plugin.DigestCategoryProvider;
 
@@ -66,18 +68,28 @@ public interface DigestService {
    * @param settings the chosen frequencies and their categories
    * @param timeZone the user profile timezone, used to send the digest at the
    *                 right local hour, the server one is used when null
+   * @throws IllegalAccessException when the administrator has not allowed the
+   *           digest mail notifications: nobody can enroll while the switch is
+   *           off, whatever the caller
    * @throws IllegalArgumentException when a frequency is enabled with no
    *           category. The categories that no installed addon provides are
    *           left out instead of being rejected, so that uninstalling an addon
    *           never keeps a user from saving his choices.
    */
-  void saveUserSettings(String username, DigestUserSettings settings, String timeZone);
+  void saveUserSettings(String username, DigestUserSettings settings, String timeZone) throws IllegalAccessException;
 
   /**
    * @return the categories the user can choose from, in display order. Only the
    *         categories of the installed addons are returned.
    */
   List<DigestCategoryProvider> getCategories();
+
+  /**
+   * @param locale the language of the labels
+   * @return the categories the user can choose from, in display order, with
+   *         their label in the given language
+   */
+  List<DigestCategory> getCategories(Locale locale);
 
   /**
    * Stores a notification for the digests of its recipients. For each
