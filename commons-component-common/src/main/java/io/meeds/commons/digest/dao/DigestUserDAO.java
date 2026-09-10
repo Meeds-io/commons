@@ -20,8 +20,9 @@ package io.meeds.commons.digest.dao;
 
 import java.time.Instant;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+import java.util.List;
+
+import org.springframework.data.domain.Limit;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -43,11 +44,15 @@ public interface DigestUserDAO extends JpaRepository<DigestUserEntity, Long> {
   DigestUserEntity findByUserId(String userId);
 
 
-  /** The daily candidates of the sender job: daily on, watermark old enough, one page at a time */
-  Page<DigestUserEntity> findByDailyTrueAndDailyLastSentBefore(Instant cutoff, Pageable pageable);
+  /**
+   * The daily candidates of the sender job: daily on, watermark old enough,
+   * read by keyset (ids after the last one seen, ascending) so that a
+   * candidate claimed by another node during the scan shifts nothing
+   */
+  List<DigestUserEntity> findByDailyTrueAndDailyLastSentBeforeAndIdGreaterThanOrderByIdAsc(Instant cutoff, long afterId, Limit limit);
 
-  /** The weekly candidates of the sender job: weekly on, watermark old enough, one page at a time */
-  Page<DigestUserEntity> findByWeeklyTrueAndWeeklyLastSentBefore(Instant cutoff, Pageable pageable);
+  /** The weekly candidates of the sender job, same keyset read as the daily one */
+  List<DigestUserEntity> findByWeeklyTrueAndWeeklyLastSentBeforeAndIdGreaterThanOrderByIdAsc(Instant cutoff, long afterId, Limit limit);
 
   /**
    * The guarded update behind the claim: the watermark moves only when it still

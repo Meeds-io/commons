@@ -38,6 +38,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import org.exoplatform.commons.api.notification.model.MessageInfo;
+import org.exoplatform.commons.notification.NotificationUtils;
 
 import io.meeds.commons.digest.DigestCategoryRegistry;
 import io.meeds.commons.digest.entity.DigestItemEntity;
@@ -110,8 +111,10 @@ public class DigestMailBuilder {
                            Instant until) {
     String username = user.getUserId();
     String email = recipientResolver.getEmail(username);
-    if (StringUtils.isBlank(email)) {
-      LOG.warn("No email address for the digest recipient {}, his digest is skipped", username);
+    if (StringUtils.isBlank(email) || !NotificationUtils.isValidEmailAddresses(email)) {
+      // A property of the user, not of the run: the occurrence is consumed like
+      // an empty one, never retried, or the job would rebuild and warn every hour
+      LOG.warn("No usable email address for the digest recipient {} ({}), his digest is skipped", username, email);
       return null;
     }
     Locale locale = recipientResolver.getLocale(username);

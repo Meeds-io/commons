@@ -100,10 +100,9 @@ public class DigestOccurrenceProcessor {
                   username,
                   previous,
                   items.size());
-      } else if (mailQueueStorage.enqueue(message)) {
-        LOG.debug("The {} digest of {} is in the mail queue: {}", frequency, username, message.getSubject());
       } else {
-        throw new IllegalStateException("The mail queue refused the message");
+        mailQueueStorage.enqueue(message);
+        LOG.debug("The {} digest of {} is in the mail queue: {}", frequency, username, message.getSubject());
       }
     }
     deleteCoveredItems(user.getId(), username);
