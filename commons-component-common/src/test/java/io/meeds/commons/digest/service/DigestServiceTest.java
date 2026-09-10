@@ -33,6 +33,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 
 import org.exoplatform.container.xml.InitParams;
 import org.exoplatform.container.xml.ValueParam;
@@ -54,6 +55,7 @@ import org.exoplatform.commons.api.notification.model.PluginKey;
 import io.meeds.commons.digest.DigestCategoryRegistry;
 import io.meeds.commons.digest.dao.DigestItemDAO;
 import io.meeds.commons.digest.entity.DigestItemEntity;
+import io.meeds.commons.digest.model.DigestCategory;
 import io.meeds.commons.digest.model.DigestUserSettings;
 import io.meeds.commons.digest.plugin.DigestCategoryPlugin;
 import io.meeds.commons.digest.plugin.DigestCategoryProvider;
@@ -82,6 +84,9 @@ public class DigestServiceTest {
   @Mock
   private DigestSender            digestSender;
 
+  @Mock
+  private DigestLabelResolver     labelResolver;
+
   private DigestServiceImpl       digestService;
 
   @Before
@@ -89,13 +94,40 @@ public class DigestServiceTest {
     DigestCategoryRegistry categoryRegistry = new DigestCategoryRegistry();
     categoryRegistry.addCategoryProvider(categoryPlugin("spaces", 20, "SpaceInvitationPlugin"));
     categoryRegistry.addCategoryProvider(categoryPlugin("feed", 10, "PostActivityPlugin"));
-    digestService = new DigestServiceImpl(settingStorage, enrollmentStorage, categoryRegistry, digestItemDAO, digestSender);
+    digestService = new DigestServiceImpl(settingStorage,
+                                          enrollmentStorage,
+                                          categoryRegistry,
+                                          digestItemDAO,
+                                          digestSender,
+                                          labelResolver);
+    // The administrator allowed the digest, unless a test says otherwise
+    lenient().when(settingStorage.isDigestAllowed()).thenReturn(true);
   }
 
   @Test
   public void testCategoriesAreReturnedInDisplayOrder() {
     List<DigestCategoryProvider> categories = digestService.getCategories();
     assertEquals(Arrays.asList("feed", "spaces"), categories.stream().map(DigestCategoryProvider::getId).toList());
+  }
+
+  @Test
+  public void testCategoriesAreLabelledInTheGivenLanguage() {
+    when(labelResolver.categoryLabel(any(), eq(Locale.FRENCH))).thenAnswer(invocation -> "fr:"
+        + ((DigestCategoryProvider) invocation.getArgument(0)).getId());
+
+    List<DigestCategory> categories = digestService.getCategories(Locale.FRENCH);
+
+    assertEquals(Arrays.asList("feed", "spaces"), categories.stream().map(DigestCategory::getId).toList());
+    assertEquals(Arrays.asList("fr:feed", "fr:spaces"), categories.stream().map(DigestCategory::getLabel).toList());
+  }
+
+  @Test
+  public void testSaveIsRefusedWhileTheAdministratorKeepsTheDigestOff() {
+    // The rule lives in the service: every caller is held to it, not only the
+    // REST one
+    when(settingStorage.isDigestAllowed()).thenReturn(false);
+    assertThrows(IllegalAccessException.class, () -> digestService.saveUserSettings(USERNAME, dailyOn(), TIME_ZONE));
+    verifyNothingWasSaved();
   }
 
   @Test
@@ -122,7 +154,7 @@ public class DigestServiceTest {
   }
 
   @Test
-  public void testSaveLeavesOutTheCategoriesOfAnUninstalledAddon() {
+  public void testSaveLeavesOutTheCategoriesOfAnUninstalledAddon() throws Exception {
     // The user enabled the tasks category before the addon was uninstalled: he
     // must still be able to save, without the category that doesn't exist
     digestService.saveUserSettings(USERNAME,
@@ -138,7 +170,7 @@ public class DigestServiceTest {
   }
 
   @Test
-  public void testSaveKeepsEachCategoryOnce() {
+  public void testSaveKeepsEachCategoryOnce() throws Exception {
     digestService.saveUserSettings(USERNAME,
                                    new DigestUserSettings(true,
                                                           Arrays.asList("spaces", "feed", "spaces"),
@@ -150,7 +182,7 @@ public class DigestServiceTest {
   }
 
   @Test
-  public void testSaveEnrollsBeforeWritingTheSettings() {
+  public void testSaveEnrollsBeforeWritingTheSettings() throws Exception {
     digestService.saveUserSettings(USERNAME, dailyOn(), TIME_ZONE);
 
     // The settings don't belong to any transaction: writing them before a
@@ -170,7 +202,7 @@ public class DigestServiceTest {
   }
 
   @Test
-  public void testSaveEnrollsAgainWhenTheSameUserIsSavedTwiceAtOnce() {
+  public void testSaveEnrollsAgainWhenTheSameUserIsSavedTwiceAtOnce() throws Exception {
     doThrow(new DataIntegrityViolationException("Duplicate USER_ID")).doNothing()
                                                                     .when(enrollmentStorage)
                                                                     .enroll(any(), any(), any());
@@ -305,8 +337,13 @@ public class DigestServiceTest {
     when(settingStorage.isDigestAllowed()).thenReturn(true);
     when(settingStorage.getUserSettings("mary")).thenReturn(dailyOn());
     // The invitation was cancelled and sent again: the first one still waits
-    when(digestItemDAO.existsByUserIdAndPluginIdAndParams("mary", "SpaceInvitationPlugin", "{\"spaceId\":\"42\"}"))
-                                                                                                                  .thenReturn(true);
+    when(digestItemDAO.findByUserIdInAndPluginIdAndParams(List.of("mary"), "SpaceInvitationPlugin", "{\"spaceId\":\"42\"}"))
+                                                                                                                       .thenReturn(List.of(new DigestItemEntity(1L,
+                                                                                                                                                                "mary",
+                                                                                                                                                                "SpaceInvitationPlugin",
+                                                                                                                                                                "spaces",
+                                                                                                                                                                null,
+                                                                                                                                                                "{\"spaceId\":\"42\"}")));
 
     digestService.capture(notification("SpaceInvitationPlugin", "mary"));
 

@@ -19,7 +19,9 @@
 package io.meeds.commons.digest.dao;
 
 import java.time.Instant;
-import java.util.List;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -40,13 +42,12 @@ public interface DigestUserDAO extends JpaRepository<DigestUserEntity, Long> {
 
   DigestUserEntity findByUserId(String userId);
 
-  void deleteByUserId(String userId);
 
-  /** The daily candidates of the sender job: daily on, watermark old enough */
-  List<DigestUserEntity> findByDailyTrueAndDailyLastSentBefore(Instant cutoff);
+  /** The daily candidates of the sender job: daily on, watermark old enough, one page at a time */
+  Page<DigestUserEntity> findByDailyTrueAndDailyLastSentBefore(Instant cutoff, Pageable pageable);
 
-  /** The weekly candidates of the sender job: weekly on, watermark old enough */
-  List<DigestUserEntity> findByWeeklyTrueAndWeeklyLastSentBefore(Instant cutoff);
+  /** The weekly candidates of the sender job: weekly on, watermark old enough, one page at a time */
+  Page<DigestUserEntity> findByWeeklyTrueAndWeeklyLastSentBefore(Instant cutoff, Pageable pageable);
 
   /**
    * The guarded update behind the claim: the watermark moves only when it still

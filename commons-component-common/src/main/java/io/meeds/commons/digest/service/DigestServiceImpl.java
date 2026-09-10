@@ -21,6 +21,7 @@ package io.meeds.commons.digest.service;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -35,6 +36,7 @@ import io.meeds.commons.digest.DigestCategoryRegistry;
 import io.meeds.commons.digest.DigestService;
 import io.meeds.commons.digest.dao.DigestItemDAO;
 import io.meeds.commons.digest.entity.DigestItemEntity;
+import io.meeds.commons.digest.model.DigestCategory;
 import io.meeds.commons.digest.model.DigestUserSettings;
 import io.meeds.commons.digest.plugin.DigestCategoryProvider;
 
@@ -51,16 +53,20 @@ public class DigestServiceImpl implements DigestService {
 
   private final DigestSender                 digestSender;
 
+  private final DigestLabelResolver          labelResolver;
+
   public DigestServiceImpl(DigestSettingStorage settingStorage,
                            DigestEnrollmentStorage enrollmentStorage,
                            DigestCategoryRegistry categoryRegistry,
                            DigestItemDAO digestItemDAO,
-                           DigestSender digestSender) {
+                           DigestSender digestSender,
+                           DigestLabelResolver labelResolver) {
     this.settingStorage = settingStorage;
     this.enrollmentStorage = enrollmentStorage;
     this.categoryRegistry = categoryRegistry;
     this.digestItemDAO = digestItemDAO;
     this.digestSender = digestSender;
+    this.labelResolver = labelResolver;
   }
 
   @Override
@@ -82,7 +88,12 @@ public class DigestServiceImpl implements DigestService {
   }
 
   @Override
-  public void saveUserSettings(String username, DigestUserSettings settings, String timeZone) {
+  public void saveUserSettings(String username, DigestUserSettings settings, String timeZone) throws IllegalAccessException {
+    if (!isDigestAllowed()) {
+      // The rule holds for every caller, not only the REST one: nobody enrolls
+      // while the administrator keeps the digest off
+      throw new IllegalAccessException("digest.notAllowed");
+    }
     if (settings == null) {
       throw new IllegalArgumentException("Digest settings are mandatory");
     }
@@ -99,6 +110,13 @@ public class DigestServiceImpl implements DigestService {
   @Override
   public List<DigestCategoryProvider> getCategories() {
     return categoryRegistry.getCategoryProviders();
+  }
+
+  @Override
+  public List<DigestCategory> getCategories(Locale locale) {
+    return getCategories().stream()
+                          .map(category -> new DigestCategory(category.getId(), labelResolver.categoryLabel(category, locale)))
+                          .toList();
   }
 
   @Override
@@ -121,23 +139,32 @@ public class DigestServiceImpl implements DigestService {
     // the sender must belong to the next window, never to the one being served
     Instant itemDate = Instant.now();
     String params = DigestParamsCodec.serialize(notification.getOwnerParameter());
+    List<String> recipients = notification.getSendToUserIds()
+                                          .stream()
+                                          .filter(StringUtils::isNotBlank)
+                                          .distinct()
+                                          .filter(recipient -> !notification.isExcluded(recipient))
+                                          // The digest is about what happened to me, never
+                                          // about what I did myself
+                                          .filter(recipient -> !StringUtils.equals(recipient, notification.getFrom()))
+                                          .filter(recipient -> wantsCategory(recipient, category))
+                                          .toList();
+    if (recipients.isEmpty()) {
+      return;
+    }
+    // The same notification fired again, like an invitation cancelled and
+    // sent anew, must not fill the digest with the same line twice: one query
+    // for all the recipients tells who already waits for it
+    Set<String> alreadyWaiting = params == null ? Set.of()
+                                                : digestItemDAO.findByUserIdInAndPluginIdAndParams(recipients, pluginId, params)
+                                                               .stream()
+                                                               .map(DigestItemEntity::getUserId)
+                                                               .collect(Collectors.toSet());
     // One saveAll, one transaction: either every enrolled recipient gets his
     // row or none does — the capture never half succeeds
-    List<DigestItemEntity> items = notification.getSendToUserIds()
-                                               .stream()
-                                               .filter(StringUtils::isNotBlank)
-                                               .distinct()
-                                               .filter(recipient -> !notification.isExcluded(recipient))
-                                               // The digest is about what happened to me, never
-                                               // about what I did myself
-                                               .filter(recipient -> !StringUtils.equals(recipient, notification.getFrom()))
-                                               .filter(recipient -> wantsCategory(recipient, category))
-                                               // The same notification fired again, like an
-                                               // invitation cancelled and sent anew, must not
-                                               // fill the digest with the same line twice
-                                               .filter(recipient -> params == null
-                                                   || !digestItemDAO.existsByUserIdAndPluginIdAndParams(recipient, pluginId, params))
-                                               .map(recipient -> new DigestItemEntity(null,
+    List<DigestItemEntity> items = recipients.stream()
+                                             .filter(recipient -> !alreadyWaiting.contains(recipient))
+                                             .map(recipient -> new DigestItemEntity(null,
                                                                                       recipient,
                                                                                       pluginId,
                                                                                       category,

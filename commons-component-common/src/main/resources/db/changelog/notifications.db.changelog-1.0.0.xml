@@ -261,6 +261,9 @@
         <tableExists tableName="NTF_EMAIL_NOTIFS_PARAMS" />
       </preConditions>
       <dropTable tableName="NTF_EMAIL_NOTIFS_PARAMS" />
+      <!-- Irreversible by design: the data of the legacy engine is not kept. An
+           explicit empty rollback keeps a Liquibase rollback from failing here -->
+      <rollback/>
     </changeSet>
 
     <changeSet author="notifications" id="1.0.0-23">
@@ -268,6 +271,9 @@
         <tableExists tableName="NTF_EMAIL_NOTIFS_DIGEST" />
       </preConditions>
       <dropTable tableName="NTF_EMAIL_NOTIFS_DIGEST" />
+      <!-- Irreversible by design: the data of the legacy engine is not kept. An
+           explicit empty rollback keeps a Liquibase rollback from failing here -->
+      <rollback/>
     </changeSet>
 
     <changeSet author="notifications" id="1.0.0-24">
@@ -275,6 +281,9 @@
         <tableExists tableName="NTF_EMAIL_NOTIFS" />
       </preConditions>
       <dropTable tableName="NTF_EMAIL_NOTIFS" />
+      <!-- Irreversible by design: the data of the legacy engine is not kept. An
+           explicit empty rollback keeps a Liquibase rollback from failing here -->
+      <rollback/>
     </changeSet>
 
     <changeSet author="notifications" id="1.0.0-25" dbms="oracle,postgresql,hsqldb">
@@ -282,6 +291,7 @@
         <sequenceExists sequenceName="SEQ_NTF_EMAIL_PARAMS" />
       </preConditions>
       <dropSequence sequenceName="SEQ_NTF_EMAIL_PARAMS" />
+      <rollback/>
     </changeSet>
 
     <changeSet author="notifications" id="1.0.0-26" dbms="oracle,postgresql,hsqldb">
@@ -289,6 +299,7 @@
         <sequenceExists sequenceName="SEQ_NTF_EMAIL_DIGEST" />
       </preConditions>
       <dropSequence sequenceName="SEQ_NTF_EMAIL_DIGEST" />
+      <rollback/>
     </changeSet>
 
     <changeSet author="notifications" id="1.0.0-27" dbms="oracle,postgresql,hsqldb">
@@ -296,6 +307,7 @@
         <sequenceExists sequenceName="SEQ_NTF_EMAIL_NOTIF" />
       </preConditions>
       <dropSequence sequenceName="SEQ_NTF_EMAIL_NOTIF" />
+      <rollback/>
     </changeSet>
 
 </databaseChangeLog>

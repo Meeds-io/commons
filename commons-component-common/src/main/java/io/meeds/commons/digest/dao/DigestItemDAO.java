@@ -19,6 +19,7 @@
 package io.meeds.commons.digest.dao;
 
 import java.time.Instant;
+import java.util.Collection;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -40,8 +41,11 @@ public interface DigestItemDAO extends JpaRepository<DigestItemEntity, Long> {
 
   String DELETE_BY_USER_QUERY    = "DELETE FROM DigestItem i WHERE i.userId = :userId";
 
-  /** Tells whether the same notification is already waiting for this recipient */
-  boolean existsByUserIdAndPluginIdAndParams(String userId, String pluginId, String params);
+  /**
+   * The waiting items of these recipients about the very same notification
+   * (same type, same parameters): one query for every recipient, at capture
+   */
+  List<DigestItemEntity> findByUserIdInAndPluginIdAndParams(Collection<String> userIds, String pluginId, String params);
 
   /** The waiting items of a recipient about one object, matched on a parameter */
   List<DigestItemEntity> findByUserIdAndPluginIdAndParamsContaining(String userId, String pluginId, String paramsFragment);

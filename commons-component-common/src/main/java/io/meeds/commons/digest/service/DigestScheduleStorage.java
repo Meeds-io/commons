@@ -21,6 +21,8 @@ package io.meeds.commons.digest.service;
 import java.time.Instant;
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,8 +33,8 @@ import io.meeds.commons.digest.entity.DigestUserEntity;
 import io.meeds.commons.digest.model.DigestFrequency;
 
 /**
- * The tables as the sender job uses them: who is a candidate, the claim of an
- * occurrence, the items of a window, and the deletions.
+ * The work list of the digest sender job: who is a candidate, the claim of an
+ * occurrence, the waiting items of a user and their deletion.
  */
 @Component
 public class DigestScheduleStorage {
@@ -47,14 +49,19 @@ public class DigestScheduleStorage {
   }
 
   /**
-   * @param frequency the digest to serve
-   * @param cutoff only the users whose watermark is older than this are
-   *          candidates, the exact local time check is done by the caller
-   * @return the pre-filtered candidates, one indexed query
+   * One page of the candidates of a frequency: the frequency is on and the
+   * watermark is older than the cutoff. The exact "due now in his timezone"
+   * check is done in Java by the caller, the query only narrows the set.
+   *
+   * @param frequency daily or weekly
+   * @param cutoff the watermark must be before it
+   * @param pageable the page to read, sorted by id so that the pages don't
+   *          overlap
+   * @return the page of candidates
    */
-  public List<DigestUserEntity> findCandidates(DigestFrequency frequency, Instant cutoff) {
-    return frequency == DigestFrequency.DAILY ? digestUserDAO.findByDailyTrueAndDailyLastSentBefore(cutoff)
-                                              : digestUserDAO.findByWeeklyTrueAndWeeklyLastSentBefore(cutoff);
+  public Page<DigestUserEntity> findCandidates(DigestFrequency frequency, Instant cutoff, Pageable pageable) {
+    return frequency == DigestFrequency.DAILY ? digestUserDAO.findByDailyTrueAndDailyLastSentBefore(cutoff, pageable)
+                                              : digestUserDAO.findByWeeklyTrueAndWeeklyLastSentBefore(cutoff, pageable);
   }
 
   public DigestUserEntity find(long id) {
@@ -62,12 +69,17 @@ public class DigestScheduleStorage {
   }
 
   /**
-   * Claims an occurrence: moves the watermark to now, only if it still has the
-   * value that was read. Of several workers or servers doing it at once, exactly
-   * one succeeds.
+   * Claims an occurrence: moves the watermark of the frequency to now, only if
+   * it still holds the value the caller read. Zero rows means another worker,
+   * or another server, took it first. Joins the transaction of the caller when
+   * there is one: the claim then commits, or rolls back, with what the caller
+   * does with the occurrence.
    *
-   * @return true when this caller got the occurrence, false when another one
-   *         took it
+   * @param userId the work list row id
+   * @param frequency daily or weekly
+   * @param expected the watermark the caller read
+   * @param now the new watermark
+   * @return true when this caller got the occurrence
    */
   @Transactional
   public boolean claim(long userId, DigestFrequency frequency, Instant expected, Instant now) {
@@ -75,21 +87,12 @@ public class DigestScheduleStorage {
   }
 
   /**
-   * Gives an occurrence back after a failure: the watermark returns to its
-   * previous value, so the next run serves the user again instead of losing his
-   * items.
+   * The waiting items of a user in a window, most recent first
    *
-   * @return true when the watermark went back, false when it no longer held the
-   *         claimed value
-   */
-  @Transactional
-  public boolean release(long userId, DigestFrequency frequency, Instant claimed, Instant previous) {
-    return updateWatermark(userId, frequency, claimed, previous) == 1;
-  }
-
-  /**
-   * @return the items of one occurrence, most recent first: received after the
-   *         previous watermark, up to the claim moment
+   * @param username the recipient
+   * @param after excluded lower bound, the previous watermark
+   * @param until included upper bound, the new watermark
+   * @return the items
    */
   public List<DigestItemEntity> findItems(String username, Instant after, Instant until) {
     return digestItemDAO.findByUserIdAndItemDateGreaterThanAndItemDateLessThanEqualOrderByItemDateDesc(username,
@@ -98,8 +101,11 @@ public class DigestScheduleStorage {
   }
 
   /**
-   * Deletes the items every enabled frequency of the user has passed over. An
-   * item filtered out or skipped at an occurrence counts as covered too.
+   * Deletes the items every enabled frequency of the user has covered
+   *
+   * @param username the recipient
+   * @param coveredUntil the oldest watermark of his enabled frequencies
+   * @return how many items were deleted
    */
   @Transactional
   public int deleteCoveredItems(String username, Instant coveredUntil) {
@@ -107,9 +113,10 @@ public class DigestScheduleStorage {
   }
 
   /**
-   * Forgets a user whose digest settings are gone (his account was deleted and
-   * his settings purged with it): his work list row and every waiting item, so
-   * the job never serves a ghost again.
+   * Forgets a user for good: his waiting items and his work list row
+   *
+   * @param id the work list row id
+   * @param username the user
    */
   @Transactional
   public void forget(long id, String username) {
@@ -118,11 +125,11 @@ public class DigestScheduleStorage {
   }
 
   /**
-   * The safety cleanup, first step of every run: items of users who have no
-   * digest enabled any more, and items older than the retention. The table can
-   * never grow forever, whatever happens.
+   * Safety cleanup, the first step of every run: the items of users who have
+   * no digest enabled any more, and the items older than the retention
    *
-   * @return how many rows went away
+   * @param retentionLimit items older than this are deleted whatever happened
+   * @return how many items were deleted
    */
   @Transactional
   public int cleanup(Instant retentionLimit) {
