@@ -19,6 +19,9 @@
 package io.meeds.commons.digest.service;
 
 import java.time.Instant;
+import java.util.Collection;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -53,6 +56,24 @@ public class DigestEnrollmentStorage {
    * @param settings the chosen frequencies
    * @param timeZone the timezone to send his digest on, may be null
    */
+  /**
+   * Answers "which of these users has a digest enabled?" with one indexed read
+   * of the work list, so that the caller reads the settings of those users
+   * only. A row exists in the work list if and only if a frequency is on.
+   *
+   * @param usernames the users to narrow down
+   * @return those of them having a row, in no particular order
+   */
+  public Set<String> findEnrolled(Collection<String> usernames) {
+    if (usernames == null || usernames.isEmpty()) {
+      return Set.of();
+    }
+    return digestUserDAO.findByUserIdIn(usernames)
+                        .stream()
+                        .map(DigestUserEntity::getUserId)
+                        .collect(Collectors.toSet());
+  }
+
   /**
    * Refreshes the timezone copy of an enrolled user; a user without a row has
    * no digest, nothing to refresh.

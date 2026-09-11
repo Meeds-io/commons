@@ -51,6 +51,10 @@ public class DigestTimeZoneListenerTest {
     doThrow(new IllegalStateException("db down")).when(digestService).updateTimeZone("ayoub", "Asia/Tokyo");
 
     new DigestTimeZoneListener(digestService).onEvent(new Event<>("social.timeZone.saved", "ayoub", "Asia/Tokyo"));
+
+    // The event is handed over, the failure stays inside: the timezone save of
+    // the user must not fail because the digest is unavailable
+    verify(digestService).updateTimeZone("ayoub", "Asia/Tokyo");
   }
 
 }

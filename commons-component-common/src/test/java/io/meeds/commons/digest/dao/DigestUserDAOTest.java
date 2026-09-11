@@ -20,14 +20,12 @@ package io.meeds.commons.digest.dao;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.List;
 
 import jakarta.persistence.EntityManager;
 
 import org.exoplatform.commons.persistence.impl.EntityManagerService;
 import org.exoplatform.jpa.BaseTest;
 
-import io.meeds.commons.digest.entity.DigestItemEntity;
 import io.meeds.commons.digest.entity.DigestUserEntity;
 
 /**

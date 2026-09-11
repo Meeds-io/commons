@@ -113,8 +113,11 @@ public class DigestMailBuilder {
     String email = recipientResolver.getEmail(username);
     if (StringUtils.isBlank(email) || !NotificationUtils.isValidEmailAddresses(email)) {
       // A property of the user, not of the run: the occurrence is consumed like
-      // an empty one, never retried, or the job would rebuild and warn every hour
-      LOG.warn("No usable email address for the digest recipient {} ({}), his digest is skipped", username, email);
+      // an empty one, never retried, or the job would rebuild and warn every hour.
+      // A disabled account has no address here (the user handler only returns
+      // the enabled ones) and keeps an enabled digest until it is deleted, so
+      // this is a normal flow repeating every day, not an incident: DEBUG
+      LOG.debug("No usable email address for the digest recipient {} ({}), his digest is skipped", username, email);
       return null;
     }
     Locale locale = recipientResolver.getLocale(username);

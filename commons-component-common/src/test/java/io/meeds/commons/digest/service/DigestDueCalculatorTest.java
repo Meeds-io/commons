@@ -157,6 +157,22 @@ public class DigestDueCalculatorTest {
   }
 
   @Test
+  public void testDaylightSavingChangeKeepsOneDigestPerLocalDay() {
+    // The night Europe/Paris goes back to winter time, 2026-10-25, with a send
+    // hour of 00:00: that local day lasts 25 hours and 02:00 happens twice.
+    // The rule counts local days, so the user still gets one digest that day
+    DigestDueCalculator atMidnight = new DigestDueCalculator(0, "FRIDAY");
+    DigestUserEntity user = user(PARIS, at(PARIS, "2026-10-24T00:05"), null);
+    assertTrue(atMidnight.isDue(user, DigestFrequency.DAILY, at(PARIS, "2026-10-25T00:00").toInstant()));
+
+    DigestUserEntity served = user(PARIS, at(PARIS, "2026-10-25T00:05"), null);
+    assertFalse("the repeated hour must not give a second digest",
+                atMidnight.isDue(served, DigestFrequency.DAILY, at(PARIS, "2026-10-25T04:00").toInstant()));
+    assertFalse(atMidnight.isDue(served, DigestFrequency.DAILY, at(PARIS, "2026-10-25T23:00").toInstant()));
+    assertTrue(atMidnight.isDue(served, DigestFrequency.DAILY, at(PARIS, "2026-10-26T00:00").toInstant()));
+  }
+
+  @Test
   public void testUnknownOrMissingTimezoneUsesTheServerOne() {
     assertEquals(ZoneId.systemDefault(), DigestDueCalculator.zoneOf(null));
     assertEquals(ZoneId.systemDefault(), DigestDueCalculator.zoneOf("Mars/Olympus"));

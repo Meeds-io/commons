@@ -139,7 +139,7 @@ public class DigestServiceImpl implements DigestService {
     // the sender must belong to the next window, never to the one being served
     Instant itemDate = Instant.now();
     String params = DigestParamsCodec.serialize(notification.getOwnerParameter());
-    List<String> recipients = notification.getSendToUserIds()
+    List<String> candidates = notification.getSendToUserIds()
                                           .stream()
                                           .filter(StringUtils::isNotBlank)
                                           .distinct()
@@ -147,8 +147,19 @@ public class DigestServiceImpl implements DigestService {
                                           // The digest is about what happened to me, never
                                           // about what I did myself
                                           .filter(recipient -> !StringUtils.equals(recipient, notification.getFrom()))
-                                          .filter(recipient -> wantsCategory(recipient, category))
                                           .toList();
+    if (candidates.isEmpty()) {
+      return;
+    }
+    // Most recipients of a notification have no digest at all: one indexed
+    // read of the work list says who has one, and the settings, four reads
+    // each, are opened only for those. A post in a large space costs one query
+    // here instead of four settings reads per member
+    Set<String> enrolled = enrollmentStorage.findEnrolled(candidates);
+    List<String> recipients = candidates.stream()
+                                        .filter(enrolled::contains)
+                                        .filter(recipient -> wantsCategory(recipient, category))
+                                        .toList();
     if (recipients.isEmpty()) {
       return;
     }
