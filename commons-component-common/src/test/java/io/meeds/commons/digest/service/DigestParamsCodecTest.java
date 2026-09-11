@@ -23,6 +23,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.junit.Test;
@@ -70,6 +71,43 @@ public class DigestParamsCodecTest {
     assertEquals("42", stored.get("taskId"));
     assertEquals("john", stored.get("creator"));
     assertTrue(stored.size() < params.size());
+  }
+
+  @Test
+  public void testAValueOfExactlyTheMaximumLengthIsKept() {
+    // 255 is the last length a value may have, 256 is already refused
+    String atTheLimit = "x".repeat(DigestParamsCodec.PARAM_VALUE_MAX_LENGTH);
+    Map<String, String> stored = DigestParamsCodec.parse(DigestParamsCodec.serialize(Map.of("noteId", atTheLimit)));
+    assertEquals(atTheLimit, stored.get("noteId"));
+  }
+
+  @Test
+  public void testTheLongestValuesAreTheOnesDroppedAndInThatOrder() {
+    // Ten values of distinct lengths, the longest in the middle of the
+    // insertion order so that dropping the first or the last one would not
+    // give this result. The JSON is 2 363 characters long: dropping l3 (255
+    // characters, the longest) leaves 2 100, dropping l8 (254) leaves 1 838,
+    // and nothing else has to go
+    Map<String, String> params = new LinkedHashMap<>();
+    params.put("taskId", "42");
+    params.put("l1", "v".repeat(248));
+    params.put("l2", "v".repeat(250));
+    params.put("l3", "v".repeat(255));
+    params.put("l4", "v".repeat(252));
+    params.put("l5", "v".repeat(249));
+    params.put("l6", "v".repeat(251));
+    params.put("l7", "v".repeat(253));
+    params.put("l8", "v".repeat(254));
+    params.put("l9", "v".repeat(247));
+    params.put("creator", "john");
+
+    String json = DigestParamsCodec.serialize(params);
+
+    assertTrue(json.length() <= DigestParamsCodec.PARAMS_MAX_LENGTH);
+    Map<String, String> stored = DigestParamsCodec.parse(json);
+    assertEquals(List.of("taskId", "l1", "l2", "l4", "l5", "l6", "l7", "l9", "creator"), List.copyOf(stored.keySet()));
+    assertEquals("42", stored.get("taskId"));
+    assertEquals("john", stored.get("creator"));
   }
 
   @Test

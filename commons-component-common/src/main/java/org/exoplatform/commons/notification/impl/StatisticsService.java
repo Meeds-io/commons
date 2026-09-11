@@ -19,8 +19,6 @@
 package org.exoplatform.commons.notification.impl;
 
 
-import org.exoplatform.commons.api.notification.NotificationContext;
-import org.exoplatform.commons.api.notification.model.UserSetting;
 import org.exoplatform.commons.api.notification.stat.EntityStatistics;
 import org.exoplatform.commons.api.notification.stat.PluginStatistics;
 import org.exoplatform.commons.api.notification.stat.QueryStatistics;
@@ -28,7 +26,6 @@ import org.exoplatform.commons.api.notification.stat.QueueStatistics;
 import org.exoplatform.commons.api.notification.stat.Statistics;
 import org.exoplatform.commons.api.notification.stat.StatisticsCollector;
 import org.exoplatform.commons.notification.stat.ThreadLocalStatisticsImpl;
-import org.exoplatform.commons.utils.CommonsUtils;
 import org.exoplatform.management.annotations.Managed;
 import org.exoplatform.management.annotations.ManagedDescription;
 import org.exoplatform.management.jmx.annotations.NameTemplate;

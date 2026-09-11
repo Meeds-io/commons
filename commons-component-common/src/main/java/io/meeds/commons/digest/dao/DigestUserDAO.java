@@ -19,6 +19,7 @@
 package io.meeds.commons.digest.dao;
 
 import java.time.Instant;
+import java.util.Collection;
 import java.util.List;
 
 import org.springframework.data.domain.Limit;
@@ -40,6 +41,13 @@ public interface DigestUserDAO extends JpaRepository<DigestUserEntity, Long> {
                                       "UPDATE DigestUser u SET u.weeklyLastSent = :value WHERE u.id = :id AND u.weeklyLastSent = :expected";
 
   DigestUserEntity findByUserId(String userId);
+
+  /**
+   * The enrolled users among the given ones: a row exists only for a user
+   * having a frequency enabled, so this one indexed read tells who is worth
+   * reading the settings of
+   */
+  List<DigestUserEntity> findByUserIdIn(Collection<String> userIds);
 
   /**
    * The daily candidates of the sender job: daily on, watermark old enough,

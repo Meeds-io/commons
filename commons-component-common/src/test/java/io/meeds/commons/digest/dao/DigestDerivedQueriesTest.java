@@ -128,6 +128,15 @@ public class DigestDerivedQueriesTest extends BaseTest {
     assertEquals(ayoub.getId(), userDAO.findByUserId("ayoub").getId());
     assertNull(userDAO.findByUserId("nobody"));
 
+    // The narrowing of the capture: who among these recipients has a digest
+    assertEquals(List.of("ayoub", "mary"),
+                 userDAO.findByUserIdIn(List.of("ayoub", "mary", "nobody"))
+                        .stream()
+                        .map(DigestUserEntity::getUserId)
+                        .sorted()
+                        .toList());
+    assertTrue(userDAO.findByUserIdIn(List.of("nobody")).isEmpty());
+
     // The candidates of the sender: frequency on, watermark before the cutoff,
     // read by keyset on the id, one batch at a time
     List<DigestUserEntity> daily = userDAO.findByDailyTrueAndDailyLastSentBeforeAndIdGreaterThanOrderByIdAsc(NOW, 0, Limit.of(1));
@@ -144,6 +153,31 @@ public class DigestDerivedQueriesTest extends BaseTest {
     assertEquals(1, userDAO.updateDailyWatermark(ayoub.getId(), BEFORE, NOW));
     assertEquals(0, userDAO.updateDailyWatermark(ayoub.getId(), BEFORE, NOW));
     assertEquals(1, userDAO.updateWeeklyWatermark(ayoub.getId(), BEFORE, NOW));
+  }
+
+  public void testASettingsSaveDoesNotUndoAWatermarkClaimedMeanwhile() {
+    DigestUserEntity ayoub = userDAO.save(new DigestUserEntity(null, "ayoub", true, false, "Europe/Paris", BEFORE, null));
+    entityManager.flush();
+    entityManager.clear();
+
+    // The settings save reads the row first: from here on it holds the
+    // watermark as it was before the claim
+    DigestUserEntity readBySettings = userDAO.findByUserId("ayoub");
+    assertEquals(BEFORE, readBySettings.getDailyLastSent());
+
+    // The sender job claims the occurrence meanwhile, with its guarded update
+    assertEquals(1, userDAO.updateDailyWatermark(ayoub.getId(), BEFORE, NOW));
+
+    // The settings save then writes its own field. Without @DynamicUpdate on
+    // the entity the UPDATE carries every column, watermark included, and puts
+    // it back to BEFORE: the occurrence would be served a second time
+    readBySettings.setTimeZone("Asia/Tokyo");
+    userDAO.saveAndFlush(readBySettings);
+    entityManager.clear();
+
+    DigestUserEntity fresh = userDAO.findByUserId("ayoub");
+    assertEquals("Asia/Tokyo", fresh.getTimeZone());
+    assertEquals(NOW, fresh.getDailyLastSent());
   }
 
   public void testMailQueueRowIsWrittenTheWayTheSenderJobReadsIt() {

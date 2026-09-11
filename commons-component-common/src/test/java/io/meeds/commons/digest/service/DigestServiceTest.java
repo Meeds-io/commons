@@ -32,8 +32,10 @@ import static org.mockito.Mockito.when;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 import org.exoplatform.container.xml.InitParams;
 import org.exoplatform.container.xml.ValueParam;
@@ -102,6 +104,10 @@ public class DigestServiceTest {
                                           labelResolver);
     // The administrator allowed the digest, unless a test says otherwise
     lenient().when(settingStorage.isDigestAllowed()).thenReturn(true);
+    // Every recipient a test speaks of has a digest enabled, unless the test
+    // says otherwise: the work list is what narrows them down
+    lenient().when(enrollmentStorage.findEnrolled(any()))
+             .thenAnswer(invocation -> new HashSet<String>(invocation.getArgument(0)));
   }
 
   @Test
@@ -240,6 +246,23 @@ public class DigestServiceTest {
     assertEquals("SpaceInvitationPlugin", item.getPluginId());
     assertEquals("spaces", item.getCategory());
     assertEquals("{\"spaceId\":\"42\"}", item.getParams());
+  }
+
+  @Test
+  public void testCaptureReadsTheSettingsOfTheEnrolledRecipientsOnly() {
+    // The work list is read once for the whole notification, and the settings
+    // of the recipients who have no digest at all are never opened
+    when(settingStorage.isDigestAllowed()).thenReturn(true);
+    when(enrollmentStorage.findEnrolled(List.of("mary", "john", "peter"))).thenReturn(Set.of("mary"));
+    when(settingStorage.getUserSettings("mary")).thenReturn(dailyOn());
+
+    digestService.capture(notification("SpaceInvitationPlugin", "mary", "john", "peter"));
+
+    verify(enrollmentStorage, times(1)).findEnrolled(List.of("mary", "john", "peter"));
+    verify(settingStorage, times(1)).getUserSettings("mary");
+    verify(settingStorage, never()).getUserSettings("john");
+    verify(settingStorage, never()).getUserSettings("peter");
+    verify(digestItemDAO, times(1)).saveAll(any());
   }
 
   @Test

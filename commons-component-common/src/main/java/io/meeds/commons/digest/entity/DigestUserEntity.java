@@ -20,6 +20,8 @@ package io.meeds.commons.digest.entity;
 
 import java.time.Instant;
 
+import org.hibernate.annotations.DynamicUpdate;
+
 import io.meeds.common.persistence.PortableSequence;
 
 import jakarta.persistence.Column;
@@ -35,8 +37,16 @@ import lombok.NoArgsConstructor;
  * The work list of the digest sender job: one row per user having at least one
  * digest frequency enabled, nobody else. The category lists are not stored
  * here, they are read from the user settings.
+ * <p>
+ * Two writers share the row: the sender job, which moves a watermark with a
+ * guarded update, and the settings save, which rewrites the frequencies and the
+ * timezone from the row it read. {@code @DynamicUpdate} is what keeps them
+ * apart: without it Hibernate writes every column from the state the second
+ * writer loaded, and a watermark claimed in between would be undone, serving
+ * the same occurrence twice.
  */
 @Entity(name = "DigestUser")
+@DynamicUpdate
 @Table(name = "NTF_DIGEST_USERS")
 @Data
 @NoArgsConstructor
