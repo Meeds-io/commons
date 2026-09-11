@@ -61,9 +61,11 @@ abstract public class HTMLSanitizer {
 
   private static final Pattern                                                HTML_CLASS               = Pattern.compile("[a-zA-Z0-9\\s,\\-_]+");
 
-  private static final Pattern                                                ONSITE_URL               = Pattern.compile("(?:[\\p{L}\\p{N} \\\\\\.\\#@\\$%\\+&;\\-_~,\\?=/!:']+|\\#(\\w)+)");
+  // URLs are accepted decoded as well as percent-encoded: some browsers (Safari) copy them
+  // with raw spaces, accents and typographic punctuation (quotes \p{Pi}\p{Pf}, dashes \p{Pd})
+  private static final Pattern                                                ONSITE_URL               = Pattern.compile("(?:[\\p{L}\\p{N} \\\\\\.\\#@\\$%\\+&;\\-_~,\\?=/!:'\\p{Pi}\\p{Pf}\\p{Pd}]+|\\#(\\w)+)");
 
-  private static final Pattern                                                OFFSITE_URL              = Pattern.compile("\\s*(?:(?:ht|f)tps?:\\/\\/|mailto:)[\\p{L}\\p{N}][\\p{L}\\p{N} \\p{Zs}\\.\\[\\]\\#@\\$%\\+&;:\\-_~,\\?=\\/!\\(\\)\\*]*+\\s*");
+  private static final Pattern                                                OFFSITE_URL              = Pattern.compile("\\s*(?:(?:ht|f)tps?:\\/\\/|mailto:)[\\p{L}\\p{N}][\\p{L}\\p{N} \\p{Zs}\\.\\[\\]\\#@\\$%\\+&;:\\-_~,\\?=\\/!\\(\\)\\*'\\p{Pi}\\p{Pf}\\p{Pd}]*+\\s*");
 
   private static final Pattern                                                NUMBER                   = Pattern.compile("[+-]?(?:(?:[0-9]+(?:\\.[0-9]*)?)|\\.[0-9]+)");
 
