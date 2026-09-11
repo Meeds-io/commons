@@ -22,10 +22,18 @@ import org.exoplatform.commons.api.notification.service.QueueMessage;
 import org.exoplatform.commons.utils.CommonsUtils;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
+import org.quartz.DisallowConcurrentExecution;
 import org.quartz.Job;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 
+/**
+ * Sends the queued emails, one execution at a time: two overlapping executions
+ * load the same queue rows and send each of them twice (seen when the Quartz
+ * scheduler starts in the last second of a minute and releases the missed
+ * occurrence right before the next one).
+ */
+@DisallowConcurrentExecution
 public class SendEmailNotificationJob implements Job {
   private static final Log LOG = ExoLogger.getLogger(SendEmailNotificationJob.class);
 

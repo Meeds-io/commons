@@ -18,8 +18,6 @@
  */
 package org.exoplatform.commons.api.notification.channel.template;
 
-import java.io.Writer;
-
 import org.exoplatform.commons.api.notification.NotificationContext;
 import org.exoplatform.commons.api.notification.model.MessageInfo;
 import org.exoplatform.commons.api.notification.plugin.AbstractNotificationPlugin;
@@ -38,16 +36,6 @@ public class PluginTemplateBuilderAdapter extends AbstractTemplateBuilder {
       return abstractPlugin.buildMessage(ctx);
     }
     return new MessageInfo().body(ctx.getNotificationInfo().getTitle());
-  }
-
-  @Override
-  protected boolean makeDigest(NotificationContext ctx, Writer writer) {
-    BaseNotificationPlugin basePlugin =  getPluginContainer().getPlugin(ctx.getNotificationInfo().getKey());
-    if (basePlugin.isOldPlugin()) {
-      AbstractNotificationPlugin abstractPlugin = (AbstractNotificationPlugin) basePlugin;
-      return abstractPlugin.buildDigest(ctx, writer);
-    }
-    return false;
   }
   
   /**

@@ -22,6 +22,28 @@
   xsi:schemaLocation="http://www.exoplatform.org/xml/ns/kernel_1_2.xsd http://www.exoplatform.org/xml/ns/kernel_1_2.xsd"
   xmlns="http://www.exoplatform.org/xml/ns/kernel_1_2.xsd">
 
+  <!-- Checks that a category declared the way the addons declare theirs, in a
+       portal configuration, really reaches the registry: a registry owned by
+       the root container would silently never receive it -->
+  <external-component-plugins>
+    <target-component>io.meeds.commons.digest.DigestCategoryRegistry</target-component>
+    <component-plugin>
+      <name>testCategory</name>
+      <set-method>addCategoryProvider</set-method>
+      <type>io.meeds.commons.digest.plugin.DigestCategoryPlugin</type>
+      <init-params>
+        <value-param>
+          <name>id</name>
+          <value>testCategory</value>
+        </value-param>
+        <values-param>
+          <name>pluginIds</name>
+          <value>TestPlugin</value>
+        </values-param>
+      </init-params>
+    </component-plugin>
+  </external-component-plugins>
+
   <import>jar:/conf/exo.commons.component.core-dependencies-configuration.xml</import>
   <import>jar:/conf/exo.commons.component.core-configuration.xml</import>
 

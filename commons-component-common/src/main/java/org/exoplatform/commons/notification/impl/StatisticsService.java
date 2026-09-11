@@ -18,20 +18,14 @@
  */
 package org.exoplatform.commons.notification.impl;
 
-import java.util.List;
 
-import org.exoplatform.commons.api.notification.NotificationContext;
-import org.exoplatform.commons.api.notification.model.UserSetting;
-import org.exoplatform.commons.api.notification.service.setting.UserSettingService;
 import org.exoplatform.commons.api.notification.stat.EntityStatistics;
 import org.exoplatform.commons.api.notification.stat.PluginStatistics;
 import org.exoplatform.commons.api.notification.stat.QueryStatistics;
 import org.exoplatform.commons.api.notification.stat.QueueStatistics;
 import org.exoplatform.commons.api.notification.stat.Statistics;
 import org.exoplatform.commons.api.notification.stat.StatisticsCollector;
-import org.exoplatform.commons.notification.job.NotificationJob;
 import org.exoplatform.commons.notification.stat.ThreadLocalStatisticsImpl;
-import org.exoplatform.commons.utils.CommonsUtils;
 import org.exoplatform.management.annotations.Managed;
 import org.exoplatform.management.annotations.ManagedDescription;
 import org.exoplatform.management.jmx.annotations.NameTemplate;
@@ -111,55 +105,8 @@ public class StatisticsService implements Startable {
     return stats.getQueryStatistics(queryString);
   }
   
-  @Managed
-  @ManagedDescription("Gets daily setting for all user")
-  public String getDailySettingForAllUser() {
-    UserSettingService userSetting = CommonsUtils.getService(UserSettingService.class);
-    NotificationContext context = NotificationContextImpl.cloneInstance();
-    context.append(NotificationJob.JOB_DAILY, true);
-    context.append(NotificationJob.JOB_WEEKLY, false);
-    
-    List<UserSetting> got = userSetting.getDigestSettingForAllUser(context, 0, -1);
-    StringBuilder sb = new StringBuilder();
-    
-    for(UserSetting u : got) {
-      sb.append(u.toString()).append("\n");
-    }
-    
-    return sb.toString();
-  }
   
-  @Managed
-  @ManagedDescription("Gets weekly setting for all user")
-  public String getWeeklySettingForAllUser() {
-    UserSettingService userSetting = CommonsUtils.getService(UserSettingService.class);
-    NotificationContext context = NotificationContextImpl.cloneInstance();
-    context.append(NotificationJob.JOB_DAILY, false);
-    context.append(NotificationJob.JOB_WEEKLY, true);
-    
-    List<UserSetting> got = userSetting.getDigestSettingForAllUser(context, 0, -1);
-    StringBuilder sb = new StringBuilder();
-    
-    for(UserSetting u : got) {
-      sb.append(u.toString()).append("\n");
-    }
-    
-    return sb.toString();
-  }
   
-  @Managed
-  @ManagedDescription("Gets default setting for all user")
-  public String getDigestDefaultSettingForAllUser() {
-    UserSettingService userSetting = CommonsUtils.getService(UserSettingService.class);
-    List<UserSetting> got = userSetting.getDigestDefaultSettingForAllUser(0, -1);
-    StringBuilder sb = new StringBuilder();
-    
-    for(UserSetting u : got) {
-      sb.append(u.toString()).append("\n");
-    }
-    
-    return sb.toString();
-  }
   
   /**
    * Get global number of message created
@@ -185,11 +132,6 @@ public class StatisticsService implements Startable {
    * Get global number of digest created
    * @return
    */
-  @Managed
-  @ManagedDescription("Gets digest info created count")
-  public long getDigestCreatedCount() {
-    return stats.getDigestCreatedCount();
-  }
   
   /**
    * Get global number of entity deletes

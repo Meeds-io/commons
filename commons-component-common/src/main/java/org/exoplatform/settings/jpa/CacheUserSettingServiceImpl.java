@@ -21,9 +21,6 @@ package org.exoplatform.settings.jpa;
 import static org.exoplatform.settings.jpa.JPAPluginSettingServiceImpl.NOTIFICATION_CHANNEL_STATUS_MODIFIED;
 import static org.exoplatform.settings.jpa.JPAPluginSettingServiceImpl.NOTIFICATION_PLUGIN_STATUS_MODIFIED;
 
-import java.util.List;
-
-import org.exoplatform.commons.api.notification.NotificationContext;
 import org.exoplatform.commons.api.notification.model.UserSetting;
 import org.exoplatform.commons.api.notification.service.setting.UserSettingService;
 import org.exoplatform.services.cache.CacheService;
@@ -86,16 +83,6 @@ public class CacheUserSettingServiceImpl implements UserSettingService {
   public UserSetting get(String userId) {
     UserSetting userSetting = userSettingFutureCache.get(userSettingService, userId);
     return userSetting == null ? null : userSetting.clone();
-  }
-
-  @Override
-  public List<UserSetting> getDigestSettingForAllUser(NotificationContext context, int offset, int limit) {
-    return userSettingService.getDigestSettingForAllUser(context, offset, limit);
-  }
-
-  @Override
-  public List<UserSetting> getDigestDefaultSettingForAllUser(int offset, int limit) {
-    return userSettingService.getDigestDefaultSettingForAllUser(offset, limit);
   }
 
   @Override

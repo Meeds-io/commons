@@ -32,7 +32,6 @@ import org.exoplatform.commons.api.notification.plugin.BaseNotificationPlugin;
 import org.exoplatform.commons.api.notification.service.setting.PluginContainer;
 import org.exoplatform.commons.api.notification.service.template.TemplateContext;
 import org.exoplatform.commons.notification.channel.MailChannel;
-import org.exoplatform.commons.notification.impl.DigestDailyPlugin;
 import org.exoplatform.commons.notification.impl.NotificationContextImpl;
 import org.exoplatform.commons.notification.plugin.PluginPLF41Test;
 import org.exoplatform.commons.notification.plugin.PluginTest;
@@ -124,14 +123,14 @@ public class PluginContainerTest extends BaseNotificationTestCase {
   }
 
   public void testRenderPlugin() throws Exception {
-    TemplateContext ctx = TemplateContext.newChannelInstance(ChannelKey.key(MailChannel.ID), DigestDailyPlugin.ID, null);
-    ctx.put("FIRSTNAME", "User ROOT");
+    TemplateContext ctx = TemplateContext.newChannelInstance(ChannelKey.key(MailChannel.ID), PluginTest.ID, null);
     ctx.put("USER", "root");
-    ctx.put("ACTIVITY", "Content of Activity");
+    ctx.put("VALUE", "Content of Activity");
+    ctx.put("CHILD_CONTENT", "");
     String s = TemplateUtils.processGroovy(ctx);
     // check process resource-bundle
-    assertEquals(true, s.indexOf("Test resource bundle.") > 0);
+    assertTrue(s.indexOf("The test plugin") > 0);
     // check process Groovy
-    assertEquals(true, s.indexOf("Content of Activity") > 0);
+    assertTrue(s.indexOf("Content of Activity") > 0);
   }
 }

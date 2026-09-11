@@ -35,7 +35,6 @@ import org.exoplatform.services.cache.ExoCache;
 
 public class TemplateContentTransformerService {
 
-  private static final String       DIGEST_TEMPLATE_KEY = "Digest.%s.%s";
 
   private static final String       SIMPLE_TEMPLATE_KEY = "Simple.%s.%s";
 
@@ -82,35 +81,12 @@ public class TemplateContentTransformerService {
     }
   }
 
-  /**
-   * Render for digest template
-   * 
-   * @param ctx {@link TemplateContext} containing all Template Variables to use
-   *          for processing Template
-   * @return digest HTML content
-   */
-  public String processDigest(TemplateContext ctx) {
-    DigestTemplate digest = getDigestTemplate(ctx);
-    return digest.accept(SimpleElementVistior.instance().with(ctx)).out();
-  }
-
   protected String getSubject(TemplateContext ctx) {
     return transform((String) ctx.get("SUBJECT"), ctx);
   }
 
   protected String transform(String value, TemplateContext ctx) { // NOSONAR
     return value == null ? null : StringEscapeUtils.unescapeHtml4(value);
-  }
-
-  private DigestTemplate getDigestTemplate(TemplateContext ctx) {
-    String key = getCacheKey(DIGEST_TEMPLATE_KEY, ctx.getPluginId(), ctx.getLanguage());
-    DigestTemplate digest = (DigestTemplate) cacheTemplate.get(key);
-    if (digest == null) {
-      PluginConfig templateConfig = getPluginConfig(ctx.getPluginId());
-      digest = NotificationUtils.getDigest(templateConfig, ctx.getPluginId(), ctx.getLanguage());
-      cacheTemplate.put(key, digest);
-    }
-    return digest;
   }
 
   private Element getSubjectElement(TemplateContext ctx) {

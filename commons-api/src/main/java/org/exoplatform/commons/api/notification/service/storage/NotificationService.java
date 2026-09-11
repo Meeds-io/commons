@@ -20,24 +20,25 @@ package org.exoplatform.commons.api.notification.service.storage;
 
 import java.util.Collection;
 
-import org.exoplatform.commons.api.notification.NotificationContext;
 import org.exoplatform.commons.api.notification.model.NotificationInfo;
 
 
 public interface NotificationService {
+
+  /**
+   * Event broadcast for every notification entering {@link #process}, before
+   * and independently from the channel dispatch, carrying the
+   * {@link NotificationInfo} as data. The digest capture listens to it; a
+   * listener failure never affects the notification itself.
+   */
+  String NOTIFICATION_PROCESSED_EVENT = "notification.processed";
+
   /**
    * Processes information when a notification message is created.
    * 
    * @param notification The notification message.
    */
   void process(NotificationInfo  notification) throws Exception;
-  
-  /**
-   * Collects information of a digest message and sends it daily or weekly.
-   *
-   * @throws Exception
-   */
-  void digest(NotificationContext context) throws Exception;
   
   /**
    * Processes information when a list of notification messages are created.
