@@ -44,6 +44,7 @@
                     <name>changelogs</name>
                     <description>Change logs of commons</description>
                     <value>db/changelog/notifications.db.changelog-1.0.0.xml</value>
+                    <value>db/changelog/digest.db.changelog-1.0.0.xml</value>
                 </values-param>
             </init-params>
         </component-plugin>

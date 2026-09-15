@@ -68,29 +68,6 @@ public class NotificationUtils {
   }
   
   /**
-   * Gets the digest's resource bundle
-   * 
-   * @param templateConfig
-   * @param pluginId
-   * @param language
-   * @return
-   */
-  public static DigestTemplate getDigest(PluginConfig templateConfig, String pluginId, String language) {
-    String srcResource = templateConfig.getBundlePath();
-    String digestOneKey = templateConfig.getKeyValue(PluginConfig.DIGEST_ONE_KEY, getDefaultKey(DEFAULT_DIGEST_ONE_KEY, pluginId));
-    String digestThreeKey = templateConfig.getKeyValue(PluginConfig.DIGEST_THREE_KEY, getDefaultKey(DEFAULT_DIGEST_THREE_KEY, pluginId));
-    String digestMoreKey = templateConfig.getKeyValue(PluginConfig.DIGEST_MORE_KEY, getDefaultKey(DEFAULT_DIGEST_MORE_KEY, pluginId));
-    
-    Locale locale = getLocale(language);
-    
-    return new DigestTemplate().digestOne(TemplateUtils.getResourceBundle(digestOneKey, locale, srcResource))
-                               .digestThree(TemplateUtils.getResourceBundle(digestThreeKey, locale, srcResource))
-                               .digestMore(TemplateUtils.getResourceBundle(digestMoreKey, locale, srcResource));
-        
-                                
-  }
-  
-  /**
    * Gets the subject's resource bundle
    * 
    * @param templateConfig

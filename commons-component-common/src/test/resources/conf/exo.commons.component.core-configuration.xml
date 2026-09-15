@@ -69,15 +69,6 @@
   </component>
 
   <component>
-    <type>org.exoplatform.commons.notification.impl.jpa.email.dao.MailParamDAO</type>
-  </component>
-  <component>
-    <type>org.exoplatform.commons.notification.impl.jpa.email.dao.MailDigestDAO</type>
-  </component>
-  <component>
-    <type>org.exoplatform.commons.notification.impl.jpa.email.dao.MailNotifDAO</type>
-  </component>
-  <component>
     <type>org.exoplatform.commons.notification.impl.jpa.email.dao.MailQueueDAO</type>
   </component>
 
@@ -89,10 +80,6 @@
   </component>
   <component>
     <type>org.exoplatform.commons.notification.impl.jpa.web.dao.WebUsersDAO</type>
-  </component>
-
-  <component>
-    <type>org.exoplatform.commons.notification.impl.jpa.email.JPAMailNotificationStorage</type>
   </component>
 
   <component>
@@ -138,11 +125,6 @@
   <component>
     <key>org.exoplatform.commons.api.notification.service.setting.PluginSettingService</key>
     <type>org.exoplatform.settings.jpa.JPAPluginSettingServiceImpl</type>
-  </component>
-
-  <component>
-    <key>org.exoplatform.commons.api.notification.service.template.DigestorService</key>
-    <type>org.exoplatform.commons.notification.impl.service.template.DigestorServiceImpl</type>
   </component>
 
   <component>
@@ -237,56 +219,12 @@
     <component-plugin>
       <name>mail.channel.template</name>
       <set-method>registerTemplateProvider</set-method>
-      <type>org.exoplatform.commons.notification.mock.MockDigestMailTemplateProvider</type>
+      <type>org.exoplatform.commons.notification.mock.MockMailTemplateProvider</type>
       <init-params>
         <value-param>
           <name>channel-id</name>
           <value>MAIL_CHANNEL</value>
         </value-param>
-      </init-params>
-    </component-plugin>
-  </external-component-plugins>
-
-  <external-component-plugins>
-    <target-component>org.exoplatform.commons.api.notification.service.setting.PluginContainer</target-component>
-    <component-plugin>
-      <name>notification.plugins</name>
-      <set-method>addPlugin</set-method>
-      <type>org.exoplatform.commons.notification.impl.DigestDailyPlugin</type>
-      <description>Initial information for plugin.</description>
-      <init-params>
-        <object-param>
-          <name>template.DigestDailyPlugin</name>
-          <description>The template of DigestDailyPlugin</description>
-          <object type="org.exoplatform.commons.api.notification.plugin.config.PluginConfig">
-            <field name="pluginId">
-              <string>DigestDailyPlugin</string>
-            </field>
-            <field name="bundlePath">
-              <string>locale.notification.template.Notification</string>
-            </field>
-          </object>
-        </object-param>
-      </init-params>
-    </component-plugin>
-    <component-plugin>
-      <name>notification.plugins</name>
-      <set-method>addPlugin</set-method>
-      <type>org.exoplatform.commons.notification.impl.DigestWeeklyPlugin</type>
-      <description>Initial information for plugin.</description>
-      <init-params>
-        <object-param>
-          <name>template.DigestWeeklyPlugin</name>
-          <description>The template of DigestWeeklyPlugin</description>
-          <object type="org.exoplatform.commons.api.notification.plugin.config.PluginConfig">
-            <field name="pluginId">
-              <string>DigestWeeklyPlugin</string>
-            </field>
-            <field name="bundlePath">
-              <string>locale.notification.template.Notification</string>
-            </field>
-          </object>
-        </object-param>
       </init-params>
     </component-plugin>
   </external-component-plugins>

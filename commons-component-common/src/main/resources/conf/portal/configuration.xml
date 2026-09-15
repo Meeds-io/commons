@@ -21,15 +21,16 @@
   xsi:schemaLocation="http://www.exoplatform.org/xml/ns/kernel_1_2.xsd http://www.exoplatform.org/xml/ns/kernel_1_2.xsd"
   xmlns="http://www.exoplatform.org/xml/ns/kernel_1_2.xsd">
 
+  <!-- Holds the digest categories the installed addons contribute. Declared
+       in the Kernel and at the portal container level on purpose: the Kernel
+       container is shared by every webapp, so an addon reaches the digest
+       whether or not it uses Spring, and the external-component-plugins the
+       addons declare live in portal configurations, which only apply to a
+       component owned by the portal container -->
   <component>
-    <type>org.exoplatform.commons.notification.impl.jpa.email.dao.MailParamDAO</type>
+    <type>io.meeds.commons.digest.DigestCategoryRegistry</type>
   </component>
-  <component>
-    <type>org.exoplatform.commons.notification.impl.jpa.email.dao.MailDigestDAO</type>
-  </component>
-  <component>
-    <type>org.exoplatform.commons.notification.impl.jpa.email.dao.MailNotifDAO</type>
-  </component>
+
   <component>
     <type>org.exoplatform.commons.notification.impl.jpa.email.dao.MailQueueDAO</type>
   </component>
@@ -42,10 +43,6 @@
   </component>
   <component>
     <type>org.exoplatform.commons.notification.impl.jpa.web.dao.WebUsersDAO</type>
-  </component>
-
-  <component>
-    <type>org.exoplatform.commons.notification.impl.jpa.email.JPAMailNotificationStorage</type>
   </component>
 
   <component>
@@ -131,4 +128,28 @@
     </component-plugin>
   </external-component-plugins>
 
+  <!-- The digest capture: a small asynchronous listener, apart from the
+       notification path on purpose (a capture failure never affects the
+       notification itself) -->
+  <external-component-plugins>
+    <target-component>org.exoplatform.services.listener.ListenerService</target-component>
+    <component-plugin>
+      <name>notification.processed</name>
+      <set-method>addListener</set-method>
+      <type>io.meeds.commons.digest.listener.DigestCaptureListener</type>
+    </component-plugin>
+  </external-component-plugins>
+
+  <!-- The platform timezone of a user, saved by social: the copy kept in the
+       digest work list follows, so the next occurrence is computed in the new
+       timezone (the event name is the contract, commons doesn't depend on
+       social) -->
+  <external-component-plugins>
+    <target-component>org.exoplatform.services.listener.ListenerService</target-component>
+    <component-plugin>
+      <name>social.timeZone.saved</name>
+      <set-method>addListener</set-method>
+      <type>io.meeds.commons.digest.listener.DigestTimeZoneListener</type>
+    </component-plugin>
+  </external-component-plugins>
 </configuration>

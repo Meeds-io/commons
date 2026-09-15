@@ -18,7 +18,6 @@
  */
 package org.exoplatform.commons.notification.channel;
 
-import java.io.Writer;
 
 import org.exoplatform.commons.api.notification.NotificationContext;
 import org.exoplatform.commons.api.notification.channel.AbstractChannel;
@@ -75,11 +74,6 @@ public class ConsoleChannel extends AbstractChannel {
                           .body(notification.getKey().getId() + " raised notification: "
                               + notification.getTitle())
                           .end();
-      }
-
-      @Override
-      protected boolean makeDigest(NotificationContext ctx, Writer writer) {
-        return false;
       }
     };
   }
