@@ -35,10 +35,22 @@
     });
   };
 
+  // Replay through origSubscribe, never through the cCometD.subscribe override: the
+  // client still reports "handshaking" here, so the override would drop every
+  // resubscription silently and nothing retries them. Guarded per entry - handshake()
+  // clears all subscriptions, so this replay is each one's only chance.
   cCometD.addListener('/meta/handshake', function(message) {
     if (message.successful) {
       //resubcribe after successfull handshake
-      cCometD.eXoResubs.forEach(elem => cCometD.subscribe(...elem));
+      cCometD.batch(cCometD, function() {
+        cCometD.eXoResubs.forEach(elem => {
+          try {
+            cCometD.origSubscribe(...elem);
+          } catch (e) {
+            cCometD._warn('cCometD: failed to resubscribe to', elem[0], e);
+          }
+        });
+      });
       cCometD.replayPending();
     }
   });
