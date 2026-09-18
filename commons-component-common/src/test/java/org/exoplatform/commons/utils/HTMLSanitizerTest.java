@@ -140,5 +140,67 @@ public class HTMLSanitizerTest {
     assertEquals("link", HTMLSanitizer.sanitize("<a href=\"data:text/html,\u2019<script>\u2019\">link</a>"));
     assertEquals("<a href=\"https://x.fr/a\u2019\" rel=\"nofollow\">link</a>",
                  HTMLSanitizer.sanitize("<a href=\"https://x.fr/a\u2019\" onmouseover=\"alert(1)\">link</a>"));
+  }               
+  /**
+   * EXO-90272 — an oEmbed provider marks its player fullscreen-capable with the boolean
+   * <code>allowfullscreen</code> attribute, which the policy used to drop, leaving the
+   * framed document with no fullscreen permission (Calameo hides its button, YouTube
+   * logs a permissions-policy violation).
+   */
+  @Test
+  public void testAllowFullScreenAttributeKeptOnIFrame() throws Exception {
+    String input = "<iframe src=\"https://www.youtube.com/embed/RLY9uVbuk3Q\" allowfullscreen></iframe>";
+    String sanitized = HTMLSanitizer.sanitize(input);
+    assertEquals("<iframe src=\"https://www.youtube.com/embed/RLY9uVbuk3Q\" allowfullscreen=\"allowfullscreen\"></iframe>",
+                 sanitized);
+  }
+
+  /**
+   * EXO-90272 — a provider sends a whole feature list; the safe ones survive, each
+   * stripped of its origin allow-list so it falls back to the spec default 'src'.
+   */
+  @Test
+  public void testProviderFeatureListKeptOnIFrame() throws Exception {
+    String input = "<iframe src=\"https://www.youtube.com/embed/RLY9uVbuk3Q\" allow=\"accelerometer *; clipboard-write *; encrypted-media *; gyroscope *; picture-in-picture *; web-share *;\"></iframe>";
+    String sanitized = HTMLSanitizer.sanitize(input);
+    assertEquals("<iframe src=\"https://www.youtube.com/embed/RLY9uVbuk3Q\" allow=\"accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share\"></iframe>",
+                 sanitized);
+  }
+
+  /**
+   * EXO-90272 — the body carrying the iframe is user-authored, so a feature that grants
+   * access to the visitor's devices or wallet is dropped whatever the provider asks for.
+   */
+  @Test
+  public void testDangerousIFrameFeaturesDropped() throws Exception {
+    String input = "<iframe src=\"https://www.youtube.com/embed/RLY9uVbuk3Q\" allow=\"camera *; microphone; geolocation 'self'; display-capture; payment; fullscreen\"></iframe>";
+    String sanitized = HTMLSanitizer.sanitize(input);
+    assertEquals("<iframe src=\"https://www.youtube.com/embed/RLY9uVbuk3Q\" allow=\"fullscreen\"></iframe>", sanitized);
+  }
+
+  /**
+   * Not a regression pin: the previous policy dropped this value too (its regex matched
+   * nothing but the bare word). It is a guard against a later widening of
+   * {@link HTMLSanitizer} that would let an unknown feature through — it fails only if
+   * someone relaxes the filter, which is exactly when it is wanted.
+   */
+  @Test
+  public void testAllowAttributeDroppedWhenNoSafeFeatureRemains() throws Exception {
+    String input = "<iframe src=\"https://www.youtube.com/embed/RLY9uVbuk3Q\" allow=\"camera; microphone\"></iframe>";
+    String sanitized = HTMLSanitizer.sanitize(input);
+    assertEquals("<iframe src=\"https://www.youtube.com/embed/RLY9uVbuk3Q\"></iframe>", sanitized);
+  }
+
+  /**
+   * EXO-90272 — the shape the notes editor actually stores: the oEmbed widget saved as a
+   * <code>div.embed-wrapper</code> wrapping the provider's iframe. This is the case
+   * reported on a note and on an article.
+   */
+  @Test
+  public void testEmbedWrapperKeepsFullScreenCapability() throws Exception {
+    String input = "<div class=\"embed-wrapper\" data-url=\"url\"><div><iframe src=\"https://v.calameo.com/?bkcode=007393684777abcf55de3\" allowfullscreen allow=\"encrypted-media *;\"></iframe></div></div>";
+    String sanitized = HTMLSanitizer.sanitize(input);
+    assertEquals("<div class=\"embed-wrapper\" data-url=\"url\"><div><iframe src=\"https://v.calameo.com/?bkcode&#61;007393684777abcf55de3\" allowfullscreen=\"allowfullscreen\" allow=\"encrypted-media\"></iframe></div></div>",
+                 sanitized);
   }
 }
