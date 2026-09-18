@@ -158,25 +158,22 @@ public class HTMLSanitizerTest {
   }
 
   /**
-   * EXO-90272 — a provider sends a whole feature list; the safe ones survive, each
-   * stripped of its origin allow-list so it falls back to the spec default 'src'.
-   */
-  /**
    * EXO-90272 — the fixtures are the oEmbed output of the providers themselves, fetched
-   * verbatim, because this defect was caused by a suite whose fixtures encoded a shape no
-   * producer emits. Each of the three keeps its fullscreen capability: YouTube through the
+   * verbatim but for the <code>title</code>, normalised so the fixture does not break when
+   * a provider retitles a video. This defect was caused by a suite whose fixtures encoded a
+   * shape no producer emits, so these are taken from the producers. Each of the three keeps its fullscreen capability: YouTube through the
    * boolean attribute, Vimeo through the feature list, Dailymotion through both.
    */
   @Test
   public void testRealProviderEmbedsKeepFullScreenCapability() throws Exception {
     // https://www.youtube.com/oembed?url=...&format=json
-    assertEquals("<iframe src=\"https://www.youtube.com/embed/MSBV91xceEw?feature&#61;oembed\" frameborder=\"0\" allow=\"autoplay; encrypted-media; picture-in-picture; web-share\" allowfullscreen=\"allowfullscreen\" title=\"t\"></iframe>",
+    assertEquals("<iframe src=\"https://www.youtube.com/embed/MSBV91xceEw?feature&#61;oembed\" frameborder=\"0\" allow=\"autoplay; encrypted-media; picture-in-picture\" allowfullscreen=\"allowfullscreen\" title=\"t\"></iframe>",
                  HTMLSanitizer.sanitize("<iframe width=\"200\" height=\"113\" src=\"https://www.youtube.com/embed/MSBV91xceEw?feature=oembed\" frameborder=\"0\" allow=\"accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share\" referrerpolicy=\"strict-origin-when-cross-origin\" allowfullscreen title=\"t\"></iframe>"));
     // https://www.dailymotion.com/services/oembed?url=...&format=json
-    assertEquals("<iframe frameborder=\"0\" src=\"https://geo.dailymotion.com/player.html?video&#61;x2jvvep&amp;\" allowfullscreen=\"allowfullscreen\" allow=\"autoplay; fullscreen; picture-in-picture; web-share\"></iframe>",
+    assertEquals("<iframe frameborder=\"0\" src=\"https://geo.dailymotion.com/player.html?video&#61;x2jvvep&amp;\" allowfullscreen=\"allowfullscreen\" allow=\"autoplay; fullscreen; picture-in-picture\"></iframe>",
                  HTMLSanitizer.sanitize("<iframe frameborder=\"0\" width=\"480\" height=\"269\" src=\"https://geo.dailymotion.com/player.html?video=x2jvvep&\" allowfullscreen allow=\"autoplay; fullscreen; picture-in-picture; web-share\"></iframe>"));
     // https://vimeo.com/api/oembed.json?url=...
-    assertEquals("<iframe src=\"https://player.vimeo.com/video/243244233?app_id&#61;122963\" frameborder=\"0\" allow=\"autoplay; fullscreen; picture-in-picture; encrypted-media; web-share\" title=\"t\"></iframe>",
+    assertEquals("<iframe src=\"https://player.vimeo.com/video/243244233?app_id&#61;122963\" frameborder=\"0\" allow=\"autoplay; fullscreen; picture-in-picture; encrypted-media\" title=\"t\"></iframe>",
                  HTMLSanitizer.sanitize("<iframe src=\"https://player.vimeo.com/video/243244233?app_id=122963\" width=\"426\" height=\"240\" frameborder=\"0\" allow=\"autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share\" referrerpolicy=\"strict-origin-when-cross-origin\" title=\"t\"></iframe>"));
   }
 
@@ -279,11 +276,13 @@ public class HTMLSanitizerTest {
    * for. This is the security contract of {@link HTMLSanitizer}'s iframe policy: a feature
    * that reaches the visitor rather than rendering the media is dropped. accelerometer and
    * gyroscope are in this list deliberately — YouTube asks for both, and they carry
-   * device-motion telemetry to an origin this policy does not constrain.
+   * device-motion telemetry to an origin this policy does not constrain — and so is
+   * web-share, which hands the platform share sheet to the framed origin and mirrors
+   * clipboard-write.
    */
   @Test
   public void testDeviceAndPaymentFeaturesNeverGranted() throws Exception {
-    String input = "<iframe src=\"https://www.youtube.com/embed/x\" allow=\"camera; microphone; geolocation; display-capture; payment; clipboard-write; accelerometer; gyroscope; usb; midi; screen-wake-lock\"></iframe>";
+    String input = "<iframe src=\"https://www.youtube.com/embed/x\" allow=\"camera; microphone; geolocation; display-capture; payment; clipboard-write; web-share; accelerometer; gyroscope; usb; midi; screen-wake-lock\"></iframe>";
     assertEquals("<iframe src=\"https://www.youtube.com/embed/x\"></iframe>", HTMLSanitizer.sanitize(input));
   }
 }
