@@ -23,10 +23,10 @@ import java.util.Collection;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.owasp.html.AttributePolicy;
@@ -99,16 +99,30 @@ abstract public class HTMLSanitizer {
    * The permission-policy features an embedded player legitimately needs. Anything
    * else an oEmbed provider asks for (camera, microphone, geolocation,
    * display-capture, payment...) is dropped: the body carrying the iframe is
-   * user-authored content.
+   * user-authored content, and the origin it embeds is not constrained by this
+   * policy.
+   * <p>
+   * <code>clipboard-write</code> is deliberately NOT in this set although providers
+   * ask for it: its default allow-list is <code>'self'</code>, so granting it would
+   * let an embedded origin write the visitor's clipboard -- not a rendering
+   * capability. The visible cost is a player's in-frame "copy link" button.
    */
   private static final Set<String>                                            ALLOWED_IFRAME_FEATURES   = Set.of("accelerometer",
                                                                                                                  "autoplay",
-                                                                                                                 "clipboard-write",
                                                                                                                  "encrypted-media",
                                                                                                                  "fullscreen",
                                                                                                                  "gyroscope",
                                                                                                                  "picture-in-picture",
                                                                                                                  "web-share");
+
+  /**
+   * The only values HTML defines for the boolean <code>allowfullscreen</code> attribute:
+   * absent, empty, or the attribute's own name. Anything else is a producer's mistake and
+   * is dropped rather than echoed back, because a note body is compiled as a Vue template,
+   * not only parsed as HTML.
+   */
+  private static final Pattern                                                ALLOW_FULL_SCREEN_VALUE   =
+                                                                                                    Pattern.compile("(?i)^(|true|allowfullscreen)$");
 
   /**
    * Filters an iframe <code>allow</code> attribute down to {@link #ALLOWED_IFRAME_FEATURES}.
@@ -117,6 +131,12 @@ abstract public class HTMLSanitizer {
    * is re-emitted without its origin allow-list, so it falls back to the spec default
    * <code>'src'</code> — the framed document itself, never the whole web. Returns
    * <code>null</code> (drop the attribute) when nothing survives.
+   * <p>
+   * That <code>'src'</code> narrowing describes <strong>this attribute only</strong>. The
+   * boolean <code>allowfullscreen</code> allowed alongside it is specified differently:
+   * Permissions Policy §9.4 sets the container policy for <code>fullscreen</code> to the
+   * special value <code>*</code>, though Chromium was measured to narrow it to
+   * <code>'src'</code> in practice. The two shapes are therefore not equivalent on paper.
    */
   private static final AttributePolicy                                        IFRAME_ALLOW_POLICY       =
                                                                                                     (elementName,
@@ -410,6 +430,7 @@ abstract public class HTMLSanitizer {
                                                                                                                                 .matching(IFRAME_ALLOW_POLICY)
                                                                                                                                 .onElements("iframe")
                                                                                                                                 .allowAttributes("allowfullscreen")
+                                                                                                                                .matching(ALLOW_FULL_SCREEN_VALUE)
                                                                                                                                 .onElements("iframe")
                                                                                                                                 .allowAttributes("frameborder")
                                                                                                                                 .onElements("iframe")
