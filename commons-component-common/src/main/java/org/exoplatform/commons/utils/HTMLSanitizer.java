@@ -96,22 +96,32 @@ abstract public class HTMLSanitizer {
                                                                                                                                                Arrays.asList(new String[]{"float", "display", "clear", "position", "left", "top"}));
 
   /**
-   * The permission-policy features an embedded player legitimately needs. Anything
-   * else an oEmbed provider asks for (camera, microphone, geolocation,
-   * display-capture, payment...) is dropped: the body carrying the iframe is
-   * user-authored content, and the origin it embeds is not constrained by this
-   * policy.
+   * The permission-policy features an embedded player needs <em>to render the media</em>.
+   * That is the criterion, and it is narrower than "whatever the provider asks for": the
+   * question is not whether a feature is denied by default, which is true of almost all of
+   * them, but what the framed origin could do to the visitor with it. A note or article
+   * body is authored by any platform user, this policy places no constraint on the origin
+   * that body embeds, and the same policy governs ten repos' content.
    * <p>
-   * <code>clipboard-write</code> is deliberately NOT in this set although providers
-   * ask for it: its default allow-list is <code>'self'</code>, so granting it would
-   * let an embedded origin write the visitor's clipboard -- not a rendering
-   * capability. The visible cost is a player's in-frame "copy link" button.
+   * So rendering features are granted — <code>autoplay</code>, <code>encrypted-media</code>
+   * (DRM playback), <code>fullscreen</code>, <code>picture-in-picture</code>,
+   * <code>web-share</code> — and features that reach the visitor are not, whoever asks:
+   * <code>camera</code>, <code>microphone</code>, <code>geolocation</code>,
+   * <code>display-capture</code>, <code>payment</code>, and two that providers do ask for:
+   * <code>clipboard-write</code> (writes the visitor's clipboard) and
+   * <code>accelerometer</code>/<code>gyroscope</code> (the Generic Sensor API and
+   * DeviceMotion/DeviceOrientation events — device-motion telemetry to an origin this
+   * policy does not constrain). YouTube requests all three; Vimeo and Dailymotion request
+   * neither sensor. The measured cost of refusing the sensors is 360-degree/VR orientation
+   * control, not playback and not fullscreen; restoring them is one entry here, and needs
+   * the trade-off written down.
+   * <p>
+   * <code>web-share</code> is kept for fidelity with the providers' own embed code, though
+   * it was measured unimplemented on Chrome/Linux desktop, where it is simply skipped.
    */
-  private static final Set<String>                                            ALLOWED_IFRAME_FEATURES   = Set.of("accelerometer",
-                                                                                                                 "autoplay",
+  private static final Set<String>                                            ALLOWED_IFRAME_FEATURES   = Set.of("autoplay",
                                                                                                                  "encrypted-media",
                                                                                                                  "fullscreen",
-                                                                                                                 "gyroscope",
                                                                                                                  "picture-in-picture",
                                                                                                                  "web-share");
 
@@ -134,7 +144,11 @@ abstract public class HTMLSanitizer {
    * Providers send a feature list such as
    * <code>accelerometer *; encrypted-media *; fullscreen *;</code>; each kept feature
    * is re-emitted without its origin allow-list, so it falls back to the spec default
-   * <code>'src'</code> — the framed document itself, never the whole web. Returns
+   * <code>'src'</code> — the framed document itself, rather than the origins the author
+   * listed. Note what that does and does not bound: the direct grant goes to the framed
+   * origin only, and that origin may itself delegate the feature onward to whatever it
+   * embeds (measured). The bound is on what a page author can grant, not on where the
+   * capability ends up. Returns
    * <code>null</code> (drop the attribute) when nothing survives.
    * <p>
    * That <code>'src'</code> narrowing describes <strong>this attribute only</strong>. The
