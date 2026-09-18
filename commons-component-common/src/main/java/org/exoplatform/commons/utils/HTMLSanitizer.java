@@ -103,27 +103,35 @@ abstract public class HTMLSanitizer {
    * body is authored by any platform user, this policy places no constraint on the origin
    * that body embeds, and the same policy governs ten repos' content.
    * <p>
-   * So rendering features are granted — <code>autoplay</code>, <code>encrypted-media</code>
-   * (DRM playback), <code>fullscreen</code>, <code>picture-in-picture</code>,
-   * <code>web-share</code> — and features that reach the visitor are not, whoever asks:
-   * <code>camera</code>, <code>microphone</code>, <code>geolocation</code>,
-   * <code>display-capture</code>, <code>payment</code>, and two that providers do ask for:
-   * <code>clipboard-write</code> (writes the visitor's clipboard) and
-   * <code>accelerometer</code>/<code>gyroscope</code> (the Generic Sensor API and
-   * DeviceMotion/DeviceOrientation events — device-motion telemetry to an origin this
-   * policy does not constrain). YouTube requests all three; Vimeo and Dailymotion request
-   * neither sensor. The measured cost of refusing the sensors is 360-degree/VR orientation
-   * control, not playback and not fullscreen; restoring them is one entry here, and needs
-   * the trade-off written down.
+   * Granted: <code>autoplay</code>, <code>encrypted-media</code> (DRM playback),
+   * <code>fullscreen</code>, and <code>picture-in-picture</code> — whose default allow-list
+   * is already <code>*</code>, so listing it grants nothing and is kept only for fidelity
+   * with the attribute as emitted. Three grants and one no-op, in other words.
    * <p>
-   * <code>web-share</code> is kept for fidelity with the providers' own embed code, though
-   * it was measured unimplemented on Chrome/Linux desktop, where it is simply skipped.
+   * Refused, although providers ask for every one of them, because each reaches the visitor
+   * rather than rendering the media — and each is one entry away from being restored, which
+   * needs its trade-off written down:
+   * <ul>
+   * <li><code>clipboard-write</code> — writes the visitor's clipboard. Cost of refusing: a
+   * player's in-frame "copy link" button.</li>
+   * <li><code>web-share</code> — hands the platform share sheet to the framed origin with
+   * content of its choosing (default allow-list <code>'self'</code>; unimplemented on
+   * Chrome/Linux desktop, live on the mobile platforms where notes are read). Cost: the
+   * in-player share button. Refused for the same reason as clipboard-write, which it
+   * mirrors.</li>
+   * <li><code>accelerometer</code>, <code>gyroscope</code> — the Generic Sensor API and
+   * DeviceMotion/DeviceOrientation events, i.e. device-motion telemetry to an origin this
+   * policy does not constrain. Cost: 360-degree/VR orientation control, not playback and
+   * not fullscreen.</li>
+   * </ul>
+   * Also refused, never asked for by a media provider: <code>camera</code>,
+   * <code>microphone</code>, <code>geolocation</code>, <code>display-capture</code>,
+   * <code>payment</code>.
    */
   private static final Set<String>                                            ALLOWED_IFRAME_FEATURES   = Set.of("autoplay",
                                                                                                                  "encrypted-media",
                                                                                                                  "fullscreen",
-                                                                                                                 "picture-in-picture",
-                                                                                                                 "web-share");
+                                                                                                                 "picture-in-picture");
 
   /**
    * The values accepted for the boolean <code>allowfullscreen</code> attribute. HTML §2.3.2
@@ -141,8 +149,10 @@ abstract public class HTMLSanitizer {
 
   /**
    * Filters an iframe <code>allow</code> attribute down to {@link #ALLOWED_IFRAME_FEATURES}.
-   * Providers send a feature list such as
-   * <code>accelerometer *; encrypted-media *; fullscreen *;</code>; each kept feature
+   * The value is a feature list. The providers' own oEmbed output carries bare feature
+   * names (<code>autoplay; fullscreen; picture-in-picture</code>); the origin-list form
+   * <code>encrypted-media *; fullscreen *;</code> is what an oEmbed proxy such as iframely
+   * emits after rewriting them. Each kept feature
    * is re-emitted without its origin allow-list, so it falls back to the spec default
    * <code>'src'</code> — the framed document itself, rather than the origins the author
    * listed. Note what that does and does not bound: the direct grant goes to the framed
