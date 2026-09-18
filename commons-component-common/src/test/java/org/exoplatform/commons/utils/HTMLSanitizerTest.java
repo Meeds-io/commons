@@ -21,6 +21,8 @@ package org.exoplatform.commons.utils;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
+import java.util.Locale;
+
 import org.junit.Test;
 
 public class HTMLSanitizerTest {
@@ -216,8 +218,18 @@ public class HTMLSanitizerTest {
    */
   @Test
   public void testAllowFeatureMatchingIsCaseFoldedAndEntityDecoded() throws Exception {
-    assertEquals("<iframe src=\"https://www.youtube.com/embed/x\" allow=\"fullscreen; picture-in-picture\"></iframe>",
-                 HTMLSanitizer.sanitize("<iframe src=\"https://www.youtube.com/embed/x\" allow=\"FULLSCREEN; CAMERA; PICTURE-IN-PICTURE\"></iframe>"));
+    // Under a Turkish default locale "PICTURE-IN-PICTURE".toLowerCase() is
+    // "pıcture-ın-pıcture" and the feature would be silently lost, so the case folding is
+    // asserted in the environment that can actually see it fail -- CI runs in en_US, where
+    // a locale-sensitive lower-casing passes.
+    Locale previous = Locale.getDefault();
+    try {
+      Locale.setDefault(Locale.forLanguageTag("tr-TR"));
+      assertEquals("<iframe src=\"https://www.youtube.com/embed/x\" allow=\"fullscreen; picture-in-picture\"></iframe>",
+                   HTMLSanitizer.sanitize("<iframe src=\"https://www.youtube.com/embed/x\" allow=\"FULLSCREEN; CAMERA; PICTURE-IN-PICTURE\"></iframe>"));
+    } finally {
+      Locale.setDefault(previous);
+    }
     assertEquals("<iframe src=\"https://www.youtube.com/embed/x\" allow=\"fullscreen\"></iframe>",
                  HTMLSanitizer.sanitize("<iframe src=\"https://www.youtube.com/embed/x\" allow=\"&#102;ullscreen\"></iframe>"));
   }

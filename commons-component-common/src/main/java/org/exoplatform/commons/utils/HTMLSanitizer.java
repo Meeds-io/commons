@@ -116,10 +116,14 @@ abstract public class HTMLSanitizer {
                                                                                                                  "web-share");
 
   /**
-   * The only values HTML defines for the boolean <code>allowfullscreen</code> attribute:
-   * absent, empty, or the attribute's own name. Anything else is a producer's mistake and
-   * is dropped rather than echoed back, because a note body is compiled as a Vue template,
-   * not only parsed as HTML.
+   * The values accepted for the boolean <code>allowfullscreen</code> attribute. HTML §2.3.2
+   * defines only three — absent, empty, or an ASCII case-insensitive match of the
+   * attribute's own name, with no surrounding whitespace — and explicitly forbids
+   * <code>true</code>/<code>false</code> on a boolean attribute. <code>true</code> is
+   * tolerated here anyway because producers emit it; <code>false</code> is dropped, which
+   * is the safe direction even though HTML would read it as "attribute present, therefore
+   * true". Anything else is a producer's mistake and is dropped rather than echoed back,
+   * because a note body is compiled as a Vue template, not only parsed as HTML.
    */
   private static final Pattern                                                ALLOW_FULL_SCREEN_VALUE   =
                                                                                                     Pattern.compile("(?i)^(|true|allowfullscreen)$");
@@ -135,8 +139,10 @@ abstract public class HTMLSanitizer {
    * That <code>'src'</code> narrowing describes <strong>this attribute only</strong>. The
    * boolean <code>allowfullscreen</code> allowed alongside it is specified differently:
    * Permissions Policy §9.4 sets the container policy for <code>fullscreen</code> to the
-   * special value <code>*</code>, though Chromium was measured to narrow it to
-   * <code>'src'</code> in practice. The two shapes are therefore not equivalent on paper.
+   * special value <code>*</code> <em>when the <code>allow</code> attribute declares no
+   * <code>fullscreen</code> entry of its own</em> — where both are present, the
+   * <code>allow</code> entry stands and the boolean adds nothing. Chromium was measured to
+   * narrow both shapes to <code>'src'</code> in practice. The two shapes are therefore not equivalent on paper.
    */
   private static final AttributePolicy                                        IFRAME_ALLOW_POLICY       =
                                                                                                     (elementName,
