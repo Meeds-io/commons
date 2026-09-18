@@ -108,9 +108,10 @@ abstract public class HTMLSanitizer {
    * is already <code>*</code>, so listing it grants nothing and is kept only for fidelity
    * with the attribute as emitted. Three grants and one no-op, in other words.
    * <p>
-   * Refused, although providers ask for every one of them, because each reaches the visitor
-   * rather than rendering the media — and each is one entry away from being restored, which
-   * needs its trade-off written down:
+   * Refused, although providers ask for every one of them, because each hands the framed
+   * origin a capability that reaches the visitor — even where it also serves a rendering
+   * purpose, as the sensors do for 360-degree playback; where both are true, refusal wins.
+   * Each is one entry away from being restored, which needs its trade-off written down:
    * <ul>
    * <li><code>clipboard-write</code> — writes the visitor's clipboard. Cost of refusing: a
    * player's in-frame "copy link" button.</li>
@@ -124,7 +125,8 @@ abstract public class HTMLSanitizer {
    * policy does not constrain. Cost: 360-degree/VR orientation control, not playback and
    * not fullscreen.</li>
    * </ul>
-   * Also refused, never asked for by a media provider: <code>camera</code>,
+   * Also refused, and not asked for by any of the three providers whose oEmbed output this
+   * suite pins: <code>camera</code>,
    * <code>microphone</code>, <code>geolocation</code>, <code>display-capture</code>,
    * <code>payment</code>.
    */
@@ -150,7 +152,8 @@ abstract public class HTMLSanitizer {
   /**
    * Filters an iframe <code>allow</code> attribute down to {@link #ALLOWED_IFRAME_FEATURES}.
    * The value is a feature list. The providers' own oEmbed output carries bare feature
-   * names (<code>autoplay; fullscreen; picture-in-picture</code>); the origin-list form
+   * names (Dailymotion's is <code>autoplay; fullscreen; picture-in-picture; web-share</code>);
+   * the origin-list form
    * <code>encrypted-media *; fullscreen *;</code> is what an oEmbed proxy such as iframely
    * emits after rewriting them. Each kept feature
    * is re-emitted without its origin allow-list, so it falls back to the spec default
