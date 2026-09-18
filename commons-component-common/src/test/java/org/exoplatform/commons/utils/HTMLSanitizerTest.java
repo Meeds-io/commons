@@ -161,9 +161,11 @@ public class HTMLSanitizerTest {
    */
   @Test
   public void testProviderFeatureListKeptOnIFrame() throws Exception {
+    // clipboard-write is asked for by the provider and deliberately refused: its default
+    // allow-list is 'self', so it is a capability grant, not a rendering capability.
     String input = "<iframe src=\"https://www.youtube.com/embed/RLY9uVbuk3Q\" allow=\"accelerometer *; clipboard-write *; encrypted-media *; gyroscope *; picture-in-picture *; web-share *;\"></iframe>";
     String sanitized = HTMLSanitizer.sanitize(input);
-    assertEquals("<iframe src=\"https://www.youtube.com/embed/RLY9uVbuk3Q\" allow=\"accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share\"></iframe>",
+    assertEquals("<iframe src=\"https://www.youtube.com/embed/RLY9uVbuk3Q\" allow=\"accelerometer; encrypted-media; gyroscope; picture-in-picture; web-share\"></iframe>",
                  sanitized);
   }
 
@@ -202,5 +204,55 @@ public class HTMLSanitizerTest {
     String sanitized = HTMLSanitizer.sanitize(input);
     assertEquals("<div class=\"embed-wrapper\" data-url=\"url\"><div><iframe src=\"https://v.calameo.com/?bkcode&#61;007393684777abcf55de3\" allowfullscreen=\"allowfullscreen\" allow=\"encrypted-media\"></iframe></div></div>",
                  sanitized);
+  }
+
+  /**
+   * EXO-90272 — the four parsing properties the filter's safety rests on, pinned because a
+   * later refactor could drop any of them silently: the value is lower-cased with
+   * {@link java.util.Locale#ROOT} (a Turkish default locale would otherwise break
+   * PICTURE-IN-PICTURE), the policy sees the entity-decoded value, the separator is the
+   * semicolon and not the comma of the HTTP header grammar, and a look-alike token is not
+   * a token.
+   */
+  @Test
+  public void testAllowFeatureMatchingIsCaseFoldedAndEntityDecoded() throws Exception {
+    assertEquals("<iframe src=\"https://www.youtube.com/embed/x\" allow=\"fullscreen; picture-in-picture\"></iframe>",
+                 HTMLSanitizer.sanitize("<iframe src=\"https://www.youtube.com/embed/x\" allow=\"FULLSCREEN; CAMERA; PICTURE-IN-PICTURE\"></iframe>"));
+    assertEquals("<iframe src=\"https://www.youtube.com/embed/x\" allow=\"fullscreen\"></iframe>",
+                 HTMLSanitizer.sanitize("<iframe src=\"https://www.youtube.com/embed/x\" allow=\"&#102;ullscreen\"></iframe>"));
+  }
+
+  @Test
+  public void testAllowFeatureSeparatorIsSemicolonAndLookAlikesAreRejected() throws Exception {
+    // "camera,fullscreen" is one unknown token: the comma separates HTTP header entries,
+    // not the entries of this attribute, so nothing survives and the attribute is dropped.
+    assertEquals("<iframe src=\"https://www.youtube.com/embed/x\"></iframe>",
+                 HTMLSanitizer.sanitize("<iframe src=\"https://www.youtube.com/embed/x\" allow=\"camera,fullscreen\"></iframe>"));
+    // fullwidth U+FF46 is not an "f"
+    assertEquals("<iframe src=\"https://www.youtube.com/embed/x\"></iframe>",
+                 HTMLSanitizer.sanitize("<iframe src=\"https://www.youtube.com/embed/x\" allow=\"\uFF46ullscreen\"></iframe>"));
+  }
+
+  /**
+   * EXO-90272 — <code>allowfullscreen</code> is a boolean attribute; a value other than the
+   * ones HTML defines is a producer mistake and is not echoed back, because a note body is
+   * compiled as a Vue template and not only parsed as HTML.
+   */
+  @Test
+  public void testAllowFullScreenRejectsAnArbitraryValue() throws Exception {
+    assertEquals("<iframe src=\"https://www.youtube.com/embed/x\"></iframe>",
+                 HTMLSanitizer.sanitize("<iframe src=\"https://www.youtube.com/embed/x\" allowfullscreen=\"javascript:alert(1)\"></iframe>"));
+    assertEquals("<iframe src=\"https://www.youtube.com/embed/x\" allowfullscreen=\"true\"></iframe>",
+                 HTMLSanitizer.sanitize("<iframe src=\"https://www.youtube.com/embed/x\" allowfullscreen=\"true\"></iframe>"));
+  }
+
+  /**
+   * EXO-90272 — the capabilities that must stay refused whatever an embedded origin asks
+   * for. This is the security contract of {@link HTMLSanitizer}'s iframe policy.
+   */
+  @Test
+  public void testDeviceAndPaymentFeaturesNeverGranted() throws Exception {
+    String input = "<iframe src=\"https://www.youtube.com/embed/x\" allow=\"camera; microphone; geolocation; display-capture; payment; clipboard-write; usb; midi; screen-wake-lock\"></iframe>";
+    assertEquals("<iframe src=\"https://www.youtube.com/embed/x\"></iframe>", HTMLSanitizer.sanitize(input));
   }
 }
