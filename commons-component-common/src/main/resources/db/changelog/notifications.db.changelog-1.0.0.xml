@@ -310,22 +310,10 @@
       <rollback/>
     </changeSet>
 
-    <!-- EXO-90453: the digest engine is the first sender that writes text typed by
-         users (a space name, an activity title) into EMAIL_QUEUE; the instant emails
-         go straight to SMTP and never used these columns. The table is created in
-         utf8mb3 like every table of the platform, so a 4-byte character such as an
-         emoji made the insert fail and the digest was retried every hour, never sent.
-         The text columns move to utf8mb4, the way social did for SOC_ACTIVITIES
-         (social-rdbms changeset 1.0.0-62). MySQL only: the other databases already
-         store any Unicode text. -->
     <changeSet author="notifications" id="1.0.0-28" dbms="mysql">
-      <sql>ALTER TABLE EMAIL_QUEUE MODIFY COLUMN SUBJECT VARCHAR(550) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci</sql>
       <sql>ALTER TABLE EMAIL_QUEUE MODIFY COLUMN BODY LONGTEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci</sql>
-      <sql>ALTER TABLE EMAIL_QUEUE MODIFY COLUMN FOOTER VARCHAR(550) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci</sql>
       <rollback>
-        <sql>ALTER TABLE EMAIL_QUEUE MODIFY COLUMN SUBJECT VARCHAR(550) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci</sql>
         <sql>ALTER TABLE EMAIL_QUEUE MODIFY COLUMN BODY LONGTEXT CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci</sql>
-        <sql>ALTER TABLE EMAIL_QUEUE MODIFY COLUMN FOOTER VARCHAR(550) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci</sql>
       </rollback>
     </changeSet>
 
