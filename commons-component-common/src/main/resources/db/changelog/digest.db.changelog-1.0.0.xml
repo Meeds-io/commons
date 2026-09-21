@@ -106,5 +106,17 @@
   <changeSet author="digest" id="1.0.0-7" dbms="oracle,postgresql,hsqldb">
     <createSequence sequenceName="SEQ_NTF_DIGEST_ITEM_ID" startValue="1"/>
   </changeSet>
+  <!-- EXO-90453: PARAMS holds text typed by users (a title, a name) and is compared
+       with "=" at capture time. The table is created in utf8mb3 like every table of
+       the platform, so a 4-byte character such as an emoji made the comparison fail
+       and the item was never stored. The column moves to utf8mb4, the way social did
+       for SOC_ACTIVITIES.TITLE (social-rdbms changeset 1.0.0-62). MySQL only: the
+       other databases already store any Unicode text. -->
+  <changeSet author="digest" id="1.0.0-8" dbms="mysql">
+    <sql>ALTER TABLE NTF_DIGEST_ITEMS MODIFY COLUMN PARAMS VARCHAR(2000) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci</sql>
+    <rollback>
+      <sql>ALTER TABLE NTF_DIGEST_ITEMS MODIFY COLUMN PARAMS VARCHAR(2000) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci</sql>
+    </rollback>
+  </changeSet>
 
 </databaseChangeLog>
