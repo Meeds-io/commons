@@ -310,4 +310,11 @@
       <rollback/>
     </changeSet>
 
+    <changeSet author="notifications" id="1.0.0-28" dbms="mysql">
+      <sql>ALTER TABLE EMAIL_QUEUE MODIFY COLUMN BODY LONGTEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci</sql>
+      <rollback>
+        <sql>ALTER TABLE EMAIL_QUEUE MODIFY COLUMN BODY LONGTEXT CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci</sql>
+      </rollback>
+    </changeSet>
+
 </databaseChangeLog>

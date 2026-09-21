@@ -106,5 +106,11 @@
   <changeSet author="digest" id="1.0.0-7" dbms="oracle,postgresql,hsqldb">
     <createSequence sequenceName="SEQ_NTF_DIGEST_ITEM_ID" startValue="1"/>
   </changeSet>
+  <changeSet author="digest" id="1.0.0-8" dbms="mysql">
+    <sql>ALTER TABLE NTF_DIGEST_ITEMS MODIFY COLUMN PARAMS VARCHAR(2000) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci</sql>
+    <rollback>
+      <sql>ALTER TABLE NTF_DIGEST_ITEMS MODIFY COLUMN PARAMS VARCHAR(2000) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci</sql>
+    </rollback>
+  </changeSet>
 
 </databaseChangeLog>
