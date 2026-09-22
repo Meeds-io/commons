@@ -20,12 +20,16 @@ package org.exoplatform.commons.utils;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
 import org.apache.commons.collections.CollectionUtils;
+import org.owasp.html.AttributePolicy;
 import org.owasp.html.CssSchema;
 import org.owasp.html.HtmlPolicyBuilder;
 import org.owasp.html.HtmlSanitizer;
@@ -91,7 +95,46 @@ abstract public class HTMLSanitizer {
                                                                                                     (Collection<String>) CollectionUtils.union(CssSchema.DEFAULT.allowedProperties(),
                                                                                                                                                Arrays.asList(new String[]{"float", "display", "clear", "position", "left", "top"}));
 
-  private static final Pattern                                                ALLOW_FULL_SCREEN_ON_IFRAME               = Pattern.compile("fullscreen");
+  /**
+   * The permission-policy features an embedded player legitimately needs. Anything
+   * else an oEmbed provider asks for (camera, microphone, geolocation,
+   * display-capture, payment...) is dropped: the body carrying the iframe is
+   * user-authored content.
+   */
+  private static final Set<String>                                            ALLOWED_IFRAME_FEATURES   = Set.of("accelerometer",
+                                                                                                                 "autoplay",
+                                                                                                                 "clipboard-write",
+                                                                                                                 "encrypted-media",
+                                                                                                                 "fullscreen",
+                                                                                                                 "gyroscope",
+                                                                                                                 "picture-in-picture",
+                                                                                                                 "web-share");
+
+  /**
+   * Filters an iframe <code>allow</code> attribute down to {@link #ALLOWED_IFRAME_FEATURES}.
+   * Providers send a feature list such as
+   * <code>accelerometer *; encrypted-media *; fullscreen *;</code>; each kept feature
+   * is re-emitted without its origin allow-list, so it falls back to the spec default
+   * <code>'src'</code> — the framed document itself, never the whole web. Returns
+   * <code>null</code> (drop the attribute) when nothing survives.
+   */
+  private static final AttributePolicy                                        IFRAME_ALLOW_POLICY       =
+                                                                                                    (elementName,
+                                                                                                     attributeName,
+                                                                                                     value) -> {
+                                                                                                      if (value == null) {
+                                                                                                        return null;
+                                                                                                      }
+                                                                                                      String features =
+                                                                                                                      Arrays.stream(value.split(";"))
+                                                                                                                            .map(String::trim)
+                                                                                                                            .filter(feature -> !feature.isEmpty())
+                                                                                                                            .map(feature -> feature.split("\\s+")[0].toLowerCase(Locale.ROOT))
+                                                                                                                            .filter(ALLOWED_IFRAME_FEATURES::contains)
+                                                                                                                            .distinct()
+                                                                                                                            .collect(Collectors.joining("; "));
+                                                                                                      return features.isEmpty() ? null : features;
+                                                                                                    };
 
 
   private static final CssSchema.Property                                     ASPECT_RATIO_PROPERTY       =
@@ -364,7 +407,9 @@ abstract public class HTMLSanitizer {
                                                                                                                                 .allowAttributes("src")
                                                                                                                                 .onElements("iframe")
                                                                                                                                 .allowAttributes("allow")
-                                                                                                                                .matching(ALLOW_FULL_SCREEN_ON_IFRAME)
+                                                                                                                                .matching(IFRAME_ALLOW_POLICY)
+                                                                                                                                .onElements("iframe")
+                                                                                                                                .allowAttributes("allowfullscreen")
                                                                                                                                 .onElements("iframe")
                                                                                                                                 .allowAttributes("frameborder")
                                                                                                                                 .onElements("iframe")
