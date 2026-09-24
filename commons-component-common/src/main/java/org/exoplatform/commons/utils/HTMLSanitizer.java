@@ -222,7 +222,11 @@ abstract public class HTMLSanitizer {
 
   private static final Pattern                                                HOST_NAME                 = Pattern.compile("[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?");
 
-  /** Characters a browser accepts in a URL and {@link URI} refuses; <code>\\</code> stays refused. */
+  /**
+   * The characters, among those a browser accepts unencoded in a URL and {@link URI}
+   * refuses, that are percent-encoded before parsing; <code>&#92;</code> is not one of them
+   * and stays refused.
+   */
   private static final String                                                 URI_UNSAFE_CHARS          = " \"<>^`{|}";
 
   private static volatile IframeAllowedHosts                                  iframeAllowedHosts        =
