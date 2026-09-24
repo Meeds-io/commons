@@ -18,8 +18,10 @@
  */
 package org.exoplatform.commons.utils;
 
+import java.net.URI;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
@@ -29,6 +31,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.owasp.html.AttributePolicy;
 import org.owasp.html.CssSchema;
 import org.owasp.html.HtmlPolicyBuilder;
@@ -38,6 +41,9 @@ import org.owasp.html.HtmlStreamRenderer;
 
 import com.google.javascript.jscomp.jarjar.com.google.common.collect.ImmutableMap;
 import com.google.javascript.jscomp.jarjar.com.google.common.collect.ImmutableSet;
+
+import org.exoplatform.services.log.ExoLogger;
+import org.exoplatform.services.log.Log;
 
 /**
  * Prevent XSS/XEE attacks by encoding user HTML inputs. This class will be used
@@ -100,8 +106,9 @@ abstract public class HTMLSanitizer {
    * That is the criterion, and it is narrower than "whatever the provider asks for": the
    * question is not whether a feature is denied by default, which is true of almost all of
    * them, but what the framed origin could do to the visitor with it. A note or article
-   * body is authored by any platform user, this policy places no constraint on the origin
-   * that body embeds, and the same policy governs ten repos' content.
+   * body is authored by any platform user, the origins it may embed are only as trustworthy
+   * as the configured {@link #IFRAME_ALLOWED_HOSTS_PROPERTY} list, and the same policy
+   * governs ten repos' content.
    * <p>
    * Granted: <code>autoplay</code>, <code>encrypted-media</code> (DRM playback),
    * <code>fullscreen</code>, and <code>picture-in-picture</code> — whose default allow-list
@@ -121,8 +128,8 @@ abstract public class HTMLSanitizer {
    * in-player share button. Refused for the same reason as clipboard-write, which it
    * mirrors.</li>
    * <li><code>accelerometer</code>, <code>gyroscope</code> — the Generic Sensor API and
-   * DeviceMotion/DeviceOrientation events, i.e. device-motion telemetry to an origin this
-   * policy does not constrain. Cost: 360-degree/VR orientation control, not playback and
+   * DeviceMotion/DeviceOrientation events, i.e. device-motion telemetry to a third-party
+   * origin. Cost: 360-degree/VR orientation control, not playback and
    * not fullscreen.</li>
    * </ul>
    * Also refused, and not asked for by any of the three providers whose oEmbed output this
@@ -189,6 +196,41 @@ abstract public class HTMLSanitizer {
                                                                                                                             .collect(Collectors.joining("; "));
                                                                                                       return features.isEmpty() ? null : features;
                                                                                                     };
+
+  private static final Log                                                    LOG                       = ExoLogger.getLogger(HTMLSanitizer.class);
+
+  /**
+   * System property holding the comma-separated host names an iframe <code>src</code> may
+   * point to. When set, it replaces {@link #DEFAULT_IFRAME_ALLOWED_HOSTS}; set to an empty
+   * value, no iframe keeps its <code>src</code>.
+   */
+  public static final String                                                  IFRAME_ALLOWED_HOSTS_PROPERTY = "io.meeds.sanitizer.iframe.allowedHosts";
+
+  /**
+   * The embed providers whose iframes are kept when {@link #IFRAME_ALLOWED_HOSTS_PROPERTY}
+   * is not set: the players the oEmbed provider (iframely) returns for YouTube, Vimeo,
+   * Dailymotion and Calameo, and iframely's own hosted iframe for the other providers.
+   */
+  public static final List<String>                                            DEFAULT_IFRAME_ALLOWED_HOSTS  = List.of("www.youtube.com",
+                                                                                                                      "www.youtube-nocookie.com",
+                                                                                                                      "player.vimeo.com",
+                                                                                                                      "www.dailymotion.com",
+                                                                                                                      "geo.dailymotion.com",
+                                                                                                                      "v.calameo.com",
+                                                                                                                      "cdn.iframe.ly");
+
+  private static final Pattern                                                HOST_NAME                 = Pattern.compile("[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?");
+
+  private static volatile String                                              iframeAllowedHostsValue;
+
+  private static volatile List<String>                                        iframeAllowedHosts        = DEFAULT_IFRAME_ALLOWED_HOSTS;
+
+  /** Drops an iframe <code>src</code> that {@link #isAllowedIframeSrc(String)} refuses. */
+  private static final AttributePolicy                                        IFRAME_SRC_POLICY         =
+                                                                                                    (elementName,
+                                                                                                     attributeName,
+                                                                                                     value) -> isAllowedIframeSrc(value) ? value
+                                                                                                                                         : null;
 
 
   private static final CssSchema.Property                                     ASPECT_RATIO_PROPERTY       =
@@ -459,6 +501,7 @@ abstract public class HTMLSanitizer {
                                                                                                                                 .allowAttributes("wikiparam")
                                                                                                                                 .globally()
                                                                                                                                 .allowAttributes("src")
+                                                                                                                                .matching(IFRAME_SRC_POLICY)
                                                                                                                                 .onElements("iframe")
                                                                                                                                 .allowAttributes("allow")
                                                                                                                                 .matching(IFRAME_ALLOW_POLICY)
@@ -501,6 +544,59 @@ abstract public class HTMLSanitizer {
     // Use the policy defined above to sanitize the HTML.
     HtmlSanitizer.sanitize(html, POLICY_DEFINITION.apply(renderer));
     return sb.toString();
+  }
+
+  /**
+   * @return the host names an iframe <code>src</code> may point to: the
+   *         {@value #IFRAME_ALLOWED_HOSTS_PROPERTY} system property when set, else
+   *         {@link #DEFAULT_IFRAME_ALLOWED_HOSTS}
+   */
+  public static List<String> getAllowedIframeHosts() {
+    String value = PropertyManager.getProperty(IFRAME_ALLOWED_HOSTS_PROPERTY);
+    if (!StringUtils.equals(value, iframeAllowedHostsValue)) {
+      iframeAllowedHosts = parseAllowedIframeHosts(value);
+      iframeAllowedHostsValue = value;
+    }
+    return iframeAllowedHosts;
+  }
+
+  /**
+   * @param src an iframe <code>src</code> value, entity-decoded
+   * @return true when it is an https or protocol-relative URL whose host is exactly one of
+   *         {@link #getAllowedIframeHosts()}
+   */
+  public static boolean isAllowedIframeSrc(String src) {
+    if (StringUtils.isBlank(src)) {
+      return false;
+    }
+    try {
+      URI uri = new URI(src.trim());
+      String scheme = uri.getScheme();
+      String host = uri.getHost();
+      return (scheme == null || scheme.equalsIgnoreCase("https"))
+             && host != null
+             && getAllowedIframeHosts().contains(host.toLowerCase(Locale.ROOT));
+    } catch (Exception e) {
+      return false;
+    }
+  }
+
+  static List<String> parseAllowedIframeHosts(String value) {
+    if (value == null) {
+      return DEFAULT_IFRAME_ALLOWED_HOSTS;
+    }
+    return Arrays.stream(value.split(","))
+                 .map(host -> host.trim().toLowerCase(Locale.ROOT))
+                 .filter(host -> !host.isEmpty())
+                 .filter(host -> {
+                   boolean valid = HOST_NAME.matcher(host).matches();
+                   if (!valid) {
+                     LOG.warn("Ignoring '{}' in {}: not a host name", host, IFRAME_ALLOWED_HOSTS_PROPERTY);
+                   }
+                   return valid;
+                 })
+                 .distinct()
+                 .toList();
   }
 
   private static Predicate<String> matchesEither(final Pattern a, final Pattern b) {
