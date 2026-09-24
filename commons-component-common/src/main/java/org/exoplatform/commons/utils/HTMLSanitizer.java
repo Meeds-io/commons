@@ -19,6 +19,7 @@
 package org.exoplatform.commons.utils;
 
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -221,9 +222,12 @@ abstract public class HTMLSanitizer {
 
   private static final Pattern                                                HOST_NAME                 = Pattern.compile("[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?");
 
-  private static volatile String                                              iframeAllowedHostsValue;
+  /** Characters a browser accepts in a URL and {@link URI} refuses; <code>\\</code> stays refused. */
+  private static final String                                                 URI_UNSAFE_CHARS          = " \"<>^`{|}";
 
-  private static volatile List<String>                                        iframeAllowedHosts        = DEFAULT_IFRAME_ALLOWED_HOSTS;
+  private static volatile IframeAllowedHosts                                  iframeAllowedHosts        =
+                                                                                                    new IframeAllowedHosts(null,
+                                                                                                                           DEFAULT_IFRAME_ALLOWED_HOSTS);
 
   /** Drops an iframe <code>src</code> that {@link #isAllowedIframeSrc(String)} refuses. */
   private static final AttributePolicy                                        IFRAME_SRC_POLICY         =
@@ -503,6 +507,12 @@ abstract public class HTMLSanitizer {
                                                                                                                                 .allowAttributes("src")
                                                                                                                                 .matching(IFRAME_SRC_POLICY)
                                                                                                                                 .onElements("iframe")
+                                                                                                                                // An iframe whose src was refused is dropped, not left as an empty frame
+                                                                                                                                .allowElements((elementName,
+                                                                                                                                                attributes) -> hasAttribute(attributes,
+                                                                                                                                                                            "src") ? elementName
+                                                                                                                                                                                   : null,
+                                                                                                                                               "iframe")
                                                                                                                                 .allowAttributes("allow")
                                                                                                                                 .matching(IFRAME_ALLOW_POLICY)
                                                                                                                                 .onElements("iframe")
@@ -553,11 +563,12 @@ abstract public class HTMLSanitizer {
    */
   public static List<String> getAllowedIframeHosts() {
     String value = PropertyManager.getProperty(IFRAME_ALLOWED_HOSTS_PROPERTY);
-    if (!StringUtils.equals(value, iframeAllowedHostsValue)) {
-      iframeAllowedHosts = parseAllowedIframeHosts(value);
-      iframeAllowedHostsValue = value;
+    IframeAllowedHosts allowedHosts = iframeAllowedHosts;
+    if (!StringUtils.equals(value, allowedHosts.value())) {
+      allowedHosts = new IframeAllowedHosts(value, parseAllowedIframeHosts(value));
+      iframeAllowedHosts = allowedHosts;
     }
-    return iframeAllowedHosts;
+    return allowedHosts.hosts();
   }
 
   /**
@@ -570,7 +581,7 @@ abstract public class HTMLSanitizer {
       return false;
     }
     try {
-      URI uri = new URI(src.trim());
+      URI uri = new URI(encodeUriUnsafeChars(src.trim()));
       String scheme = uri.getScheme();
       String host = uri.getHost();
       return (scheme == null || scheme.equalsIgnoreCase("https"))
@@ -579,6 +590,28 @@ abstract public class HTMLSanitizer {
     } catch (Exception e) {
       return false;
     }
+  }
+
+  private static String encodeUriUnsafeChars(String url) {
+    StringBuilder encoded = new StringBuilder(url.length());
+    for (byte b : url.getBytes(StandardCharsets.UTF_8)) {
+      char c = (char) (b & 0xFF);
+      if (c > 0x7F || URI_UNSAFE_CHARS.indexOf(c) >= 0) {
+        encoded.append('%').append(String.format("%02X", b & 0xFF));
+      } else {
+        encoded.append(c);
+      }
+    }
+    return encoded.toString();
+  }
+
+  private static boolean hasAttribute(List<String> attributes, String name) {
+    for (int i = 0; i < attributes.size(); i += 2) {
+      if (name.equals(attributes.get(i))) {
+        return true;
+      }
+    }
+    return false;
   }
 
   static List<String> parseAllowedIframeHosts(String value) {
@@ -601,6 +634,10 @@ abstract public class HTMLSanitizer {
 
   private static Predicate<String> matchesEither(final Pattern a, final Pattern b) {
     return s -> a.matcher(s).matches() || b.matcher(s).matches();
+  }
+
+  /** The property value and the host list parsed from it, replaced as a unit. */
+  private record IframeAllowedHosts(String value, List<String> hosts) {
   }
 
 }

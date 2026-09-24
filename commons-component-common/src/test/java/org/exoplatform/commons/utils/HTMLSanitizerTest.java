@@ -99,13 +99,13 @@ public class HTMLSanitizerTest {
   public void testNotAllowedURLInIFrame() throws Exception {
     String input = "<iframe allow=\"fullscreen\" frameborder=\"0\" src=\"https://www.udemy.com/course/java-the-complete-java-developer-course/\"></iframe>";
     String sanitized = HTMLSanitizer.sanitize(input);
-    assertEquals("<iframe allow=\"fullscreen\" frameborder=\"0\"></iframe>", sanitized);
+    assertEquals("", sanitized);
   }
 
   /**
    * EXO-90558 — the hosts iframely returns for the default providers, bare and inside the
    * wrappers the editors store, keep their <code>src</code>; iframely's own hosted iframe is
-   * protocol-relative.
+   * protocol-relative, and a query may carry characters a browser accepts unencoded.
    */
   @Test
   public void testDefaultEmbedProvidersKeptInIFrame() throws Exception {
@@ -121,12 +121,15 @@ public class HTMLSanitizerTest {
       String input = "<div style=\"position:relative\"><iframe src=\"" + src + "\"></iframe></div>";
       assertEquals(src, input, HTMLSanitizer.sanitize(input));
     }
+    assertEquals("<iframe src=\"https://www.youtube.com/embed/x?list&#61;a|b&amp;c&#61;^1&amp;d&#61;&#96;e \"></iframe>",
+                 HTMLSanitizer.sanitize("<iframe src=\"https://www.youtube.com/embed/x?list=a|b&amp;c=^1&amp;d=`e\"></iframe>"));
   }
 
   /**
-   * EXO-90558 — a <code>src</code> is kept only when its host is exactly an allowed one:
-   * not a sub-domain, not a look-alike suffix, not the user-info part, not over plain http
-   * or another scheme, and not a relative or unparseable URL.
+   * EXO-90558 — an iframe is kept only when its <code>src</code> host is exactly an allowed
+   * one: not a sub-domain, not a look-alike suffix, not the user-info part (entity-encoded
+   * included, the policy seeing the decoded value), not over plain http or another scheme,
+   * and not a relative or unparseable URL. The refused iframe is dropped, its wrapper kept.
    */
   @Test
   public void testNotAllowedIFrameSrcDropped() throws Exception {
@@ -134,6 +137,7 @@ public class HTMLSanitizerTest {
                               "https://www.youtube.com.evil.example/embed/x",
                               "https://evil.www.youtube.com/embed/x",
                               "https://www.youtube.com@evil.example/embed/x",
+                              "https://www.youtube.com&#64;evil.example/embed/x",
                               "https://evil.example\\@www.youtube.com/embed/x",
                               "http://www.youtube.com/embed/x",
                               "javascript:alert(1)",
@@ -141,9 +145,11 @@ public class HTMLSanitizerTest {
                               "/portal/dw",
                               "")) {
       assertEquals(src,
-                   "<iframe frameborder=\"0\"></iframe>",
-                   HTMLSanitizer.sanitize("<iframe frameborder=\"0\" src=\"" + src + "\"></iframe>"));
-      assertFalse(src, HTMLSanitizer.isAllowedIframeSrc(src));
+                   "<div class=\"embed-wrapper\"></div>",
+                   HTMLSanitizer.sanitize("<div class=\"embed-wrapper\"><iframe frameborder=\"0\" src=\"" + src + "\"></iframe></div>"));
+      if (!src.contains("&#64;")) {
+        assertFalse(src, HTMLSanitizer.isAllowedIframeSrc(src));
+      }
     }
     assertFalse(HTMLSanitizer.isAllowedIframeSrc(null));
   }
@@ -159,7 +165,7 @@ public class HTMLSanitizerTest {
       assertEquals(List.of("w.soundcloud.com", "player.vimeo.com"), HTMLSanitizer.getAllowedIframeHosts());
       assertEquals("<iframe src=\"https://w.soundcloud.com/player/\"></iframe>",
                    HTMLSanitizer.sanitize("<iframe src=\"https://w.soundcloud.com/player/\"></iframe>"));
-      assertEquals("<iframe></iframe>", HTMLSanitizer.sanitize("<iframe src=\"https://www.youtube.com/embed/x\"></iframe>"));
+      assertEquals("", HTMLSanitizer.sanitize("<iframe src=\"https://www.youtube.com/embed/x\"></iframe>"));
 
       PropertyManager.setProperty(HTMLSanitizer.IFRAME_ALLOWED_HOSTS_PROPERTY, "");
       assertEquals(List.of(), HTMLSanitizer.getAllowedIframeHosts());
