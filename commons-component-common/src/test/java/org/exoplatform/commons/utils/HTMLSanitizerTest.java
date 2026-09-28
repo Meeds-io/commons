@@ -19,8 +19,11 @@
 package org.exoplatform.commons.utils;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.util.List;
 import java.util.Locale;
 
 import org.junit.Test;
@@ -96,7 +99,94 @@ public class HTMLSanitizerTest {
   public void testNotAllowedURLInIFrame() throws Exception {
     String input = "<iframe allow=\"fullscreen\" frameborder=\"0\" src=\"https://www.udemy.com/course/java-the-complete-java-developer-course/\"></iframe>";
     String sanitized = HTMLSanitizer.sanitize(input);
-    assertEquals("<iframe allow=\"fullscreen\" frameborder=\"0\" src=\"https://www.udemy.com/course/java-the-complete-java-developer-course/\"></iframe>", sanitized);
+    assertEquals("", sanitized);
+  }
+
+  /**
+   * EXO-90558 — the hosts iframely returns for the default providers, bare and inside the
+   * wrappers the editors store, keep their <code>src</code>; iframely's own hosted iframe is
+   * protocol-relative, and a query may carry characters a browser accepts unencoded.
+   */
+  @Test
+  public void testDefaultEmbedProvidersKeptInIFrame() throws Exception {
+    for (String src : List.of("https://www.youtube.com/embed/x",
+                              "https://www.youtube-nocookie.com/embed/x",
+                              "https://player.vimeo.com/video/1",
+                              "https://www.dailymotion.com/embed/video/x",
+                              "https://geo.dailymotion.com/player.html",
+                              "https://v.calameo.com/",
+                              "https://cdn.iframe.ly/api/iframe",
+                              "//cdn.iframe.ly/api/iframe",
+                              "HTTPS://WWW.YOUTUBE.COM/embed/x")) {
+      String input = "<div style=\"position:relative\"><iframe src=\"" + src + "\"></iframe></div>";
+      assertEquals(src, input, HTMLSanitizer.sanitize(input));
+    }
+    assertEquals("<iframe src=\"https://www.youtube.com/embed/x?list&#61;a|b&amp;c&#61;^1&amp;d&#61;&#96;e \"></iframe>",
+                 HTMLSanitizer.sanitize("<iframe src=\"https://www.youtube.com/embed/x?list=a|b&amp;c=^1&amp;d=`e\"></iframe>"));
+  }
+
+  /**
+   * EXO-90558 — an iframe is kept only when its <code>src</code> host is exactly an allowed
+   * one: not a sub-domain, not a look-alike suffix, not the user-info part (entity-encoded
+   * included, the policy seeing the decoded value), not over plain http or another scheme,
+   * and not a relative or unparseable URL. The refused iframe is dropped, its wrapper kept.
+   */
+  @Test
+  public void testNotAllowedIFrameSrcDropped() throws Exception {
+    for (String src : List.of("https://evil.example/x",
+                              "https://www.youtube.com.evil.example/embed/x",
+                              "https://evil.www.youtube.com/embed/x",
+                              "https://www.youtube.com@evil.example/embed/x",
+                              "https://www.youtube.com&#64;evil.example/embed/x",
+                              "https://evil.example\\@www.youtube.com/embed/x",
+                              "http://www.youtube.com/embed/x",
+                              "javascript:alert(1)",
+                              "data:text/html,x",
+                              "/portal/dw",
+                              "")) {
+      assertEquals(src,
+                   "<div class=\"embed-wrapper\"></div>",
+                   HTMLSanitizer.sanitize("<div class=\"embed-wrapper\"><iframe frameborder=\"0\" src=\"" + src + "\"></iframe></div>"));
+      if (!src.contains("&#64;")) {
+        assertFalse(src, HTMLSanitizer.isAllowedIframeSrc(src));
+      }
+    }
+    assertFalse(HTMLSanitizer.isAllowedIframeSrc(null));
+  }
+
+  /**
+   * EXO-90558 — the system property replaces the default list, so a host can be added and
+   * a default one removed; set empty, it allows none.
+   */
+  @Test
+  public void testAllowedIframeHostsFromSystemProperty() throws Exception {
+    try {
+      PropertyManager.setProperty(HTMLSanitizer.IFRAME_ALLOWED_HOSTS_PROPERTY, " W.SoundCloud.com , player.vimeo.com,,");
+      assertEquals(List.of("w.soundcloud.com", "player.vimeo.com"), HTMLSanitizer.getAllowedIframeHosts());
+      assertEquals("<iframe src=\"https://w.soundcloud.com/player/\"></iframe>",
+                   HTMLSanitizer.sanitize("<iframe src=\"https://w.soundcloud.com/player/\"></iframe>"));
+      assertEquals("", HTMLSanitizer.sanitize("<iframe src=\"https://www.youtube.com/embed/x\"></iframe>"));
+
+      PropertyManager.setProperty(HTMLSanitizer.IFRAME_ALLOWED_HOSTS_PROPERTY, "");
+      assertEquals(List.of(), HTMLSanitizer.getAllowedIframeHosts());
+      assertFalse(HTMLSanitizer.isAllowedIframeSrc("https://www.youtube.com/embed/x"));
+    } finally {
+      System.clearProperty(HTMLSanitizer.IFRAME_ALLOWED_HOSTS_PROPERTY);
+      PropertyManager.refresh();
+    }
+    assertEquals(HTMLSanitizer.DEFAULT_IFRAME_ALLOWED_HOSTS, HTMLSanitizer.getAllowedIframeHosts());
+    assertTrue(HTMLSanitizer.isAllowedIframeSrc("https://www.youtube.com/embed/x"));
+  }
+
+  /**
+   * EXO-90558 — the allowed hosts are written into a page script by the portal head, so an
+   * entry that is not a plain host name is dropped rather than echoed.
+   */
+  @Test
+  public void testInvalidAllowedIframeHostIgnored() {
+    assertEquals(List.of("w.soundcloud.com"),
+                 HTMLSanitizer.parseAllowedIframeHosts("w.soundcloud.com, \"];alert(1);//, *.evil.example, https://x.example/, -x.example"));
+    assertEquals(HTMLSanitizer.DEFAULT_IFRAME_ALLOWED_HOSTS, HTMLSanitizer.parseAllowedIframeHosts(null));
   }
 
   @Test
@@ -180,8 +270,8 @@ public class HTMLSanitizerTest {
   /** EXO-90272 — a feature repeated, in any case, is emitted once. */
   @Test
   public void testDuplicateFeaturesCollapse() throws Exception {
-    assertEquals("<iframe src=\"https://x/y\" allow=\"fullscreen\"></iframe>",
-                 HTMLSanitizer.sanitize("<iframe src=\"https://x/y\" allow=\"fullscreen; fullscreen; FULLSCREEN\"></iframe>"));
+    assertEquals("<iframe src=\"https://www.youtube.com/embed/x\" allow=\"fullscreen\"></iframe>",
+                 HTMLSanitizer.sanitize("<iframe src=\"https://www.youtube.com/embed/x\" allow=\"fullscreen; fullscreen; FULLSCREEN\"></iframe>"));
   }
 
   /**
@@ -276,7 +366,7 @@ public class HTMLSanitizerTest {
    * for. This is the security contract of {@link HTMLSanitizer}'s iframe policy: a feature
    * that reaches the visitor rather than rendering the media is dropped. accelerometer and
    * gyroscope are in this list deliberately — YouTube asks for both, and they carry
-   * device-motion telemetry to an origin this policy does not constrain — and so is
+   * device-motion telemetry to a third-party origin — and so is
    * web-share, which hands the platform share sheet to the framed origin and mirrors
    * clipboard-write.
    */
