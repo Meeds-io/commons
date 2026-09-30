@@ -21,8 +21,8 @@ package org.exoplatform.commons.api.notification.service;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
-import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.FutureTask;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -43,12 +43,8 @@ public class NotificationCompletionService implements Startable {
 
   private Executor executor;
 
-  private ExecutorCompletionService<?> ecs;
-  
   //store runnable to process notification
   private BlockingQueue<Runnable> workQueue = new LinkedBlockingQueue<Runnable>();
-
-  private final int DEFAULT_THREAD_NUMBER = 1;
 
   private final boolean DEFAULT_ASYNC_EXECUTION = true;
 
@@ -57,7 +53,10 @@ public class NotificationCompletionService implements Startable {
   private int keepAliveTime;
 
   private boolean configAsyncExecution;
-  
+
+  // Set on the threads of the pool only
+  private final ThreadLocal<Boolean> poolThread = new ThreadLocal<>();
+
   public NotificationCompletionService(InitParams params) {
 
     //
@@ -69,7 +68,7 @@ public class NotificationCompletionService implements Startable {
     try {
       configThreadNumber = Integer.parseInt(threadNumberValue.getValue());
     } catch (Exception e) {
-      configThreadNumber = DEFAULT_THREAD_NUMBER;
+      configThreadNumber = 0;
     }
 
     //
@@ -86,11 +85,15 @@ public class NotificationCompletionService implements Startable {
       configAsyncExecution = DEFAULT_ASYNC_EXECUTION;
     }
     
-    int threadNumber = configThreadNumber <= 0 ? configThreadNumber : Runtime.getRuntime().availableProcessors();
+    // A missing, invalid or non-positive thread-number means one thread per available processor
+    int threadNumber = configThreadNumber > 0 ? configThreadNumber : Runtime.getRuntime().availableProcessors();
 
     ThreadFactory threadFactory = new ThreadFactory() {
       public Thread newThread(Runnable runable) {
-        Thread t = new Thread(runable, "Notification-Thread");
+        Thread t = new Thread(() -> {
+          poolThread.set(Boolean.TRUE);
+          runable.run();
+        }, "Notification-Thread");
         t.setPriority(Thread.MIN_PRIORITY);
         return t;
       }
@@ -103,12 +106,17 @@ public class NotificationCompletionService implements Startable {
     } else {
       executor = new DirectExecutor();
     }
-    //
-    ecs = new ExecutorCompletionService(executor);
   }
 
+  /**
+   * Runs the task, on the pool when the execution is asynchronous. Neither its
+   * result nor an exception it lets escape is kept: a task logs its own errors.
+   *
+   * @param callable the task to run
+   */
+  @SuppressWarnings("unchecked")
   public void addTask(Callable callable) {
-    ecs.submit(callable);
+    executor.execute(new FutureTask<>(callable));
   }
 
   public void waitCompletionFinished() {
@@ -124,6 +132,14 @@ public class NotificationCompletionService implements Startable {
 
   public boolean isAsync() {
     return configAsyncExecution;
+  }
+
+  /**
+   * @return true when the current thread is a thread of the pool, false on any
+   *         other thread, the caller of a synchronous execution included
+   */
+  public boolean isPoolThread() {
+    return Boolean.TRUE.equals(poolThread.get());
   }
 
   private class DirectExecutor implements Executor {
