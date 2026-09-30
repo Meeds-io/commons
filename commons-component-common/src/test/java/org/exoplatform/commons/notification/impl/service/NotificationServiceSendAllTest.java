@@ -28,6 +28,7 @@ import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.IntStream;
 
@@ -125,14 +126,29 @@ public class NotificationServiceSendAllTest extends BaseCommonsTestCase {
   }
 
   /**
-   * On the notification thread pool, the persistence context is emptied after
-   * each page: it ends holding at most the last page's entities, not every user
-   * of the platform, and every user still gets the notification.
+   * On the notification thread pool, the kernel EntityManager of the thread
+   * ends emptied instead of holding the entities of every user, and every user
+   * still gets the notification. That the clear follows each page is pinned by
+   * NotificationServiceImplTest.
    */
   public void testSendAllOnThePoolKeepsThePersistenceContextBounded() throws Exception {
     notificationService(true).process(sendAllNotification());
 
     assertTrue("Managed entities after the send-all: " + managedEntitiesCount(), managedEntitiesCount() < USERS_COUNT);
+    assertReceivedByEveryUser();
+  }
+
+  /**
+   * Explicit recipients, the members of a large space, leave the kernel
+   * EntityManager of the pool thread emptied too, and every one of them gets
+   * the notification. That they are handed page by page, with a clear after
+   * each page, is pinned by NotificationServiceImplTest.
+   */
+  public void testExplicitRecipientsOnThePoolKeepThePersistenceContextBounded() throws Exception {
+    List<String> users = IntStream.range(0, USERS_COUNT).mapToObj(i -> USER_PREFIX + i).toList();
+    notificationService(true).process(NotificationInfo.instance().key("TestPlugin").to(new ArrayList<>(users)));
+
+    assertTrue("Managed entities after the notification: " + managedEntitiesCount(), managedEntitiesCount() < USERS_COUNT);
     assertReceivedByEveryUser();
   }
 

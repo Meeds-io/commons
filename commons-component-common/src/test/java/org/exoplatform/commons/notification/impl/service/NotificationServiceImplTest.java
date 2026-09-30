@@ -284,8 +284,8 @@ class NotificationServiceImplTest {
   }
 
   /**
-   * Explicit recipients go to every active channel, without walking the users
-   * nor touching the persistence context.
+   * A few explicit recipients are one page: every active channel gets it, no
+   * user is walked, and the persistence context is emptied once.
    */
   @Test
   void testExplicitRecipientsGoToEveryActiveChannel() throws Exception {
@@ -293,8 +293,40 @@ class NotificationServiceImplTest {
 
     verify(mailLifecycle).process(any(NotificationContext.class), eq(new String[] { "john", "mary" }));
     verify(webLifecycle).process(any(NotificationContext.class), eq(new String[] { "john", "mary" }));
+    verify(settingService, never()).countContextsByType(anyString());
     verify(settingService, never()).getContextNamesByType(anyString(), anyInt(), anyInt());
-    verify(entityManager, never()).clear();
+    verify(entityManager, times(1)).clear();
+  }
+
+  /**
+   * Many explicit recipients, the members of a large space, go page by page to
+   * every channel, with the persistence context emptied after each page.
+   */
+  @Test
+  void testExplicitRecipientsGoPageByPageToEveryChannel() throws Exception {
+    notificationService.process(NotificationInfo.instance().key(PLUGIN_ID).to(USERS));
+
+    InOrder inOrder = inOrder(mailLifecycle, webLifecycle, entityManager);
+    for (int offset = 0; offset < USERS_COUNT; offset += 100) {
+      String[] page = page(offset);
+      inOrder.verify(mailLifecycle).process(any(NotificationContext.class), eq(page));
+      inOrder.verify(webLifecycle).process(any(NotificationContext.class), eq(page));
+      inOrder.verify(entityManager).clear();
+    }
+    verify(entityManager, times(3)).clear();
+  }
+
+  @Test
+  void testAChannelFailingOnAPageOfRecipientsIsDroppedAndTheErrorIsRaised() {
+    IllegalStateException error = new IllegalStateException("Mail channel failure");
+    doThrow(error).when(mailLifecycle).process(any(NotificationContext.class), any(String[].class));
+
+    assertSame(error,
+               assertThrows(IllegalStateException.class,
+                            () -> notificationService.process(NotificationInfo.instance().key(PLUGIN_ID).to(USERS))));
+
+    verify(mailLifecycle, times(1)).process(any(NotificationContext.class), any(String[].class));
+    verify(webLifecycle, times(3)).process(any(NotificationContext.class), any(String[].class));
   }
 
   private NotificationInfo sendAllNotification() {

@@ -53,7 +53,9 @@ import org.exoplatform.services.organization.UserProfile;
 
 public class NotificationServiceImpl extends AbstractService implements NotificationService {
 
-  private static final Log                 LOG = ExoLogger.getLogger(NotificationServiceImpl.class);
+  private static final Log                 LOG       = ExoLogger.getLogger(NotificationServiceImpl.class);
+
+  private static final int                 PAGE_SIZE = 100;
 
   /** */
   private final UserSettingService         userService;
@@ -152,8 +154,7 @@ public class NotificationServiceImpl extends AbstractService implements Notifica
    * Walks every user page by page, and hands each page to every channel in turn:
    * a page is listed and filtered once, its user settings are loaded by the
    * first channel and looked up in the user settings cache by the next ones, as
-   * long as the cache holds the page. A channel that fails is not given the next
-   * pages.
+   * long as the cache holds the page.
    *
    * @return the last error a channel raised, null if none did
    */
@@ -167,9 +168,8 @@ public class NotificationServiceImpl extends AbstractService implements Notifica
     List<AbstractChannel> remainingChannels = new ArrayList<>(channels);
     Exception error = null;
     long usersCount = settingService.countContextsByType(Context.USER.getName());
-    int maxResults = 100;
-    for (int i = 0; i < usersCount && !remainingChannels.isEmpty(); i += maxResults) {
-      List<String> users = settingService.getContextNamesByType(Context.USER.getName(), i, maxResults);
+    for (int i = 0; i < usersCount && !remainingChannels.isEmpty(); i += PAGE_SIZE) {
+      List<String> users = settingService.getContextNamesByType(Context.USER.getName(), i, PAGE_SIZE);
       if (notification.isSendAllInternals()) {
         users = users.stream().filter(userId -> {
           // Filter on external users
@@ -184,45 +184,69 @@ public class NotificationServiceImpl extends AbstractService implements Notifica
       if (!notification.getExcludedUsersIds().isEmpty()) {
         users = users.stream().filter(userId -> !notification.isExcluded(userId)).toList();
       }
-      if (!users.isEmpty()) {
-        Iterator<AbstractChannel> channelsIterator = remainingChannels.iterator();
-        while (channelsIterator.hasNext()) {
-          AbstractChannel channel = channelsIterator.next();
-          try {
-            processLifecycle(notificationContext, getLifecycle(channel), users);
-          } catch (Exception e) {
-            logChannelError(notification, channel, e);
-            error = e;
-            channelsIterator.remove();
-          }
-        }
-      }
-      clearPersistenceContext();
+      error = lastError(processPage(notificationContext, notification, remainingChannels, users), error);
     }
     return error;
   }
 
+  /**
+   * Hands the recipients page by page to every channel in turn, as a send-all
+   * does.
+   *
+   * @return the last error a channel raised, null if none did
+   */
   private Exception processSendToUsers(NotificationContext notificationContext,
                                        NotificationInfo notification,
                                        List<AbstractChannel> channels) {
+    List<AbstractChannel> remainingChannels = new ArrayList<>(channels);
     Exception error = null;
-    for (AbstractChannel channel : channels) {
-      try {
-        processLifecycle(notificationContext, getLifecycle(channel), notification.getSendToUserIds());
-      } catch (Exception e) {
-        logChannelError(notification, channel, e);
-        error = e;
-      }
+    List<String> userIds = notification.getSendToUserIds();
+    for (int i = 0; i < userIds.size() && !remainingChannels.isEmpty(); i += PAGE_SIZE) {
+      List<String> users = userIds.subList(i, Math.min(i + PAGE_SIZE, userIds.size()));
+      error = lastError(processPage(notificationContext, notification, remainingChannels, users), error);
     }
     return error;
+  }
+
+  /**
+   * Hands one page of recipients to every remaining channel in turn, then
+   * empties the persistence context. A channel that fails is removed from the
+   * remaining channels: it is not given the next pages.
+   *
+   * @return the last error a channel raised on this page, null if none did
+   */
+  private Exception processPage(NotificationContext notificationContext,
+                                NotificationInfo notification,
+                                List<AbstractChannel> remainingChannels,
+                                List<String> users) {
+    Exception error = null;
+    if (!users.isEmpty()) {
+      Iterator<AbstractChannel> channelsIterator = remainingChannels.iterator();
+      while (channelsIterator.hasNext()) {
+        AbstractChannel channel = channelsIterator.next();
+        try {
+          processLifecycle(notificationContext, getLifecycle(channel), users);
+        } catch (Exception e) {
+          logChannelError(notification, channel, e);
+          error = e;
+          channelsIterator.remove();
+        }
+      }
+    }
+    clearPersistenceContext();
+    return error;
+  }
+
+  private Exception lastError(Exception pageError, Exception previousError) {
+    return pageError == null ? previousError : pageError;
   }
 
   /**
    * Detaches what the kernel EntityManager of the thread has loaded so far. Each
    * transactional read of a user's settings commits, and each commit
    * dirty-checks every entity of the persistence context: without this, the
-   * context grows with every user of a send-all, and so does the cost of each
-   * next read. Done only on a thread of the notification pool, whose task
+   * context grows with every recipient, and so does the cost of each next
+   * read. Done only on a thread of the notification pool, whose task
    * begins and ends its own request lifecycle and so owns the EntityManager,
    * and only outside a transaction, whose pending changes a clear would discard.
    */
