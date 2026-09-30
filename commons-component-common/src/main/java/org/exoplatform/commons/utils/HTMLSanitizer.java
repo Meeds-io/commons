@@ -643,7 +643,9 @@ abstract public class HTMLSanitizer {
                  .filter(host -> {
                    boolean valid = HOST_NAME.matcher(host).matches() || WILDCARD_HOST_NAME.matcher(host).matches();
                    if (!valid) {
-                     LOG.warn("Ignoring '{}' in {}: not a host name", host, IFRAME_ALLOWED_HOSTS_PROPERTY);
+                     LOG.warn("Ignoring '{}' in {}: neither a host name nor a '*.' wildcard over two labels at least",
+                              host,
+                              IFRAME_ALLOWED_HOSTS_PROPERTY);
                    }
                    return valid;
                  })
