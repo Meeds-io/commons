@@ -179,13 +179,45 @@ public class HTMLSanitizerTest {
   }
 
   /**
+   * EXO-90558 — a <code>*.</code> entry allows every sub-domain of its domain, at any depth,
+   * and neither the domain itself nor a host that merely ends with the same characters.
+   */
+  @Test
+  public void testWildcardAllowedIframeHost() throws Exception {
+    try {
+      PropertyManager.setProperty(HTMLSanitizer.IFRAME_ALLOWED_HOSTS_PROPERTY, "www.youtube.com, *.SharePoint.com");
+      for (String src : List.of("https://contoso.sharepoint.com/sites/x/_layouts/15/embed.aspx?UniqueId=1",
+                                "https://contoso.my.sharepoint.com/personal/x",
+                                "//CONTOSO.SHAREPOINT.COM/x",
+                                "https://www.youtube.com/embed/x")) {
+        assertTrue(src, HTMLSanitizer.isAllowedIframeSrc(src));
+      }
+      for (String src : List.of("https://sharepoint.com/x",
+                                "https://evilsharepoint.com/x",
+                                "https://contoso.sharepoint.com.evil.example/x",
+                                "https://contoso.sharepoint.com@evil.example/x",
+                                "http://contoso.sharepoint.com/x",
+                                "https://youtube.com/embed/x")) {
+        assertFalse(src, HTMLSanitizer.isAllowedIframeSrc(src));
+      }
+      assertEquals("<iframe src=\"https://contoso.sharepoint.com/x\"></iframe>",
+                   HTMLSanitizer.sanitize("<iframe src=\"https://contoso.sharepoint.com/x\"></iframe>"));
+      assertEquals("", HTMLSanitizer.sanitize("<iframe src=\"https://sharepoint.com/x\"></iframe>"));
+    } finally {
+      System.clearProperty(HTMLSanitizer.IFRAME_ALLOWED_HOSTS_PROPERTY);
+      PropertyManager.refresh();
+    }
+  }
+
+  /**
    * EXO-90558 — the allowed hosts are written into a page script by the portal head, so an
-   * entry that is not a plain host name is dropped rather than echoed.
+   * entry that is neither a plain host name nor a <code>*.</code> wildcard over a domain of
+   * two labels at least is dropped rather than echoed.
    */
   @Test
   public void testInvalidAllowedIframeHostIgnored() {
-    assertEquals(List.of("w.soundcloud.com"),
-                 HTMLSanitizer.parseAllowedIframeHosts("w.soundcloud.com, \"];alert(1);//, *.evil.example, https://x.example/, -x.example"));
+    assertEquals(List.of("w.soundcloud.com", "*.sharepoint.com"),
+                 HTMLSanitizer.parseAllowedIframeHosts("w.soundcloud.com, \"];alert(1);//, *.sharepoint.com, https://x.example/, -x.example, *, *.com, a.*.com, *sharepoint.com, *.*.com, *.-x.com"));
     assertEquals(HTMLSanitizer.DEFAULT_IFRAME_ALLOWED_HOSTS, HTMLSanitizer.parseAllowedIframeHosts(null));
   }
 

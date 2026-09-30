@@ -202,8 +202,10 @@ abstract public class HTMLSanitizer {
 
   /**
    * System property holding the comma-separated host names an iframe <code>src</code> may
-   * point to. When set, it replaces {@link #DEFAULT_IFRAME_ALLOWED_HOSTS}; set to an empty
-   * value, no iframe keeps its <code>src</code>.
+   * point to. An entry <code>*.example.com</code> allows every sub-domain of
+   * <code>example.com</code>, at any depth, but not <code>example.com</code> itself. When
+   * set, it replaces {@link #DEFAULT_IFRAME_ALLOWED_HOSTS}; set to an empty value, no iframe
+   * keeps its <code>src</code>.
    */
   public static final String                                                  IFRAME_ALLOWED_HOSTS_PROPERTY = "io.meeds.sanitizer.iframe.allowedHosts";
 
@@ -221,6 +223,12 @@ abstract public class HTMLSanitizer {
                                                                                                                       "cdn.iframe.ly");
 
   private static final Pattern                                                HOST_NAME                 = Pattern.compile("[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?");
+
+  /** <code>*.</code> followed by a domain of at least two labels, e.g. <code>*.sharepoint.com</code>. */
+  private static final Pattern                                                WILDCARD_HOST_NAME        =
+                                                                                                    Pattern.compile("\\*(?:\\.[a-z0-9](?:[a-z0-9-]*[a-z0-9])?){2,}");
+
+  private static final String                                                 WILDCARD_PREFIX           = "*.";
 
   /**
    * The characters, among those a browser accepts unencoded in a URL and {@link URI}
@@ -578,7 +586,8 @@ abstract public class HTMLSanitizer {
   /**
    * @param src an iframe <code>src</code> value, entity-decoded
    * @return true when it is an https or protocol-relative URL whose host is exactly one of
-   *         {@link #getAllowedIframeHosts()}
+   *         {@link #getAllowedIframeHosts()}, or a sub-domain of one of its
+   *         <code>*.</code> entries
    */
   public static boolean isAllowedIframeSrc(String src) {
     if (StringUtils.isBlank(src)) {
@@ -590,10 +599,16 @@ abstract public class HTMLSanitizer {
       String host = uri.getHost();
       return (scheme == null || scheme.equalsIgnoreCase("https"))
              && host != null
-             && getAllowedIframeHosts().contains(host.toLowerCase(Locale.ROOT));
+             && isAllowedIframeHost(host.toLowerCase(Locale.ROOT));
     } catch (Exception e) {
       return false;
     }
+  }
+
+  private static boolean isAllowedIframeHost(String host) {
+    return getAllowedIframeHosts().stream()
+                                  .anyMatch(allowedHost -> allowedHost.startsWith(WILDCARD_PREFIX) ? host.endsWith(allowedHost.substring(1))
+                                                                                                   : host.equals(allowedHost));
   }
 
   private static String encodeUriUnsafeChars(String url) {
@@ -626,7 +641,7 @@ abstract public class HTMLSanitizer {
                  .map(host -> host.trim().toLowerCase(Locale.ROOT))
                  .filter(host -> !host.isEmpty())
                  .filter(host -> {
-                   boolean valid = HOST_NAME.matcher(host).matches();
+                   boolean valid = HOST_NAME.matcher(host).matches() || WILDCARD_HOST_NAME.matcher(host).matches();
                    if (!valid) {
                      LOG.warn("Ignoring '{}' in {}: not a host name", host, IFRAME_ALLOWED_HOSTS_PROPERTY);
                    }
