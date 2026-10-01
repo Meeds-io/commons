@@ -18,12 +18,14 @@
  */
 package org.exoplatform.commons.notification.impl.service;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
@@ -33,6 +35,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.IntStream;
 
@@ -273,6 +276,33 @@ class NotificationServiceImplTest {
     String[] firstPage = USERS.subList(0, 100).stream().filter(user -> !user.equals("user3")).toArray(String[]::new);
     verify(mailLifecycle).process(any(NotificationContext.class), eq(firstPage));
     verify(webLifecycle).process(any(NotificationContext.class), eq(firstPage));
+  }
+
+  /**
+   * A lifecycle leaves its last per-recipient clone in the shared context:
+   * every channel, on every page, still starts from the notification itself.
+   */
+  @Test
+  void testEveryChannelStartsEachPageFromTheNotification() throws Exception {
+    List<NotificationInfo> received = new ArrayList<>();
+    doAnswer(invocation -> {
+      NotificationContext ctx = invocation.getArgument(0);
+      received.add(ctx.getNotificationInfo());
+      ctx.setNotificationInfo(ctx.getNotificationInfo().clone().setTo("lastRecipient"));
+      return null;
+    }).when(mailLifecycle).process(any(NotificationContext.class), any(String[].class));
+    doAnswer(invocation -> {
+      NotificationContext ctx = invocation.getArgument(0);
+      received.add(ctx.getNotificationInfo());
+      ctx.setNotificationInfo(ctx.getNotificationInfo().clone(true).setTo("lastRecipient"));
+      return null;
+    }).when(webLifecycle).process(any(NotificationContext.class), any(String[].class));
+    NotificationInfo notification = sendAllNotification();
+
+    notificationService.process(notification);
+
+    assertEquals(6, received.size());
+    received.forEach(info -> assertSame(notification, info));
   }
 
   @Test

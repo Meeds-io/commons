@@ -210,8 +210,10 @@ public class NotificationServiceImpl extends AbstractService implements Notifica
 
   /**
    * Hands one page of recipients to every remaining channel in turn, then
-   * empties the persistence context. A channel that fails is removed from the
-   * remaining channels: it is not given the next pages.
+   * empties the persistence context. Each channel starts from the notification
+   * itself: a lifecycle leaves its last per-recipient clone in the shared
+   * context. A channel that fails is removed from the remaining channels: it is
+   * not given the next pages.
    *
    * @return the last error a channel raised on this page, null if none did
    */
@@ -225,6 +227,7 @@ public class NotificationServiceImpl extends AbstractService implements Notifica
       while (channelsIterator.hasNext()) {
         AbstractChannel channel = channelsIterator.next();
         try {
+          notificationContext.setNotificationInfo(notification);
           processLifecycle(notificationContext, getLifecycle(channel), users);
         } catch (Exception e) {
           logChannelError(notification, channel, e);
