@@ -92,7 +92,11 @@ public class NotificationCompletionService implements Startable {
       public Thread newThread(Runnable runable) {
         Thread t = new Thread(() -> {
           poolThread.set(Boolean.TRUE);
-          runable.run();
+          try {
+            runable.run();
+          } finally {
+            poolThread.remove();
+          }
         }, "Notification-Thread");
         t.setPriority(Thread.MIN_PRIORITY);
         return t;

@@ -215,7 +215,8 @@ class NotificationServiceImplTest {
     IllegalStateException error = new IllegalStateException("Mail channel failure");
     doThrow(error).when(mailLifecycle).process(any(NotificationContext.class), any(String[].class));
 
-    assertSame(error, assertThrows(IllegalStateException.class, () -> notificationService.process(sendAllNotification())));
+    NotificationInfo notification = sendAllNotification();
+    assertSame(error, assertThrows(IllegalStateException.class, () -> notificationService.process(notification)));
 
     verify(mailLifecycle, times(1)).process(any(NotificationContext.class), any(String[].class));
     verify(webLifecycle, times(3)).process(any(NotificationContext.class), any(String[].class));
@@ -263,7 +264,8 @@ class NotificationServiceImplTest {
     when(pluginSettingService.getPluginConfig(PLUGIN_ID)).thenReturn(pluginConfig);
     UserSetting mutedSetting = mock(UserSetting.class);
     when(mutedSetting.isSpaceMuted(1L)).thenReturn(true);
-    when(userSettingService.get(anyString())).thenReturn(mock(UserSetting.class));
+    UserSetting defaultSetting = mock(UserSetting.class);
+    when(userSettingService.get(anyString())).thenReturn(defaultSetting);
     when(userSettingService.get("user3")).thenReturn(mutedSetting);
 
     notificationService.process(sendAllNotification().setSpaceId(1L));
@@ -321,9 +323,8 @@ class NotificationServiceImplTest {
     IllegalStateException error = new IllegalStateException("Mail channel failure");
     doThrow(error).when(mailLifecycle).process(any(NotificationContext.class), any(String[].class));
 
-    assertSame(error,
-               assertThrows(IllegalStateException.class,
-                            () -> notificationService.process(NotificationInfo.instance().key(PLUGIN_ID).to(USERS))));
+    NotificationInfo notification = NotificationInfo.instance().key(PLUGIN_ID).to(USERS);
+    assertSame(error, assertThrows(IllegalStateException.class, () -> notificationService.process(notification)));
 
     verify(mailLifecycle, times(1)).process(any(NotificationContext.class), any(String[].class));
     verify(webLifecycle, times(3)).process(any(NotificationContext.class), any(String[].class));

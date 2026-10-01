@@ -106,7 +106,7 @@ class NotificationCompletionServiceTest {
 
     for (int i = 0; i < 50 && result.get().get() != null; i++) {
       System.gc(); // NOSONAR the reference is cleared only by a collection
-      Thread.sleep(20);
+      Thread.sleep(20); // NOSONAR leaves the collector the time to clear it
     }
     assertNull(result.get().get(), "The result of a completed task is still reachable");
   }
@@ -166,7 +166,7 @@ class NotificationCompletionServiceTest {
     int previous = -1;
     while (System.currentTimeMillis() < deadline && running.get() != previous) {
       previous = running.get();
-      Thread.sleep(300);
+      Thread.sleep(300); // NOSONAR nothing signals that the pool started all it can run at once
     }
     release.countDown();
     assertTrue(finished.await(10, TimeUnit.SECONDS), "Tasks did not finish");
