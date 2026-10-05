@@ -280,9 +280,9 @@ public class JPAWebNotificationStorageTest extends BaseNotificationTestCase {
     String secondUser = "demo";
     userIds.add(firstUser);
     userIds.add(secondUser);
-    webNotificationStorage.save(makeWebNotificationInfo(firstUser));
-    webNotificationStorage.save(makeWebNotificationInfo(firstUser));
-    webNotificationStorage.save(makeWebNotificationInfo(secondUser));
+    webNotificationStorage.save(makeWebNotificationInfoUpdatedBeforeNow(firstUser));
+    webNotificationStorage.save(makeWebNotificationInfoUpdatedBeforeNow(firstUser));
+    webNotificationStorage.save(makeWebNotificationInfoUpdatedBeforeNow(secondUser));
     restartTransaction();
     List<String> notifiedUsers = listenToBadgeUpdates();
 
@@ -300,15 +300,19 @@ public class JPAWebNotificationStorageTest extends BaseNotificationTestCase {
    */
   public void testRemoveForUserBroadcastsOnce() throws Exception {
     String userId = "root";
+    String otherUserId = "demo";
     userIds.add(userId);
-    webNotificationStorage.save(makeWebNotificationInfo(userId));
-    webNotificationStorage.save(makeWebNotificationInfo(userId));
+    userIds.add(otherUserId);
+    webNotificationStorage.save(makeWebNotificationInfoUpdatedBeforeNow(userId));
+    webNotificationStorage.save(makeWebNotificationInfoUpdatedBeforeNow(userId));
+    webNotificationStorage.save(makeWebNotificationInfoUpdatedBeforeNow(otherUserId));
     restartTransaction();
     List<String> notifiedUsers = listenToBadgeUpdates();
 
     webNotificationStorage.remove(userId, 0);
 
     assertEquals(1, notifiedUsers.stream().filter(userId::equals).count());
+    assertFalse(notifiedUsers.contains(otherUserId));
   }
 
   /**
@@ -366,6 +370,16 @@ public class JPAWebNotificationStorageTest extends BaseNotificationTestCase {
     webNotificationStorage.remove(notif.getId());
 
     assertEquals(1, notifiedUsers.stream().filter(userId::equals).count());
+  }
+
+  /**
+   * A notification last updated a minute ago. A removal by lifetime deletes
+   * what was updated strictly before its cutoff, now minus the lifetime: with a
+   * lifetime of 0, a notification saved in the same millisecond as the cutoff
+   * is kept.
+   */
+  private NotificationInfo makeWebNotificationInfoUpdatedBeforeNow(String userId) {
+    return makeWebNotificationInfo(userId).setLastModifiedDate(System.currentTimeMillis() - 60000);
   }
 
   /**
