@@ -210,11 +210,14 @@ abstract public class HTMLSanitizer {
   public static final String                                                  IFRAME_ALLOWED_HOSTS_PROPERTY = "io.meeds.sanitizer.iframe.allowedHosts";
 
   /**
-   * The embed providers whose iframes are kept when {@link #IFRAME_ALLOWED_HOSTS_PROPERTY}
-   * is not set: the players the oEmbed provider (iframely) returns for YouTube, Vimeo,
-   * Dailymotion and Calameo, and iframely's own hosted iframe for the other providers.
+   * The embed hosts whose iframes are kept when {@link #IFRAME_ALLOWED_HOSTS_PROPERTY} is
+   * not set: <code>if-cdn.com</code>, where the editors' oEmbed provider
+   * (<code>ckeditor.iframe.ly</code>) hosts the iframe of every embed it returns, YouTube's
+   * included; <code>cdn.iframe.ly</code>, iframely's API iframe; and the players of YouTube,
+   * Vimeo, Dailymotion and Calameo for an iframe pasted from those providers.
    */
-  public static final List<String>                                            DEFAULT_IFRAME_ALLOWED_HOSTS  = List.of("www.youtube.com",
+  public static final List<String>                                            DEFAULT_IFRAME_ALLOWED_HOSTS  = List.of("if-cdn.com",
+                                                                                                                      "www.youtube.com",
                                                                                                                       "www.youtube-nocookie.com",
                                                                                                                       "player.vimeo.com",
                                                                                                                       "www.dailymotion.com",

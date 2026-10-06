@@ -103,9 +103,30 @@ public class HTMLSanitizerTest {
   }
 
   /**
-   * EXO-90558 — the hosts iframely returns for the default providers, bare and inside the
-   * wrappers the editors store, keep their <code>src</code>; iframely's own hosted iframe is
-   * protocol-relative, and a query may carry characters a browser accepts unencoded.
+   * EXO-90558 — an embed as the notes editor stores it: the wrapper around the HTML that
+   * <code>ckeditor.iframe.ly/api/oembed?omit_script=1</code> answered for
+   * <code>https://www.youtube.com/watch?v=iBd1r5VOK2c</code> (2026-10-06), whose iframe is
+   * iframely's protocol-relative <code>//if-cdn.com/&lt;id&gt;</code>, not YouTube's player.
+   * It keeps its iframe with the default allowed hosts.
+   */
+  @Test
+  public void testEditorEmbedFromIframelyKept() throws Exception {
+    String oembedHtml = "<div><div style=\"left: 0; width: 100%; height: 0; position: relative; padding-bottom: 56.25%;\">"
+        + "<iframe src=\"//if-cdn.com/cGy0Wq3T\" style=\"top: 0; left: 0; width: 100%; height: 100%; position: absolute; border: 0;\""
+        + " allowfullscreen scrolling=\"no\""
+        + " allow=\"accelerometer *; clipboard-write *; encrypted-media *; gyroscope *; picture-in-picture *; web-share *;\"></iframe></div></div>";
+    String stored = "<div data-url=\"https://www.youtube.com/watch?v&#61;iBd1r5VOK2c\" class=\"embed-wrapper d-flex position-relative ml-auto mr-auto\">"
+        + oembedHtml + "</div>";
+    String sanitized = HTMLSanitizer.sanitize(stored);
+    assertTrue(sanitized, sanitized.contains("<iframe src=\"//if-cdn.com/cGy0Wq3T\""));
+    assertTrue(HTMLSanitizer.isAllowedIframeSrc("//if-cdn.com/eCZPIqYd"));
+    assertTrue(HTMLSanitizer.isAllowedIframeSrc("https://if-cdn.com/74HLuw1D"));
+  }
+
+  /**
+   * EXO-90558 — the other default hosts, bare and inside a wrapper, keep their
+   * <code>src</code>; a protocol-relative source is kept, and a query may carry characters a
+   * browser accepts unencoded.
    */
   @Test
   public void testDefaultEmbedProvidersKeptInIFrame() throws Exception {
