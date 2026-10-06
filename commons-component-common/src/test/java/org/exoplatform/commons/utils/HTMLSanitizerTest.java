@@ -103,20 +103,21 @@ public class HTMLSanitizerTest {
   }
 
   /**
-   * EXO-90558 — an embed as the notes editor stores it: the wrapper around the HTML that
+   * EXO-90558 — an embed as the notes editor stores it (<code>preserveEmbedded</code>): a
+   * styled wrapper around the iframe of the HTML that
    * <code>ckeditor.iframe.ly/api/oembed?omit_script=1</code> answered for
-   * <code>https://www.youtube.com/watch?v=iBd1r5VOK2c</code> (2026-10-06), whose iframe is
-   * iframely's protocol-relative <code>//if-cdn.com/&lt;id&gt;</code>, not YouTube's player.
-   * It keeps its iframe with the default allowed hosts.
+   * <code>https://www.youtube.com/watch?v=iBd1r5VOK2c</code> (2026-10-06), iframely's
+   * protocol-relative <code>//if-cdn.com/&lt;id&gt;</code>, not YouTube's player. It keeps
+   * its iframe with the default allowed hosts.
    */
   @Test
   public void testEditorEmbedFromIframelyKept() throws Exception {
-    String oembedHtml = "<div><div style=\"left: 0; width: 100%; height: 0; position: relative; padding-bottom: 56.25%;\">"
-        + "<iframe src=\"//if-cdn.com/cGy0Wq3T\" style=\"top: 0; left: 0; width: 100%; height: 100%; position: absolute; border: 0;\""
+    String iframe = "<iframe src=\"//if-cdn.com/cGy0Wq3T\" style=\"top: 0; left: 0; width: 100%; height: 100%; position: absolute; border: 0;\""
         + " allowfullscreen scrolling=\"no\""
-        + " allow=\"accelerometer *; clipboard-write *; encrypted-media *; gyroscope *; picture-in-picture *; web-share *;\"></iframe></div></div>";
-    String stored = "<div data-url=\"https://www.youtube.com/watch?v&#61;iBd1r5VOK2c\" class=\"embed-wrapper d-flex position-relative ml-auto mr-auto\">"
-        + oembedHtml + "</div>";
+        + " allow=\"accelerometer *; clipboard-write *; encrypted-media *; gyroscope *; picture-in-picture *; web-share *;\"></iframe>";
+    String stored = "<div data-url=\"https://www.youtube.com/watch?v&#61;iBd1r5VOK2c\""
+        + " style=\"min-height: 168.68932038834953px; min-width: 300px; width: 100%; margin-bottom: 10px; aspect-ratio: 1.7784172661870503;\""
+        + " class=\"embed-wrapper d-flex position-relative ml-auto mr-auto\">" + iframe + "</div>";
     String sanitized = HTMLSanitizer.sanitize(stored);
     assertTrue(sanitized, sanitized.contains("<iframe src=\"//if-cdn.com/cGy0Wq3T\""));
     assertTrue(HTMLSanitizer.isAllowedIframeSrc("//if-cdn.com/eCZPIqYd"));

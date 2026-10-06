@@ -205,16 +205,19 @@ abstract public class HTMLSanitizer {
    * point to. An entry <code>*.example.com</code> allows every sub-domain of
    * <code>example.com</code>, at any depth, but not <code>example.com</code> itself. When
    * set, it replaces {@link #DEFAULT_IFRAME_ALLOWED_HOSTS}; set to an empty value, no iframe
-   * keeps its <code>src</code>.
+   * keeps its <code>src</code>. A deployment that points the editors at another oEmbed
+   * provider (<code>io.meeds.iframely.url</code>) lists that provider's iframe host here,
+   * together with the defaults it still needs.
    */
   public static final String                                                  IFRAME_ALLOWED_HOSTS_PROPERTY = "io.meeds.sanitizer.iframe.allowedHosts";
 
   /**
    * The embed hosts whose iframes are kept when {@link #IFRAME_ALLOWED_HOSTS_PROPERTY} is
-   * not set: <code>if-cdn.com</code>, where the editors' oEmbed provider
-   * (<code>ckeditor.iframe.ly</code>) hosts the iframe of every embed it returns, YouTube's
-   * included; <code>cdn.iframe.ly</code>, iframely's API iframe; and the players of YouTube,
-   * Vimeo, Dailymotion and Calameo for an iframe pasted from those providers.
+   * not set: <code>if-cdn.com</code>, where the editors' default oEmbed provider
+   * (<code>ckeditor.iframe.ly</code>) hosts the iframe of the embeds it returns, YouTube's
+   * and SoundCloud's included; <code>cdn.iframe.ly</code>, iframely's API iframe; and the
+   * players of YouTube, Vimeo, Dailymotion and Calameo, for an iframe from those providers
+   * that does not come through iframely.
    */
   public static final List<String>                                            DEFAULT_IFRAME_ALLOWED_HOSTS  = List.of("if-cdn.com",
                                                                                                                       "www.youtube.com",
