@@ -64,8 +64,11 @@ import org.exoplatform.services.organization.UserStatus;
  * {@code -Dexo.it.sendall.disabledUsers}. The users are created in the
  * in-memory organization service, so the identity store costs nothing here:
  * the test counts the SQL statements the send-all runs on the settings and
- * notification stores, and logs its duration. The HSQLDB database lives as
- * long as the JVM: the users and settings it creates are not removed.
+ * notification stores, and logs its duration. Delivery is observed on the web
+ * channel only: the mail channel is given the same pages and reads the same
+ * user settings, but the test mail template builds no recipient address, so
+ * no mail is queued. The HSQLDB database lives as long as the JVM: the users
+ * and settings it creates are not removed.
  */
 @ConfiguredBy({
   @ConfigurationUnit(scope = ContainerScope.ROOT, path = "conf/configuration.xml"),

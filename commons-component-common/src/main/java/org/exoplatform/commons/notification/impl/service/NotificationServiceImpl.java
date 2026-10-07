@@ -156,8 +156,10 @@ public class NotificationServiceImpl extends AbstractService implements Notifica
 
   /**
    * Walks the enabled users page by page, and hands each page to every channel
-   * in turn: a send-all costs the users who can receive it, however many
-   * disabled accounts the platform holds. A page is listed and filtered once,
+   * in turn. With the organization service's default configuration, which
+   * filters the status in the identity store's own query (countPaginatedUsers),
+   * a send-all costs the users who can receive it, however many disabled
+   * accounts the platform holds. A page is listed and filtered once,
    * its user settings are loaded by the first channel and looked up in the
    * user settings cache by the next ones, as long as the cache holds the page.
    * A user the organization service lists twice, as it may when it filters the
@@ -175,37 +177,43 @@ public class NotificationServiceImpl extends AbstractService implements Notifica
     List<AbstractChannel> remainingChannels = new ArrayList<>(channels);
     Exception error = null;
     Set<String> listedUsers = new HashSet<>();
+    ListAccess<User> enabledUsers;
+    int usersCount;
     try {
-      ListAccess<User> enabledUsers = organizationService.getUserHandler().findAllUsers(UserStatus.ENABLED);
-      int usersCount = enabledUsers.getSize();
-      for (int i = 0; i < usersCount && !remainingChannels.isEmpty(); i += PAGE_SIZE) {
-        List<String> users = Arrays.stream(enabledUsers.load(i, Math.min(PAGE_SIZE, usersCount - i)))
-                                   .filter(Objects::nonNull)
-                                   .map(User::getUserName)
-                                   .filter(userId -> StringUtils.isNotBlank(userId) && listedUsers.add(userId))
-                                   .toList();
-        if (notification.isSendAllInternals()) {
-          users = users.stream().filter(userId -> {
-            // Filter on external users
-            try {
-              UserProfile userProfile = organizationService.getUserProfileHandler().findUserProfileByName(userId);
-              return userProfile == null || !StringUtils.equals(userProfile.getAttribute(UserProfile.OTHER_KEYS[2]), "true");
-            } catch (Exception e) {
-              return false;
-            }
-          }).toList();
-        }
-        if (!notification.getExcludedUsersIds().isEmpty()) {
-          users = users.stream().filter(userId -> !notification.isExcluded(userId)).toList();
-        }
-        error = lastError(processPage(notificationContext, notification, remainingChannels, users), error);
-      }
+      enabledUsers = organizationService.getUserHandler().findAllUsers(UserStatus.ENABLED);
+      usersCount = enabledUsers.getSize();
     } catch (Exception e) {
-      LOG.warn("Error listing the users of notification with id '{}' for plugin '{}'",
-               notification.getId(),
-               notification.getKey().getId(),
-               e);
-      error = e;
+      logListingError(notification, e);
+      return e;
+    }
+    for (int i = 0; i < usersCount && !remainingChannels.isEmpty(); i += PAGE_SIZE) {
+      User[] page;
+      try {
+        page = enabledUsers.load(i, Math.min(PAGE_SIZE, usersCount - i));
+      } catch (Exception e) {
+        logListingError(notification, e);
+        return e;
+      }
+      List<String> users = Arrays.stream(page)
+                                 .filter(Objects::nonNull)
+                                 .map(User::getUserName)
+                                 .filter(userId -> StringUtils.isNotBlank(userId) && listedUsers.add(userId))
+                                 .toList();
+      if (notification.isSendAllInternals()) {
+        users = users.stream().filter(userId -> {
+          // Filter on external users
+          try {
+            UserProfile userProfile = organizationService.getUserProfileHandler().findUserProfileByName(userId);
+            return userProfile == null || !StringUtils.equals(userProfile.getAttribute(UserProfile.OTHER_KEYS[2]), "true");
+          } catch (Exception e) {
+            return false;
+          }
+        }).toList();
+      }
+      if (!notification.getExcludedUsersIds().isEmpty()) {
+        users = users.stream().filter(userId -> !notification.isExcluded(userId)).toList();
+      }
+      error = lastError(processPage(notificationContext, notification, remainingChannels, users), error);
     }
     return error;
   }
@@ -286,6 +294,13 @@ public class NotificationServiceImpl extends AbstractService implements Notifica
 
   private AbstractNotificationLifecycle getLifecycle(AbstractChannel channel) {
     return channelManager.getLifecycle(ChannelKey.key(channel.getId()));
+  }
+
+  private void logListingError(NotificationInfo notification, Exception e) {
+    LOG.warn("Error listing the users of notification with id '{}' for plugin '{}'",
+             notification.getId(),
+             notification.getKey().getId(),
+             e);
   }
 
   private void logChannelError(NotificationInfo notification, AbstractChannel channel, Exception e) {

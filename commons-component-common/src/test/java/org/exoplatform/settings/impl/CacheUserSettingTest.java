@@ -71,11 +71,17 @@ public class CacheUserSettingTest {
    */
   @Test
   public void testGetKeepsTheEnabledStatus() {
-    userSetting.setEnabled(false);
+    UserSetting disabledSetting = new UserSetting();
+    disabledSetting.setUserId(USER_ID);
+    disabledSetting.setEnabled(false);
+    UserSetting enabledSetting = new UserSetting();
+    enabledSetting.setUserId(USER_ID);
+    when(userSettingServiceImpl.get(USER_ID)).thenReturn(disabledSetting, enabledSetting);
+
     assertFalse(cacheUserSettingServiceImpl.get(USER_ID).isEnabled());
     assertFalse(cacheUserSettingServiceImpl.get(USER_ID).isEnabled());
 
-    userSetting.setEnabled(true);
+    // Re-enabling the user evicts the disabled settings from the cache
     cacheUserSettingServiceImpl.setUserEnabled(USER_ID, true);
     assertTrue(cacheUserSettingServiceImpl.get(USER_ID).isEnabled());
     assertTrue(cacheUserSettingServiceImpl.get(USER_ID).isEnabled());

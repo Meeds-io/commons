@@ -218,6 +218,24 @@ class NotificationServiceImplTest {
   }
 
   /**
+   * A user listed again on the next page, as the organization service does when
+   * it completes a short page with the users that follow, is handed once.
+   */
+  @Test
+  void testAUserListedAgainOnTheNextPageIsHandedOnce() throws Exception {
+    User[] repeatedUser = users(List.of("user99"));
+    when(enabledUsers.getSize()).thenReturn(101);
+    when(enabledUsers.load(100, 1)).thenReturn(repeatedUser);
+
+    notificationService.process(sendAllNotification());
+
+    verify(mailLifecycle).process(any(NotificationContext.class), eq(page(0)));
+    verify(webLifecycle).process(any(NotificationContext.class), eq(page(0)));
+    verify(mailLifecycle, times(1)).process(any(NotificationContext.class), any(String[].class));
+    verify(webLifecycle, times(1)).process(any(NotificationContext.class), any(String[].class));
+  }
+
+  /**
    * When the users cannot be listed, no channel is given anything and the
    * notification ends in error.
    */
