@@ -238,8 +238,8 @@ public class HTMLSanitizerTest {
    */
   @Test
   public void testInvalidAllowedIframeHostIgnored() {
-    assertEquals(List.of("w.soundcloud.com", "*.sharepoint.com"),
-                 HTMLSanitizer.parseAllowedIframeHosts("w.soundcloud.com, \"];alert(1);//, *.sharepoint.com, https://x.example/, -x.example, *, *.com, a.*.com, *sharepoint.com, *.*.com, *.-x.com"));
+    assertEquals(List.of("w.soundcloud.com", "*.sharepoint.com", "*.my.sharepoint.com"),
+                 HTMLSanitizer.parseAllowedIframeHosts("w.soundcloud.com, \"];alert(1);//, *.sharepoint.com, https://x.example/, -x.example, *, *.com, a.*.com, *sharepoint.com, *.*.com, *.-x.com, *.my.sharepoint.com, *.a..com, *.a-.com, *.com., *."));
     assertEquals(HTMLSanitizer.DEFAULT_IFRAME_ALLOWED_HOSTS, HTMLSanitizer.parseAllowedIframeHosts(null));
   }
 

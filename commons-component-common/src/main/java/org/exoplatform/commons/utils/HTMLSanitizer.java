@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
@@ -230,9 +231,8 @@ abstract public class HTMLSanitizer {
 
   private static final Pattern                                                HOST_NAME                 = Pattern.compile("[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?");
 
-  /** <code>*.</code> followed by a domain of at least two labels, e.g. <code>*.sharepoint.com</code>. */
-  private static final Pattern                                                WILDCARD_HOST_NAME        =
-                                                                                                    Pattern.compile("\\*(?:\\.[a-z0-9](?:[a-z0-9-]*[a-z0-9])?){2,}");
+  /** One label of the domain of a <code>*.</code> entry. */
+  private static final Pattern                                                HOST_LABEL                = Pattern.compile("[a-z0-9](?:[a-z0-9-]*[a-z0-9])?");
 
   private static final String                                                 WILDCARD_PREFIX           = "*.";
 
@@ -243,9 +243,9 @@ abstract public class HTMLSanitizer {
    */
   private static final String                                                 URI_UNSAFE_CHARS          = " \"<>^`{|}";
 
-  private static volatile IframeAllowedHosts                                  iframeAllowedHosts        =
-                                                                                                    new IframeAllowedHosts(null,
-                                                                                                                           DEFAULT_IFRAME_ALLOWED_HOSTS);
+  private static final AtomicReference<IframeAllowedHosts>                    IFRAME_ALLOWED_HOSTS      =
+                                                                                                    new AtomicReference<>(new IframeAllowedHosts(null,
+                                                                                                                                                 DEFAULT_IFRAME_ALLOWED_HOSTS));
 
   /** Drops an iframe <code>src</code> that {@link #isAllowedIframeSrc(String)} refuses. */
   private static final AttributePolicy                                        IFRAME_SRC_POLICY         =
@@ -581,10 +581,10 @@ abstract public class HTMLSanitizer {
    */
   public static List<String> getAllowedIframeHosts() {
     String value = PropertyManager.getProperty(IFRAME_ALLOWED_HOSTS_PROPERTY);
-    IframeAllowedHosts allowedHosts = iframeAllowedHosts;
+    IframeAllowedHosts allowedHosts = IFRAME_ALLOWED_HOSTS.get();
     if (!StringUtils.equals(value, allowedHosts.value())) {
       allowedHosts = new IframeAllowedHosts(value, parseAllowedIframeHosts(value));
-      iframeAllowedHosts = allowedHosts;
+      IFRAME_ALLOWED_HOSTS.set(allowedHosts);
     }
     return allowedHosts.hosts();
   }
@@ -647,7 +647,7 @@ abstract public class HTMLSanitizer {
                  .map(host -> host.trim().toLowerCase(Locale.ROOT))
                  .filter(host -> !host.isEmpty())
                  .filter(host -> {
-                   boolean valid = HOST_NAME.matcher(host).matches() || WILDCARD_HOST_NAME.matcher(host).matches();
+                   boolean valid = HOST_NAME.matcher(host).matches() || isWildcardHostName(host);
                    if (!valid) {
                      LOG.warn("Ignoring '{}' in {}: neither a host name nor a '*.' wildcard over two labels at least",
                               host,
@@ -657,6 +657,18 @@ abstract public class HTMLSanitizer {
                  })
                  .distinct()
                  .toList();
+  }
+
+  /**
+   * @return true when the entry is <code>*.</code> followed by a domain of at least two
+   *         labels, e.g. <code>*.sharepoint.com</code>
+   */
+  private static boolean isWildcardHostName(String host) {
+    if (!host.startsWith(WILDCARD_PREFIX)) {
+      return false;
+    }
+    String[] labels = host.substring(WILDCARD_PREFIX.length()).split("\\.", -1);
+    return labels.length >= 2 && Arrays.stream(labels).allMatch(label -> HOST_LABEL.matcher(label).matches());
   }
 
   private static Predicate<String> matchesEither(final Pattern a, final Pattern b) {
