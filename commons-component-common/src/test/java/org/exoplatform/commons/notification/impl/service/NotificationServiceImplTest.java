@@ -65,14 +65,15 @@ import org.exoplatform.commons.api.notification.plugin.config.PluginConfig;
 import org.exoplatform.commons.api.notification.service.NotificationCompletionService;
 import org.exoplatform.commons.api.notification.service.setting.PluginSettingService;
 import org.exoplatform.commons.api.notification.service.setting.UserSettingService;
-import org.exoplatform.commons.api.settings.SettingService;
-import org.exoplatform.commons.api.settings.data.Context;
 import org.exoplatform.commons.notification.NotificationContextFactory;
 import org.exoplatform.commons.persistence.impl.EntityManagerService;
 import org.exoplatform.commons.utils.CommonsUtils;
+import org.exoplatform.commons.utils.ListAccess;
 import org.exoplatform.services.listener.ListenerService;
 import org.exoplatform.services.organization.OrganizationService;
+import org.exoplatform.services.organization.User;
 import org.exoplatform.services.organization.UserProfile;
+import org.exoplatform.services.organization.UserStatus;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
@@ -109,7 +110,7 @@ class NotificationServiceImplTest {
   private PluginSettingService          pluginSettingService;
 
   @Mock
-  private SettingService                settingService;
+  private ListAccess<User>              enabledUsers;
 
   @Mock
   private UserSettingService            userSettingService;
@@ -125,10 +126,9 @@ class NotificationServiceImplTest {
   private NotificationServiceImpl       notificationService;
 
   @BeforeEach
-  void setUp() {
+  void setUp() throws Exception {
     commonsUtils = mockStatic(CommonsUtils.class);
     commonsUtils.when(() -> CommonsUtils.getService(PluginSettingService.class)).thenReturn(pluginSettingService);
-    commonsUtils.when(() -> CommonsUtils.getService(SettingService.class)).thenReturn(settingService);
 
     AbstractChannel mailChannel = channel("MAIL_CHANNEL");
     AbstractChannel webChannel = channel("WEB_CHANNEL");
@@ -137,11 +137,16 @@ class NotificationServiceImplTest {
     when(channelManager.getLifecycle(ChannelKey.key("WEB_CHANNEL"))).thenReturn(webLifecycle);
     when(pluginSettingService.isActive(anyString(), eq(PLUGIN_ID))).thenReturn(true);
 
-    when(settingService.countContextsByType(Context.USER.getName())).thenReturn((long) USERS_COUNT);
-    when(settingService.getContextNamesByType(eq(Context.USER.getName()), anyInt(), anyInt())).thenAnswer(invocation -> {
-      int offset = invocation.getArgument(1);
-      int limit = invocation.getArgument(2);
-      return USERS.subList(Math.min(offset, USERS_COUNT), Math.min(offset + limit, USERS_COUNT));
+    when(organizationService.getUserHandler().findAllUsers(UserStatus.ENABLED)).thenReturn(enabledUsers);
+    when(enabledUsers.getSize()).thenReturn(USERS_COUNT);
+    when(enabledUsers.load(anyInt(), anyInt())).thenAnswer(invocation -> {
+      int index = invocation.getArgument(0);
+      int length = invocation.getArgument(1);
+      // As the organization service does, past the size of the list
+      if (index + length > USERS_COUNT) {
+        throw new IllegalArgumentException("Try to get more than number users can retrieve");
+      }
+      return users(USERS.subList(index, index + length));
     });
 
     when(completionService.isPoolThread()).thenReturn(true);
@@ -163,23 +168,69 @@ class NotificationServiceImplTest {
   }
 
   /**
-   * Each page is listed once and handed to every channel before the next page
-   * is listed, and the persistence context is emptied after each page.
+   * Each page of enabled users is loaded once, the last one within the size of
+   * the list, and handed to every channel before the next page is loaded; the
+   * persistence context is emptied after each page.
    */
   @Test
   void testSendAllHandsEachPageToEveryChannelThenClearsThePersistenceContext() throws Exception {
     notificationService.process(sendAllNotification());
 
-    InOrder inOrder = inOrder(settingService, mailLifecycle, webLifecycle, entityManager);
+    InOrder inOrder = inOrder(enabledUsers, mailLifecycle, webLifecycle, entityManager);
     for (int offset = 0; offset < USERS_COUNT; offset += 100) {
       String[] page = page(offset);
-      inOrder.verify(settingService).getContextNamesByType(Context.USER.getName(), offset, 100);
+      inOrder.verify(enabledUsers).load(offset, page.length);
       inOrder.verify(mailLifecycle).process(any(NotificationContext.class), eq(page));
       inOrder.verify(webLifecycle).process(any(NotificationContext.class), eq(page));
       inOrder.verify(entityManager).clear();
     }
-    verify(settingService, times(3)).getContextNamesByType(anyString(), anyInt(), anyInt());
+    verify(enabledUsers, times(3)).load(anyInt(), anyInt());
     verify(entityManager, times(3)).clear();
+  }
+
+  /**
+   * A send-all walks the enabled users of the organization service, never the
+   * disabled ones: their settings are not even loaded.
+   */
+  @Test
+  void testSendAllWalksTheEnabledUsersOnly() throws Exception {
+    notificationService.process(sendAllNotification());
+
+    verify(organizationService.getUserHandler()).findAllUsers(UserStatus.ENABLED);
+    verify(organizationService.getUserHandler(), never()).findAllUsers(UserStatus.ANY);
+    verify(organizationService.getUserHandler(), never()).findAllUsers(UserStatus.DISABLED);
+  }
+
+  /**
+   * A user listed twice, as the organization service does when it completes a
+   * page filtered on the status with the last user it found, is handed once.
+   */
+  @Test
+  void testAUserListedTwiceIsHandedOnce() throws Exception {
+    User[] paddedPage = users(List.of("user0", "user1", "user1", "user1"));
+    when(enabledUsers.getSize()).thenReturn(4);
+    when(enabledUsers.load(0, 4)).thenReturn(paddedPage);
+
+    notificationService.process(sendAllNotification());
+
+    verify(mailLifecycle).process(any(NotificationContext.class), eq(new String[] { "user0", "user1" }));
+    verify(webLifecycle).process(any(NotificationContext.class), eq(new String[] { "user0", "user1" }));
+  }
+
+  /**
+   * When the users cannot be listed, no channel is given anything and the
+   * notification ends in error.
+   */
+  @Test
+  void testAFailingUsersListingIsRaised() throws Exception {
+    IllegalStateException error = new IllegalStateException("Users store failure");
+    when(organizationService.getUserHandler().findAllUsers(UserStatus.ENABLED)).thenThrow(error);
+
+    NotificationInfo notification = sendAllNotification();
+    assertSame(error, assertThrows(IllegalStateException.class, () -> notificationService.process(notification)));
+
+    verify(mailLifecycle, never()).process(any(NotificationContext.class), any(String[].class));
+    verify(webLifecycle, never()).process(any(NotificationContext.class), any(String[].class));
   }
 
   /**
@@ -311,8 +362,7 @@ class NotificationServiceImplTest {
 
     notificationService.process(sendAllNotification());
 
-    verify(settingService, never()).countContextsByType(anyString());
-    verify(settingService, never()).getContextNamesByType(anyString(), anyInt(), anyInt());
+    verify(organizationService.getUserHandler(), never()).findAllUsers(any(UserStatus.class));
   }
 
   /**
@@ -325,8 +375,7 @@ class NotificationServiceImplTest {
 
     verify(mailLifecycle).process(any(NotificationContext.class), eq(new String[] { "john", "mary" }));
     verify(webLifecycle).process(any(NotificationContext.class), eq(new String[] { "john", "mary" }));
-    verify(settingService, never()).countContextsByType(anyString());
-    verify(settingService, never()).getContextNamesByType(anyString(), anyInt(), anyInt());
+    verify(organizationService.getUserHandler(), never()).findAllUsers(any(UserStatus.class));
     verify(entityManager, times(1)).clear();
   }
 
@@ -366,6 +415,14 @@ class NotificationServiceImplTest {
 
   private String[] page(int offset) {
     return USERS.subList(offset, Math.min(offset + 100, USERS_COUNT)).toArray(new String[0]);
+  }
+
+  private User[] users(List<String> usernames) {
+    return usernames.stream().map(username -> {
+      User user = mock(User.class);
+      when(user.getUserName()).thenReturn(username);
+      return user;
+    }).toArray(User[]::new);
   }
 
   private AbstractChannel channel(String id) {

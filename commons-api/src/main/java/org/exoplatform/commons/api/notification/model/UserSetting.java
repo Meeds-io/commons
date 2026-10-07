@@ -265,6 +265,7 @@ public class UserSetting {
       setting.setChannelDefaultValueActive(entry.getKey(), entry.getValue());
     }
     setting.setUserId(userId);
+    setting.setEnabled(isEnabled);
     setting.setMutedSpaces(mutedSpaces);
     return setting;
   }
