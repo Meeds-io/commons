@@ -24,7 +24,8 @@ import java.util.List;
  * Lists the users a send-all notification walks, page by page: the enabled
  * users of the platform, the internal ones only when asked. A send-all uses
  * the implementation registered in the container, and walks the enabled users
- * of the organization service when there is none.
+ * of the organization service when there is none; at most one implementation
+ * may be registered, or every send-all fails.
  */
 public interface SendAllRecipientProvider {
 

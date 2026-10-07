@@ -303,6 +303,39 @@ class NotificationServiceImplTest {
   }
 
   /**
+   * A provider listing nobody ends the walk at once: no channel is given
+   * anything, and the notification succeeds.
+   */
+  @Test
+  void testAnEmptyProviderListEndsTheWalk() throws Exception {
+    when(recipientProvider.getRecipients(anyBoolean(), any(), anyInt())).thenReturn(List.of());
+    commonsUtils.when(() -> CommonsUtils.getService(SendAllRecipientProvider.class)).thenReturn(recipientProvider);
+
+    notificationService.process(sendAllNotification());
+
+    verify(recipientProvider, times(1)).getRecipients(false, null, 100);
+    verify(mailLifecycle, never()).process(any(NotificationContext.class), any(String[].class));
+    verify(webLifecycle, never()).process(any(NotificationContext.class), any(String[].class));
+  }
+
+  /**
+   * When the provider cannot be looked up, as when two are registered, the
+   * send-all does not fall back to another listing: no channel is given
+   * anything and the notification ends in error.
+   */
+  @Test
+  void testAFailingProviderLookupIsRaised() {
+    IllegalStateException error = new IllegalStateException("Several providers registered");
+    commonsUtils.when(() -> CommonsUtils.getService(SendAllRecipientProvider.class)).thenThrow(error);
+
+    NotificationInfo notification = sendAllNotification();
+    assertSame(error, assertThrows(IllegalStateException.class, () -> notificationService.process(notification)));
+
+    verify(mailLifecycle, never()).process(any(NotificationContext.class), any(String[].class));
+    verify(webLifecycle, never()).process(any(NotificationContext.class), any(String[].class));
+  }
+
+  /**
    * When the provider fails, no channel is given anything and the notification
    * ends in error.
    */
