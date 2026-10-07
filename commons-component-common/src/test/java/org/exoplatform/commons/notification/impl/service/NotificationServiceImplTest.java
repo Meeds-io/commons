@@ -22,6 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -63,6 +64,7 @@ import org.exoplatform.commons.api.notification.model.NotificationInfo;
 import org.exoplatform.commons.api.notification.model.UserSetting;
 import org.exoplatform.commons.api.notification.plugin.config.PluginConfig;
 import org.exoplatform.commons.api.notification.service.NotificationCompletionService;
+import org.exoplatform.commons.api.notification.service.SendAllRecipientProvider;
 import org.exoplatform.commons.api.notification.service.setting.PluginSettingService;
 import org.exoplatform.commons.api.notification.service.setting.UserSettingService;
 import org.exoplatform.commons.notification.NotificationContextFactory;
@@ -111,6 +113,9 @@ class NotificationServiceImplTest {
 
   @Mock
   private ListAccess<User>              enabledUsers;
+
+  @Mock
+  private SendAllRecipientProvider      recipientProvider;
 
   @Mock
   private UserSettingService            userSettingService;
@@ -233,6 +238,85 @@ class NotificationServiceImplTest {
     verify(webLifecycle).process(any(NotificationContext.class), eq(page(0)));
     verify(mailLifecycle, times(1)).process(any(NotificationContext.class), any(String[].class));
     verify(webLifecycle, times(1)).process(any(NotificationContext.class), any(String[].class));
+  }
+
+  /**
+   * A registered provider lists the recipients: each page is asked after the
+   * last recipient of the previous one, handed to every channel, and followed
+   * by a clear of the persistence context; the walk ends on a short page, and
+   * the organization service is not walked.
+   */
+  @Test
+  void testSendAllWalksTheProviderPageAfterPage() throws Exception {
+    useRecipientProvider();
+
+    notificationService.process(sendAllNotification());
+
+    InOrder inOrder = inOrder(recipientProvider, mailLifecycle, webLifecycle, entityManager);
+    String lastRecipient = null;
+    for (int offset = 0; offset < USERS_COUNT; offset += 100) {
+      String[] page = page(offset);
+      inOrder.verify(recipientProvider).getRecipients(false, lastRecipient, 100);
+      inOrder.verify(mailLifecycle).process(any(NotificationContext.class), eq(page));
+      inOrder.verify(webLifecycle).process(any(NotificationContext.class), eq(page));
+      inOrder.verify(entityManager).clear();
+      lastRecipient = page[page.length - 1];
+    }
+    verify(recipientProvider, times(3)).getRecipients(anyBoolean(), any(), anyInt());
+    verify(organizationService.getUserHandler(), never()).findAllUsers(any(UserStatus.class));
+  }
+
+  /**
+   * A send-all to internals asks the provider for the internal users, and the
+   * organization service is not read user by user to leave the external ones
+   * out; excluded users are still left out of the page.
+   */
+  @Test
+  void testSendAllToInternalsAsksTheProviderForInternalUsers() throws Exception {
+    useRecipientProvider();
+
+    notificationService.process(NotificationInfo.instance().key(PLUGIN_ID).setSendAllInternals(true).exclude("user2"));
+
+    verify(recipientProvider).getRecipients(true, null, 100);
+    String[] firstPage = USERS.subList(0, 100).stream().filter(user -> !user.equals("user2")).toArray(String[]::new);
+    verify(mailLifecycle).process(any(NotificationContext.class), eq(firstPage));
+    verify(webLifecycle).process(any(NotificationContext.class), eq(firstPage));
+    verify(organizationService.getUserProfileHandler(), never()).findUserProfileByName(anyString());
+  }
+
+  /**
+   * A page that does not move forward, as a provider ignoring the last
+   * recipient would return, is not handed out again: the walk ends.
+   */
+  @Test
+  void testAProviderPageThatDoesNotMoveForwardEndsTheWalk() throws Exception {
+    when(recipientProvider.getRecipients(anyBoolean(), any(), anyInt())).thenReturn(USERS.subList(0, 100),
+                                                                                    USERS.subList(0, 100),
+                                                                                    List.of());
+    commonsUtils.when(() -> CommonsUtils.getService(SendAllRecipientProvider.class)).thenReturn(recipientProvider);
+
+    notificationService.process(sendAllNotification());
+
+    verify(recipientProvider, times(2)).getRecipients(anyBoolean(), any(), anyInt());
+    verify(mailLifecycle, times(1)).process(any(NotificationContext.class), any(String[].class));
+    verify(webLifecycle, times(1)).process(any(NotificationContext.class), any(String[].class));
+  }
+
+  /**
+   * When the provider fails, no channel is given anything and the notification
+   * ends in error.
+   */
+  @Test
+  void testAFailingProviderIsRaised() {
+    IllegalStateException error = new IllegalStateException("Recipients store failure");
+    when(recipientProvider.getRecipients(anyBoolean(), any(), anyInt())).thenThrow(error);
+    commonsUtils.when(() -> CommonsUtils.getService(SendAllRecipientProvider.class)).thenReturn(recipientProvider);
+
+    NotificationInfo notification = sendAllNotification();
+    assertSame(error, assertThrows(IllegalStateException.class, () -> notificationService.process(notification)));
+
+    verify(mailLifecycle, never()).process(any(NotificationContext.class), any(String[].class));
+    verify(webLifecycle, never()).process(any(NotificationContext.class), any(String[].class));
   }
 
   /**
@@ -429,6 +513,16 @@ class NotificationServiceImplTest {
 
   private NotificationInfo sendAllNotification() {
     return NotificationInfo.instance().key(PLUGIN_ID).setSendAll(true);
+  }
+
+  private void useRecipientProvider() {
+    when(recipientProvider.getRecipients(anyBoolean(), any(), anyInt())).thenAnswer(invocation -> {
+      String afterUsername = invocation.getArgument(1);
+      int limit = invocation.getArgument(2);
+      int from = afterUsername == null ? 0 : USERS.indexOf(afterUsername) + 1;
+      return USERS.subList(from, Math.min(from + limit, USERS_COUNT));
+    });
+    commonsUtils.when(() -> CommonsUtils.getService(SendAllRecipientProvider.class)).thenReturn(recipientProvider);
   }
 
   private String[] page(int offset) {

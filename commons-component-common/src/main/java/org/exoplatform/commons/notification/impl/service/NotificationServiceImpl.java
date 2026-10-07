@@ -39,6 +39,7 @@ import org.exoplatform.commons.api.notification.model.ChannelKey;
 import org.exoplatform.commons.api.notification.model.NotificationInfo;
 import org.exoplatform.commons.api.notification.plugin.config.PluginConfig;
 import org.exoplatform.commons.api.notification.service.NotificationCompletionService;
+import org.exoplatform.commons.api.notification.service.SendAllRecipientProvider;
 import org.exoplatform.commons.api.notification.service.setting.PluginSettingService;
 import org.exoplatform.commons.api.notification.service.setting.UserSettingService;
 import org.exoplatform.commons.api.notification.service.storage.NotificationService;
@@ -155,15 +156,9 @@ public class NotificationServiceImpl extends AbstractService implements Notifica
   }
 
   /**
-   * Walks the enabled users page by page, and hands each page to every channel
-   * in turn. With the organization service's default configuration, which
-   * filters the status in the identity store's own query (countPaginatedUsers),
-   * a send-all costs the users who can receive it, however many disabled
-   * accounts the platform holds. A page is listed and filtered once,
-   * its user settings are loaded by the first channel and looked up in the
-   * user settings cache by the next ones, as long as the cache holds the page.
-   * A user the organization service lists twice, as it may when it filters the
-   * status page by page, is handed once.
+   * Walks the recipients of a send-all page by page, and hands each page to
+   * every channel in turn: from the registered {@link SendAllRecipientProvider},
+   * or from the organization service when there is none.
    *
    * @return the last error a channel raised, or the error that stopped the
    *         listing of the users, null if none
@@ -174,6 +169,69 @@ public class NotificationServiceImpl extends AbstractService implements Notifica
     if (channels.isEmpty()) {
       return null;
     }
+    SendAllRecipientProvider recipientProvider = CommonsUtils.getService(SendAllRecipientProvider.class);
+    if (recipientProvider == null) {
+      return processSendAllFromOrganizationService(notificationContext, notification, channels);
+    } else {
+      return processSendAllFromProvider(recipientProvider, notificationContext, notification, channels);
+    }
+  }
+
+  /**
+   * Walks the recipients the provider lists, each page after the last
+   * recipient of the previous one, until a page is short; a page that is empty
+   * or does not move forward is not handed out and ends the walk. A page is
+   * filtered once, its user settings are loaded by the first
+   * channel and looked up in the user settings cache by the next ones.
+   *
+   * @return the last error a channel raised, or the error that stopped the
+   *         listing of the users, null if none
+   */
+  private Exception processSendAllFromProvider(SendAllRecipientProvider recipientProvider,
+                                               NotificationContext notificationContext,
+                                               NotificationInfo notification,
+                                               List<AbstractChannel> channels) {
+    List<AbstractChannel> remainingChannels = new ArrayList<>(channels);
+    Exception error = null;
+    String lastRecipient = null;
+    boolean lastPage = false;
+    while (!lastPage && !remainingChannels.isEmpty()) {
+      List<String> page;
+      try {
+        page = recipientProvider.getRecipients(notification.isSendAllInternals(), lastRecipient, PAGE_SIZE);
+      } catch (Exception e) {
+        logListingError(notification, e);
+        return e;
+      }
+      String pageLastRecipient = page.isEmpty() ? null : page.get(page.size() - 1);
+      if (pageLastRecipient == null || pageLastRecipient.equals(lastRecipient)) {
+        break;
+      }
+      lastPage = page.size() < PAGE_SIZE;
+      lastRecipient = pageLastRecipient;
+      List<String> users = notification.getExcludedUsersIds().isEmpty() ? page
+                                                                         : page.stream()
+                                                                               .filter(userId -> !notification.isExcluded(userId))
+                                                                               .toList();
+      error = lastError(processPage(notificationContext, notification, remainingChannels, users), error);
+    }
+    return error;
+  }
+
+  /**
+   * Walks the enabled users of the organization service page by page. With its
+   * default configuration, which filters the status in the identity store's
+   * own query (countPaginatedUsers), a send-all costs the users who can
+   * receive it, however many disabled accounts the platform holds. A user the
+   * organization service lists twice, as it may when it filters the status
+   * page by page, is handed once.
+   *
+   * @return the last error a channel raised, or the error that stopped the
+   *         listing of the users, null if none
+   */
+  private Exception processSendAllFromOrganizationService(NotificationContext notificationContext,
+                                                          NotificationInfo notification,
+                                                          List<AbstractChannel> channels) {
     List<AbstractChannel> remainingChannels = new ArrayList<>(channels);
     Exception error = null;
     Set<String> listedUsers = new HashSet<>();
