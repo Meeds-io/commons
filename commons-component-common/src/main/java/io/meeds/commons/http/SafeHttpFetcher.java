@@ -26,12 +26,13 @@ import java.io.InterruptedIOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.StringUtils;
@@ -45,6 +46,7 @@ import org.apache.hc.core5.http.ClassicHttpResponse;
 import org.apache.hc.core5.http.Header;
 import org.apache.hc.core5.http.HttpEntity;
 import org.apache.hc.core5.http.HttpHeaders;
+import org.apache.hc.core5.http.HttpStatus;
 import org.apache.hc.core5.util.Timeout;
 
 import org.exoplatform.services.log.ExoLogger;
@@ -64,24 +66,31 @@ import org.exoplatform.services.log.Log;
  * deadline over the whole read — redirects included — enforced by cancelling
  * the request, a body limit counted on the decoded bytes (a compressed body
  * cannot inflate past it), a redirect count, and the declared content type
- * checked before the body is read. <b>Nothing of the platform's goes out</b>:
- * no cookie store, no credentials, no proxy, no retry; the only headers sent
- * are the ones the request names. <b>Nothing of the URL goes into a log</b>:
- * it may embed a secret.
+ * checked before the body is read. A {@link SafeFetchRequest} narrows these
+ * bounds, never widens them. <b>Nothing of the platform's goes out</b>: no
+ * cookie store, no credentials, no proxy, no retry. The headers sent are the
+ * HTTP client's own — {@code Host}, {@code Connection}, the policy's
+ * {@code User-Agent} and the {@code Accept-Encoding} of the compressions it
+ * decodes — and the ones the request names: {@code Accept},
+ * {@code If-None-Match}, {@code If-Modified-Since}. <b>Nothing of the URL goes
+ * into a log</b>: it may embed a secret.
  * <p>
- * Thread-safe; one instance per consumer, closed when the consumer goes.
+ * Thread-safe; one instance per consumer, closed when the consumer goes. A
+ * closed fetcher refuses every read with an {@link IllegalStateException}.
  */
 public class SafeHttpFetcher implements Closeable {
 
-  private static final Log               LOG = ExoLogger.getLogger(SafeHttpFetcher.class);
+  private static final Log                  LOG            = ExoLogger.getLogger(SafeHttpFetcher.class);
 
-  private final SafeFetchPolicy          policy;
+  private static final String               CLOSED_MESSAGE = "The fetcher is closed";
 
-  private final SafeAddressGuard         guard;
+  private final SafeFetchPolicy             policy;
 
-  private final CloseableHttpClient      httpClient;
+  private final SafeAddressGuard            guard;
 
-  private final ScheduledExecutorService deadlines;
+  private final CloseableHttpClient         httpClient;
+
+  private final ScheduledThreadPoolExecutor deadlines;
 
   /**
    * The fetcher of a policy.
@@ -112,11 +121,14 @@ public class SafeHttpFetcher implements Closeable {
                                  .disableAutomaticRetries()
                                  .setUserAgent(policy.getUserAgent())
                                  .build();
-    this.deadlines = Executors.newSingleThreadScheduledExecutor(runnable -> {
+    this.deadlines = new ScheduledThreadPoolExecutor(1, runnable -> {
       Thread thread = new Thread(runnable, policy.getName() + "-deadline");
       thread.setDaemon(true);
       return thread;
     });
+    // a read ends long before its deadline: its cancelled timer leaves the
+    // queue at once instead of waiting there for the deadline to pass
+    this.deadlines.setRemoveOnCancelPolicy(true);
   }
 
   /**
@@ -139,6 +151,7 @@ public class SafeHttpFetcher implements Closeable {
    * @param uri the URL
    * @return what the server answered
    * @throws SafeFetchException with the reason nothing usable was read
+   * @throws IllegalStateException when the fetcher is closed
    */
   public SafeFetchResponse fetch(URI uri) throws SafeFetchException {
     return fetch(SafeFetchRequest.get(uri));
@@ -152,6 +165,7 @@ public class SafeHttpFetcher implements Closeable {
    * @param request the read
    * @return what the server answered
    * @throws SafeFetchException with the reason nothing usable was read
+   * @throws IllegalStateException when the fetcher is closed
    */
   public SafeFetchResponse fetch(SafeFetchRequest request) throws SafeFetchException {
     long deadline = System.nanoTime() + policy.getTotalTimeout().toNanos();
@@ -169,7 +183,8 @@ public class SafeHttpFetcher implements Closeable {
   }
 
   /**
-   * Stops the deadline thread and closes the connections.
+   * Stops the deadline thread and closes the connections; a read started
+   * afterwards is refused.
    */
   @Override
   public void close() {
@@ -191,6 +206,7 @@ public class SafeHttpFetcher implements Closeable {
    * @param deadline the read's deadline, as {@link System#nanoTime()}
    * @return the answer: a response, or a redirect to follow
    * @throws SafeFetchException with the reason nothing usable was read
+   * @throws IllegalStateException when the fetcher is closed
    */
   private SafeFetchHop request(URI uri, SafeFetchRequest request, long deadline) throws SafeFetchException {
     long remaining = deadline - System.nanoTime();
@@ -207,23 +223,31 @@ public class SafeHttpFetcher implements Closeable {
     if (StringUtils.isNotBlank(request.ifModifiedSince())) {
       get.setHeader(HttpHeaders.IF_MODIFIED_SINCE, request.ifModifiedSince());
     }
-    ScheduledFuture<?> timer = deadlines.schedule(get::cancel, remaining, TimeUnit.NANOSECONDS);
+    ScheduledFuture<?> timer = null;
     try {
+      timer = deadlines.schedule(get::cancel, remaining, TimeUnit.NANOSECONDS);
       return httpClient.execute(get, response -> handle(get, uri, response, request, deadline));
     } catch (SafeFetchException e) {
       throw e;
+    } catch (RejectedExecutionException e) {
+      // the deadline thread stops first when the fetcher closes
+      throw new IllegalStateException(CLOSED_MESSAGE, e);
     } catch (IOException | RuntimeException e) {
       SafeFetchFailure failure = System.nanoTime() >= deadline || get.isCancelled() ? SafeFetchFailure.TIMEOUT : failureOf(e);
       LOG.debug("A URL could not be read by {}: {} ({})", policy.getName(), failure, e.getClass().getSimpleName());
       throw new SafeFetchException(failure, e);
     } finally {
-      timer.cancel(false);
+      if (timer != null) {
+        timer.cancel(false);
+      }
     }
   }
 
   /**
    * Reads an answer: nothing modified, a redirect to follow, a body of an
-   * accepted type within the limit, or the failure it is.
+   * accepted type within the limit, or the failure it is. A 304 is read as
+   * nothing modified only when the request sent a validator; answering an
+   * unconditional read, it is an error status.
    * <p>
    * An answer not read to its end is aborted before the client closes it:
    * closing a response otherwise drains its body to the declared length, so a
@@ -246,10 +270,10 @@ public class SafeHttpFetcher implements Closeable {
     int status = response.getCode();
     Map<String, String> headers = headersOf(response);
     String contentType = headers.get(HttpHeaders.CONTENT_TYPE);
-    if (status == 304) {
+    if (status == HttpStatus.SC_NOT_MODIFIED && isConditional(request)) {
       return SafeFetchHop.answered(new SafeFetchResponse(status, true, false, null, contentType, headers, uri));
     }
-    if (status == 301 || status == 302 || status == 303 || status == 307 || status == 308) {
+    if (isRedirect(status)) {
       get.cancel();
       String location = headers.get(HttpHeaders.LOCATION);
       if (StringUtils.isBlank(location)) {
@@ -261,8 +285,8 @@ public class SafeHttpFetcher implements Closeable {
       get.cancel();
       throw new SafeFetchException(SafeFetchFailure.HTTP_ERROR, status);
     }
-    Set<String> accepted = request.acceptedContentTypes() == null ? policy.getAcceptedContentTypes() : request.acceptedContentTypes();
-    if (!accepted.isEmpty()) {
+    Set<String> accepted = acceptedContentTypes(request);
+    if (accepted != null) {
       String mediaType = SafeFetchPolicyBuilder.mediaTypeOf(contentType);
       if (mediaType == null || !accepted.contains(mediaType)) {
         get.cancel();
@@ -273,36 +297,124 @@ public class SafeHttpFetcher implements Closeable {
     if (entity == null) {
       return SafeFetchHop.answered(new SafeFetchResponse(status, false, false, new byte[0], contentType, headers, uri));
     }
-    long limit = request.maxBytes() > 0 ? request.maxBytes() : policy.getMaxBytes();
+    long limit = maxBytes(request);
     if (entity.getContentLength() > limit && !request.truncateAtLimit()) {
       get.cancel();
       throw new SafeFetchException(SafeFetchFailure.TOO_LARGE);
     }
     ByteArrayOutputStream body = new ByteArrayOutputStream();
-    boolean truncated = false;
+    boolean truncated = readBody(get, entity, body, limit, request.truncateAtLimit(), deadline);
+    return SafeFetchHop.answered(new SafeFetchResponse(status, false, truncated, body.toByteArray(), contentType, headers, uri));
+  }
+
+  /**
+   * Reads a body up to a limit, counted on the decoded bytes, and within the
+   * read's deadline; past the limit, the body is cut there when the request
+   * allows it, refused otherwise, and the rest is never downloaded.
+   *
+   * @param get the request, cancelled when the body is not read to its end
+   * @param entity the body answered
+   * @param body where the bytes read go
+   * @param limit the most bytes read
+   * @param truncateAtLimit whether a longer body is cut rather than refused
+   * @param deadline the read's deadline
+   * @return whether the body was cut at the limit
+   * @throws IOException carrying the reason of a failure
+   */
+  private static boolean readBody(HttpGet get,
+                                  HttpEntity entity,
+                                  ByteArrayOutputStream body,
+                                  long limit,
+                                  boolean truncateAtLimit,
+                                  long deadline) throws IOException {
     try (InputStream input = entity.getContent()) {
       byte[] buffer = new byte[8192];
       long total = 0;
       int read;
-      while (!truncated && (read = input.read(buffer)) != -1) {
+      while ((read = input.read(buffer)) != -1) {
         if (System.nanoTime() >= deadline) {
           get.cancel();
           throw new SafeFetchException(SafeFetchFailure.TIMEOUT);
         }
         if (total + read > limit) {
           get.cancel();
-          if (!request.truncateAtLimit()) {
+          if (!truncateAtLimit) {
             throw new SafeFetchException(SafeFetchFailure.TOO_LARGE);
           }
           body.write(buffer, 0, (int) (limit - total));
-          truncated = true;
-        } else {
-          total += read;
-          body.write(buffer, 0, read);
+          return true;
         }
+        total += read;
+        body.write(buffer, 0, read);
       }
     }
-    return SafeFetchHop.answered(new SafeFetchResponse(status, false, truncated, body.toByteArray(), contentType, headers, uri));
+    return false;
+  }
+
+  /**
+   * The media types a read accepts: the request's within the policy's, the
+   * policy's alone when the request names none.
+   *
+   * @param request the read
+   * @return the media types, null when any is accepted; empty when the request
+   *         names none the policy accepts, so that every answer is refused
+   */
+  private Set<String> acceptedContentTypes(SafeFetchRequest request) {
+    Set<String> policyTypes = policy.getAcceptedContentTypes();
+    Set<String> requestTypes = request.acceptedContentTypes();
+    if (requestTypes == null) {
+      return policyTypes.isEmpty() ? null : policyTypes;
+    }
+    if (policyTypes.isEmpty()) {
+      return requestTypes;
+    }
+    Set<String> narrowed = new HashSet<>(requestTypes);
+    narrowed.retainAll(policyTypes);
+    return narrowed;
+  }
+
+  /**
+   * The most bytes a read takes: the request's limit, capped at the policy's.
+   *
+   * @param request the read
+   * @return the limit
+   */
+  private long maxBytes(SafeFetchRequest request) {
+    return request.maxBytes() > 0 ? Math.min(request.maxBytes(), policy.getMaxBytes()) : policy.getMaxBytes();
+  }
+
+  /**
+   * The number of deadline timers still queued: none once every read ended.
+   *
+   * @return the timers queued
+   */
+  int pendingDeadlines() {
+    return deadlines.getQueue().size();
+  }
+
+  /**
+   * Whether a read sent a validator, the only case where a 304 means nothing
+   * changed.
+   *
+   * @param request the read
+   * @return true when it is conditional
+   */
+  private static boolean isConditional(SafeFetchRequest request) {
+    return StringUtils.isNotBlank(request.ifNoneMatch()) || StringUtils.isNotBlank(request.ifModifiedSince());
+  }
+
+  /**
+   * Whether a status is a redirect the fetcher follows.
+   *
+   * @param status the HTTP status
+   * @return true for 301, 302, 303, 307 and 308
+   */
+  private static boolean isRedirect(int status) {
+    return status == HttpStatus.SC_MOVED_PERMANENTLY
+        || status == HttpStatus.SC_MOVED_TEMPORARILY
+        || status == HttpStatus.SC_SEE_OTHER
+        || status == HttpStatus.SC_TEMPORARY_REDIRECT
+        || status == HttpStatus.SC_PERMANENT_REDIRECT;
   }
 
   /**
