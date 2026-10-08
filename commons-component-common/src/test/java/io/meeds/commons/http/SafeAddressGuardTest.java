@@ -24,11 +24,13 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.lang.reflect.Modifier;
 import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.URI;
 import java.net.UnknownHostException;
 import java.time.Duration;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -320,6 +322,20 @@ class SafeAddressGuardTest {
     SafeAddressGuard byName = new SafeAddressGuard(policy().exemptHosts(Set.of("private.test")).build());
     assertArrayEquals(dns.get("private.test"), byName.resolveAllowed("private.test"));
     assertThrows(RefusedAddressException.class, () -> byName.resolveAllowed("loopback.test"));
+  }
+
+  /**
+   * The exemption seams are out of reach of a production policy: only code of
+   * this package can set them, while the resolver seam, whose every answer
+   * the guard still judges, stays public.
+   *
+   * @throws Exception never
+   */
+  @Test
+  void onlyTheResolverSeamIsPublic() throws Exception {
+    assertFalse(Modifier.isPublic(SafeFetchPolicyBuilder.class.getDeclaredMethod("exemptHosts", Collection.class).getModifiers()));
+    assertFalse(Modifier.isPublic(SafeFetchPolicyBuilder.class.getDeclaredMethod("exemptAddresses", Collection.class).getModifiers()));
+    assertTrue(Modifier.isPublic(SafeFetchPolicyBuilder.class.getDeclaredMethod("resolver", HostResolver.class).getModifiers()));
   }
 
   /**
