@@ -37,6 +37,9 @@ import org.apache.commons.lang3.StringUtils;
  */
 public final class SafeFetchPolicyBuilder {
 
+  /** The most digits a port has: longer, it is above 65535 or padded. */
+  private static final int MAX_PORT_DIGITS          = 5;
+
   private String           name                     = SafeFetchPolicy.DEFAULT_NAME;
 
   private String           userAgent                = SafeFetchPolicy.DEFAULT_USER_AGENT;
@@ -149,9 +152,10 @@ public final class SafeFetchPolicyBuilder {
   }
 
   /**
-   * Reads a comma-separated list of ports, ignoring what is not one, as a
-   * deployment property states them; falls back to the given set when the list
-   * names no usable port.
+   * Reads a comma-separated list of ports, ignoring what is not one — a word, a
+   * number outside 1-65535, however many digits it has — as a deployment
+   * property states them; falls back to the given set when the list names no
+   * usable port.
    *
    * @param ports the list, such as {@code 80,443,8443}
    * @param fallback the ports when the list names none
@@ -161,7 +165,7 @@ public final class SafeFetchPolicyBuilder {
     Set<Integer> parsed = new LinkedHashSet<>();
     Arrays.stream(StringUtils.split(StringUtils.defaultString(ports), ','))
           .map(String::trim)
-          .filter(StringUtils::isNumeric)
+          .filter(entry -> StringUtils.isNumeric(entry) && entry.length() <= MAX_PORT_DIGITS)
           .map(Integer::parseInt)
           .filter(port -> port > 0 && port <= 65535)
           .forEach(parsed::add);
@@ -193,7 +197,8 @@ public final class SafeFetchPolicyBuilder {
 
   /**
    * Sets the media types an answer may declare; an answer declaring another,
-   * or none, is refused before its body is read. Empty accepts any.
+   * or none, is refused before its body is read. Empty, the default, accepts
+   * any. A request may narrow this set, never widen it.
    *
    * @param contentTypes the media types, without parameters, case ignored
    * @return this builder
@@ -204,7 +209,8 @@ public final class SafeFetchPolicyBuilder {
   }
 
   /**
-   * Sets the largest body read, in bytes.
+   * Sets the largest body read, in bytes: a ceiling a request may lower, never
+   * raise.
    *
    * @param bytes the limit, positive
    * @return this builder
@@ -282,7 +288,9 @@ public final class SafeFetchPolicyBuilder {
   }
 
   /**
-   * Replaces name resolution: the seam of the tests, a table of names.
+   * Replaces name resolution: the seam of the tests, a table of names. Every
+   * address it answers is still judged by the guard, so it cannot open what
+   * the policy refuses.
    *
    * @param hostResolver the resolver
    * @return this builder
@@ -293,15 +301,24 @@ public final class SafeFetchPolicyBuilder {
   }
 
   /**
+   * @return the policy
+   */
+  public SafeFetchPolicy build() {
+    return new SafeFetchPolicy(this);
+  }
+
+  /**
    * Reads the addresses of these host names as public, whatever they are: the
    * seam of the tests, so that a stub on loopback answers for a "public" name
-   * while the same stub under any other name stays refused. Empty in
+   * while the same stub under any other name stays refused. Package-private,
+   * so that no production policy can exempt a name: a test outside this
+   * package reaches it through a helper of its own in this package. Empty in
    * production.
    *
    * @param hosts the host names
    * @return this builder
    */
-  public SafeFetchPolicyBuilder exemptHosts(Collection<String> hosts) {
+  SafeFetchPolicyBuilder exemptHosts(Collection<String> hosts) {
     this.exemptHosts = Set.copyOf(Objects.requireNonNull(hosts, "exemptHosts"));
     return this;
   }
@@ -309,21 +326,15 @@ public final class SafeFetchPolicyBuilder {
   /**
    * Reads these addresses as public, whatever name they come from: the seam of
    * the tests, so that a stub on 127.0.0.1 can be reached while 127.0.0.2 and
-   * every other internal address stay refused. Empty in production.
+   * every other internal address stay refused. Package-private, as
+   * {@link #exemptHosts}. Empty in production.
    *
    * @param addresses the addresses
    * @return this builder
    */
-  public SafeFetchPolicyBuilder exemptAddresses(Collection<InetAddress> addresses) {
+  SafeFetchPolicyBuilder exemptAddresses(Collection<InetAddress> addresses) {
     this.exemptAddresses = Set.copyOf(Objects.requireNonNull(addresses, "exemptAddresses"));
     return this;
-  }
-
-  /**
-   * @return the policy
-   */
-  public SafeFetchPolicy build() {
-    return new SafeFetchPolicy(this);
   }
 
   /**

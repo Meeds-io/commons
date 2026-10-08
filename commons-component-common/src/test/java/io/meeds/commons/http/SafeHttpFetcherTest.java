@@ -34,7 +34,9 @@ import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -397,22 +399,19 @@ class SafeHttpFetcherTest {
   void aNameRebindingToAnInternalAddressIsRefusedAtConnection() throws Exception {
     InetAddress internal = InetAddress.getByAddress(new byte[] { 127, 0, 0, 2 });
     AtomicInteger lookups = new AtomicInteger();
-    SafeHttpFetcher rebinding = new SafeHttpFetcher(policy().resolver(host -> {
-      if (!"rebind.test".equals(host)) {
-        throw new UnknownHostException(host);
-      }
-      return lookups.incrementAndGet() == 1 ? new InetAddress[] { stub } : new InetAddress[] { internal };
-    }).build());
     handler = exchange -> {
       exchange.getResponseHeaders().add("Connection", "close");
       answer(exchange, 200, BODY);
     };
-    try {
+    try (SafeHttpFetcher rebinding = new SafeHttpFetcher(policy().resolver(host -> {
+      if (!"rebind.test".equals(host)) {
+        throw new UnknownHostException(host);
+      }
+      return lookups.incrementAndGet() == 1 ? new InetAddress[] { stub } : new InetAddress[] { internal };
+    }).build())) {
       assertArrayEquals(BODY.getBytes(StandardCharsets.UTF_8), rebinding.fetch(url("rebind.test", "/cal.ics")).body());
       assertEquals(1, lookups.get(), "one connection, one lookup");
       assertEquals(SafeFetchFailure.REFUSED_ADDRESS, failure(rebinding, url("rebind.test", "/cal.ics")));
-    } finally {
-      rebinding.close();
     }
     assertEquals(2, lookups.get(), "the second connection must resolve the name again rather than trust the first answer");
     assertEquals(List.of("/cal.ics"), hits, "no request may reach the stub through a name judged internal");
@@ -426,14 +425,11 @@ class SafeHttpFetcherTest {
   @Test
   void aReachableLoopbackUnderANonExemptNameIsRefusedAtConnection() {
     dns.put("loopback.test", new InetAddress[] { stub });
-    SafeHttpFetcher byName = new SafeHttpFetcher(policy().exemptAddresses(Set.of()).exemptHosts(Set.of("public.test")).build());
     handler = exchange -> answer(exchange, 200, BODY);
-    try {
+    try (SafeHttpFetcher byName = new SafeHttpFetcher(policy().exemptAddresses(Set.of()).exemptHosts(Set.of("public.test")).build())) {
       assertEquals(SafeFetchFailure.REFUSED_ADDRESS, failure(byName, url("loopback.test", "/cal.ics")));
       assertTrue(hits.isEmpty(), "the stub must never see the request");
       assertDoesNotThrowFetch(byName, url("public.test", "/cal.ics"));
-    } finally {
-      byName.close();
     }
     assertEquals(List.of("/cal.ics"), hits);
   }
@@ -476,15 +472,11 @@ class SafeHttpFetcherTest {
   void internalAddressesAreReadWhenTheDeploymentAllowsThem() throws Exception {
     dns.put("loopback.test", new InetAddress[] { InetAddress.getByAddress(new byte[] { 127, 0, 0, 1 }) });
     handler = exchange -> answer(exchange, 200, BODY);
-    SafeHttpFetcher closed = new SafeHttpFetcher(policy().exemptAddresses(Set.of()).build());
-    SafeHttpFetcher open = new SafeHttpFetcher(policy().exemptAddresses(Set.of()).internalAddressesAllowed(true).build());
-    try {
+    try (SafeHttpFetcher closed = new SafeHttpFetcher(policy().exemptAddresses(Set.of()).build());
+         SafeHttpFetcher open = new SafeHttpFetcher(policy().exemptAddresses(Set.of()).internalAddressesAllowed(true).build())) {
       assertEquals(SafeFetchFailure.REFUSED_ADDRESS, failure(closed, url("loopback.test", "/cal.ics")));
       assertTrue(hits.isEmpty());
       assertArrayEquals(BODY.getBytes(StandardCharsets.UTF_8), open.fetch(url("loopback.test", "/cal.ics")).body());
-    } finally {
-      closed.close();
-      open.close();
     }
   }
 
@@ -512,23 +504,20 @@ class SafeHttpFetcherTest {
     assertEquals(4, hits.size(), "the first request and three redirects, then nothing");
 
     hits.clear();
-    SafeHttpFetcher none = new SafeHttpFetcher(policy().maxRedirects(0).build());
-    try {
+    try (SafeHttpFetcher none = new SafeHttpFetcher(policy().maxRedirects(0).build())) {
       assertEquals(SafeFetchFailure.TOO_MANY_REDIRECTS, failure(none, url("public.test", "/loop")));
-    } finally {
-      none.close();
     }
     assertEquals(1, hits.size(), "no redirect is followed");
   }
 
   /**
    * A body over the limit is refused, announced or streamed, under the policy's
-   * limit or the request's own.
+   * limit or the request's own; a request asking for more than the policy
+   * allows is held to the policy's.
    */
   @Test
   void aBodyOverTheLimitIsRefused() {
-    SafeHttpFetcher small = new SafeHttpFetcher(policy().maxBytes(1024).build());
-    try {
+    try (SafeHttpFetcher small = new SafeHttpFetcher(policy().maxBytes(1024).build())) {
       handler = exchange -> answer(exchange, 200, "X".repeat(2048));
       assertEquals(SafeFetchFailure.TOO_LARGE, failure(small, url("public.test", "/announced")));
       assertEquals(SafeFetchFailure.TOO_LARGE, failure(fetcher, SafeFetchRequest.get(url("public.test", "/announced")).withMaxBytes(1024)).getFailure());
@@ -545,10 +534,15 @@ class SafeHttpFetcherTest {
       assertEquals(SafeFetchFailure.TOO_LARGE, failure(small, url("public.test", "/streamed")));
       assertEquals(SafeFetchFailure.TOO_LARGE, failure(fetcher, SafeFetchRequest.get(url("public.test", "/streamed")).withMaxBytes(1024)).getFailure());
 
+      SafeFetchRequest wider = SafeFetchRequest.get(url("public.test", "/streamed")).withMaxBytes(1024L * 1024);
+      assertEquals(SafeFetchFailure.TOO_LARGE, failure(small, wider).getFailure(), "a request cannot raise the policy's limit");
+
+      handler = exchange -> answer(exchange, 200, "X".repeat(2048));
+      SafeFetchRequest widerAnnounced = SafeFetchRequest.get(url("public.test", "/announced")).withMaxBytes(1024L * 1024);
+      assertEquals(SafeFetchFailure.TOO_LARGE, failure(small, widerAnnounced).getFailure(), "a request cannot raise the policy's limit");
+
       handler = exchange -> answer(exchange, 200, "Z".repeat(1024));
       assertDoesNotThrowFetch(small, url("public.test", "/exact"));
-    } finally {
-      small.close();
     }
   }
 
@@ -646,19 +640,20 @@ class SafeHttpFetcherTest {
       }
       answer(exchange, 200, BODY);
     };
-    SafeHttpFetcher images = new SafeHttpFetcher(policy().acceptedContentTypes(Set.of("image/png", "image/svg+xml")).build());
-    try {
+    try (SafeHttpFetcher images = new SafeHttpFetcher(policy().acceptedContentTypes(Set.of("image/png", "image/svg+xml")).build())) {
       assertDoesNotThrowFetch(images, url("public.test", "/png"));
+      assertEquals(SafeFetchFailure.CONTENT_TYPE_NOT_ALLOWED,
+                   failure(images, SafeFetchRequest.get(url("public.test", "/png")).withAcceptedContentTypes(Set.of("image/svg+xml"))).getFailure(),
+                   "a request narrows the policy's types");
       variant.set(1);
       assertEquals(SafeFetchFailure.CONTENT_TYPE_NOT_ALLOWED, failure(images, url("public.test", "/html")));
       assertDoesNotThrowFetch(fetcher, url("public.test", "/html"));
-      images.fetch(SafeFetchRequest.get(url("public.test", "/html")).withAcceptedContentTypes(Set.of("text/html")));
-      images.fetch(SafeFetchRequest.get(url("public.test", "/html")).withAcceptedContentTypes(Set.of()));
+      fetcher.fetch(SafeFetchRequest.get(url("public.test", "/html")).withAcceptedContentTypes(Set.of("text/html")));
+      SafeFetchRequest wider = SafeFetchRequest.get(url("public.test", "/html")).withAcceptedContentTypes(Set.of("text/html", "image/png"));
+      assertEquals(SafeFetchFailure.CONTENT_TYPE_NOT_ALLOWED, failure(images, wider).getFailure(), "a request cannot widen the policy's types");
       variant.set(2);
       assertEquals(SafeFetchFailure.CONTENT_TYPE_NOT_ALLOWED, failure(images, url("public.test", "/untyped")));
       assertNull(fetcher.fetch(url("public.test", "/untyped")).mediaType());
-    } finally {
-      images.close();
     }
   }
 
@@ -695,15 +690,12 @@ class SafeHttpFetcherTest {
    */
   @Test
   void aSilentServerTimesOut() {
-    SafeHttpFetcher impatient = new SafeHttpFetcher(policy().readTimeout(Duration.ofMillis(300)).build());
     handler = exchange -> {
       sleep(2000);
       answer(exchange, 200, BODY);
     };
-    try {
+    try (SafeHttpFetcher impatient = new SafeHttpFetcher(policy().readTimeout(Duration.ofMillis(300)).build())) {
       assertEquals(SafeFetchFailure.TIMEOUT, failure(impatient, url("public.test", "/slow")));
-    } finally {
-      impatient.close();
     }
   }
 
@@ -713,7 +705,6 @@ class SafeHttpFetcherTest {
    */
   @Test
   void aTricklingServerIsStoppedByTheDeadline() {
-    SafeHttpFetcher bounded = new SafeHttpFetcher(policy().readTimeout(Duration.ofSeconds(1)).totalTimeout(Duration.ofMillis(700)).build());
     handler = exchange -> {
       exchange.sendResponseHeaders(200, 0);
       try (OutputStream output = exchange.getResponseBody()) {
@@ -725,10 +716,8 @@ class SafeHttpFetcherTest {
       }
     };
     long start = System.nanoTime();
-    try {
+    try (SafeHttpFetcher bounded = new SafeHttpFetcher(policy().readTimeout(Duration.ofSeconds(1)).totalTimeout(Duration.ofMillis(700)).build())) {
       assertEquals(SafeFetchFailure.TIMEOUT, failure(bounded, url("public.test", "/trickle")));
-    } finally {
-      bounded.close();
     }
     assertTrue(Duration.ofNanos(System.nanoTime() - start).toMillis() < 2500, "the deadline must cut the read short");
   }
@@ -742,16 +731,13 @@ class SafeHttpFetcherTest {
    */
   @Test
   void aServerSilentPastTheDeadlineIsCutOffByTheTimer() {
-    SafeHttpFetcher bounded = new SafeHttpFetcher(policy().readTimeout(Duration.ofSeconds(3)).totalTimeout(Duration.ofMillis(500)).build());
     handler = exchange -> {
       sleep(1000);
       answer(exchange, 200, BODY);
     };
     long start = System.nanoTime();
-    try {
+    try (SafeHttpFetcher bounded = new SafeHttpFetcher(policy().readTimeout(Duration.ofSeconds(3)).totalTimeout(Duration.ofMillis(500)).build())) {
       assertEquals(SafeFetchFailure.TIMEOUT, failure(bounded, url("public.test", "/silent")));
-    } finally {
-      bounded.close();
     }
     long elapsed = Duration.ofNanos(System.nanoTime() - start).toMillis();
     assertTrue(elapsed < 900, "the timer must cancel the request at the deadline, not wait for the answer: " + elapsed + " ms");
@@ -771,6 +757,141 @@ class SafeHttpFetcherTest {
     assertTrue(hits.isEmpty());
     assertEquals(fetcher.getPolicy().getAllowedPorts(), Set.of(port));
     assertThrows(SafeFetchException.class, () -> fetcher.getGuard().normalize("http://public.test:22/"));
+  }
+
+  /**
+   * A 304 answering a read that sent no validator is an error status, not a
+   * not-modified answer without a body: only a conditional read can be told
+   * that nothing changed.
+   */
+  @Test
+  void aNotModifiedAnswerToAnUnconditionalReadIsAnError() {
+    handler = exchange -> answer(exchange, 304, "");
+
+    SafeFetchException unconditional = failure(fetcher, SafeFetchRequest.get(url("public.test", "/cal.ics")));
+
+    assertEquals(SafeFetchFailure.HTTP_ERROR, unconditional.getFailure());
+    assertEquals(304, unconditional.getStatus());
+  }
+
+  /**
+   * Either validator alone makes a read conditional, so that a 304 then means
+   * nothing changed.
+   *
+   * @throws Exception when a read fails
+   */
+  @Test
+  void eitherValidatorAloneMakesAReadConditional() throws Exception {
+    handler = exchange -> answer(exchange, 304, "");
+
+    assertTrue(fetcher.fetch(SafeFetchRequest.get(url("public.test", "/etag")).withValidators("\"v1\"", null)).notModified());
+    assertTrue(fetcher.fetch(SafeFetchRequest.get(url("public.test", "/date")).withValidators(null, "Mon, 14 Sep 2026 10:00:00 GMT"))
+                      .notModified());
+  }
+
+  /**
+   * The headers sent are the HTTP client's own and the ones the request names,
+   * nothing else.
+   *
+   * @throws Exception when a read fails
+   */
+  @Test
+  void onlyTheClientsAndTheRequestsHeadersAreSent() throws Exception {
+    handler = exchange -> answer(exchange, 200, BODY);
+
+    fetcher.fetch(url("public.test", "/plain"));
+    fetcher.fetch(SafeFetchRequest.get(url("public.test", "/named")).withAccept("text/calendar").withValidators("\"v1\"", "Mon, 14 Sep 2026 10:00:00 GMT"));
+
+    Set<String> clientOwn = Set.of("host", "connection", "user-agent", "accept-encoding");
+    assertEquals(clientOwn, headerNames(requests.get(0)));
+    Set<String> named = new HashSet<>(clientOwn);
+    named.addAll(Set.of("accept", "if-none-match", "if-modified-since"));
+    assertEquals(named, headerNames(requests.get(1)));
+  }
+
+  /**
+   * The names of the headers a request carried, lower-cased.
+   *
+   * @param headers the headers
+   * @return the names
+   */
+  private static Set<String> headerNames(Headers headers) {
+    Set<String> names = new HashSet<>();
+    headers.keySet().forEach(name -> names.add(name.toLowerCase(Locale.ROOT)));
+    return names;
+  }
+
+  /**
+   * The deadline timer of a read leaves the queue when the read ends, rather
+   * than staying queued until its deadline passes.
+   *
+   * @throws Exception when a read fails
+   */
+  @Test
+  void aReadLeavesNoDeadlineQueued() throws Exception {
+    handler = exchange -> answer(exchange, 200, BODY);
+
+    for (int i = 0; i < 3; i++) {
+      fetcher.fetch(url("public.test", "/cal.ics"));
+    }
+    assertThrows(SafeFetchException.class, () -> fetcher.fetch(url("internal.test", "/cal.ics")));
+
+    assertEquals(0, fetcher.pendingDeadlines(), "every timer is removed once its read ended");
+  }
+
+  /**
+   * A closed fetcher refuses a read with the exception its Javadoc names, and
+   * reaches nothing.
+   */
+  @Test
+  void aClosedFetcherRefusesARead() {
+    handler = exchange -> answer(exchange, 200, BODY);
+    SafeHttpFetcher closing = new SafeHttpFetcher(policy().build());
+    closing.close();
+    URI uri = url("public.test", "/cal.ics");
+
+    assertThrows(IllegalStateException.class, () -> closing.fetch(uri));
+    assertTrue(hits.isEmpty());
+  }
+
+  /**
+   * An IP literal naming an internal address is refused through the fetcher
+   * under the production resolver, the stub's own loopback address included,
+   * and nothing reaches the stub: the refusal does not rest on the table of
+   * names, which answers a literal with nothing.
+   */
+  @Test
+  void anInternalIpLiteralIsRefusedUnderTheProductionResolver() {
+    handler = exchange -> answer(exchange, 200, BODY);
+    try (SafeHttpFetcher production = new SafeHttpFetcher(policy().exemptAddresses(Set.of()).resolver(InetAddress::getAllByName).build())) {
+      for (String host : new String[] { "127.0.0.1", "[::1]", "169.254.169.254", "[::ffff:127.0.0.1]", "10.0.0.5" }) {
+        URI literal = URI.create("http://" + host + ":" + port + "/cal.ics");
+        assertEquals(SafeFetchFailure.REFUSED_ADDRESS, failure(production, literal), host);
+      }
+    }
+    assertTrue(hits.isEmpty(), "no request may reach the stub through an internal literal");
+  }
+
+  /**
+   * The HTTP client hands an IP-literal host to the guarded resolver when it
+   * opens the connection, so the literal is judged at the connection as well
+   * as before the request. Pins the client's behaviour: a client version
+   * resolving literals on its own would make the resolver see nothing here.
+   *
+   * @throws Exception when the read fails
+   */
+  @Test
+  void anIpLiteralHostIsResolvedThroughTheGuardAtConnection() throws Exception {
+    List<String> lookups = new CopyOnWriteArrayList<>();
+    handler = exchange -> answer(exchange, 200, BODY);
+    try (SafeHttpFetcher counting = new SafeHttpFetcher(policy().resolver(host -> {
+      lookups.add(host);
+      return InetAddress.getAllByName(host);
+    }).build())) {
+      counting.fetch(URI.create("http://127.0.0.1:" + port + "/cal.ics"));
+    }
+    assertEquals(List.of("127.0.0.1"), lookups);
+    assertEquals(List.of("/cal.ics"), hits);
   }
 
   /**

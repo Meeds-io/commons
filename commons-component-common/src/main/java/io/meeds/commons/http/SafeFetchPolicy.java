@@ -31,8 +31,11 @@ import java.util.Set;
  * <p>
  * The {@linkplain #getResolver() resolver} and the two exemptions are the
  * seams of the tests, so that a stub server on loopback can stand in for a
- * public one while every other internal address stays refused; a production
- * policy leaves them at their defaults.
+ * public one while every other internal address stays refused. The resolver
+ * can be set by anyone, since the guard judges every address it answers; the
+ * exemptions are set only from this package, so a production policy holds
+ * none. The body limit and the accepted content types are ceilings: a
+ * {@link SafeFetchRequest} narrows them, never widens them.
  */
 public final class SafeFetchPolicy {
 
