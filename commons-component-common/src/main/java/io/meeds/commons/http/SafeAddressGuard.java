@@ -26,6 +26,7 @@ import java.util.Locale;
 import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.hc.core5.net.InetAddressUtils;
 
 /**
  * Decides which URLs the platform may be made to read on a user's or a
@@ -38,8 +39,9 @@ import org.apache.commons.lang3.StringUtils;
  * metadata endpoint handing out credentials.
  * <p>
  * <b>What it decides.</b> The URL's shape — an allowed scheme, no credentials,
- * a host, an allowed port ({@link #checkTarget}) — and the addresses its host
- * resolves to ({@link #resolveAllowed}): loopback, link-local (the metadata
+ * a host, an allowed port, and the address itself when the host is an IP
+ * literal ({@link #checkTarget}) — and the addresses its host resolves to
+ * ({@link #resolveAllowed}): loopback, link-local (the metadata
  * address 169.254.169.254 among them), private, carrier-grade NAT, multicast,
  * broadcast and reserved, unspecified, IETF assignments, benchmarking, IPv6
  * unique-local and site-local, and each of those spelled as an IPv4 address
@@ -52,7 +54,10 @@ import org.apache.commons.lang3.StringUtils;
  * connection it opens — every redirect hop included. A name that resolved to a
  * public address when it was first seen and to a private one when the
  * connection opens (DNS rebinding) is refused at that connection, not trusted
- * from an earlier answer. What stays outside its reach: a public server that
+ * from an earlier answer. An IP literal is judged twice: by {@link #checkTarget}
+ * before the request, so its refusal does not depend on how the HTTP client
+ * resolves a literal host, and by the resolver when the connection opens.
+ * What stays outside its reach: a public server that
  * itself relays the request inward, and the time a refused or unreachable
  * answer takes, which says something about a public host.
  */
@@ -117,7 +122,9 @@ public class SafeAddressGuard {
   /**
    * Checks the shape of a URL about to be read — the one given, or the target
    * of a redirect: absolute, an allowed scheme, no credentials, a host, an
-   * allowed port, not too long, no white space or control character.
+   * allowed port, not too long, no white space or control character; and, when
+   * the host is an IP literal, the address it names, under the same rules as
+   * {@link #resolveAllowed}. A host name is not resolved here.
    *
    * @param uri the URL
    * @return the URL with its scheme lower-cased
@@ -146,10 +153,10 @@ public class SafeAddressGuard {
     if (StringUtils.isBlank(uri.getHost())) {
       throw new SafeFetchException(SafeFetchFailure.INVALID_URL);
     }
-    int port = uri.getPort() >= 0 ? uri.getPort() : ("http".equals(scheme) ? 80 : 443);
-    if (!anyPortAllowed && !allowedPorts.contains(port)) {
+    if (!anyPortAllowed && !allowedPorts.contains(portOf(uri, scheme))) {
       throw new SafeFetchException(SafeFetchFailure.PORT_NOT_ALLOWED);
     }
+    checkLiteralAddress(bareHost(uri.getHost()));
     if (scheme.equals(uri.getScheme())) {
       return uri;
     }
@@ -172,7 +179,7 @@ public class SafeAddressGuard {
    * @throws UnknownHostException when the host resolves to nothing
    */
   public InetAddress[] resolveAllowed(String host) throws UnknownHostException {
-    String bare = StringUtils.removeEnd(StringUtils.removeStart(StringUtils.trim(host), "["), "]");
+    String bare = bareHost(host);
     if (StringUtils.isBlank(bare)) {
       throw new UnknownHostException("No host");
     }
@@ -180,13 +187,7 @@ public class SafeAddressGuard {
     if (addresses == null || addresses.length == 0) {
       throw new UnknownHostException("The host resolves to nothing");
     }
-    if (!internalAddressesAllowed && !exemptHosts.contains(bare)) {
-      for (InetAddress address : addresses) {
-        if (isBlocked(address) && !exemptAddresses.contains(address)) {
-          throw new RefusedAddressException();
-        }
-      }
-    }
+    judge(bare, addresses);
     return addresses;
   }
 
@@ -220,6 +221,75 @@ public class SafeAddressGuard {
     }
     byte[] embedded = embeddedIpv4(bytes);
     return embedded != null && isBlockedIpv4(embedded);
+  }
+
+  /**
+   * Refuses a host's addresses when ANY of them is one the platform must not
+   * reach, unless the policy allows internal addresses or exempts the host or
+   * the address.
+   *
+   * @param host the host, without brackets
+   * @param addresses the addresses it names or resolves to
+   * @throws RefusedAddressException when an address is refused
+   */
+  private void judge(String host, InetAddress[] addresses) throws RefusedAddressException {
+    if (internalAddressesAllowed || exemptHosts.contains(host)) {
+      return;
+    }
+    for (InetAddress address : addresses) {
+      if (isBlocked(address) && !exemptAddresses.contains(address)) {
+        throw new RefusedAddressException();
+      }
+    }
+  }
+
+  /**
+   * Judges the address an IP-literal host names, without any lookup; a host
+   * name is left to the resolver. An IPv6 literal that does not parse is not a
+   * usable URL.
+   *
+   * @param host the host, without brackets
+   * @throws SafeFetchException {@link SafeFetchFailure#REFUSED_ADDRESS} when
+   *           the literal names a refused address
+   */
+  private void checkLiteralAddress(String host) throws SafeFetchException {
+    // a colon never appears in a host name: every such host is an IPv6
+    // literal, the mixed notation ::ffff:a.b.c.d included
+    if (!InetAddressUtils.isIPv4(host) && !StringUtils.contains(host, ':')) {
+      return;
+    }
+    try {
+      // a literal is parsed, never looked up
+      judge(host, new InetAddress[] { InetAddress.getByName(host) });
+    } catch (RefusedAddressException e) {
+      throw new SafeFetchException(SafeFetchFailure.REFUSED_ADDRESS, e);
+    } catch (UnknownHostException e) {
+      throw new SafeFetchException(SafeFetchFailure.INVALID_URL, e);
+    }
+  }
+
+  /**
+   * The port a URL reaches: the one it names, else its scheme's default.
+   *
+   * @param uri the URL
+   * @param scheme its scheme, lower-cased
+   * @return the port
+   */
+  private static int portOf(URI uri, String scheme) {
+    if (uri.getPort() >= 0) {
+      return uri.getPort();
+    }
+    return "http".equals(scheme) ? 80 : 443;
+  }
+
+  /**
+   * A host without the brackets of an IPv6 literal, trimmed.
+   *
+   * @param host the host
+   * @return the bare host
+   */
+  private static String bareHost(String host) {
+    return StringUtils.removeEnd(StringUtils.removeStart(StringUtils.trim(host), "["), "]");
   }
 
   /**

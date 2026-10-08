@@ -24,18 +24,23 @@ import java.util.Objects;
 import java.util.Set;
 
 /**
- * One read of a URL by {@link SafeHttpFetcher}: a GET, with what it may say
- * and accept beyond the fetcher's {@link SafeFetchPolicy}. Built from
- * {@link #get(URI)} and the {@code with} methods; immutable.
+ * One read of a URL by {@link SafeHttpFetcher}: a GET, with the headers it
+ * sends and how it narrows the fetcher's {@link SafeFetchPolicy}. A request
+ * never widens the policy: its body limit is capped at the policy's, and its
+ * media types are kept only where the policy accepts them too. Built from
+ * {@link #get(URI)} and the {@code with} methods; immutable. A header value
+ * carrying a line break or another control character is refused, so that no
+ * value can add a header of its own.
  *
  * @param uri the URL to read
  * @param accept the {@code Accept} header sent, null for none
  * @param ifNoneMatch the {@code If-None-Match} header sent, null for none
  * @param ifModifiedSince the {@code If-Modified-Since} header sent, null for
  *          none
- * @param acceptedContentTypes the media types this read accepts, replacing the
- *          policy's; null keeps the policy's, empty accepts any
- * @param maxBytes the most bytes this read takes, replacing the policy's; zero
+ * @param acceptedContentTypes the media types this read accepts, within the
+ *          policy's when the policy names some; null keeps the policy's, and
+ *          an empty set is refused
+ * @param maxBytes the most bytes this read takes, capped at the policy's; zero
  *          or less keeps the policy's
  * @param truncateAtLimit whether a body past the limit is cut at it and
  *          returned, instead of refused: for a page whose head comes first,
@@ -52,6 +57,8 @@ public record SafeFetchRequest(URI uri,
   /**
    * Checks the request and normalizes its media types.
    *
+   * @throws IllegalArgumentException when a header value carries a control
+   *           character, or the media types name none
    * @param uri the URL to read
    * @param accept the {@code Accept} header sent
    * @param ifNoneMatch the {@code If-None-Match} header sent
@@ -62,7 +69,15 @@ public record SafeFetchRequest(URI uri,
    */
   public SafeFetchRequest {
     Objects.requireNonNull(uri, "uri");
-    acceptedContentTypes = acceptedContentTypes == null ? null : SafeFetchPolicyBuilder.normalizeContentTypes(acceptedContentTypes);
+    requireHeaderValue(accept, "accept");
+    requireHeaderValue(ifNoneMatch, "ifNoneMatch");
+    requireHeaderValue(ifModifiedSince, "ifModifiedSince");
+    if (acceptedContentTypes != null) {
+      acceptedContentTypes = SafeFetchPolicyBuilder.normalizeContentTypes(acceptedContentTypes);
+      if (acceptedContentTypes.isEmpty()) {
+        throw new IllegalArgumentException("acceptedContentTypes names at least one media type");
+      }
+    }
   }
 
   /**
@@ -93,17 +108,20 @@ public record SafeFetchRequest(URI uri,
    * @param etag the entity tag of the previous read, or null
    * @param lastModified the {@code Last-Modified} of the previous read, or null
    * @return the request
+   * @throws IllegalArgumentException when a value carries a control character
    */
   public SafeFetchRequest withValidators(String etag, String lastModified) {
     return new SafeFetchRequest(uri, accept, etag, lastModified, acceptedContentTypes, maxBytes, truncateAtLimit);
   }
 
   /**
-   * The same read accepting these media types only.
+   * The same read accepting these media types only, within the policy's when
+   * the policy names some: a type the policy refuses stays refused.
    *
-   * @param contentTypes the media types, without parameters, case ignored;
-   *          empty accepts any
+   * @param contentTypes the media types, without parameters, case ignored; at
+   *          least one
    * @return the request
+   * @throws IllegalArgumentException when the set names no media type
    */
   public SafeFetchRequest withAcceptedContentTypes(Collection<String> contentTypes) {
     return new SafeFetchRequest(uri,
@@ -116,7 +134,8 @@ public record SafeFetchRequest(URI uri,
   }
 
   /**
-   * The same read taking at most this many bytes.
+   * The same read taking at most this many bytes, or the policy's limit when
+   * that is lower.
    *
    * @param limit the limit, positive
    * @return the request
@@ -136,6 +155,24 @@ public record SafeFetchRequest(URI uri,
    */
   public SafeFetchRequest truncatedAtLimit() {
     return new SafeFetchRequest(uri, accept, ifNoneMatch, ifModifiedSince, acceptedContentTypes, maxBytes, true);
+  }
+
+  /**
+   * Refuses a header value carrying a line break or another control
+   * character, which would end the header and start another.
+   *
+   * @param value the value, null for none
+   * @param field its name, for the refusal
+   */
+  private static void requireHeaderValue(String value, String field) {
+    if (value == null) {
+      return;
+    }
+    for (int i = 0; i < value.length(); i++) {
+      if (Character.isISOControl(value.charAt(i))) {
+        throw new IllegalArgumentException(field + " carries a control character");
+      }
+    }
   }
 
 }

@@ -323,6 +323,48 @@ class SafeAddressGuardTest {
   }
 
   /**
+   * A port list read from a deployment property ignores what is not a port —
+   * a word, zero, a number above 65535 however many digits it has — rather
+   * than failing, and falls back when it names none.
+   */
+  @Test
+  void aPortListIgnoresWhatIsNotAPort() {
+    Set<Integer> fallback = Set.of(443);
+    assertEquals(Set.of(443, 8443),
+                 SafeFetchPolicy.builder().allowedPorts("443, 99999999999,abc,0,70000,8443", fallback).build().getAllowedPorts());
+    assertEquals(fallback, SafeFetchPolicy.builder().allowedPorts("99999999999", Set.of(443)).build().getAllowedPorts());
+    assertEquals(Set.of(8080), SafeFetchPolicy.builder().allowedPorts("08080", fallback).build().getAllowedPorts());
+    assertEquals(fallback, SafeFetchPolicy.builder().allowedPorts(null, Set.of(443)).build().getAllowedPorts());
+  }
+
+  /**
+   * An IP literal naming an internal address is refused by the URL check
+   * itself, before any resolution — the resolver here knows no name at all —
+   * and a public literal passes; the opt-out and the address seam apply as
+   * they do at resolution.
+   *
+   * @throws Exception never
+   */
+  @Test
+  void anInternalIpLiteralIsRefusedByTheUrlCheck() throws Exception {
+    for (String host : new String[] { "127.0.0.1", "[::1]", "169.254.169.254", "[::ffff:127.0.0.1]", "10.0.0.5", "[fd00:ec2::254]",
+        "100.100.100.200", "0.0.0.0" }) {
+      assertEquals(SafeFetchFailure.REFUSED_ADDRESS, refusal("http://" + host + "/"), host);
+    }
+    assertEquals("http://93.184.216.34/", guard().normalize("http://93.184.216.34/").toString());
+    assertEquals("http://[2606:2800:220:1:248:1893:25c8:1946]/", guard().normalize("http://[2606:2800:220:1:248:1893:25c8:1946]/").toString());
+    assertEquals("http://localhost/", guard().normalize("http://localhost/").toString(), "a name is left to the resolver");
+
+    SafeAddressGuard allowing = new SafeAddressGuard(policy().internalAddressesAllowed(true).build());
+    assertEquals("http://127.0.0.1/", allowing.normalize("http://127.0.0.1/").toString());
+    SafeAddressGuard byAddress = new SafeAddressGuard(policy().exemptAddresses(Set.of(address(127, 0, 0, 1))).build());
+    assertEquals("http://127.0.0.1/", byAddress.normalize("http://127.0.0.1/").toString());
+    URI otherLoopback = URI.create("http://127.0.0.2/");
+    assertEquals(SafeFetchFailure.REFUSED_ADDRESS,
+                 assertThrows(SafeFetchException.class, () -> byAddress.checkTarget(otherLoopback)).getFailure());
+  }
+
+  /**
    * A policy refuses what no fetch may run under: a scheme the client does not
    * speak, an empty scheme or port set, a port outside 1-65535, a non-positive
    * limit, count or timeout, a per-route bound above the total.
@@ -330,15 +372,21 @@ class SafeAddressGuardTest {
   @Test
   void aPolicyRefusesWhatNoFetchMayRunUnder() {
     SafeFetchPolicyBuilder builder = SafeFetchPolicy.builder();
-    assertThrows(IllegalArgumentException.class, () -> builder.allowedSchemes(Set.of("ftp")));
-    assertThrows(IllegalArgumentException.class, () -> builder.allowedSchemes(Set.of()));
-    assertThrows(IllegalArgumentException.class, () -> builder.allowedPorts(Set.of()));
-    assertThrows(IllegalArgumentException.class, () -> builder.allowedPorts(Set.of(0)));
-    assertThrows(IllegalArgumentException.class, () -> builder.allowedPorts(Set.of(65536)));
+    Set<String> ftp = Set.of("ftp");
+    Set<String> noScheme = Set.of();
+    Set<Integer> noPort = Set.of();
+    Set<Integer> portZero = Set.of(0);
+    Set<Integer> portAbove = Set.of(65536);
+    Duration negative = Duration.ofSeconds(-1);
+    assertThrows(IllegalArgumentException.class, () -> builder.allowedSchemes(ftp));
+    assertThrows(IllegalArgumentException.class, () -> builder.allowedSchemes(noScheme));
+    assertThrows(IllegalArgumentException.class, () -> builder.allowedPorts(noPort));
+    assertThrows(IllegalArgumentException.class, () -> builder.allowedPorts(portZero));
+    assertThrows(IllegalArgumentException.class, () -> builder.allowedPorts(portAbove));
     assertThrows(IllegalArgumentException.class, () -> builder.maxBytes(0));
     assertThrows(IllegalArgumentException.class, () -> builder.maxRedirects(-1));
     assertThrows(IllegalArgumentException.class, () -> builder.connectTimeout(Duration.ZERO));
-    assertThrows(IllegalArgumentException.class, () -> builder.readTimeout(Duration.ofSeconds(-1)));
+    assertThrows(IllegalArgumentException.class, () -> builder.readTimeout(negative));
     assertThrows(IllegalArgumentException.class, () -> builder.totalTimeout(null));
     assertThrows(IllegalArgumentException.class, () -> builder.maxConnections(2, 3));
     assertThrows(IllegalArgumentException.class, () -> builder.name(" "));
