@@ -622,7 +622,7 @@ class SafeHttpFetcherTest {
 
   /**
    * The declared type must be in the accepted set when there is one — the
-   * policy's, or the request's replacing it — parameters and case ignored; an
+   * policy's, or the request's within it — parameters and case ignored; an
    * answer declaring none is refused then; without a set, anything is read.
    *
    * @throws Exception when a read fails
@@ -840,8 +840,8 @@ class SafeHttpFetcherTest {
   }
 
   /**
-   * A closed fetcher refuses a read with the exception its Javadoc names, and
-   * reaches nothing.
+   * A closed fetcher refuses every read with the exception its Javadoc names,
+   * a URL the guard would refuse included, and reaches nothing.
    */
   @Test
   void aClosedFetcherRefusesARead() {
@@ -850,7 +850,12 @@ class SafeHttpFetcherTest {
     closing.close();
     URI uri = url("public.test", "/cal.ics");
 
+    URI refused = url("internal.test", "/cal.ics");
+    URI outsideTheRules = URI.create("ftp://public.test/cal.ics");
+
     assertThrows(IllegalStateException.class, () -> closing.fetch(uri));
+    assertThrows(IllegalStateException.class, () -> closing.fetch(refused));
+    assertThrows(IllegalStateException.class, () -> closing.fetch(outsideTheRules));
     assertTrue(hits.isEmpty());
   }
 
