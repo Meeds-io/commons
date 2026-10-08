@@ -49,7 +49,10 @@ public enum SafeFetchFailure {
   /** The answer took too long. */
   TIMEOUT("The URL did not answer in time"),
 
-  /** The server answered with a status outside 2xx and 304. */
+  /**
+   * An answer the read cannot use: a status outside 2xx, a 304 to a read that
+   * sent no validator, or a redirect without a {@code Location}.
+   */
   HTTP_ERROR("The URL answered with an error status"),
 
   /** The answer is larger than allowed. */
