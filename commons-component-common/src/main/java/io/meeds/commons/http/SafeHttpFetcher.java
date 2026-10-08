@@ -168,6 +168,9 @@ public class SafeHttpFetcher implements Closeable {
    * @throws IllegalStateException when the fetcher is closed
    */
   public SafeFetchResponse fetch(SafeFetchRequest request) throws SafeFetchException {
+    if (deadlines.isShutdown()) {
+      throw new IllegalStateException(CLOSED_MESSAGE);
+    }
     long deadline = System.nanoTime() + policy.getTotalTimeout().toNanos();
     URI current = guard.checkTarget(request.uri());
     for (int hop = 0;; hop++) {
@@ -230,7 +233,7 @@ public class SafeHttpFetcher implements Closeable {
     } catch (SafeFetchException e) {
       throw e;
     } catch (RejectedExecutionException e) {
-      // the deadline thread stops first when the fetcher closes
+      // closed while this read started: the deadline thread stops first
       throw new IllegalStateException(CLOSED_MESSAGE, e);
     } catch (IOException | RuntimeException e) {
       SafeFetchFailure failure = System.nanoTime() >= deadline || get.isCancelled() ? SafeFetchFailure.TIMEOUT : failureOf(e);
