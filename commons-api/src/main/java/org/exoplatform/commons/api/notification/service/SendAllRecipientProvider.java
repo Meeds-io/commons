@@ -23,9 +23,11 @@ import java.util.List;
 /**
  * Lists the users a send-all notification walks, page by page: the enabled
  * users of the platform, the internal ones only when asked. A send-all uses
- * the implementation registered in the container, and walks the enabled users
- * of the organization service when there is none; at most one implementation
- * may be registered, or every send-all fails.
+ * the implementation registered in the portal container (a Kernel component,
+ * or a Spring bean whose class carries {@code @Service}, which the Kernel
+ * bridge exports), and walks the enabled users of the organization service
+ * when there is none. At most one implementation may be registered: with two,
+ * every send-all active on a channel fails.
  */
 public interface SendAllRecipientProvider {
 
