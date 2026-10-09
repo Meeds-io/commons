@@ -18,14 +18,7 @@
  */
 package org.exoplatform.commons.notification.impl.service;
 
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.CALLS_REAL_METHODS;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.mockStatic;
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
@@ -33,7 +26,6 @@ import java.util.List;
 import java.util.stream.IntStream;
 
 import org.hibernate.Session;
-import org.mockito.MockedStatic;
 
 import org.exoplatform.commons.api.notification.channel.ChannelManager;
 import org.exoplatform.commons.api.notification.model.NotificationInfo;
@@ -41,29 +33,27 @@ import org.exoplatform.commons.api.notification.model.WebNotificationFilter;
 import org.exoplatform.commons.api.notification.service.NotificationCompletionService;
 import org.exoplatform.commons.api.notification.service.WebNotificationService;
 import org.exoplatform.commons.api.notification.service.setting.UserSettingService;
-import org.exoplatform.commons.api.settings.SettingService;
-import org.exoplatform.commons.api.settings.data.Context;
 import org.exoplatform.commons.notification.NotificationContextFactory;
 import org.exoplatform.commons.notification.impl.jpa.web.dao.WebNotifDAO;
 import org.exoplatform.commons.notification.impl.jpa.web.dao.WebParamsDAO;
 import org.exoplatform.commons.notification.impl.jpa.web.dao.WebUsersDAO;
 import org.exoplatform.commons.persistence.impl.EntityManagerService;
 import org.exoplatform.commons.testing.BaseCommonsTestCase;
-import org.exoplatform.commons.utils.CommonsUtils;
 import org.exoplatform.component.test.ConfigurationUnit;
 import org.exoplatform.component.test.ConfiguredBy;
 import org.exoplatform.component.test.ContainerScope;
 import org.exoplatform.services.listener.ListenerService;
 import org.exoplatform.services.organization.OrganizationService;
+import org.exoplatform.services.organization.User;
+import org.exoplatform.services.organization.UserHandler;
 
 /**
  * A send-all over more users than one page, delivered by the real web channel
  * into the real JPA storage, on the real kernel EntityManager of the thread
  * (EXO-90779). The entities counted are the web notifications it persists: in
  * this container the settings DAOs are in-memory, so the settings reads the
- * clear exists for in production do not reach JPA here. The same in-memory
- * context DAO ignores offset and limit, so the walk over the users is served by
- * a spy that pages like the JPA one.
+ * clear exists for in production do not reach JPA here. The users are enabled
+ * users of the in-memory organization service, which a send-all walks.
  */
 @ConfiguredBy({
   @ConfigurationUnit(scope = ContainerScope.ROOT, path = "conf/configuration.xml"),
@@ -88,8 +78,6 @@ public class NotificationServiceSendAllTest extends BaseCommonsTestCase {
 
   private WebUsersDAO            webUsersDAO;
 
-  private MockedStatic<CommonsUtils> commonsUtils;
-
   @Override
   public void setUp() throws Exception {
     super.setUp();
@@ -101,25 +89,17 @@ public class NotificationServiceSendAllTest extends BaseCommonsTestCase {
     webUsersDAO = getService(WebUsersDAO.class);
     begin();
     cleanWebNotifications();
+    UserHandler userHandler = getService(OrganizationService.class).getUserHandler();
     for (int i = 0; i < USERS_COUNT; i++) {
-      userSettingService.setUserEnabled(USER_PREFIX + i, true);
+      User user = userHandler.createUserInstance(USER_PREFIX + i);
+      user.setEmail(USER_PREFIX + i + "@test.local");
+      userHandler.createUser(user, true);
     }
     restartTransaction();
-    List<String> users = IntStream.range(0, USERS_COUNT).mapToObj(i -> USER_PREFIX + i).toList();
-    SettingService settingService = spy(getService(SettingService.class));
-    doReturn((long) USERS_COUNT).when(settingService).countContextsByType(Context.USER.getName());
-    doAnswer(invocation -> {
-      int offset = invocation.getArgument(1);
-      int limit = invocation.getArgument(2);
-      return users.subList(Math.min(offset, USERS_COUNT), Math.min(offset + limit, USERS_COUNT));
-    }).when(settingService).getContextNamesByType(eq(Context.USER.getName()), anyInt(), anyInt());
-    commonsUtils = mockStatic(CommonsUtils.class, CALLS_REAL_METHODS);
-    commonsUtils.when(() -> CommonsUtils.getService(SettingService.class)).thenReturn(settingService);
   }
 
   @Override
   public void tearDown() throws Exception {
-    commonsUtils.close();
     cleanWebNotifications();
     end();
     super.tearDown();
@@ -150,6 +130,25 @@ public class NotificationServiceSendAllTest extends BaseCommonsTestCase {
 
     assertTrue("Managed entities after the notification: " + managedEntitiesCount(), managedEntitiesCount() < USERS_COUNT);
     assertReceivedByEveryUser();
+  }
+
+  /**
+   * A disabled user named as a recipient gets nothing, through the cached user
+   * settings the lifecycles read, while the enabled recipient named with it does.
+   */
+  public void testADisabledRecipientReceivesNothing() throws Exception {
+    String disabledUser = USER_PREFIX + "disabled";
+    UserHandler userHandler = getService(OrganizationService.class).getUserHandler();
+    userHandler.createUser(userHandler.createUserInstance(disabledUser), true);
+    userHandler.setEnabled(disabledUser, false, true);
+    restartTransaction();
+
+    notificationService(true).process(NotificationInfo.instance()
+                                                      .key("TestPlugin")
+                                                      .to(new ArrayList<>(List.of(USER_PREFIX + 0, disabledUser))));
+
+    assertEquals(1, webNotificationService.getNotificationInfos(new WebNotificationFilter(USER_PREFIX + 0), 0, 10).size());
+    assertEquals(0, webNotificationService.getNotificationInfos(new WebNotificationFilter(disabledUser), 0, 10).size());
   }
 
   /**

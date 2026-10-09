@@ -160,7 +160,8 @@ public class JPAUserSettingServiceImpl extends AbstractService implements UserSe
   public UserSetting get(String userId) {// NOSONAR
     UserSetting userSettings = getDefaultSettings();
     userSettings.setUserId(userId);
-    userSettings.setEnabled(isUserEnabled(userId));
+    Boolean enabledInIdentityStore = isUserEnabledInIdentityStore(userId);
+    userSettings.setEnabled(enabledInIdentityStore == null || enabledInIdentityStore);
     userSettings.applyDefaultValues();
 
     Map<Scope, Map<String, SettingValue<String>>> userNotificationSettings = settingService.getSettingsByContext(USER.id(userId));
@@ -173,8 +174,9 @@ public class JPAUserSettingServiceImpl extends AbstractService implements UserSe
                                                                   .collect(Collectors.toMap(channel -> getChannelProperty(channel.getId()),
                                                                                             Function.identity()));
 
-    // Global Settings
-    if (userSettings.isEnabled()
+    // Global Settings: the stored status, a copy of the identity store's,
+    // decides only when the identity store could not be read
+    if (enabledInIdentityStore == null
         && userNotificationSettings.containsKey(Scope.GLOBAL)
         && userNotificationSettings.get(Scope.GLOBAL).containsKey(EXO_IS_ENABLED)) {
       SettingValue<String> enabledSetting = userNotificationSettings.get(Scope.GLOBAL).get(EXO_IS_ENABLED);
@@ -312,13 +314,17 @@ public class JPAUserSettingServiceImpl extends AbstractService implements UserSe
     settingService.save(Context.USER.id(username));
   }
 
-  private boolean isUserEnabled(String userId) {
+  /**
+   * @return whether the user is enabled in the identity store, null when the
+   *         identity store could not be read
+   */
+  private Boolean isUserEnabledInIdentityStore(String userId) {
     try {
       User user = organizationService.getUserHandler().findUserByName(userId);
       return user != null && user.isEnabled();
     } catch (Exception e) {
-      LOG.warn("Error getting user status from IDM store. Consider it as enabled.", e);
-      return true;
+      LOG.warn("Error getting the status of user {} from the identity store, its stored status is used instead", userId, e);
+      return null; // NOSONAR
     }
   }
 
