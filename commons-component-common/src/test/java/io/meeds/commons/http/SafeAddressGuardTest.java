@@ -381,6 +381,27 @@ class SafeAddressGuardTest {
   }
 
   /**
+   * A host of digits and dots that is not a canonical IPv4 literal is refused
+   * by the URL check, whatever the policy allows: the JDK would read
+   * {@code 010.0.0.1} as 10.0.0.1 and {@code 2130706433} as 127.0.0.1, and no
+   * host name is all-numeric.
+   *
+   * @throws Exception never
+   */
+  @Test
+  void aNonCanonicalNumericHostIsRefusedByTheUrlCheck() throws Exception {
+    SafeAddressGuard allowing = new SafeAddressGuard(policy().internalAddressesAllowed(true).build());
+    for (String host : new String[] { "010.0.0.1", "127.000.000.001", "2130706433", "093.184.216.34" }) {
+      assertEquals(SafeFetchFailure.INVALID_URL, refusal("http://" + host + "/"), host);
+      URI uri = URI.create("http://" + host + "/");
+      assertEquals(SafeFetchFailure.INVALID_URL,
+                   assertThrows(SafeFetchException.class, () -> allowing.checkTarget(uri)).getFailure(),
+                   host);
+    }
+    assertEquals("http://93.184.216.34/", allowing.normalize("http://93.184.216.34/").toString());
+  }
+
+  /**
    * A policy refuses what no fetch may run under: a scheme the client does not
    * speak, an empty scheme or port set, a port outside 1-65535, a non-positive
    * limit, count or timeout, a per-route bound above the total.

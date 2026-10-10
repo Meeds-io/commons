@@ -246,13 +246,21 @@ public class SafeAddressGuard {
   /**
    * Judges the address an IP-literal host names, without any lookup; a host
    * name is left to the resolver. An IPv6 literal that does not parse is not a
-   * usable URL.
+   * usable URL, nor is a host of digits and dots other than a canonical IPv4
+   * literal ({@code 010.0.0.1}, {@code 127.000.000.001}, {@code 2130706433}):
+   * no host name is all-numeric, and the JDK would read those forms as the
+   * addresses they encode.
    *
    * @param host the host, without brackets
    * @throws SafeFetchException {@link SafeFetchFailure#REFUSED_ADDRESS} when
-   *           the literal names a refused address
+   *           the literal names a refused address,
+   *           {@link SafeFetchFailure#INVALID_URL} when it is not a canonical
+   *           literal
    */
   private void checkLiteralAddress(String host) throws SafeFetchException {
+    if (StringUtils.containsOnly(host, "0123456789.") && !InetAddressUtils.isIPv4(host)) {
+      throw new SafeFetchException(SafeFetchFailure.INVALID_URL);
+    }
     // a colon never appears in a host name: every such host is an IPv6
     // literal, the mixed notation ::ffff:a.b.c.d included
     if (!InetAddressUtils.isIPv4(host) && !StringUtils.contains(host, ':')) {
