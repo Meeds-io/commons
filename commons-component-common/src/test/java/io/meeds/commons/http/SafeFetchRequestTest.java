@@ -72,4 +72,14 @@ class SafeFetchRequestTest {
     assertNull(request.acceptedContentTypes(), "no set keeps the policy's");
   }
 
+  /**
+   * The media types of a request cannot be changed through its accessor, so a
+   * request shared between reads stays the one built.
+   */
+  @Test
+  void theMediaTypesOfARequestCannotBeChanged() {
+    Set<String> types = SafeFetchRequest.get(URL).withAcceptedContentTypes(Set.of("image/png")).acceptedContentTypes();
+    assertThrows(UnsupportedOperationException.class, () -> types.add("text/html"));
+  }
+
 }

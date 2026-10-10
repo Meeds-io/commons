@@ -73,7 +73,7 @@ public record SafeFetchRequest(URI uri,
     requireHeaderValue(ifNoneMatch, "ifNoneMatch");
     requireHeaderValue(ifModifiedSince, "ifModifiedSince");
     if (acceptedContentTypes != null) {
-      acceptedContentTypes = SafeFetchPolicyBuilder.normalizeContentTypes(acceptedContentTypes);
+      acceptedContentTypes = Set.copyOf(SafeFetchPolicyBuilder.normalizeContentTypes(acceptedContentTypes));
       if (acceptedContentTypes.isEmpty()) {
         throw new IllegalArgumentException("acceptedContentTypes names at least one media type");
       }
@@ -165,14 +165,29 @@ public record SafeFetchRequest(URI uri,
    * @param field its name, for the refusal
    */
   private static void requireHeaderValue(String value, String field) {
+    if (hasControlCharacter(value)) {
+      throw new IllegalArgumentException(field + " carries a control character");
+    }
+  }
+
+  /**
+   * Whether a header value carries a line break or another control character:
+   * the values a request refuses, and the response header values a fetcher
+   * does not hand out, so that a validator read can always be sent back.
+   *
+   * @param value the value, null for none
+   * @return true when the value carries a control character
+   */
+  static boolean hasControlCharacter(String value) {
     if (value == null) {
-      return;
+      return false;
     }
     for (int i = 0; i < value.length(); i++) {
       if (Character.isISOControl(value.charAt(i))) {
-        throw new IllegalArgumentException(field + " carries a control character");
+        return true;
       }
     }
+    return false;
   }
 
 }
