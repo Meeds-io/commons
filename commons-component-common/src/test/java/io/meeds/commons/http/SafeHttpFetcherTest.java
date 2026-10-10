@@ -901,28 +901,52 @@ class SafeHttpFetcherTest {
   }
 
   /**
-   * A response header value carrying a control character is not handed out, so
-   * the validators a read gives can always be sent back on the next read: an
-   * {@code ETag} with an interior TAB is dropped, the {@code Last-Modified}
-   * beside it kept, and the next conditional read goes out.
+   * The validators a read gives can always be sent back on the next read: an
+   * {@code ETag} holding a tab — white space a field value may carry — is
+   * handed out and sent back, and a value carrying another control character
+   * is not handed out at all, the {@code Last-Modified} beside it kept.
    *
    * @throws Exception when a read fails
    */
   @Test
-  void aValidatorWithAControlCharacterIsNotHandedOut() throws Exception {
+  void theValidatorsAReadGivesCanBeSentBack() throws Exception {
     handler = exchange -> {
       exchange.getResponseHeaders().add("ETag", "\"a\tb\"");
+      exchange.getResponseHeaders().add("X-Control", "a\u0001b");
       exchange.getResponseHeaders().add("Last-Modified", "Mon, 14 Sep 2026 10:00:00 GMT");
       answer(exchange, 200, BODY);
     };
 
     SafeFetchResponse first = fetcher.fetch(url("public.test", "/cal.ics"));
-    assertNull(first.header("ETag"));
+    assertEquals("\"a\tb\"", first.header("ETag"));
+    assertNull(first.header("X-Control"));
     assertEquals("Mon, 14 Sep 2026 10:00:00 GMT", first.header("Last-Modified"));
 
     fetcher.fetch(SafeFetchRequest.get(url("public.test", "/cal.ics")).withValidators(first.header("ETag"), first.header("Last-Modified")));
     assertEquals(2, requests.size());
+    // the tab is white space, which either side of the wire may fold to a space
+    assertTrue(requests.get(1).getFirst("If-None-Match").matches("\"a[\t ]b\""));
     assertEquals("Mon, 14 Sep 2026 10:00:00 GMT", requests.get(1).getFirst("If-Modified-Since"));
+  }
+
+  /**
+   * A {@code Content-Type} holding a tab before its parameters is read as its
+   * media type, and the read is accepted.
+   *
+   * @throws Exception when the read fails
+   */
+  @Test
+  void aContentTypeHoldingATabIsAccepted() throws Exception {
+    handler = exchange -> {
+      exchange.getResponseHeaders().add("Content-Type", "text/calendar;\tcharset=UTF-8");
+      answer(exchange, 200, BODY);
+    };
+
+    SafeFetchResponse response = fetcher.fetch(SafeFetchRequest.get(url("public.test", "/cal.ics"))
+                                                               .withAcceptedContentTypes(Set.of("text/calendar")));
+
+    assertEquals(200, response.status());
+    assertEquals("text/calendar", response.mediaType());
   }
 
   /**

@@ -438,9 +438,10 @@ public class SafeHttpFetcher implements Closeable {
   }
 
   /**
-   * The first value of every header answered, by name. A value carrying a
-   * control character is dropped: a request refuses such a validator, so an
-   * {@code ETag} handed out with one could never be sent back.
+   * The first usable value of every header answered, by name. A value carrying
+   * a control character other than a tab is dropped: a request refuses such a
+   * validator, so an {@code ETag} handed out with one could never be sent
+   * back.
    *
    * @param response the answer
    * @return the headers

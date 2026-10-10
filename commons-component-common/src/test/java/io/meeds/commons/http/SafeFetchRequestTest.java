@@ -37,7 +37,8 @@ class SafeFetchRequestTest {
 
   /**
    * A line break or another control character in a header value is refused,
-   * whichever header carries it; a plain value and no value at all are kept.
+   * whichever header carries it; a plain value, a tab and no value at all are
+   * kept.
    */
   @Test
   void aHeaderValueWithAControlCharacterIsRefused() {
@@ -51,6 +52,7 @@ class SafeFetchRequestTest {
     assertEquals("text/calendar", conditional.accept());
     assertEquals("\"v1\"", conditional.ifNoneMatch());
     assertEquals("Mon, 14 Sep 2026 10:00:00 GMT", conditional.ifModifiedSince());
+    assertEquals("\"a\tb\"", request.withValidators("\"a\tb\"", null).ifNoneMatch(), "a tab is white space a value may hold");
     SafeFetchRequest none = request.withValidators(null, null);
     assertNull(none.ifNoneMatch());
     assertNull(none.ifModifiedSince());
