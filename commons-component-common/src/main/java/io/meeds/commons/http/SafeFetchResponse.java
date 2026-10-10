@@ -39,7 +39,8 @@ import java.util.TreeMap;
  * @param contentType the {@code Content-Type} header answered, as sent, or
  *          null
  * @param headers the first value of every header answered, by name, case
- *          ignored
+ *          ignored; a value carrying a control character other than a tab
+ *          is left out, as a request would refuse to send it
  * @param uri the URL the answer came from, after the redirects followed
  */
 public record SafeFetchResponse(int status,
@@ -73,7 +74,8 @@ public record SafeFetchResponse(int status,
    * The first value of a header answered.
    *
    * @param name the header name, case ignored
-   * @return the value, or null when the header was not answered
+   * @return the value, or null when the header was not answered or its value
+   *         carried a control character other than a tab
    */
   public String header(String name) {
     return name == null ? null : headers.get(name);

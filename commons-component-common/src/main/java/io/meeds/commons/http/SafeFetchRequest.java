@@ -29,8 +29,8 @@ import java.util.Set;
  * never widens the policy: its body limit is capped at the policy's, and its
  * media types are kept only where the policy accepts them too. Built from
  * {@link #get(URI)} and the {@code with} methods; immutable. A header value
- * carrying a line break or another control character is refused, so that no
- * value can add a header of its own.
+ * carrying a line break or another control character than a horizontal tab
+ * is refused, so that no value can add a header of its own.
  *
  * @param uri the URL to read
  * @param accept the {@code Accept} header sent, null for none
@@ -171,19 +171,22 @@ public record SafeFetchRequest(URI uri,
   }
 
   /**
-   * Whether a header value carries a line break or another control character:
-   * the values a request refuses, and the response header values a fetcher
-   * does not hand out, so that a validator read can always be sent back.
+   * Whether a header value carries a line break or another control character
+   * than the horizontal tab, which a field value may hold as white space
+   * (RFC 9110 §5.5): the values a request refuses, and the response header
+   * values a fetcher does not hand out, so that a validator read can always be
+   * sent back.
    *
    * @param value the value, null for none
-   * @return true when the value carries a control character
+   * @return true when the value carries such a control character
    */
   static boolean hasControlCharacter(String value) {
     if (value == null) {
       return false;
     }
     for (int i = 0; i < value.length(); i++) {
-      if (Character.isISOControl(value.charAt(i))) {
+      char c = value.charAt(i);
+      if (Character.isISOControl(c) && c != '\t') {
         return true;
       }
     }
