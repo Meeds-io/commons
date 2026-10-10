@@ -27,7 +27,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.lang.reflect.Field;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.URI;
@@ -45,6 +44,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -950,29 +950,49 @@ class SafeHttpFetcherTest {
   }
 
   /**
-   * A fetcher whose deadline thread stops while a read is under way — the
-   * first step of {@link SafeHttpFetcher#close()}, caught between a read's
-   * hops — refuses the read's next hop with the exception its Javadoc names,
-   * and the redirect is never requested. Only the deadline thread is stopped,
-   * through reflection: closing the whole fetcher would close the first hop's
-   * connection too.
-   *
-   * @throws Exception when the deadline thread cannot be reached
+   * A fetcher closed while a read is under way refuses the read's next hop with
+   * the exception and message its Javadoc names, and the redirect is never
+   * requested: the policy's resolver closes the fetcher while the first hop
+   * opens its connection, after that hop's deadline was armed, so the refusal
+   * comes from arming the next hop's deadline rather than from the check a
+   * read makes before it starts.
    */
   @Test
-  void aFetcherClosedBetweenTwoHopsRefusesTheNextOne() throws Exception {
-    Field field = SafeHttpFetcher.class.getDeclaredField("deadlines");
-    field.setAccessible(true);
-    ExecutorService deadlines = (ExecutorService) field.get(fetcher);
+  void aFetcherClosedDuringAReadRefusesItsNextHop() {
     handler = exchange -> {
-      deadlines.shutdownNow();
       exchange.getResponseHeaders().add("Location", "/landing");
       answer(exchange, 302, "");
     };
+    AtomicReference<SafeHttpFetcher> closedByItsResolver = new AtomicReference<>();
+    SafeHttpFetcher closing = new SafeHttpFetcher(policy().resolver(host -> {
+      closedByItsResolver.get().close();
+      return resolve(host);
+    }).build());
+    closedByItsResolver.set(closing);
 
     URI uri = url("public.test", "/start");
-    assertThrows(IllegalStateException.class, () -> fetcher.fetch(uri));
+    IllegalStateException refusal = assertThrows(IllegalStateException.class, () -> closing.fetch(uri));
+    assertEquals("The fetcher is closed", refusal.getMessage());
     assertEquals(List.of("/start"), hits);
+  }
+
+  /**
+   * A host of digits and dots that is not a canonical IPv4 literal is refused
+   * as an invalid URL through the fetcher under the production resolver, the
+   * forms naming the stub's own loopback address included, and nothing reaches
+   * the stub: the refusal does not wait for the connection's lookup, which
+   * would read {@code 2130706433} as 127.0.0.1.
+   */
+  @Test
+  void aNonCanonicalNumericHostIsRefusedBeforeAnyConnection() {
+    handler = exchange -> answer(exchange, 200, BODY);
+    try (SafeHttpFetcher production = new SafeHttpFetcher(policy().exemptAddresses(Set.of()).resolver(InetAddress::getAllByName).build())) {
+      for (String host : new String[] { "010.0.0.1", "127.000.000.001", "2130706433" }) {
+        URI numeric = URI.create("http://" + host + ":" + port + "/cal.ics");
+        assertEquals(SafeFetchFailure.INVALID_URL, failure(production, numeric), host);
+      }
+    }
+    assertTrue(hits.isEmpty(), "no request may reach the stub through a numeric host");
   }
 
   /**
