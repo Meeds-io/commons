@@ -27,6 +27,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.lang.reflect.Field;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.URI;
@@ -897,6 +898,57 @@ class SafeHttpFetcherTest {
     }
     assertEquals(List.of("127.0.0.1"), lookups);
     assertEquals(List.of("/cal.ics"), hits);
+  }
+
+  /**
+   * A response header value carrying a control character is not handed out, so
+   * the validators a read gives can always be sent back on the next read: an
+   * {@code ETag} with an interior TAB is dropped, the {@code Last-Modified}
+   * beside it kept, and the next conditional read goes out.
+   *
+   * @throws Exception when a read fails
+   */
+  @Test
+  void aValidatorWithAControlCharacterIsNotHandedOut() throws Exception {
+    handler = exchange -> {
+      exchange.getResponseHeaders().add("ETag", "\"a\tb\"");
+      exchange.getResponseHeaders().add("Last-Modified", "Mon, 14 Sep 2026 10:00:00 GMT");
+      answer(exchange, 200, BODY);
+    };
+
+    SafeFetchResponse first = fetcher.fetch(url("public.test", "/cal.ics"));
+    assertNull(first.header("ETag"));
+    assertEquals("Mon, 14 Sep 2026 10:00:00 GMT", first.header("Last-Modified"));
+
+    fetcher.fetch(SafeFetchRequest.get(url("public.test", "/cal.ics")).withValidators(first.header("ETag"), first.header("Last-Modified")));
+    assertEquals(2, requests.size());
+    assertEquals("Mon, 14 Sep 2026 10:00:00 GMT", requests.get(1).getFirst("If-Modified-Since"));
+  }
+
+  /**
+   * A fetcher whose deadline thread stops while a read is under way — the
+   * first step of {@link SafeHttpFetcher#close()}, caught between a read's
+   * hops — refuses the read's next hop with the exception its Javadoc names,
+   * and the redirect is never requested. Only the deadline thread is stopped,
+   * through reflection: closing the whole fetcher would close the first hop's
+   * connection too.
+   *
+   * @throws Exception when the deadline thread cannot be reached
+   */
+  @Test
+  void aFetcherClosedBetweenTwoHopsRefusesTheNextOne() throws Exception {
+    Field field = SafeHttpFetcher.class.getDeclaredField("deadlines");
+    field.setAccessible(true);
+    ExecutorService deadlines = (ExecutorService) field.get(fetcher);
+    handler = exchange -> {
+      deadlines.shutdownNow();
+      exchange.getResponseHeaders().add("Location", "/landing");
+      answer(exchange, 302, "");
+    };
+
+    URI uri = url("public.test", "/start");
+    assertThrows(IllegalStateException.class, () -> fetcher.fetch(uri));
+    assertEquals(List.of("/start"), hits);
   }
 
   /**

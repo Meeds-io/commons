@@ -438,7 +438,9 @@ public class SafeHttpFetcher implements Closeable {
   }
 
   /**
-   * The first value of every header answered, by name.
+   * The first value of every header answered, by name. A value carrying a
+   * control character is dropped: a request refuses such a validator, so an
+   * {@code ETag} handed out with one could never be sent back.
    *
    * @param response the answer
    * @return the headers
@@ -446,7 +448,8 @@ public class SafeHttpFetcher implements Closeable {
   private static Map<String, String> headersOf(ClassicHttpResponse response) {
     Map<String, String> headers = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
     for (Header header : response.getHeaders()) {
-      if (header.getName() != null && StringUtils.isNotBlank(header.getValue())) {
+      if (header.getName() != null && StringUtils.isNotBlank(header.getValue())
+          && !SafeFetchRequest.hasControlCharacter(header.getValue())) {
         headers.putIfAbsent(header.getName(), header.getValue());
       }
     }
