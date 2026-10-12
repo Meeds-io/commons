@@ -18,6 +18,8 @@
  */
 package org.exoplatform.settings.impl;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.*;
 
 import org.junit.Before;
@@ -60,6 +62,29 @@ public class CacheUserSettingTest {
 
     cacheUserSettingServiceImpl.get(USER_ID);
     verify(userSettingServiceImpl, times(1)).get(USER_ID);
+  }
+
+  /**
+   * The cache hands out a copy of the loaded settings: a disabled user must
+   * stay disabled in it, on the loading call and on the cached ones, or every
+   * notification lifecycle delivers to that user (EXO-90779).
+   */
+  @Test
+  public void testGetKeepsTheEnabledStatus() {
+    UserSetting disabledSetting = new UserSetting();
+    disabledSetting.setUserId(USER_ID);
+    disabledSetting.setEnabled(false);
+    UserSetting enabledSetting = new UserSetting();
+    enabledSetting.setUserId(USER_ID);
+    when(userSettingServiceImpl.get(USER_ID)).thenReturn(disabledSetting, enabledSetting);
+
+    assertFalse(cacheUserSettingServiceImpl.get(USER_ID).isEnabled());
+    assertFalse(cacheUserSettingServiceImpl.get(USER_ID).isEnabled());
+
+    // Re-enabling the user evicts the disabled settings from the cache
+    cacheUserSettingServiceImpl.setUserEnabled(USER_ID, true);
+    assertTrue(cacheUserSettingServiceImpl.get(USER_ID).isEnabled());
+    assertTrue(cacheUserSettingServiceImpl.get(USER_ID).isEnabled());
   }
 
   @Test

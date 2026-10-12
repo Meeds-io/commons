@@ -18,10 +18,18 @@
  */
 package org.exoplatform.commons.notification.impl.service;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
+
+import jakarta.persistence.EntityManager;
 
 import org.exoplatform.commons.api.notification.NotificationContext;
 import org.exoplatform.commons.api.notification.channel.AbstractChannel;
@@ -30,24 +38,30 @@ import org.exoplatform.commons.api.notification.lifecycle.AbstractNotificationLi
 import org.exoplatform.commons.api.notification.model.ChannelKey;
 import org.exoplatform.commons.api.notification.model.NotificationInfo;
 import org.exoplatform.commons.api.notification.plugin.config.PluginConfig;
+import org.exoplatform.commons.api.notification.service.NotificationCompletionService;
+import org.exoplatform.commons.api.notification.service.SendAllRecipientProvider;
 import org.exoplatform.commons.api.notification.service.setting.PluginSettingService;
 import org.exoplatform.commons.api.notification.service.setting.UserSettingService;
 import org.exoplatform.commons.api.notification.service.storage.NotificationService;
-import org.exoplatform.commons.api.settings.SettingService;
-import org.exoplatform.commons.api.settings.data.Context;
 import org.exoplatform.commons.notification.NotificationContextFactory;
 import org.exoplatform.commons.notification.impl.AbstractService;
 import org.exoplatform.commons.notification.impl.NotificationContextImpl;
+import org.exoplatform.commons.persistence.impl.EntityManagerService;
 import org.exoplatform.commons.utils.CommonsUtils;
+import org.exoplatform.commons.utils.ListAccess;
 import org.exoplatform.services.listener.ListenerService;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 import org.exoplatform.services.organization.OrganizationService;
+import org.exoplatform.services.organization.User;
 import org.exoplatform.services.organization.UserProfile;
+import org.exoplatform.services.organization.UserStatus;
 
 public class NotificationServiceImpl extends AbstractService implements NotificationService {
 
-  private static final Log                 LOG = ExoLogger.getLogger(NotificationServiceImpl.class);
+  private static final Log                 LOG       = ExoLogger.getLogger(NotificationServiceImpl.class);
+
+  private static final int                 PAGE_SIZE = 100;
 
   /** */
   private final UserSettingService         userService;
@@ -63,12 +77,20 @@ public class NotificationServiceImpl extends AbstractService implements Notifica
 
   private final ListenerService            listenerService;
 
+  private final NotificationCompletionService completionService;
+
+  private final EntityManagerService       entityManagerService;
+
   public NotificationServiceImpl(ChannelManager channelManager,
                                  UserSettingService userService,
                                  OrganizationService organizationService,
                                  NotificationContextFactory notificationContextFactory,
-                                 ListenerService listenerService) {
+                                 ListenerService listenerService,
+                                 NotificationCompletionService completionService,
+                                 EntityManagerService entityManagerService) {
     this.listenerService = listenerService;
+    this.completionService = completionService;
+    this.entityManagerService = entityManagerService;
     this.userService = userService;
     this.organizationService = organizationService;
     this.notificationContextFactory = notificationContextFactory;
@@ -92,23 +114,30 @@ public class NotificationServiceImpl extends AbstractService implements Notifica
     broadcastProcessedEvent(notification);
     //
     PluginSettingService pluginSettingService = CommonsUtils.getService(PluginSettingService.class);
-    SettingService settingService = CommonsUtils.getService(SettingService.class);
-    List<AbstractChannel> channels = channelManager.getChannels();
+    List<AbstractChannel> channels = new ArrayList<>();
     Exception error = null;
-    for (AbstractChannel channel : channels) {
+    for (AbstractChannel channel : channelManager.getChannels()) {
       try {
-        if (!pluginSettingService.isActive(channel.getId(), pluginId)) {
-          continue;
+        if (pluginSettingService.isActive(channel.getId(), pluginId)) {
+          channels.add(channel);
         }
-        process(settingService, ctx, notification, channel);
       } catch (Exception e) {
-        LOG.warn("Error processing notification with id '{}' on channel '{}' for plugin '{}'",
-                 notification.getId(),
-                 channel.getId(),
-                 notification.getKey().getId(),
-                 e);
+        logChannelError(notification, channel, e);
         error = e;
       }
+    }
+    Exception processingError = null;
+    if (notification.isSendAll() || notification.isSendAllInternals()) {
+      processingError = processSendAll(ctx, notification, channels);
+    } else if (notification.getSendToUserIds() == null || notification.getSendToUserIds().isEmpty()) {
+      LOG.debug("Notification with id '{}' and parameters = '{}' not sent because receivers are empty",
+                notification.getId(),
+                notification.getOwnerParameter());
+    } else {
+      processingError = processSendToUsers(ctx, notification, channels);
+    }
+    if (processingError != null) {
+      error = processingError;
     }
     if (error != null) {
       // Must indicate error status for the notification
@@ -126,33 +155,108 @@ public class NotificationServiceImpl extends AbstractService implements Notifica
     }
   }
 
-  private AbstractNotificationLifecycle process(SettingService settingService,
-                                                NotificationContext notificationContext,
-                                                NotificationInfo notification,
-                                                AbstractChannel channel) {
-    AbstractNotificationLifecycle lifecycle = channelManager.getLifecycle(ChannelKey.key(channel.getId()));
-    if (notification.isSendAll() || notification.isSendAllInternals()) {
-      processSendAll(settingService, notificationContext, notification, lifecycle);
-    } else {
-      if (notification.getSendToUserIds() == null || notification.getSendToUserIds().isEmpty()) {
-        LOG.debug("Notification with id '{}' and parameters = '{}' not sent because receivers are empty",
-                  notification.getId(),
-                  notification.getOwnerParameter());
-      } else {
-        processSendToUsers(notificationContext, notification, lifecycle);
-      }
+  /**
+   * Walks the recipients of a send-all page by page, and hands each page to
+   * every channel in turn: from the registered {@link SendAllRecipientProvider},
+   * or from the organization service when there is none.
+   *
+   * @return the last error a channel raised, or the error that stopped the
+   *         listing of the users, null if none
+   */
+  private Exception processSendAll(NotificationContext notificationContext,
+                                   NotificationInfo notification,
+                                   List<AbstractChannel> channels) {
+    if (channels.isEmpty()) {
+      return null;
     }
-    return lifecycle;
+    SendAllRecipientProvider recipientProvider = CommonsUtils.getService(SendAllRecipientProvider.class);
+    if (recipientProvider == null) {
+      return processSendAllFromOrganizationService(notificationContext, notification, channels);
+    } else {
+      return processSendAllFromProvider(recipientProvider, notificationContext, notification, channels);
+    }
   }
 
-  private void processSendAll(SettingService settingService,
-                              NotificationContext notificationContext,
-                              NotificationInfo notification,
-                              AbstractNotificationLifecycle lifecycle) {
-    long usersCount = settingService.countContextsByType(Context.USER.getName());
-    int maxResults = 100;
-    for (int i = 0; i < usersCount; i += maxResults) {
-      List<String> users = settingService.getContextNamesByType(Context.USER.getName(), i, maxResults);
+  /**
+   * Walks the recipients the provider lists, each page after the last
+   * recipient of the previous one, until a page is short; a page that is empty
+   * or does not move forward is not handed out and ends the walk. A page is
+   * filtered once, its user settings are loaded by the first
+   * channel and looked up in the user settings cache by the next ones.
+   *
+   * @return the last error a channel raised, or the error that stopped the
+   *         listing of the users, null if none
+   */
+  private Exception processSendAllFromProvider(SendAllRecipientProvider recipientProvider,
+                                               NotificationContext notificationContext,
+                                               NotificationInfo notification,
+                                               List<AbstractChannel> channels) {
+    List<AbstractChannel> remainingChannels = new ArrayList<>(channels);
+    Exception error = null;
+    String lastRecipient = null;
+    boolean lastPage = false;
+    while (!lastPage && !remainingChannels.isEmpty()) {
+      List<String> page;
+      try {
+        page = recipientProvider.getRecipients(notification.isSendAllInternals(), lastRecipient, PAGE_SIZE);
+      } catch (Exception e) {
+        logListingError(notification, e);
+        return e;
+      }
+      String pageLastRecipient = page.isEmpty() ? null : page.get(page.size() - 1);
+      if (pageLastRecipient == null || pageLastRecipient.equals(lastRecipient)) {
+        break;
+      }
+      lastPage = page.size() < PAGE_SIZE;
+      lastRecipient = pageLastRecipient;
+      List<String> users = notification.getExcludedUsersIds().isEmpty() ? page
+                                                                         : page.stream()
+                                                                               .filter(userId -> !notification.isExcluded(userId))
+                                                                               .toList();
+      error = lastError(processPage(notificationContext, notification, remainingChannels, users), error);
+    }
+    return error;
+  }
+
+  /**
+   * Walks the enabled users of the organization service page by page. With its
+   * default configuration, which filters the status in the identity store's
+   * own query (countPaginatedUsers), a send-all costs the users who can
+   * receive it, however many disabled accounts the platform holds. A user the
+   * organization service lists twice, as it may when it filters the status
+   * page by page, is handed once.
+   *
+   * @return the last error a channel raised, or the error that stopped the
+   *         listing of the users, null if none
+   */
+  private Exception processSendAllFromOrganizationService(NotificationContext notificationContext,
+                                                          NotificationInfo notification,
+                                                          List<AbstractChannel> channels) {
+    List<AbstractChannel> remainingChannels = new ArrayList<>(channels);
+    Exception error = null;
+    Set<String> listedUsers = new HashSet<>();
+    ListAccess<User> enabledUsers;
+    int usersCount;
+    try {
+      enabledUsers = organizationService.getUserHandler().findAllUsers(UserStatus.ENABLED);
+      usersCount = enabledUsers.getSize();
+    } catch (Exception e) {
+      logListingError(notification, e);
+      return e;
+    }
+    for (int i = 0; i < usersCount && !remainingChannels.isEmpty(); i += PAGE_SIZE) {
+      User[] page;
+      try {
+        page = enabledUsers.load(i, Math.min(PAGE_SIZE, usersCount - i));
+      } catch (Exception e) {
+        logListingError(notification, e);
+        return e;
+      }
+      List<String> users = Arrays.stream(page)
+                                 .filter(Objects::nonNull)
+                                 .map(User::getUserName)
+                                 .filter(userId -> StringUtils.isNotBlank(userId) && listedUsers.add(userId))
+                                 .toList();
       if (notification.isSendAllInternals()) {
         users = users.stream().filter(userId -> {
           // Filter on external users
@@ -167,17 +271,102 @@ public class NotificationServiceImpl extends AbstractService implements Notifica
       if (!notification.getExcludedUsersIds().isEmpty()) {
         users = users.stream().filter(userId -> !notification.isExcluded(userId)).toList();
       }
-      if (!users.isEmpty()) {
-        processLifecycle(notificationContext, lifecycle, users);
+      error = lastError(processPage(notificationContext, notification, remainingChannels, users), error);
+    }
+    return error;
+  }
+
+  /**
+   * Hands the recipients page by page to every channel in turn, as a send-all
+   * does.
+   *
+   * @return the last error a channel raised, null if none did
+   */
+  private Exception processSendToUsers(NotificationContext notificationContext,
+                                       NotificationInfo notification,
+                                       List<AbstractChannel> channels) {
+    List<AbstractChannel> remainingChannels = new ArrayList<>(channels);
+    Exception error = null;
+    List<String> userIds = notification.getSendToUserIds();
+    for (int i = 0; i < userIds.size() && !remainingChannels.isEmpty(); i += PAGE_SIZE) {
+      List<String> users = userIds.subList(i, Math.min(i + PAGE_SIZE, userIds.size()));
+      error = lastError(processPage(notificationContext, notification, remainingChannels, users), error);
+    }
+    return error;
+  }
+
+  /**
+   * Hands one page of recipients to every remaining channel in turn, then
+   * empties the persistence context. Each channel starts from the notification
+   * itself: a lifecycle leaves its last per-recipient clone in the shared
+   * context. A channel that fails is removed from the remaining channels: it is
+   * not given the next pages.
+   *
+   * @return the last error a channel raised on this page, null if none did
+   */
+  private Exception processPage(NotificationContext notificationContext,
+                                NotificationInfo notification,
+                                List<AbstractChannel> remainingChannels,
+                                List<String> users) {
+    Exception error = null;
+    if (!users.isEmpty()) {
+      Iterator<AbstractChannel> channelsIterator = remainingChannels.iterator();
+      while (channelsIterator.hasNext()) {
+        AbstractChannel channel = channelsIterator.next();
+        try {
+          notificationContext.setNotificationInfo(notification);
+          processLifecycle(notificationContext, getLifecycle(channel), users);
+        } catch (Exception e) {
+          logChannelError(notification, channel, e);
+          error = e;
+          channelsIterator.remove();
+        }
       }
+    }
+    clearPersistenceContext();
+    return error;
+  }
+
+  private Exception lastError(Exception pageError, Exception previousError) {
+    return pageError == null ? previousError : pageError;
+  }
+
+  /**
+   * Detaches what the kernel EntityManager of the thread has loaded so far. Each
+   * transactional read of a user's settings commits, and each commit
+   * dirty-checks every entity of the persistence context: without this, the
+   * context grows with every recipient, and so does the cost of each next
+   * read. Done only on a thread of the notification pool, whose task
+   * begins and ends its own request lifecycle and so owns the EntityManager,
+   * and only outside a transaction, whose pending changes a clear would discard.
+   */
+  private void clearPersistenceContext() {
+    if (!completionService.isPoolThread()) {
+      return;
+    }
+    EntityManager entityManager = entityManagerService.getEntityManager();
+    if (entityManager != null && !entityManager.getTransaction().isActive()) {
+      entityManager.clear();
     }
   }
 
-  private void processSendToUsers(NotificationContext notificationContext,
-                                  NotificationInfo notification,
-                                  AbstractNotificationLifecycle lifecycle) {
-    List<String> userIds = notification.getSendToUserIds();
-    processLifecycle(notificationContext, lifecycle, userIds);
+  private AbstractNotificationLifecycle getLifecycle(AbstractChannel channel) {
+    return channelManager.getLifecycle(ChannelKey.key(channel.getId()));
+  }
+
+  private void logListingError(NotificationInfo notification, Exception e) {
+    LOG.warn("Error listing the users of notification with id '{}' for plugin '{}'",
+             notification.getId(),
+             notification.getKey().getId(),
+             e);
+  }
+
+  private void logChannelError(NotificationInfo notification, AbstractChannel channel, Exception e) {
+    LOG.warn("Error processing notification with id '{}' on channel '{}' for plugin '{}'",
+             notification.getId(),
+             channel.getId(),
+             notification.getKey().getId(),
+             e);
   }
 
   private void processLifecycle(NotificationContext notificationContext,

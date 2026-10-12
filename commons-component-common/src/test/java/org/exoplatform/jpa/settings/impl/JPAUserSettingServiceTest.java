@@ -18,11 +18,17 @@
  */
 package org.exoplatform.jpa.settings.impl;
 
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.exoplatform.commons.api.notification.NotificationContext;
@@ -34,9 +40,16 @@ import org.exoplatform.commons.api.notification.model.ChannelKey;
 import org.exoplatform.commons.api.notification.model.PluginKey;
 import org.exoplatform.commons.api.notification.model.UserSetting;
 import org.exoplatform.commons.api.notification.plugin.config.PluginConfig;
+import org.exoplatform.commons.api.persistence.DataInitializer;
+import org.exoplatform.commons.api.settings.SettingService;
+import org.exoplatform.commons.api.settings.SettingValue;
+import org.exoplatform.commons.api.settings.data.Context;
+import org.exoplatform.commons.api.settings.data.Scope;
 import org.exoplatform.commons.notification.channel.MailChannel;
+import org.exoplatform.commons.notification.impl.AbstractService;
 import org.exoplatform.commons.utils.CommonsUtils;
 import org.exoplatform.jpa.BaseTest;
+import org.exoplatform.services.listener.ListenerService;
 import org.exoplatform.services.organization.OrganizationService;
 import org.exoplatform.services.organization.User;
 import org.exoplatform.services.organization.idm.UserImpl;
@@ -231,6 +244,59 @@ public class JPAUserSettingServiceTest extends BaseTest {
     CommonsUtils.getService(OrganizationService.class).getUserHandler().removeUser("binh", false);
     assertNull(CommonsUtils.getService(OrganizationService.class).getUserHandler().findUserByName("binh"));
 
+  }
+
+  /**
+   * The stored status is a copy of the identity store's: the identity store
+   * decides, so a stale disabled copy does not silence an enabled user, and an
+   * enabled copy does not wake a disabled one. The settings store is stubbed:
+   * the in-memory one of this container matches any scope name when asked for
+   * a null one, so it never returns the stored status under the GLOBAL scope.
+   */
+  public void testTheIdentityStoreDecidesTheEnabledStatus() throws Exception {
+    User enabledUser = mock(User.class);
+    when(enabledUser.isEnabled()).thenReturn(true);
+    OrganizationService identityStore = mock(OrganizationService.class, RETURNS_DEEP_STUBS);
+    when(identityStore.getUserHandler().findUserByName("enableduser")).thenReturn(enabledUser);
+    when(identityStore.getUserHandler().findUserByName("disableduser")).thenReturn(null);
+    SettingService settingsStore = mock(SettingService.class);
+    when(settingsStore.getSettingsByContext(Context.USER.id("enableduser"))).thenReturn(storedStatus("false"));
+    when(settingsStore.getSettingsByContext(Context.USER.id("disableduser"))).thenReturn(storedStatus("true"));
+
+    JPAUserSettingServiceImpl settings = userSettingService(identityStore, settingsStore);
+    assertTrue(settings.get("enableduser").isEnabled());
+    assertFalse(settings.get("disableduser").isEnabled());
+  }
+
+  /**
+   * When the identity store cannot be read, the stored status decides, and a
+   * user with no stored status is considered enabled.
+   */
+  public void testTheStoredStatusDecidesWhenTheIdentityStoreCannotBeRead() throws Exception {
+    OrganizationService identityStore = mock(OrganizationService.class, RETURNS_DEEP_STUBS);
+    when(identityStore.getUserHandler().findUserByName(anyString())).thenThrow(new IllegalStateException("Identity store failure"));
+    SettingService settingsStore = mock(SettingService.class);
+    when(settingsStore.getSettingsByContext(Context.USER.id("storeddisabled"))).thenReturn(storedStatus("false"));
+    when(settingsStore.getSettingsByContext(Context.USER.id("storedenabled"))).thenReturn(storedStatus("true"));
+
+    JPAUserSettingServiceImpl settings = userSettingService(identityStore, settingsStore);
+    assertFalse(settings.get("storeddisabled").isEnabled());
+    assertTrue(settings.get("storedenabled").isEnabled());
+    assertTrue(settings.get("nostoredstatus").isEnabled());
+  }
+
+  private JPAUserSettingServiceImpl userSettingService(OrganizationService identityStore,
+                                                       SettingService settingsStore) throws Exception {
+    return new JPAUserSettingServiceImpl(identityStore,
+                                         settingsStore,
+                                         channelManager,
+                                         pluginSettingServiceImpl,
+                                         getService(DataInitializer.class),
+                                         getService(ListenerService.class));
+  }
+
+  private Map<Scope, Map<String, SettingValue<String>>> storedStatus(String enabled) {
+    return Map.of(Scope.GLOBAL, Map.of(AbstractService.EXO_IS_ENABLED, SettingValue.create(enabled)));
   }
 
   private UserSetting createUserSetting(String userId, List<String> instantly) {
