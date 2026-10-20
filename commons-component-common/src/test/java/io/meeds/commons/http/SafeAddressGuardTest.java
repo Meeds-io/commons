@@ -415,6 +415,7 @@ class SafeAddressGuardTest {
     Set<Integer> portZero = Set.of(0);
     Set<Integer> portAbove = Set.of(65536);
     Duration negative = Duration.ofSeconds(-1);
+    Duration overAnHour = Duration.ofHours(1).plusNanos(1);
     assertThrows(IllegalArgumentException.class, () -> builder.allowedSchemes(ftp));
     assertThrows(IllegalArgumentException.class, () -> builder.allowedSchemes(noScheme));
     assertThrows(IllegalArgumentException.class, () -> builder.allowedPorts(noPort));
@@ -425,6 +426,10 @@ class SafeAddressGuardTest {
     assertThrows(IllegalArgumentException.class, () -> builder.connectTimeout(Duration.ZERO));
     assertThrows(IllegalArgumentException.class, () -> builder.readTimeout(negative));
     assertThrows(IllegalArgumentException.class, () -> builder.totalTimeout(null));
+    assertThrows(IllegalArgumentException.class, () -> builder.totalTimeout(overAnHour));
+    assertThrows(IllegalArgumentException.class, () -> builder.connectTimeout(overAnHour));
+    assertThrows(IllegalArgumentException.class, () -> builder.readTimeout(overAnHour));
+    assertEquals(Duration.ofHours(1), builder.totalTimeout(Duration.ofHours(1)).build().getTotalTimeout());
     assertThrows(IllegalArgumentException.class, () -> builder.maxConnections(2, 3));
     assertThrows(IllegalArgumentException.class, () -> builder.name(" "));
     assertThrows(IllegalArgumentException.class, () -> builder.userAgent(""));

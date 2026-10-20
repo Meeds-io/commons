@@ -33,12 +33,15 @@ import org.apache.commons.lang3.StringUtils;
 /**
  * Builds a {@link SafeFetchPolicy}, starting from the defaults and refusing
  * what no policy may hold: a scheme the HTTP client does not speak, a port
- * outside 1-65535, a non-positive limit or timeout.
+ * outside 1-65535, a non-positive limit or timeout, a timeout over an hour.
  */
 public final class SafeFetchPolicyBuilder {
 
   /** The most digits a port has: longer, it is above 65535 or padded. */
   private static final int MAX_PORT_DIGITS          = 5;
+
+  /** The longest timeout: a read's deadline then never overflows the nanosecond clock. */
+  private static final Duration MAX_TIMEOUT        = Duration.ofHours(1);
 
   private String           name                     = SafeFetchPolicy.DEFAULT_NAME;
 
@@ -240,22 +243,22 @@ public final class SafeFetchPolicyBuilder {
   /**
    * Sets the longest wait for a connection.
    *
-   * @param timeout the wait, positive
+   * @param timeout the wait, positive and at most one hour
    * @return this builder
    */
   public SafeFetchPolicyBuilder connectTimeout(Duration timeout) {
-    this.connectTimeout = requirePositive(timeout, "connectTimeout");
+    this.connectTimeout = requireTimeout(timeout, "connectTimeout");
     return this;
   }
 
   /**
    * Sets the longest wait between two reads.
    *
-   * @param timeout the wait, positive
+   * @param timeout the wait, positive and at most one hour
    * @return this builder
    */
   public SafeFetchPolicyBuilder readTimeout(Duration timeout) {
-    this.readTimeout = requirePositive(timeout, "readTimeout");
+    this.readTimeout = requireTimeout(timeout, "readTimeout");
     return this;
   }
 
@@ -263,11 +266,11 @@ public final class SafeFetchPolicyBuilder {
    * Sets the longest read of a URL, redirects included, enforced by cancelling
    * the request.
    *
-   * @param timeout the deadline, positive
+   * @param timeout the deadline, positive and at most one hour
    * @return this builder
    */
   public SafeFetchPolicyBuilder totalTimeout(Duration timeout) {
-    this.totalTimeout = requirePositive(timeout, "totalTimeout");
+    this.totalTimeout = requireTimeout(timeout, "totalTimeout");
     return this;
   }
 
@@ -518,15 +521,19 @@ public final class SafeFetchPolicyBuilder {
   }
 
   /**
-   * A duration that is positive.
+   * A timeout that is positive and at most {@link #MAX_TIMEOUT}, so a read's
+   * deadline never overflows the nanosecond clock.
    *
    * @param duration the duration
    * @param field its name, for the refusal
    * @return the duration
    */
-  private static Duration requirePositive(Duration duration, String field) {
+  private static Duration requireTimeout(Duration duration, String field) {
     if (duration == null || duration.isZero() || duration.isNegative()) {
       throw new IllegalArgumentException(field + " is positive");
+    }
+    if (duration.compareTo(MAX_TIMEOUT) > 0) {
+      throw new IllegalArgumentException(field + " is at most " + MAX_TIMEOUT);
     }
     return duration;
   }
