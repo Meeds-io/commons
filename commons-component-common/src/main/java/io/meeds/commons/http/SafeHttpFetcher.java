@@ -236,6 +236,7 @@ public class SafeHttpFetcher implements Closeable {
       // closed while this read started: the deadline thread stops first
       throw new IllegalStateException(CLOSED_MESSAGE, e);
     } catch (IOException | RuntimeException e) {
+      // a subtraction, not nanoTime() >= deadline: the clock's origin is arbitrary, so the sum may have overflowed
       SafeFetchFailure failure = System.nanoTime() - deadline >= 0 || get.isCancelled() ? SafeFetchFailure.TIMEOUT : failureOf(e);
       LOG.debug("A URL could not be read by {}: {} ({})", policy.getName(), failure, e.getClass().getSimpleName());
       throw new SafeFetchException(failure, e);
@@ -335,6 +336,7 @@ public class SafeHttpFetcher implements Closeable {
       long total = 0;
       int read;
       while ((read = input.read(buffer)) != -1) {
+        // a subtraction, not nanoTime() >= deadline: the clock's origin is arbitrary, so the sum may have overflowed
         if (System.nanoTime() - deadline >= 0) {
           get.cancel();
           throw new SafeFetchException(SafeFetchFailure.TIMEOUT);

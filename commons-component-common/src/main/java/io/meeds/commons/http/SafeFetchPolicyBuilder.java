@@ -40,7 +40,11 @@ public final class SafeFetchPolicyBuilder {
   /** The most digits a port has: longer, it is above 65535 or padded. */
   private static final int MAX_PORT_DIGITS          = 5;
 
-  /** The longest timeout: a read's deadline then never overflows the nanosecond clock. */
+  /**
+   * The longest timeout: {@link Duration#toNanos()} cannot overflow, and a read's
+   * deadline stays far within the range the overflow-safe
+   * {@code System.nanoTime() - deadline} comparison needs.
+   */
   private static final Duration MAX_TIMEOUT        = Duration.ofHours(1);
 
   private String           name                     = SafeFetchPolicy.DEFAULT_NAME;
@@ -521,8 +525,9 @@ public final class SafeFetchPolicyBuilder {
   }
 
   /**
-   * A timeout that is positive and at most {@link #MAX_TIMEOUT}, so a read's
-   * deadline never overflows the nanosecond clock.
+   * A timeout that is positive and at most {@link #MAX_TIMEOUT}, so its
+   * {@link Duration#toNanos()} cannot overflow and a read's deadline can be
+   * compared by subtraction.
    *
    * @param duration the duration
    * @param field its name, for the refusal
