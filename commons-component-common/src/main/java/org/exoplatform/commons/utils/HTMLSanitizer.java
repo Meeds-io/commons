@@ -23,10 +23,10 @@ import java.util.Collection;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.owasp.html.AttributePolicy;
@@ -96,27 +96,81 @@ abstract public class HTMLSanitizer {
                                                                                                                                                Arrays.asList(new String[]{"float", "display", "clear", "position", "left", "top"}));
 
   /**
-   * The permission-policy features an embedded player legitimately needs. Anything
-   * else an oEmbed provider asks for (camera, microphone, geolocation,
-   * display-capture, payment...) is dropped: the body carrying the iframe is
-   * user-authored content.
+   * The permission-policy features an embedded player needs <em>to render the media</em>.
+   * That is the criterion, and it is narrower than "whatever the provider asks for": the
+   * question is not whether a feature is denied by default, which is true of almost all of
+   * them, but what the framed origin could do to the visitor with it. A note or article
+   * body is authored by any platform user, this policy places no constraint on the origin
+   * that body embeds, and the same policy governs ten repos' content.
+   * <p>
+   * Granted: <code>autoplay</code>, <code>encrypted-media</code> (DRM playback),
+   * <code>fullscreen</code>, and <code>picture-in-picture</code> — whose default allow-list
+   * is already <code>*</code>, so listing it grants nothing and is kept only for fidelity
+   * with the attribute as emitted. Three grants and one no-op, in other words.
+   * <p>
+   * Refused, although providers ask for every one of them, because each hands the framed
+   * origin a capability that reaches the visitor — even where it also serves a rendering
+   * purpose, as the sensors do for 360-degree playback; where both are true, refusal wins.
+   * Each is one entry away from being restored, which needs its trade-off written down:
+   * <ul>
+   * <li><code>clipboard-write</code> — writes the visitor's clipboard. Cost of refusing: a
+   * player's in-frame "copy link" button.</li>
+   * <li><code>web-share</code> — hands the platform share sheet to the framed origin with
+   * content of its choosing (default allow-list <code>'self'</code>; unimplemented on
+   * Chrome/Linux desktop, live on the mobile platforms where notes are read). Cost: the
+   * in-player share button. Refused for the same reason as clipboard-write, which it
+   * mirrors.</li>
+   * <li><code>accelerometer</code>, <code>gyroscope</code> — the Generic Sensor API and
+   * DeviceMotion/DeviceOrientation events, i.e. device-motion telemetry to an origin this
+   * policy does not constrain. Cost: 360-degree/VR orientation control, not playback and
+   * not fullscreen.</li>
+   * </ul>
+   * Also refused, and not asked for by any of the three providers whose oEmbed output this
+   * suite pins: <code>camera</code>,
+   * <code>microphone</code>, <code>geolocation</code>, <code>display-capture</code>,
+   * <code>payment</code>.
    */
-  private static final Set<String>                                            ALLOWED_IFRAME_FEATURES   = Set.of("accelerometer",
-                                                                                                                 "autoplay",
-                                                                                                                 "clipboard-write",
+  private static final Set<String>                                            ALLOWED_IFRAME_FEATURES   = Set.of("autoplay",
                                                                                                                  "encrypted-media",
                                                                                                                  "fullscreen",
-                                                                                                                 "gyroscope",
-                                                                                                                 "picture-in-picture",
-                                                                                                                 "web-share");
+                                                                                                                 "picture-in-picture");
+
+  /**
+   * The values accepted for the boolean <code>allowfullscreen</code> attribute. HTML §2.3.2
+   * defines only three — absent, empty, or an ASCII case-insensitive match of the
+   * attribute's own name, with no surrounding whitespace — and explicitly forbids
+   * <code>true</code>/<code>false</code> on a boolean attribute. <code>true</code> is
+   * tolerated here deliberately — a template engine rendering a boolean binding can
+   * serialise it that way, and a browser reads any present <code>allowfullscreen</code> as
+   * true whatever its value. <code>false</code> is dropped, which is the safe direction
+   * even though HTML would read it as "attribute present, therefore true". Anything else is a producer's mistake and is dropped rather than echoed back,
+   * because a note body is compiled as a Vue template, not only parsed as HTML.
+   */
+  private static final Pattern                                                ALLOW_FULL_SCREEN_VALUE   =
+                                                                                                    Pattern.compile("(?i)^(|true|allowfullscreen)$");
 
   /**
    * Filters an iframe <code>allow</code> attribute down to {@link #ALLOWED_IFRAME_FEATURES}.
-   * Providers send a feature list such as
-   * <code>accelerometer *; encrypted-media *; fullscreen *;</code>; each kept feature
+   * The value is a feature list. The providers' own oEmbed output carries bare feature
+   * names (Dailymotion's is <code>autoplay; fullscreen; picture-in-picture; web-share</code>);
+   * the origin-list form
+   * <code>encrypted-media *; fullscreen *;</code> is what an oEmbed proxy such as iframely
+   * emits after rewriting them. Each kept feature
    * is re-emitted without its origin allow-list, so it falls back to the spec default
-   * <code>'src'</code> — the framed document itself, never the whole web. Returns
+   * <code>'src'</code> — the framed document itself, rather than the origins the author
+   * listed. Note what that does and does not bound: the direct grant goes to the framed
+   * origin only, and that origin may itself delegate the feature onward to whatever it
+   * embeds (measured). The bound is on what a page author can grant, not on where the
+   * capability ends up. Returns
    * <code>null</code> (drop the attribute) when nothing survives.
+   * <p>
+   * That <code>'src'</code> narrowing describes <strong>this attribute only</strong>. The
+   * boolean <code>allowfullscreen</code> allowed alongside it is specified differently:
+   * Permissions Policy §9.4 sets the container policy for <code>fullscreen</code> to the
+   * special value <code>*</code> <em>when the <code>allow</code> attribute declares no
+   * <code>fullscreen</code> entry of its own</em> — where both are present, the
+   * <code>allow</code> entry stands and the boolean adds nothing. Chromium was measured to
+   * narrow both shapes to <code>'src'</code> in practice. The two shapes are therefore not equivalent on paper.
    */
   private static final AttributePolicy                                        IFRAME_ALLOW_POLICY       =
                                                                                                     (elementName,
@@ -410,6 +464,7 @@ abstract public class HTMLSanitizer {
                                                                                                                                 .matching(IFRAME_ALLOW_POLICY)
                                                                                                                                 .onElements("iframe")
                                                                                                                                 .allowAttributes("allowfullscreen")
+                                                                                                                                .matching(ALLOW_FULL_SCREEN_VALUE)
                                                                                                                                 .onElements("iframe")
                                                                                                                                 .allowAttributes("frameborder")
                                                                                                                                 .onElements("iframe")

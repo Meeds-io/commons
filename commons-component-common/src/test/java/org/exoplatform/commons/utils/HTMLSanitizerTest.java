@@ -21,6 +21,8 @@ package org.exoplatform.commons.utils;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
+import java.util.Locale;
+
 import org.junit.Test;
 
 public class HTMLSanitizerTest {
@@ -156,15 +158,30 @@ public class HTMLSanitizerTest {
   }
 
   /**
-   * EXO-90272 — a provider sends a whole feature list; the safe ones survive, each
-   * stripped of its origin allow-list so it falls back to the spec default 'src'.
+   * EXO-90272 — the fixtures are the oEmbed output of the providers themselves, fetched
+   * verbatim but for the <code>title</code>, normalised so the fixture does not break when
+   * a provider retitles a video. This defect was caused by a suite whose fixtures encoded a
+   * shape no producer emits, so these are taken from the producers. Each of the three keeps its fullscreen capability: YouTube through the
+   * boolean attribute, Vimeo through the feature list, Dailymotion through both.
    */
   @Test
-  public void testProviderFeatureListKeptOnIFrame() throws Exception {
-    String input = "<iframe src=\"https://www.youtube.com/embed/RLY9uVbuk3Q\" allow=\"accelerometer *; clipboard-write *; encrypted-media *; gyroscope *; picture-in-picture *; web-share *;\"></iframe>";
-    String sanitized = HTMLSanitizer.sanitize(input);
-    assertEquals("<iframe src=\"https://www.youtube.com/embed/RLY9uVbuk3Q\" allow=\"accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share\"></iframe>",
-                 sanitized);
+  public void testRealProviderEmbedsKeepFullScreenCapability() throws Exception {
+    // https://www.youtube.com/oembed?url=...&format=json
+    assertEquals("<iframe src=\"https://www.youtube.com/embed/MSBV91xceEw?feature&#61;oembed\" frameborder=\"0\" allow=\"autoplay; encrypted-media; picture-in-picture\" allowfullscreen=\"allowfullscreen\" title=\"t\"></iframe>",
+                 HTMLSanitizer.sanitize("<iframe width=\"200\" height=\"113\" src=\"https://www.youtube.com/embed/MSBV91xceEw?feature=oembed\" frameborder=\"0\" allow=\"accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share\" referrerpolicy=\"strict-origin-when-cross-origin\" allowfullscreen title=\"t\"></iframe>"));
+    // https://www.dailymotion.com/services/oembed?url=...&format=json
+    assertEquals("<iframe frameborder=\"0\" src=\"https://geo.dailymotion.com/player.html?video&#61;x2jvvep&amp;\" allowfullscreen=\"allowfullscreen\" allow=\"autoplay; fullscreen; picture-in-picture\"></iframe>",
+                 HTMLSanitizer.sanitize("<iframe frameborder=\"0\" width=\"480\" height=\"269\" src=\"https://geo.dailymotion.com/player.html?video=x2jvvep&\" allowfullscreen allow=\"autoplay; fullscreen; picture-in-picture; web-share\"></iframe>"));
+    // https://vimeo.com/api/oembed.json?url=...
+    assertEquals("<iframe src=\"https://player.vimeo.com/video/243244233?app_id&#61;122963\" frameborder=\"0\" allow=\"autoplay; fullscreen; picture-in-picture; encrypted-media\" title=\"t\"></iframe>",
+                 HTMLSanitizer.sanitize("<iframe src=\"https://player.vimeo.com/video/243244233?app_id=122963\" width=\"426\" height=\"240\" frameborder=\"0\" allow=\"autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share\" referrerpolicy=\"strict-origin-when-cross-origin\" title=\"t\"></iframe>"));
+  }
+
+  /** EXO-90272 — a feature repeated, in any case, is emitted once. */
+  @Test
+  public void testDuplicateFeaturesCollapse() throws Exception {
+    assertEquals("<iframe src=\"https://x/y\" allow=\"fullscreen\"></iframe>",
+                 HTMLSanitizer.sanitize("<iframe src=\"https://x/y\" allow=\"fullscreen; fullscreen; FULLSCREEN\"></iframe>"));
   }
 
   /**
@@ -202,5 +219,70 @@ public class HTMLSanitizerTest {
     String sanitized = HTMLSanitizer.sanitize(input);
     assertEquals("<div class=\"embed-wrapper\" data-url=\"url\"><div><iframe src=\"https://v.calameo.com/?bkcode&#61;007393684777abcf55de3\" allowfullscreen=\"allowfullscreen\" allow=\"encrypted-media\"></iframe></div></div>",
                  sanitized);
+  }
+
+  /**
+   * EXO-90272 — the four parsing properties the filter's safety rests on, pinned because a
+   * later refactor could drop any of them silently: the value is lower-cased with
+   * {@link java.util.Locale#ROOT} (a Turkish default locale would otherwise break
+   * PICTURE-IN-PICTURE), the policy sees the entity-decoded value, the separator is the
+   * semicolon and not the comma of the HTTP header grammar, and a look-alike token is not
+   * a token.
+   */
+  @Test
+  public void testAllowFeatureMatchingIsCaseFoldedAndEntityDecoded() throws Exception {
+    // Under a Turkish default locale "PICTURE-IN-PICTURE".toLowerCase() is
+    // "pıcture-ın-pıcture" and the feature would be silently lost, so the case folding is
+    // asserted in the environment that can actually see it fail -- CI runs in en_US, where
+    // a locale-sensitive lower-casing passes.
+    Locale previous = Locale.getDefault();
+    try {
+      Locale.setDefault(Locale.forLanguageTag("tr-TR"));
+      assertEquals("<iframe src=\"https://www.youtube.com/embed/x\" allow=\"fullscreen; picture-in-picture\"></iframe>",
+                   HTMLSanitizer.sanitize("<iframe src=\"https://www.youtube.com/embed/x\" allow=\"FULLSCREEN; CAMERA; PICTURE-IN-PICTURE\"></iframe>"));
+    } finally {
+      Locale.setDefault(previous);
+    }
+    assertEquals("<iframe src=\"https://www.youtube.com/embed/x\" allow=\"fullscreen\"></iframe>",
+                 HTMLSanitizer.sanitize("<iframe src=\"https://www.youtube.com/embed/x\" allow=\"&#102;ullscreen\"></iframe>"));
+  }
+
+  @Test
+  public void testAllowFeatureSeparatorIsSemicolonAndLookAlikesAreRejected() throws Exception {
+    // "camera,fullscreen" is one unknown token: the comma separates HTTP header entries,
+    // not the entries of this attribute, so nothing survives and the attribute is dropped.
+    assertEquals("<iframe src=\"https://www.youtube.com/embed/x\"></iframe>",
+                 HTMLSanitizer.sanitize("<iframe src=\"https://www.youtube.com/embed/x\" allow=\"camera,fullscreen\"></iframe>"));
+    // fullwidth U+FF46 is not an "f"
+    assertEquals("<iframe src=\"https://www.youtube.com/embed/x\"></iframe>",
+                 HTMLSanitizer.sanitize("<iframe src=\"https://www.youtube.com/embed/x\" allow=\"\uFF46ullscreen\"></iframe>"));
+  }
+
+  /**
+   * EXO-90272 — <code>allowfullscreen</code> is a boolean attribute; a value other than the
+   * ones HTML defines is a producer mistake and is not echoed back, because a note body is
+   * compiled as a Vue template and not only parsed as HTML.
+   */
+  @Test
+  public void testAllowFullScreenRejectsAnArbitraryValue() throws Exception {
+    assertEquals("<iframe src=\"https://www.youtube.com/embed/x\"></iframe>",
+                 HTMLSanitizer.sanitize("<iframe src=\"https://www.youtube.com/embed/x\" allowfullscreen=\"javascript:alert(1)\"></iframe>"));
+    assertEquals("<iframe src=\"https://www.youtube.com/embed/x\" allowfullscreen=\"true\"></iframe>",
+                 HTMLSanitizer.sanitize("<iframe src=\"https://www.youtube.com/embed/x\" allowfullscreen=\"true\"></iframe>"));
+  }
+
+  /**
+   * EXO-90272 — the capabilities that must stay refused whatever an embedded origin asks
+   * for. This is the security contract of {@link HTMLSanitizer}'s iframe policy: a feature
+   * that reaches the visitor rather than rendering the media is dropped. accelerometer and
+   * gyroscope are in this list deliberately — YouTube asks for both, and they carry
+   * device-motion telemetry to an origin this policy does not constrain — and so is
+   * web-share, which hands the platform share sheet to the framed origin and mirrors
+   * clipboard-write.
+   */
+  @Test
+  public void testDeviceAndPaymentFeaturesNeverGranted() throws Exception {
+    String input = "<iframe src=\"https://www.youtube.com/embed/x\" allow=\"camera; microphone; geolocation; display-capture; payment; clipboard-write; web-share; accelerometer; gyroscope; usb; midi; screen-wake-lock\"></iframe>";
+    assertEquals("<iframe src=\"https://www.youtube.com/embed/x\"></iframe>", HTMLSanitizer.sanitize(input));
   }
 }
