@@ -35,6 +35,7 @@ import org.exoplatform.commons.api.notification.channel.AbstractChannel;
 import org.exoplatform.commons.api.notification.channel.ChannelManager;
 import org.exoplatform.commons.api.notification.model.PluginInfo;
 import org.exoplatform.commons.api.notification.model.UserSetting;
+import org.exoplatform.commons.api.notification.plugin.NotificationPluginUtils;
 import org.exoplatform.commons.api.notification.service.setting.PluginSettingService;
 import org.exoplatform.commons.api.notification.service.setting.UserSettingService;
 import org.exoplatform.commons.api.persistence.DataInitializer;
@@ -53,6 +54,7 @@ import org.exoplatform.services.log.Log;
 import org.exoplatform.services.organization.OrganizationService;
 import org.exoplatform.services.organization.User;
 import org.exoplatform.services.organization.UserEventListener;
+import org.exoplatform.services.organization.UserStatus;
 
 public class JPAUserSettingServiceImpl extends AbstractService implements UserSettingService {
 
@@ -160,8 +162,8 @@ public class JPAUserSettingServiceImpl extends AbstractService implements UserSe
   public UserSetting get(String userId) {// NOSONAR
     UserSetting userSettings = getDefaultSettings();
     userSettings.setUserId(userId);
-    Boolean enabledInIdentityStore = isUserEnabledInIdentityStore(userId);
-    userSettings.setEnabled(enabledInIdentityStore == null || enabledInIdentityStore);
+    Boolean recipientEnabled = isRecipientEnabled(userId);
+    userSettings.setEnabled(recipientEnabled == null || recipientEnabled);
     userSettings.applyDefaultValues();
 
     Map<Scope, Map<String, SettingValue<String>>> userNotificationSettings = settingService.getSettingsByContext(USER.id(userId));
@@ -176,7 +178,7 @@ public class JPAUserSettingServiceImpl extends AbstractService implements UserSe
 
     // Global Settings: the stored status, a copy of the identity store's,
     // decides only when the identity store could not be read
-    if (enabledInIdentityStore == null
+    if (recipientEnabled == null
         && userNotificationSettings.containsKey(Scope.GLOBAL)
         && userNotificationSettings.get(Scope.GLOBAL).containsKey(EXO_IS_ENABLED)) {
       SettingValue<String> enabledSetting = userNotificationSettings.get(Scope.GLOBAL).get(EXO_IS_ENABLED);
@@ -315,13 +317,28 @@ public class JPAUserSettingServiceImpl extends AbstractService implements UserSe
   }
 
   /**
-   * @return whether the user is enabled in the identity store, null when the
+   * A recipient with no account in the identity store is a guest when its
+   * username is a mail address: the address it is notified at
+   * ({@link NotificationPluginUtils#getTo(String)}), such as a guest invited
+   * to an agenda event by mail address (EXO-61764). The account is looked up
+   * whatever its status, so a disabled account whose username is a mail
+   * address stays disabled. A removed account whose username is a mail
+   * address is read as a guest too: neither the identity store nor these
+   * settings keep a trace of it, so only its sender, which knows the
+   * recipient's identity, can leave it out.
+   *
+   * @param userId username of the recipient
+   * @return whether the user is enabled in the identity store, or for a
+   *         username with no account whether it is a guest; null when the
    *         identity store could not be read
    */
-  private Boolean isUserEnabledInIdentityStore(String userId) {
+  private Boolean isRecipientEnabled(String userId) {
     try {
-      User user = organizationService.getUserHandler().findUserByName(userId);
-      return user != null && user.isEnabled();
+      User user = organizationService.getUserHandler().findUserByName(userId, UserStatus.ANY);
+      if (user != null) {
+        return user.isEnabled();
+      }
+      return NotificationPluginUtils.isValidEmail(userId);
     } catch (Exception e) {
       LOG.warn("Error getting the status of user {} from the identity store, its stored status is used instead", userId, e);
       return null; // NOSONAR

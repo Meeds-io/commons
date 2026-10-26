@@ -18,6 +18,7 @@
  */
 package org.exoplatform.jpa.settings.impl;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
 import static org.mockito.Mockito.mock;
@@ -40,6 +41,7 @@ import org.exoplatform.commons.api.notification.model.ChannelKey;
 import org.exoplatform.commons.api.notification.model.PluginKey;
 import org.exoplatform.commons.api.notification.model.UserSetting;
 import org.exoplatform.commons.api.notification.plugin.config.PluginConfig;
+import org.exoplatform.commons.api.notification.service.setting.UserSettingService;
 import org.exoplatform.commons.api.persistence.DataInitializer;
 import org.exoplatform.commons.api.settings.SettingService;
 import org.exoplatform.commons.api.settings.SettingValue;
@@ -52,6 +54,7 @@ import org.exoplatform.jpa.BaseTest;
 import org.exoplatform.services.listener.ListenerService;
 import org.exoplatform.services.organization.OrganizationService;
 import org.exoplatform.services.organization.User;
+import org.exoplatform.services.organization.UserStatus;
 import org.exoplatform.services.organization.idm.UserImpl;
 import org.exoplatform.settings.jpa.JPAPluginSettingServiceImpl;
 import org.exoplatform.settings.jpa.JPAUserSettingServiceImpl;
@@ -256,9 +259,11 @@ public class JPAUserSettingServiceTest extends BaseTest {
   public void testTheIdentityStoreDecidesTheEnabledStatus() throws Exception {
     User enabledUser = mock(User.class);
     when(enabledUser.isEnabled()).thenReturn(true);
+    User disabledUser = mock(User.class);
+    when(disabledUser.isEnabled()).thenReturn(false);
     OrganizationService identityStore = mock(OrganizationService.class, RETURNS_DEEP_STUBS);
-    when(identityStore.getUserHandler().findUserByName("enableduser")).thenReturn(enabledUser);
-    when(identityStore.getUserHandler().findUserByName("disableduser")).thenReturn(null);
+    when(identityStore.getUserHandler().findUserByName("enableduser", UserStatus.ANY)).thenReturn(enabledUser);
+    when(identityStore.getUserHandler().findUserByName("disableduser", UserStatus.ANY)).thenReturn(disabledUser);
     SettingService settingsStore = mock(SettingService.class);
     when(settingsStore.getSettingsByContext(Context.USER.id("enableduser"))).thenReturn(storedStatus("false"));
     when(settingsStore.getSettingsByContext(Context.USER.id("disableduser"))).thenReturn(storedStatus("true"));
@@ -274,7 +279,7 @@ public class JPAUserSettingServiceTest extends BaseTest {
    */
   public void testTheStoredStatusDecidesWhenTheIdentityStoreCannotBeRead() throws Exception {
     OrganizationService identityStore = mock(OrganizationService.class, RETURNS_DEEP_STUBS);
-    when(identityStore.getUserHandler().findUserByName(anyString())).thenThrow(new IllegalStateException("Identity store failure"));
+    when(identityStore.getUserHandler().findUserByName(anyString(), any(UserStatus.class))).thenThrow(new IllegalStateException("Identity store failure"));
     SettingService settingsStore = mock(SettingService.class);
     when(settingsStore.getSettingsByContext(Context.USER.id("storeddisabled"))).thenReturn(storedStatus("false"));
     when(settingsStore.getSettingsByContext(Context.USER.id("storedenabled"))).thenReturn(storedStatus("true"));
@@ -283,6 +288,50 @@ public class JPAUserSettingServiceTest extends BaseTest {
     assertFalse(settings.get("storeddisabled").isEnabled());
     assertTrue(settings.get("storedenabled").isEnabled());
     assertTrue(settings.get("nostoredstatus").isEnabled());
+  }
+
+  /**
+   * A guest has no account and is notified at its mail address (EXO-61764):
+   * it stays a recipient, also through the cached service the lifecycles
+   * read, whose hits are clones.
+   */
+  public void testAGuestWithNoAccountIsEnabled() throws Exception {
+    String guest = "guest.without.account@example.com";
+    assertNull(organizationService.getUserHandler().findUserByName(guest, UserStatus.ANY));
+
+    assertTrue(userSettingService.get(guest).isEnabled());
+    UserSettingService cachedUserSettingService = getService(UserSettingService.class);
+    assertTrue(cachedUserSettingService.get(guest).isEnabled());
+    assertTrue(cachedUserSettingService.get(guest).isEnabled());
+  }
+
+  /**
+   * A disabled account whose username is a mail address is not taken for a
+   * guest: its account is found whatever its status.
+   */
+  public void testADisabledAccountWhoseUsernameIsAMailAddressStaysDisabled() throws Exception {
+    String username = "disabled.account@example.com";
+    User user = organizationService.getUserHandler().createUserInstance(username);
+    user.setEmail(username);
+    user.setFirstName("first");
+    user.setLastName("last");
+    user.setPassword("pwdADDSomeSaltToBeCompliantWithSomeIS00");
+    organizationService.getUserHandler().createUser(user, true);
+    teardownUsers.add(username);
+    organizationService.getUserHandler().setEnabled(username, false, true);
+
+    assertFalse(userSettingService.get(username).isEnabled());
+    assertFalse(getService(UserSettingService.class).get(username).isEnabled());
+  }
+
+  /**
+   * A username with no account that is not a mail address, such as a removed
+   * account's, is not a recipient.
+   */
+  public void testAnUnknownUsernameThatIsNotAMailAddressIsDisabled() throws Exception {
+    assertNull(organizationService.getUserHandler().findUserByName("removedaccount", UserStatus.ANY));
+
+    assertFalse(userSettingService.get("removedaccount").isEnabled());
   }
 
   private JPAUserSettingServiceImpl userSettingService(OrganizationService identityStore,
