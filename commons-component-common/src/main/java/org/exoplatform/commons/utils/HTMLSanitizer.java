@@ -18,17 +18,22 @@
  */
 package org.exoplatform.commons.utils;
 
+import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.owasp.html.AttributePolicy;
 import org.owasp.html.CssSchema;
 import org.owasp.html.HtmlPolicyBuilder;
@@ -38,6 +43,9 @@ import org.owasp.html.HtmlStreamRenderer;
 
 import com.google.javascript.jscomp.jarjar.com.google.common.collect.ImmutableMap;
 import com.google.javascript.jscomp.jarjar.com.google.common.collect.ImmutableSet;
+
+import org.exoplatform.services.log.ExoLogger;
+import org.exoplatform.services.log.Log;
 
 /**
  * Prevent XSS/XEE attacks by encoding user HTML inputs. This class will be used
@@ -96,27 +104,82 @@ abstract public class HTMLSanitizer {
                                                                                                                                                Arrays.asList(new String[]{"float", "display", "clear", "position", "left", "top"}));
 
   /**
-   * The permission-policy features an embedded player legitimately needs. Anything
-   * else an oEmbed provider asks for (camera, microphone, geolocation,
-   * display-capture, payment...) is dropped: the body carrying the iframe is
-   * user-authored content.
+   * The permission-policy features an embedded player needs <em>to render the media</em>.
+   * That is the criterion, and it is narrower than "whatever the provider asks for": the
+   * question is not whether a feature is denied by default, which is true of almost all of
+   * them, but what the framed origin could do to the visitor with it. A note or article
+   * body is authored by any platform user, the origins it may embed are only as trustworthy
+   * as the configured {@link #IFRAME_ALLOWED_HOSTS_PROPERTY} list, and the same policy
+   * governs ten repos' content.
+   * <p>
+   * Granted: <code>autoplay</code>, <code>encrypted-media</code> (DRM playback),
+   * <code>fullscreen</code>, and <code>picture-in-picture</code> — whose default allow-list
+   * is already <code>*</code>, so listing it grants nothing and is kept only for fidelity
+   * with the attribute as emitted. Three grants and one no-op, in other words.
+   * <p>
+   * Refused, although providers ask for every one of them, because each hands the framed
+   * origin a capability that reaches the visitor — even where it also serves a rendering
+   * purpose, as the sensors do for 360-degree playback; where both are true, refusal wins.
+   * Each is one entry away from being restored, which needs its trade-off written down:
+   * <ul>
+   * <li><code>clipboard-write</code> — writes the visitor's clipboard. Cost of refusing: a
+   * player's in-frame "copy link" button.</li>
+   * <li><code>web-share</code> — hands the platform share sheet to the framed origin with
+   * content of its choosing (default allow-list <code>'self'</code>; unimplemented on
+   * Chrome/Linux desktop, live on the mobile platforms where notes are read). Cost: the
+   * in-player share button. Refused for the same reason as clipboard-write, which it
+   * mirrors.</li>
+   * <li><code>accelerometer</code>, <code>gyroscope</code> — the Generic Sensor API and
+   * DeviceMotion/DeviceOrientation events, i.e. device-motion telemetry to a third-party
+   * origin. Cost: 360-degree/VR orientation control, not playback and
+   * not fullscreen.</li>
+   * </ul>
+   * Also refused, and not asked for by any of the three providers whose oEmbed output this
+   * suite pins: <code>camera</code>,
+   * <code>microphone</code>, <code>geolocation</code>, <code>display-capture</code>,
+   * <code>payment</code>.
    */
-  private static final Set<String>                                            ALLOWED_IFRAME_FEATURES   = Set.of("accelerometer",
-                                                                                                                 "autoplay",
-                                                                                                                 "clipboard-write",
+  private static final Set<String>                                            ALLOWED_IFRAME_FEATURES   = Set.of("autoplay",
                                                                                                                  "encrypted-media",
                                                                                                                  "fullscreen",
-                                                                                                                 "gyroscope",
-                                                                                                                 "picture-in-picture",
-                                                                                                                 "web-share");
+                                                                                                                 "picture-in-picture");
+
+  /**
+   * The values accepted for the boolean <code>allowfullscreen</code> attribute. HTML §2.3.2
+   * defines only three — absent, empty, or an ASCII case-insensitive match of the
+   * attribute's own name, with no surrounding whitespace — and explicitly forbids
+   * <code>true</code>/<code>false</code> on a boolean attribute. <code>true</code> is
+   * tolerated here deliberately — a template engine rendering a boolean binding can
+   * serialise it that way, and a browser reads any present <code>allowfullscreen</code> as
+   * true whatever its value. <code>false</code> is dropped, which is the safe direction
+   * even though HTML would read it as "attribute present, therefore true". Anything else is a producer's mistake and is dropped rather than echoed back,
+   * because a note body is compiled as a Vue template, not only parsed as HTML.
+   */
+  private static final Pattern                                                ALLOW_FULL_SCREEN_VALUE   =
+                                                                                                    Pattern.compile("(?i)^(|true|allowfullscreen)$");
 
   /**
    * Filters an iframe <code>allow</code> attribute down to {@link #ALLOWED_IFRAME_FEATURES}.
-   * Providers send a feature list such as
-   * <code>accelerometer *; encrypted-media *; fullscreen *;</code>; each kept feature
+   * The value is a feature list. The providers' own oEmbed output carries bare feature
+   * names (Dailymotion's is <code>autoplay; fullscreen; picture-in-picture; web-share</code>);
+   * the origin-list form
+   * <code>encrypted-media *; fullscreen *;</code> is what an oEmbed proxy such as iframely
+   * emits after rewriting them. Each kept feature
    * is re-emitted without its origin allow-list, so it falls back to the spec default
-   * <code>'src'</code> — the framed document itself, never the whole web. Returns
+   * <code>'src'</code> — the framed document itself, rather than the origins the author
+   * listed. Note what that does and does not bound: the direct grant goes to the framed
+   * origin only, and that origin may itself delegate the feature onward to whatever it
+   * embeds (measured). The bound is on what a page author can grant, not on where the
+   * capability ends up. Returns
    * <code>null</code> (drop the attribute) when nothing survives.
+   * <p>
+   * That <code>'src'</code> narrowing describes <strong>this attribute only</strong>. The
+   * boolean <code>allowfullscreen</code> allowed alongside it is specified differently:
+   * Permissions Policy §9.4 sets the container policy for <code>fullscreen</code> to the
+   * special value <code>*</code> <em>when the <code>allow</code> attribute declares no
+   * <code>fullscreen</code> entry of its own</em> — where both are present, the
+   * <code>allow</code> entry stands and the boolean adds nothing. Chromium was measured to
+   * narrow both shapes to <code>'src'</code> in practice. The two shapes are therefore not equivalent on paper.
    */
   private static final AttributePolicy                                        IFRAME_ALLOW_POLICY       =
                                                                                                     (elementName,
@@ -135,6 +198,61 @@ abstract public class HTMLSanitizer {
                                                                                                                             .collect(Collectors.joining("; "));
                                                                                                       return features.isEmpty() ? null : features;
                                                                                                     };
+
+  private static final Log                                                    LOG                       = ExoLogger.getLogger(HTMLSanitizer.class);
+
+  /**
+   * System property holding the comma-separated host names an iframe <code>src</code> may
+   * point to. An entry <code>*.example.com</code> allows every sub-domain of
+   * <code>example.com</code>, at any depth, but not <code>example.com</code> itself. When
+   * set, it replaces {@link #DEFAULT_IFRAME_ALLOWED_HOSTS}; set to an empty value, no iframe
+   * keeps its <code>src</code>. A deployment that points the editors at another oEmbed
+   * provider (<code>io.meeds.iframely.url</code>) lists that provider's iframe host here,
+   * together with the defaults it still needs.
+   */
+  public static final String                                                  IFRAME_ALLOWED_HOSTS_PROPERTY = "io.meeds.sanitizer.iframe.allowedHosts";
+
+  /**
+   * The embed hosts whose iframes are kept when {@link #IFRAME_ALLOWED_HOSTS_PROPERTY} is
+   * not set: <code>if-cdn.com</code>, where the editors' default oEmbed provider
+   * (<code>ckeditor.iframe.ly</code>) hosts the iframe of the embeds it returns, YouTube's
+   * and SoundCloud's included; <code>cdn.iframe.ly</code>, iframely's API iframe; and the
+   * players of YouTube, Vimeo, Dailymotion and Calameo, for an iframe from those providers
+   * that does not come through iframely.
+   */
+  public static final List<String>                                            DEFAULT_IFRAME_ALLOWED_HOSTS  = List.of("if-cdn.com",
+                                                                                                                      "www.youtube.com",
+                                                                                                                      "www.youtube-nocookie.com",
+                                                                                                                      "player.vimeo.com",
+                                                                                                                      "www.dailymotion.com",
+                                                                                                                      "geo.dailymotion.com",
+                                                                                                                      "v.calameo.com",
+                                                                                                                      "cdn.iframe.ly");
+
+  private static final Pattern                                                HOST_NAME                 = Pattern.compile("[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?");
+
+  /** One label of the domain of a <code>*.</code> entry. */
+  private static final Pattern                                                HOST_LABEL                = Pattern.compile("[a-z0-9](?:[a-z0-9-]*[a-z0-9])?");
+
+  private static final String                                                 WILDCARD_PREFIX           = "*.";
+
+  /**
+   * The characters, among those a browser accepts unencoded in a URL and {@link URI}
+   * refuses, that are percent-encoded before parsing; <code>&#92;</code> is not one of them
+   * and stays refused.
+   */
+  private static final String                                                 URI_UNSAFE_CHARS          = " \"<>^`{|}";
+
+  private static final AtomicReference<IframeAllowedHosts>                    IFRAME_ALLOWED_HOSTS      =
+                                                                                                    new AtomicReference<>(new IframeAllowedHosts(null,
+                                                                                                                                                 DEFAULT_IFRAME_ALLOWED_HOSTS));
+
+  /** Drops an iframe <code>src</code> that {@link #isAllowedIframeSrc(String)} refuses. */
+  private static final AttributePolicy                                        IFRAME_SRC_POLICY         =
+                                                                                                    (elementName,
+                                                                                                     attributeName,
+                                                                                                     value) -> isAllowedIframeSrc(value) ? value
+                                                                                                                                         : null;
 
 
   private static final CssSchema.Property                                     ASPECT_RATIO_PROPERTY       =
@@ -405,11 +523,19 @@ abstract public class HTMLSanitizer {
                                                                                                                                 .allowAttributes("wikiparam")
                                                                                                                                 .globally()
                                                                                                                                 .allowAttributes("src")
+                                                                                                                                .matching(IFRAME_SRC_POLICY)
                                                                                                                                 .onElements("iframe")
+                                                                                                                                // An iframe whose src was refused is dropped, not left as an empty frame
+                                                                                                                                .allowElements((elementName,
+                                                                                                                                                attributes) -> hasAttribute(attributes,
+                                                                                                                                                                            "src") ? elementName
+                                                                                                                                                                                   : null,
+                                                                                                                                               "iframe")
                                                                                                                                 .allowAttributes("allow")
                                                                                                                                 .matching(IFRAME_ALLOW_POLICY)
                                                                                                                                 .onElements("iframe")
                                                                                                                                 .allowAttributes("allowfullscreen")
+                                                                                                                                .matching(ALLOW_FULL_SCREEN_VALUE)
                                                                                                                                 .onElements("iframe")
                                                                                                                                 .allowAttributes("frameborder")
                                                                                                                                 .onElements("iframe")
@@ -448,8 +574,109 @@ abstract public class HTMLSanitizer {
     return sb.toString();
   }
 
+  /**
+   * @return the host names an iframe <code>src</code> may point to: the
+   *         {@value #IFRAME_ALLOWED_HOSTS_PROPERTY} system property when set, else
+   *         {@link #DEFAULT_IFRAME_ALLOWED_HOSTS}
+   */
+  public static List<String> getAllowedIframeHosts() {
+    String value = PropertyManager.getProperty(IFRAME_ALLOWED_HOSTS_PROPERTY);
+    IframeAllowedHosts allowedHosts = IFRAME_ALLOWED_HOSTS.get();
+    if (!StringUtils.equals(value, allowedHosts.value())) {
+      allowedHosts = new IframeAllowedHosts(value, parseAllowedIframeHosts(value));
+      IFRAME_ALLOWED_HOSTS.set(allowedHosts);
+    }
+    return allowedHosts.hosts();
+  }
+
+  /**
+   * @param src an iframe <code>src</code> value, entity-decoded
+   * @return true when it is an https or protocol-relative URL whose host is exactly one of
+   *         {@link #getAllowedIframeHosts()}, or a sub-domain of one of its
+   *         <code>*.</code> entries
+   */
+  public static boolean isAllowedIframeSrc(String src) {
+    if (StringUtils.isBlank(src)) {
+      return false;
+    }
+    try {
+      URI uri = new URI(encodeUriUnsafeChars(src.trim()));
+      String scheme = uri.getScheme();
+      String host = uri.getHost();
+      return (scheme == null || scheme.equalsIgnoreCase("https"))
+             && host != null
+             && isAllowedIframeHost(host.toLowerCase(Locale.ROOT));
+    } catch (Exception e) {
+      return false;
+    }
+  }
+
+  private static boolean isAllowedIframeHost(String host) {
+    return getAllowedIframeHosts().stream()
+                                  .anyMatch(allowedHost -> allowedHost.startsWith(WILDCARD_PREFIX) ? host.endsWith(allowedHost.substring(1))
+                                                                                                   : host.equals(allowedHost));
+  }
+
+  private static String encodeUriUnsafeChars(String url) {
+    StringBuilder encoded = new StringBuilder(url.length());
+    for (byte b : url.getBytes(StandardCharsets.UTF_8)) {
+      char c = (char) (b & 0xFF);
+      if (c > 0x7F || URI_UNSAFE_CHARS.indexOf(c) >= 0) {
+        encoded.append('%').append(String.format("%02X", b & 0xFF));
+      } else {
+        encoded.append(c);
+      }
+    }
+    return encoded.toString();
+  }
+
+  private static boolean hasAttribute(List<String> attributes, String name) {
+    for (int i = 0; i < attributes.size(); i += 2) {
+      if (name.equals(attributes.get(i))) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  static List<String> parseAllowedIframeHosts(String value) {
+    if (value == null) {
+      return DEFAULT_IFRAME_ALLOWED_HOSTS;
+    }
+    return Arrays.stream(value.split(","))
+                 .map(host -> host.trim().toLowerCase(Locale.ROOT))
+                 .filter(host -> !host.isEmpty())
+                 .filter(host -> {
+                   boolean valid = HOST_NAME.matcher(host).matches() || isWildcardHostName(host);
+                   if (!valid) {
+                     LOG.warn("Ignoring '{}' in {}: neither a host name nor a '*.' wildcard over two labels at least",
+                              host,
+                              IFRAME_ALLOWED_HOSTS_PROPERTY);
+                   }
+                   return valid;
+                 })
+                 .distinct()
+                 .toList();
+  }
+
+  /**
+   * @return true when the entry is <code>*.</code> followed by a domain of at least two
+   *         labels, e.g. <code>*.sharepoint.com</code>
+   */
+  private static boolean isWildcardHostName(String host) {
+    if (!host.startsWith(WILDCARD_PREFIX)) {
+      return false;
+    }
+    String[] labels = host.substring(WILDCARD_PREFIX.length()).split("\\.", -1);
+    return labels.length >= 2 && Arrays.stream(labels).allMatch(label -> HOST_LABEL.matcher(label).matches());
+  }
+
   private static Predicate<String> matchesEither(final Pattern a, final Pattern b) {
     return s -> a.matcher(s).matches() || b.matcher(s).matches();
+  }
+
+  /** The property value and the host list parsed from it, replaced as a unit. */
+  private record IframeAllowedHosts(String value, List<String> hosts) {
   }
 
 }
