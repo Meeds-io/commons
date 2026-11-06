@@ -714,7 +714,7 @@
 		if ( !item.name ) {
 			item.name = htmlEncode( item.id.replace( /::.*$/, ':' ).replace( /^:|:$/g, '' ) );
 		}
-		item.label = emojiLabel( item.name );
+		item.label = htmlEncode( emojiLabel( item.name ) );
 		return item;
 	}
 
@@ -745,9 +745,16 @@
 		}
 	}
 
-	// The emoji's spoken name: 'thumbs_up' gives 'thumbs up'
+	// The emoji's spoken name, in the characters the server's HTML policy keeps in an aria-label
+	// (HTMLSanitizer HTML_TITLE): 'thumbs_up' gives 'thumbs up', 'keycap_#' 'keycap number sign'
 	function emojiLabel( name ) {
-		return name ? String( name ).replace( /_/g, ' ' ).trim() : '';
+		return name ? String( name )
+			.replace( /&amp;/g, '&' ).replace( /&lt;/g, '<' ).replace( /&gt;/g, '>' )
+			.replace( /[‘’]/g, '\'' ).replace( /[“”"]/g, '' )
+			.replace( /#/g, ' number sign ' ).replace( /\*/g, ' asterisk ' )
+			.replace( /_/g, ' ' )
+			.replace( /[^\p{L}\p{N}\s\-',:\[\]!\.\/\\\(\)&]/gu, ' ' )
+			.replace( /\s+/g, ' ' ).trim() : '';
 	}
 } )();
 
