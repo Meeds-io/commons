@@ -620,12 +620,21 @@
 				// HELPER FUNCTIONS:
 
 				function initPlugin() {
-					editor._.emoji.autocomplete = new CKEDITOR.plugins.autocomplete( editor, {
+					var autocomplete = new CKEDITOR.plugins.autocomplete( editor, {
 						textTestCallback: getTextTestCallback(),
 						dataCallback: dataCallback,
 						itemTemplate: '<li data-id="{id}" class="cke_emoji-suggestion_item"><span>{symbol}</span> {name}</li>',
 						outputTemplate: '<span role="img" aria-label="{label}">{symbol}</span>'
 					} );
+					var commit = autocomplete.commit;
+					autocomplete.commit = function() {
+						commit.apply( this, arguments );
+						// after the editor has settled the selection of the inserted markup
+						setTimeout( function() {
+							moveCaretAfterEmoji( editor );
+						}, 0 );
+					};
+					editor._.emoji.autocomplete = autocomplete;
 				}
 
 				function getTextTestCallback() {
@@ -707,6 +716,33 @@
 		}
 		item.label = emojiLabel( item.name );
 		return item;
+	}
+
+	// The caret leaves the emoji just inserted, so that the next typed text is not part of its name
+	function moveCaretAfterEmoji( editor ) {
+		var isEmoji = function( node ) {
+				return node && node.type === CKEDITOR.NODE_ELEMENT && node.is( 'span' ) && node.getAttribute( 'role' ) === 'img';
+			},
+			selection = editor.getSelection(),
+			start = selection && selection.getStartElement(),
+			emoji = start && start.getAscendant( isEmoji, true ),
+			caret = !emoji && selection && selection.getRanges()[ 0 ];
+		// the caret may also sit right after the emoji, past empty text nodes, where typing still extends it
+		if ( caret && caret.startContainer.type === CKEDITOR.NODE_ELEMENT ) {
+			for ( var index = caret.startOffset - 1; index >= 0; index-- ) {
+				var previous = caret.startContainer.getChild( index );
+				if ( previous.type === CKEDITOR.NODE_TEXT && !previous.getText().replace( /​/g, '' ).length ) {
+					continue;
+				}
+				emoji = isEmoji( previous ) ? previous : null;
+				break;
+			}
+		}
+		if ( emoji ) {
+			var range = editor.createRange();
+			range.moveToPosition( emoji, CKEDITOR.POSITION_AFTER_END );
+			range.select();
+		}
 	}
 
 	// The emoji's spoken name: 'thumbs_up' gives 'thumbs up'
