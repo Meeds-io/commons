@@ -313,7 +313,10 @@
 						event: 'click',
 						listener: function( event ) {
 							if ( event.data.getTarget().data( 'cke-emoji-name' ) ) {
-								this.editor.execCommand( 'insertEmoji', { emojiText: event.data.getTarget().data( 'cke-emoji-symbol' ) } );
+								this.editor.execCommand( 'insertEmoji', {
+									emojiText: event.data.getTarget().data( 'cke-emoji-symbol' ),
+									emojiName: event.data.getTarget().data( 'cke-emoji-name' )
+								} );
 							}
 						}
 					} );
@@ -621,7 +624,7 @@
 						textTestCallback: getTextTestCallback(),
 						dataCallback: dataCallback,
 						itemTemplate: '<li data-id="{id}" class="cke_emoji-suggestion_item"><span>{symbol}</span> {name}</li>',
-						outputTemplate: '{symbol}'
+						outputTemplate: '<span role="img" aria-label="{label}">{symbol}</span>'
 					} );
 				}
 
@@ -669,7 +672,20 @@
 
 			editor.addCommand( 'insertEmoji', {
 				exec: function( editor, data ) {
-					editor.insertHtml( data.emojiText );
+					var label = emojiLabel( data.emojiName );
+					if ( label ) {
+						// The emoji is read by its name; the caret goes after it so that the
+						// next typed text is not part of the emoji
+						var element = new CKEDITOR.dom.element( 'span', editor.document );
+						element.setAttributes( { role: 'img', 'aria-label': label } );
+						element.setText( data.emojiText );
+						editor.insertElement( element );
+						var range = editor.createRange();
+						range.moveToPosition( element, CKEDITOR.POSITION_AFTER_END );
+						range.select();
+					} else {
+						editor.insertHtml( data.emojiText );
+					}
 					document.dispatchEvent(new CustomEvent('editor-option-added', {detail: 'useEmoji'}));
 				}
 			} );
@@ -689,7 +705,13 @@
 		if ( !item.name ) {
 			item.name = htmlEncode( item.id.replace( /::.*$/, ':' ).replace( /^:|:$/g, '' ) );
 		}
+		item.label = emojiLabel( item.name );
 		return item;
+	}
+
+	// The emoji's spoken name: 'thumbs_up' gives 'thumbs up'
+	function emojiLabel( name ) {
+		return name ? String( name ).replace( /_/g, ' ' ).trim() : '';
 	}
 } )();
 
