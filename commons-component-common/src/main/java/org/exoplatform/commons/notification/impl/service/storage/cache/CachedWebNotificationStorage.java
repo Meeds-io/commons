@@ -120,12 +120,7 @@ public class CachedWebNotificationStorage implements WebNotificationStorage {
   @Override
   public void hidePopover(String notificationId) {
     storage.hidePopover(notificationId);
-
-    // update data showPopover
-    NotificationInfo infoData = webNotificationCache.get(WebNotifInfoCacheKey.key(notificationId));
-    if (infoData != null) {
-      updateCacheByUser(infoData.getTo());
-    }
+    updateRead(notificationId);
   }
 
   @Override
@@ -232,6 +227,10 @@ public class CachedWebNotificationStorage implements WebNotificationStorage {
   private void updateRead(String notificationId) {
     WebNotifInfoCacheKey key = WebNotifInfoCacheKey.key(notificationId);
     NotificationInfo infoData = webNotificationCache.get(key);
+    if (infoData == null) {
+      // Another node may hold the notification and the lists of its recipient, whom the store names
+      infoData = storage.get(notificationId);
+    }
     if (infoData != null) {
       updateCacheByUser(infoData.getTo());
     }

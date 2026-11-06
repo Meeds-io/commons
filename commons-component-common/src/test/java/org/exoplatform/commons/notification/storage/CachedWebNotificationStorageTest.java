@@ -160,6 +160,42 @@ public class CachedWebNotificationStorageTest extends BaseNotificationTestCase {
     assertTrue(notifInfo.isRead());
   }
 
+  public void testReadOfANotificationThisNodeDidNotLoadEvictsTheListsOfItsRecipient() throws Exception {
+    ListWebNotificationsKey listKey = loadListWithoutItsNotification("read-elsewhere");
+
+    cachedStorage.markRead(notificationOf(listKey));
+
+    assertNull(exoWebNotificationsCache.get(listKey));
+  }
+
+  public void testHidePopoverOfANotificationThisNodeDidNotLoadEvictsTheListsOfItsRecipient() throws Exception {
+    ListWebNotificationsKey listKey = loadListWithoutItsNotification("hidden-elsewhere");
+
+    cachedStorage.hidePopover(notificationOf(listKey));
+
+    assertNull(exoWebNotificationsCache.get(listKey));
+  }
+
+  /**
+   * Loads the list of the notifications of a user, then drops its notification from this node's cache, as on a node
+   * where another one loaded it
+   */
+  private ListWebNotificationsKey loadListWithoutItsNotification(String userId) {
+    userIds.add(userId);
+    NotificationInfo info = makeWebNotificationInfo(userId);
+    cachedStorage.save(info);
+    WebNotificationFilter filter = new WebNotificationFilter(userId, false);
+    assertEquals(1, cachedStorage.get(filter, 0, 10).size());
+    ListWebNotificationsKey listKey = new ListWebNotificationsKey(filter, 0, 10);
+    assertNotNull(exoWebNotificationsCache.get(listKey));
+    exoWebNotificationCache.removeLocal(WebNotifInfoCacheKey.key(info.getId()));
+    return listKey;
+  }
+
+  private String notificationOf(ListWebNotificationsKey listKey) {
+    return String.valueOf(exoWebNotificationsCache.get(listKey).getList().get(0));
+  }
+
   public void testMarkAllRead() {
     String userId = "demo8";
     userIds.add(userId);
