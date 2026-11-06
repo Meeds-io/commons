@@ -58,6 +58,40 @@ public class HTMLSanitizerTest {
   }
 
   @Test
+  public void testEmojiTextEquivalentKept() throws Exception {
+    String sanitized = HTMLSanitizer.sanitize("<p>Great <span role=\"img\" aria-label=\"thumbs up\">👍</span></p>");
+    assertTrue(sanitized, sanitized.contains("<span role=\"img\" aria-label=\"thumbs up\">"));
+  }
+
+  @Test
+  public void testOtherRoleOnSpanRemoved() throws Exception {
+    String sanitized = HTMLSanitizer.sanitize("<span role=\"button\" aria-label=\"thumbs up\">x</span>");
+    assertFalse(sanitized, sanitized.contains("role="));
+    assertTrue(sanitized, sanitized.contains("aria-label=\"thumbs up\""));
+  }
+
+  @Test
+  public void testEmojiLabelWithMarkupRemoved() throws Exception {
+    String sanitized = HTMLSanitizer.sanitize("<span role=\"img\" aria-label=\"&quot;&gt;&lt;script&gt;alert(1)&lt;/script&gt;\">x</span>");
+    assertFalse(sanitized, sanitized.contains("aria-label"));
+    assertFalse(sanitized, sanitized.contains("<script"));
+  }
+
+  @Test
+  public void testEmojiAttributesOnlyOnSpan() throws Exception {
+    String sanitized = HTMLSanitizer.sanitize("<div role=\"img\" aria-label=\"thumbs up\">x</div><a href=\"/a\" role=\"img\" aria-label=\"thumbs up\">y</a>");
+    assertFalse(sanitized, sanitized.contains("role="));
+    assertFalse(sanitized, sanitized.contains("aria-label"));
+  }
+
+  @Test
+  public void testEmojiSpanEventHandlerRemoved() throws Exception {
+    String sanitized = HTMLSanitizer.sanitize("<span role=\"img\" aria-label=\"thumbs up\" onmouseover=\"alert(1)\">x</span>");
+    assertFalse(sanitized, sanitized.contains("onmouseover"));
+    assertTrue(sanitized, sanitized.contains("role=\"img\""));
+  }
+
+  @Test
   public void testTextAllowedInLinks() throws Exception {
     String input = "<a href=\"../good.html\">click here</a>";
     String sanitized = HTMLSanitizer.sanitize(input);
