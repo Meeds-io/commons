@@ -18,26 +18,40 @@
  */
 package org.exoplatform.commons.notification.impl.service.storage.cache;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-import junit.framework.TestCase;
+import org.junit.jupiter.api.Test;
 
 import org.exoplatform.commons.api.notification.model.NotificationInfo;
 import org.exoplatform.commons.api.notification.model.WebNotificationFilter;
+import org.exoplatform.commons.notification.impl.jpa.web.JPAWebNotificationStorage;
 import org.exoplatform.commons.notification.impl.service.storage.cache.model.ListWebNotificationsKey;
 import org.exoplatform.commons.notification.impl.service.storage.cache.model.WebNotifInfoCacheKey;
+import org.exoplatform.services.cache.CacheService;
+import org.exoplatform.services.cache.CachedObjectSelector;
+import org.exoplatform.services.cache.ExoCache;
+import org.exoplatform.services.cache.ExoCacheConfigPlugin;
 import org.exoplatform.services.cache.ObjectCacheInfo;
+import org.exoplatform.services.cache.concurrent.ConcurrentFIFOExoCache;
 
-/**
- * The selections of the web notifications of a user, which travel to the other nodes of a cluster.
- */
-public class WebNotificationSelectorsTest extends TestCase {
+class WebNotificationSelectorsTest {
 
-  public void testTheNotificationsSentToTheUserAreSelected() {
+  @Test
+  void theNotificationsSentToTheUserAreSelected() {
     WebNotificationsOfUserSelector selector = new WebNotificationsOfUserSelector("john");
 
     assertTrue(selector.select(WebNotifInfoCacheKey.key("1"), info(NotificationInfo.instance().to("john"))));
@@ -45,14 +59,16 @@ public class WebNotificationSelectorsTest extends TestCase {
     assertFalse(selector.select(WebNotifInfoCacheKey.key("3"), info(null)));
   }
 
-  public void testTheNotificationListsOfTheUserAreSelected() {
+  @Test
+  void theNotificationListsOfTheUserAreSelected() {
     WebNotificationListsOfUserSelector selector = new WebNotificationListsOfUserSelector("john");
 
     assertTrue(selector.select(new ListWebNotificationsKey(new WebNotificationFilter("john", true), 0, 10), null));
     assertFalse(selector.select(new ListWebNotificationsKey(new WebNotificationFilter("mary", true), 0, 10), null));
   }
 
-  public void testTheSelectionsTravelAsTheSameSelections() throws Exception {
+  @Test
+  void theSelectionsTravelAsTheSameSelections() throws Exception {
     WebNotificationsOfUserSelector notifications = new WebNotificationsOfUserSelector("john");
     WebNotificationListsOfUserSelector lists = new WebNotificationListsOfUserSelector("john");
 
@@ -65,6 +81,58 @@ public class WebNotificationSelectorsTest extends TestCase {
     assertEquals(lists.hashCode(), receivedLists.hashCode());
     assertFalse(notifications.equals(new WebNotificationsOfUserSelector("mary")));
     assertFalse(notifications.equals(lists));
+  }
+
+  @Test
+  void theStorageSelectsTheEntriesOfTheUserWithTheSelectionsThatTravel() {
+    Map<String, SelectionRecordingCache> caches = new HashMap<>();
+    CachedWebNotificationStorage storage = new CachedWebNotificationStorage(mock(JPAWebNotificationStorage.class),
+                                                                            cacheService(caches));
+
+    storage.markAllRead("john");
+
+    assertEquals(List.of(new WebNotificationsOfUserSelector("john")),
+                 caches.get("commons.WebNotificationCache").selections);
+    assertEquals(List.of(new WebNotificationListsOfUserSelector("john")),
+                 caches.get("commons.WebNotificationsCache").selections);
+  }
+
+  private static CacheService cacheService(Map<String, SelectionRecordingCache> caches) {
+    return new CacheService() {
+      @Override
+      public void addExoCacheConfig(ExoCacheConfigPlugin plugin) {
+        // Not used
+      }
+
+      @SuppressWarnings("unchecked")
+      @Override
+      public <K extends Serializable, V> ExoCache<K, V> getCacheInstance(String region) {
+        return (ExoCache<K, V>) caches.computeIfAbsent(region, SelectionRecordingCache::new);
+      }
+
+      @Override
+      public java.util.Collection<ExoCache<? extends Serializable, ?>> getAllCacheInstances() {
+        return new ArrayList<>(caches.values());
+      }
+    };
+  }
+
+  /**
+   * A cache of this node that records the selections other nodes would receive
+   */
+  private static class SelectionRecordingCache extends ConcurrentFIFOExoCache<Serializable, Object> {
+
+    private final List<CachedObjectSelector<?, ?>> selections = new ArrayList<>();
+
+    SelectionRecordingCache(String name) {
+      setName(name);
+    }
+
+    @Override
+    public void select(CachedObjectSelector<? super Serializable, ? super Object> selector) throws Exception {
+      selections.add(selector);
+      super.select(selector);
+    }
   }
 
   private static ObjectCacheInfo<NotificationInfo> info(NotificationInfo notification) {
