@@ -66,10 +66,18 @@ public class HTMLSanitizerTest {
   @Test
   public void testEmojiLabelsWrittenByTheEditorKept() throws Exception {
     // the forms the editor's emoji plugin writes after normalising a name (emojiLabel in plugin.js)
-    for (String label : new String[] { "twelve o'clock", "flag antigua &amp; barbuda", "keycap number sign",
-        "keycap asterisk", "flag côte d'ivoire", "japanese here button" }) {
-      String sanitized = HTMLSanitizer.sanitize("<span role=\"img\" aria-label=\"" + label + "\">x</span>");
-      assertTrue(label + " -> " + sanitized, sanitized.contains("aria-label="));
+    // written label -> the attribute the policy keeps, in its output encoding
+    String[][] cases = {
+      { "keycap number sign", "aria-label=\"keycap number sign\"" },
+      { "keycap asterisk", "aria-label=\"keycap asterisk\"" },
+      { "japanese here button", "aria-label=\"japanese here button\"" },
+      { "twelve o'clock", "aria-label=\"twelve o&#39;clock\"" },
+      { "flag côte d'ivoire", "aria-label=\"flag côte d&#39;ivoire\"" },
+      { "flag antigua &amp; barbuda", "aria-label=\"flag antigua &amp; barbuda\"" },
+    };
+    for (String[] testCase : cases) {
+      String sanitized = HTMLSanitizer.sanitize("<span role=\"img\" aria-label=\"" + testCase[0] + "\">x</span>");
+      assertTrue(testCase[0] + " -> " + sanitized, sanitized.contains(testCase[1]));
     }
   }
 

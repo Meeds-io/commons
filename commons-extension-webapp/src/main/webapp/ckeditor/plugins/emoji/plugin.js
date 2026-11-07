@@ -714,7 +714,8 @@
 		if ( !item.name ) {
 			item.name = htmlEncode( item.id.replace( /::.*$/, ':' ).replace( /^:|:$/g, '' ) );
 		}
-		item.label = htmlEncode( emojiLabel( item.name ) );
+		// plain text: the autocomplete encodes every field it puts in its output template
+		item.label = emojiLabel( item.name );
 		return item;
 	}
 
