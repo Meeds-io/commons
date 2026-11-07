@@ -43,6 +43,23 @@ public class HTMLSanitizerTest {
             HTMLSanitizer.sanitize(input1));
   }
 
+  /**
+   * A table keeps the style class a writer picks (Simple, Striped, Bordered) and
+   * the numeric-cell class, with the CKEditor 4 attributes older tables carry:
+   * the rich-text table rules read those classes (EXO-93568).
+   */
+  @Test
+  public void testTableStyleClassesKept() throws Exception {
+    String input = "<table border=\"1\" cellpadding=\"1\" cellspacing=\"1\" class=\"table-striped\">"
+        + "<thead><tr><th>Name</th><th class=\"num\">Count</th></tr></thead>"
+        + "<tbody><tr><td>Button</td><td class=\"num\">9</td></tr></tbody></table>";
+    String sanitized = HTMLSanitizer.sanitize(input);
+    assertTrue(sanitized, sanitized.contains("class=\"table-striped\""));
+    assertTrue(sanitized, sanitized.contains("<th class=\"num\">Count</th>"));
+    assertTrue(sanitized, sanitized.contains("<td class=\"num\">9</td>"));
+    assertTrue(sanitized, sanitized.contains("border=\"1\""));
+  }
+
   @Test
   public void testSanitizeRemovesScripts() throws Exception {
     String input = "<p>Hello World</p>" + "<script language=\"text/javascript\">alert(\"bad\");</script>";
