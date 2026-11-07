@@ -4,6 +4,7 @@ For licensing, see LICENSE.md or http://ckeditor.com/license
 */
 
 @import "../ckeditor/skins/common/editor.less";
+@import "../skin/less/rich-text-table.less";
 
 body {
   font-size: @normalFontSize;
@@ -47,24 +48,9 @@ p, li, blockquote {
   font-size: @normalFontSize;
 }
 
-table {
-  margin-bottom: 10px !important;
-  margin-top: 0 !important;
-  border-style: solid;
-  border-color: black;
-
-  td, th {
-    margin-bottom: 10px !important;
-    margin-top: 0 !important;
-    padding: 5px;
-    font-size: @normalFontSize;
-    line-height: 1.4;
-
-    p:last-child {
-      margin-bottom: 0;
-    }
-  }
-}
+// the published view's table look (platform-ui rich-text-table.less), so editing matches viewing
+.rich-text-table();
+.rich-text-table-editor();
 
 img:not(.cke_widget_mask, .cke_widget_drag_handler) {
   margin: 10px 0 !important;
