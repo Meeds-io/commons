@@ -34,15 +34,6 @@
     }
   }
 
-  table[border="0"] tr, table[border="0"] tr td {
-    border-width: 0 !important;
-  }
-
-  table tr, table tr td {
-    border-width: 1px !important;
-    border-style: solid !important;
-  }
-
   table[align="center"] {
     margin-left: auto;
     margin-right: auto;
@@ -56,23 +47,9 @@
     margin-left: auto;
   }
 
-  table {
-    box-sizing: revert;
-    margin-top: 0 !important;
-    margin-bottom: 10px !important;
-    border-style: solid;
-    border-color: var(--allPagesBlackColor, #000);
-
-    td, th {
-      line-height: @normalLineHeight;
-      font-size: @normalFontSize;
-      padding: 5px;
-      border: inherit;
-
-      p:last-child {
-        margin-bottom: 0 !important;
-      }
-    }
+  table td, table th {
+    line-height: @normalLineHeight;
+    font-size: @normalFontSize;
   }
 
   img {
