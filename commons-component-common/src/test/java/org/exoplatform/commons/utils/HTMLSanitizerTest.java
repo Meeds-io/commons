@@ -64,6 +64,25 @@ public class HTMLSanitizerTest {
   }
 
   @Test
+  public void testEmojiLabelsWrittenByTheEditorKept() throws Exception {
+    // the forms the editor's emoji plugin writes after normalising a name (emojiLabel in plugin.js)
+    for (String label : new String[] { "twelve o'clock", "flag antigua &amp; barbuda", "keycap number sign",
+        "keycap asterisk", "flag côte d'ivoire", "japanese here button" }) {
+      String sanitized = HTMLSanitizer.sanitize("<span role=\"img\" aria-label=\"" + label + "\">x</span>");
+      assertTrue(label + " -> " + sanitized, sanitized.contains("aria-label="));
+    }
+  }
+
+  @Test
+  public void testEmojiLabelsWithSignsOutsideTheTitlePatternRemoved() throws Exception {
+    // the raw names the plugin normalises, which the policy would drop
+    for (String label : new String[] { "twelve o’clock", "keycap #", "keycap *", "japanese “here” button" }) {
+      String sanitized = HTMLSanitizer.sanitize("<span role=\"img\" aria-label=\"" + label + "\">x</span>");
+      assertFalse(label + " -> " + sanitized, sanitized.contains("aria-label="));
+    }
+  }
+
+  @Test
   public void testOtherRoleOnSpanRemoved() throws Exception {
     String sanitized = HTMLSanitizer.sanitize("<span role=\"button\" aria-label=\"thumbs up\">x</span>");
     assertFalse(sanitized, sanitized.contains("role="));
