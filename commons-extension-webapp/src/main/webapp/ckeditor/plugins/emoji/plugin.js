@@ -626,11 +626,7 @@
 						itemTemplate: '<li data-id="{id}" class="cke_emoji-suggestion_item"><span>{symbol}</span> {name}</li>',
 						outputTemplate: '<span role="img" aria-label="{label}">{symbol}</span>'
 					} );
-					var commit = autocomplete.commit;
-					autocomplete.commit = function() {
-						commit.apply( this, arguments );
-						deferMoveCaretAfterEmoji( editor );
-					};
+					moveCaretAfterCommit( autocomplete, editor );
 					editor._.emoji.autocomplete = autocomplete;
 				}
 
@@ -718,6 +714,15 @@
 
 	function isEmoji( node ) {
 		return node?.type === CKEDITOR.NODE_ELEMENT && node.is( 'span' ) && node.getAttribute( 'role' ) === 'img';
+	}
+
+	// an emoji chosen in the suggestions leaves the caret after it, as one chosen in the panel does
+	function moveCaretAfterCommit( autocomplete, editor ) {
+		var commit = autocomplete.commit;
+		autocomplete.commit = function() {
+			commit.apply( this, arguments );
+			deferMoveCaretAfterEmoji( editor );
+		};
 	}
 
 	// after the editor has settled the selection of the inserted markup
