@@ -629,10 +629,7 @@
 					var commit = autocomplete.commit;
 					autocomplete.commit = function() {
 						commit.apply( this, arguments );
-						// after the editor has settled the selection of the inserted markup
-						setTimeout( function() {
-							moveCaretAfterEmoji( editor );
-						}, 0 );
+						deferMoveCaretAfterEmoji( editor );
 					};
 					editor._.emoji.autocomplete = autocomplete;
 				}
@@ -719,20 +716,28 @@
 		return item;
 	}
 
+	function isEmoji( node ) {
+		return node?.type === CKEDITOR.NODE_ELEMENT && node.is( 'span' ) && node.getAttribute( 'role' ) === 'img';
+	}
+
+	// after the editor has settled the selection of the inserted markup
+	function deferMoveCaretAfterEmoji( editor ) {
+		setTimeout( function() {
+			moveCaretAfterEmoji( editor );
+		}, 0 );
+	}
+
 	// The caret leaves the emoji just inserted, so that the next typed text is not part of its name
 	function moveCaretAfterEmoji( editor ) {
-		var isEmoji = function( node ) {
-				return node && node.type === CKEDITOR.NODE_ELEMENT && node.is( 'span' ) && node.getAttribute( 'role' ) === 'img';
-			},
-			selection = editor.getSelection(),
-			start = selection && selection.getStartElement(),
-			emoji = start && start.getAscendant( isEmoji, true ),
-			caret = !emoji && selection && selection.getRanges()[ 0 ];
+		var selection = editor.getSelection(),
+			start = selection?.getStartElement(),
+			emoji = start?.getAscendant( isEmoji, true ),
+			caret = !emoji && selection?.getRanges()[ 0 ];
 		// the caret may also sit right after the emoji, past empty text nodes, where typing still extends it
 		if ( caret && caret.startContainer.type === CKEDITOR.NODE_ELEMENT ) {
 			for ( var index = caret.startOffset - 1; index >= 0; index-- ) {
 				var previous = caret.startContainer.getChild( index );
-				if ( previous.type === CKEDITOR.NODE_TEXT && !previous.getText().replace( /​/g, '' ).length ) {
+				if ( previous.type === CKEDITOR.NODE_TEXT && !previous.getText().replaceAll( '\u200B', '' ).length ) {
 					continue;
 				}
 				emoji = isEmoji( previous ) ? previous : null;
@@ -750,11 +755,11 @@
 	// (HTMLSanitizer HTML_TITLE): 'thumbs_up' gives 'thumbs up', 'keycap_#' 'keycap number sign'
 	function emojiLabel( name ) {
 		return name ? String( name )
-			.replace( /&amp;/g, '&' ).replace( /&lt;/g, '<' ).replace( /&gt;/g, '>' )
+			.replaceAll( '&amp;', '&' ).replaceAll( '&lt;', '<' ).replaceAll( '&gt;', '>' )
 			.replace( /[‘’]/g, '\'' ).replace( /[“”"]/g, '' )
-			.replace( /#/g, ' number sign ' ).replace( /\*/g, ' asterisk ' )
-			.replace( /_/g, ' ' )
-			.replace( /[^\p{L}\p{N}\s\-',:\[\]!\.\/\\\(\)&]/gu, ' ' )
+			.replaceAll( '#', ' number sign ' ).replaceAll( '*', ' asterisk ' )
+			.replaceAll( '_', ' ' )
+			.replace( /[^\p{L}\p{N}\s\-',:[\]!./\\()&]/gu, ' ' )
 			.replace( /\s+/g, ' ' ).trim() : '';
 	}
 } )();
