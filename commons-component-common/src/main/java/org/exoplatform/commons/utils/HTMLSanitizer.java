@@ -71,6 +71,8 @@ abstract public class HTMLSanitizer {
   // force non-empty with a '+' at the end instead of '*'
   private static final Pattern                                                HTML_TITLE               = Pattern.compile("[\\p{L}\\p{N}\\s\\-_',:\\[\\]!\\./\\\\\\(\\)&]*");
 
+  private static final Pattern                                                IMAGE_ROLE               = Pattern.compile("img");
+
   private static final Pattern                                                HTML_CLASS               = Pattern.compile("[a-zA-Z0-9\\s,\\-_]+");
 
   // URLs are accepted decoded as well as percent-encoded: some browsers (Safari) copy them
@@ -304,6 +306,14 @@ abstract public class HTMLSanitizer {
                                                                                                                                 .globally()
                                                                                                                                 .allowAttributes("data-role")
                                                                                                                                 .globally()
+                                                                                                                                // the text equivalent of an emoji. Allowed on any span: the policy cannot match children, so a span
+                                                                                                                                // wrapping a link could relabel it for screen readers, which an author can already do with the link text
+                                                                                                                                .allowAttributes("role")
+                                                                                                                                .matching(IMAGE_ROLE)
+                                                                                                                                .onElements("span")
+                                                                                                                                .allowAttributes("aria-label")
+                                                                                                                                .matching(HTML_TITLE)
+                                                                                                                                .onElements("span")
                                                                                                                                 .allowAttributes("data-object")
                                                                                                                                 .globally()
                                                                                                                                 .allowAttributes("nohref")
