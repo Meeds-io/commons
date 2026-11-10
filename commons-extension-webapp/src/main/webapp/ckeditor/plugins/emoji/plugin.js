@@ -673,6 +673,8 @@
 			} );
 
 			editor.addCommand( 'insertEmoji', {
+				// an editor that filters its content keeps the emoji's name
+				allowedContent: 'span[role,aria-label]',
 				exec: function( editor, data ) {
 					var label = emojiLabel( data.emojiName );
 					if ( label ) {
@@ -691,6 +693,7 @@
 					document.dispatchEvent(new CustomEvent('editor-option-added', {detail: 'useEmoji'}));
 				}
 			} );
+			editor.addFeature( editor.getCommand( 'insertEmoji' ) );
 
 			if ( editor.plugins.toolbar ) {
 				new EmojiDropdown( editor, this );
