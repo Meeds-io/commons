@@ -759,13 +759,21 @@
 	// The emoji's spoken name, in the characters the server's HTML policy keeps in an aria-label
 	// (HTMLSanitizer HTML_TITLE): 'thumbs_up' gives 'thumbs up', 'keycap_#' 'keycap number sign'
 	function emojiLabel( name ) {
-		return name ? String( name )
-			.replaceAll( '&amp;', '&' ).replaceAll( '&lt;', '<' ).replaceAll( '&gt;', '>' )
+		if ( !name ) {
+			return '';
+		}
+		// the name may be encoded twice: some emoji ids already hold '&amp;', which the plugin encodes again
+		var text = String( name );
+		while ( text.includes( '&amp;' ) ) {
+			text = text.replaceAll( '&amp;', '&' );
+		}
+		return text
+			.replaceAll( '&lt;', '<' ).replaceAll( '&gt;', '>' )
 			.replace( /[‘’]/g, '\'' ).replace( /[“”"]/g, '' )
 			.replaceAll( '#', ' number sign ' ).replaceAll( '*', ' asterisk ' )
 			.replaceAll( '_', ' ' )
 			.replace( /[^\p{L}\p{N}\s\-',:[\]!./\\()&]/gu, ' ' )
-			.replace( /\s+/g, ' ' ).trim() : '';
+			.replace( /\s+/g, ' ' ).trim();
 	}
 } )();
 
