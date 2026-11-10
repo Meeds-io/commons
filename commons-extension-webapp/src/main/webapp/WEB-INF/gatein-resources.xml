@@ -52,6 +52,17 @@
     <depends>
       <module>tagSuggester</module>
     </depends>
+    <depends>
+      <module>videoEmbed</module>
+    </depends>
+  </module>
+
+  <module>
+    <name>videoEmbed</name>
+    <script>
+      <minify>false</minify>
+      <path>/js/videoEmbed.js</path>
+    </script>
   </module>
 
 </gatein-resources>
