@@ -34,6 +34,7 @@
   const VIMEO_ID = /^\d{1,12}$/;
   const VIMEO_HASH = /^[0-9a-f]{6,20}$/;
   const GATED_IFRAME_HOST = 'if-cdn.com';
+  const PLAYER_HOSTS = ['www.youtube-nocookie.com', 'player.vimeo.com'];
 
   function parseUrl(url) {
     if (!url || typeof url !== 'string') {
@@ -108,9 +109,10 @@
     if (!VIMEO_ID.test(video?.id || '')) {
       return null;
     }
-    // An unlisted video is reached through the hash following its id
+    // An unlisted video is reached through the hash following its id; dnt=1
+    // keeps the player from tracking the viewer
     const hash = parsedUrl.searchParams.get('h') || video.hash;
-    return VIMEO_HASH.test(hash || '') ? `https://player.vimeo.com/video/${video.id}?h=${hash}` : `https://player.vimeo.com/video/${video.id}`;
+    return VIMEO_HASH.test(hash || '') ? `https://player.vimeo.com/video/${video.id}?h=${hash}&dnt=1` : `https://player.vimeo.com/video/${video.id}?dnt=1`;
   }
 
   // Same rule as the sanitizers: a deployment that replaced the allowed iframe
@@ -149,7 +151,7 @@
     }
     return '<div><div style="left: 0; width: 100%; height: 0; position: relative; padding-bottom: 56.25%;">'
       + `<iframe src="${playerUrl.replace(/&/g, '&amp;')}" style="top: 0; left: 0; width: 100%; height: 100%; position: absolute; border: 0;"`
-      + ' allow="autoplay; encrypted-media; fullscreen; picture-in-picture" allowfullscreen></iframe>'
+      + ' allow="autoplay; encrypted-media; fullscreen; picture-in-picture" allowfullscreen loading="lazy"></iframe>'
       + '</div></div>';
   }
 
@@ -174,19 +176,24 @@
    * article keeps the URL it embeds on the wrapper of its iframe
    * (div.embed-wrapper[data-url]), and the iframe it saved is the oEmbed
    * provider's own. Only the provider's consent-gated iframe (if-cdn.com) is
-   * replaced. Meant for an HTML sanitizer hook, before its iframe host check.
+   * replaced. A player iframe is loaded lazily, the saved one included: the
+   * server's HTML sanitizer does not keep the loading attribute. Meant for an
+   * HTML sanitizer hook, before its iframe host check.
    *
    * @param {Element} iframe an iframe being sanitized
    */
   function usePlayerInSavedEmbed(iframe) {
-    if (parseUrl(iframe?.getAttribute?.('src'))?.hostname.toLowerCase() !== GATED_IFRAME_HOST) {
-      return;
-    }
-    const playerUrl = getPlayerUrl(iframe.parentNode?.getAttribute?.('data-url'));
-    if (playerUrl) {
-      iframe.setAttribute('src', playerUrl);
-      iframe.setAttribute('allow', 'autoplay; encrypted-media; fullscreen; picture-in-picture');
-      iframe.setAttribute('allowfullscreen', '');
+    const host = parseUrl(iframe?.getAttribute?.('src'))?.hostname.toLowerCase();
+    if (host === GATED_IFRAME_HOST) {
+      const playerUrl = getPlayerUrl(iframe.parentNode?.getAttribute?.('data-url'));
+      if (playerUrl) {
+        iframe.setAttribute('src', playerUrl);
+        iframe.setAttribute('allow', 'autoplay; encrypted-media; fullscreen; picture-in-picture');
+        iframe.setAttribute('allowfullscreen', '');
+        iframe.setAttribute('loading', 'lazy');
+      }
+    } else if (PLAYER_HOSTS.includes(host)) {
+      iframe.setAttribute('loading', 'lazy');
     }
   }
 
