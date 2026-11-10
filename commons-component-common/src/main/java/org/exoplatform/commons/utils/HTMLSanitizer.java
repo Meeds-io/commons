@@ -306,7 +306,8 @@ abstract public class HTMLSanitizer {
                                                                                                                                 .globally()
                                                                                                                                 .allowAttributes("data-role")
                                                                                                                                 .globally()
-                                                                                                                                // the text equivalent of an emoji
+                                                                                                                                // the text equivalent of an emoji. Allowed on any span: the policy cannot match children, so a span
+                                                                                                                                // wrapping a link could relabel it for screen readers, which an author can already do with the link text
                                                                                                                                 .allowAttributes("role")
                                                                                                                                 .matching(IMAGE_ROLE)
                                                                                                                                 .onElements("span")
