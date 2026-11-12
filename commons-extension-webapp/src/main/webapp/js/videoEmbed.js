@@ -25,7 +25,9 @@
  * in the default iframe allowlist of the HTML sanitizers
  * (io.meeds.sanitizer.iframe.allowedHosts). The video id is matched against
  * the provider's id alphabet only, so nothing else from the URL reaches the
- * iframe src.
+ * iframe src. Where content is rendered, a player shows as a click-to-play
+ * facade, so a page with several videos loads none of them until one is
+ * played.
  */
 (function() {
   const YOUTUBE_HOSTS = ['youtube.com', 'www.youtube.com', 'm.youtube.com', 'music.youtube.com', 'youtube-nocookie.com', 'www.youtube-nocookie.com'];
@@ -197,11 +199,120 @@
     }
   }
 
+  function escapeAttribute(value) {
+    return value.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  function getAutoplayUrl(playerUrl) {
+    const autoplayUrl = new URL(playerUrl);
+    autoplayUrl.searchParams.set('autoplay', '1');
+    return autoplayUrl.toString();
+  }
+
+  // A saved src as it is, protocol-relative included, set to start
+  function getSavedAutoplayUrl(src) {
+    const parsedUrl = parseUrl(src);
+    return parsedUrl && getAutoplayUrl(parsedUrl.toString());
+  }
+
+  // A thumbnail and a play button. Built from the canonical player URL only:
+  // its id, start time and hash have been matched against the provider's
+  // alphabet. The click is handled by playOnClick; the link, opening the
+  // player in a new tab, is only its fallback.
+  function getFacadeHtml(playerUrl) {
+    const youtubeId = new URL(playerUrl).hostname === 'www.youtube-nocookie.com' && pathSegments(new URL(playerUrl))[1];
+    const background = youtubeId ? `#000 url(https://i.ytimg.com/vi/${youtubeId}/hqdefault.jpg) center/cover no-repeat` : '#000';
+    const label = youtubeId ? 'YouTube' : 'Vimeo';
+    return '<!doctype html><html style="height:100%"><body style="margin:0;height:100%">'
+      + `<a href="${escapeAttribute(getAutoplayUrl(playerUrl))}" target="_blank" rel="noopener" aria-label="${label}" style="display:flex;align-items:center;justify-content:center;width:100%;height:100%;background:${background};text-decoration:none">`
+      + '<span style="display:flex;align-items:center;justify-content:center;width:68px;height:48px;border-radius:12px;background:rgba(0,0,0,0.7)">'
+      + '<span style="width:0;height:0;border-style:solid;border-width:10px 0 10px 18px;border-color:transparent transparent transparent #fff"></span>'
+      + '</span></a></body></html>';
+  }
+
+  /**
+   * Shows a YouTube or Vimeo player iframe as a click-to-play facade: the
+   * iframe's srcdoc, which wins over its src, holds the video's thumbnail (a
+   * Vimeo one once its oEmbed endpoint has returned it) and a play button, so
+   * until the reader clicks the page loads from the provider only the
+   * thumbnail, and for Vimeo the oEmbed answer that names it; the click then
+   * loads the player in the same iframe, started (playOnClick). An iframe whose src is not a
+   * supported video is left unchanged. Meant for an HTML sanitizer's
+   * afterSanitizeAttributes hook, once its iframe host check has passed: the
+   * sanitizer would remove the srcdoc attribute.
+   *
+   * @param {Element} iframe a sanitized iframe
+   */
+  function usePlayerFacade(iframe) {
+    if (iframe?.nodeName !== 'IFRAME') {
+      return;
+    }
+    const playerUrl = getPlayerUrl(iframe.getAttribute('src'));
+    if (playerUrl) {
+      iframe.setAttribute('srcdoc', getFacadeHtml(playerUrl));
+    }
+  }
+
+  // A Vimeo thumbnail is not derived from the video id: the facade shows it
+  // once Vimeo's oEmbed endpoint has returned it, and stays black otherwise.
+  // Only an image of Vimeo's CDN is used.
+  const VIMEO_THUMBNAIL = /^https:\/\/i\.vimeocdn\.com\/video\/[A-Za-z0-9_.-]+(\?[A-Za-z0-9_.=&-]*)?$/;
+  function showVimeoThumbnail(facade, playerUrl) {
+    const parsedUrl = new URL(playerUrl);
+    const link = facade.querySelector('a');
+    if (parsedUrl.hostname !== 'player.vimeo.com' || !link) {
+      return;
+    }
+    const videoId = pathSegments(parsedUrl)[1];
+    const hash = parsedUrl.searchParams.get('h');
+    const pageUrl = hash ? `https://vimeo.com/${videoId}/${hash}` : `https://vimeo.com/${videoId}`;
+    fetch(`https://vimeo.com/api/oembed.json?width=640&url=${encodeURIComponent(pageUrl)}`, {credentials: 'omit'})
+      .then(response => (response.ok ? response.json() : null))
+      .then(data => {
+        if (VIMEO_THUMBNAIL.test(data?.thumbnail_url || '')) {
+          link.style.background = `#000 url("${data.thumbnail_url}") center/cover no-repeat`;
+        }
+      })
+      .catch(() => {
+        // The facade stays black
+      });
+  }
+
+  // Once a facade has loaded, a click on it points the iframe at the player,
+  // started, and removes the srcdoc, so the iframe loads the player. The page
+  // navigates the iframe itself: a player loaded by a link inside the srcdoc
+  // document is not started, and Vimeo's refuses to play. The facade document
+  // has the page's origin, a srcdoc one without sandbox, so its click can be
+  // listened to. A load event does not bubble: it is caught while capturing.
+  function playOnClick(event) {
+    const iframe = event.target;
+    if (iframe?.nodeName !== 'IFRAME' || !iframe.hasAttribute('srcdoc')) {
+      return;
+    }
+    const playerUrl = getPlayerUrl(iframe.getAttribute('src'));
+    const facade = playerUrl && iframe.contentDocument;
+    if (facade) {
+      showVimeoThumbnail(facade, playerUrl);
+      facade.addEventListener('click', clickEvent => {
+        clickEvent.preventDefault();
+        // The iframe's own src, which the host check kept, with every
+        // parameter its author saved: only the srcdoc needs the canonical URL
+        iframe.setAttribute('src', getSavedAutoplayUrl(iframe.getAttribute('src')) || getAutoplayUrl(playerUrl));
+        if (!iframe.hasAttribute('allow')) {
+          iframe.setAttribute('allow', 'autoplay; encrypted-media; fullscreen; picture-in-picture');
+        }
+        iframe.removeAttribute('srcdoc');
+      }, {once: true});
+    }
+  }
+  document.addEventListener('load', playOnClick, true);
+
   const videoEmbed = {
     getPlayerUrl,
     getPlayerHtml,
     handleEmbedResponse,
     usePlayerInSavedEmbed,
+    usePlayerFacade,
   };
   // Read as a global by the CKEditor plugins, which are not AMD modules
   window.eXo = window.eXo || {};
