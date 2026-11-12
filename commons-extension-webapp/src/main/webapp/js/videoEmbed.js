@@ -209,22 +209,37 @@
     return autoplayUrl.toString();
   }
 
-  // A saved src as it is, protocol-relative included, set to start
+  // A saved src as it is, protocol-relative included, set to start, when it
+  // is already a player: a YouTube page (watch, shorts…) refuses to be framed
   function getSavedAutoplayUrl(src) {
     const parsedUrl = parseUrl(src);
-    return parsedUrl && getAutoplayUrl(parsedUrl.toString());
+    const host = parsedUrl?.hostname.toLowerCase();
+    const segments = parsedUrl ? pathSegments(parsedUrl) : [];
+    const isPlayer = (YOUTUBE_HOSTS.includes(host) && segments[0] === 'embed')
+      || (host === 'player.vimeo.com' && segments[0] === 'video');
+    return isPlayer ? getAutoplayUrl(parsedUrl.toString()) : null;
+  }
+
+  function getProviderName(playerUrl) {
+    return new URL(playerUrl).hostname === 'player.vimeo.com' ? 'Vimeo' : 'YouTube';
+  }
+
+  // The label of the play control, "{0}" standing for the provider's name;
+  // the provider's name alone without one
+  function getPlayLabel(playerUrl, labelTemplate) {
+    const providerName = getProviderName(playerUrl);
+    return typeof labelTemplate === 'string' && labelTemplate.includes('{0}') ? labelTemplate.replace('{0}', providerName) : providerName;
   }
 
   // A thumbnail and a play button. Built from the canonical player URL only:
   // its id, start time and hash have been matched against the provider's
   // alphabet. The click is handled by playOnClick; the link, opening the
   // player in a new tab, is only its fallback.
-  function getFacadeHtml(playerUrl) {
-    const youtubeId = new URL(playerUrl).hostname === 'www.youtube-nocookie.com' && pathSegments(new URL(playerUrl))[1];
+  function getFacadeHtml(playerUrl, label) {
+    const youtubeId = getProviderName(playerUrl) === 'YouTube' && pathSegments(new URL(playerUrl))[1];
     const background = youtubeId ? `#000 url(https://i.ytimg.com/vi/${youtubeId}/hqdefault.jpg) center/cover no-repeat` : '#000';
-    const label = youtubeId ? 'YouTube' : 'Vimeo';
     return '<!doctype html><html style="height:100%"><body style="margin:0;height:100%">'
-      + `<a href="${escapeAttribute(getAutoplayUrl(playerUrl))}" target="_blank" rel="noopener" aria-label="${label}" style="display:flex;align-items:center;justify-content:center;width:100%;height:100%;background:${background};text-decoration:none">`
+      + `<a href="${escapeAttribute(getAutoplayUrl(playerUrl))}" target="_blank" rel="noopener" aria-label="${escapeAttribute(label)}" style="display:flex;align-items:center;justify-content:center;width:100%;height:100%;background:${background};text-decoration:none">`
       + '<span style="display:flex;align-items:center;justify-content:center;width:68px;height:48px;border-radius:12px;background:rgba(0,0,0,0.7)">'
       + '<span style="width:0;height:0;border-style:solid;border-width:10px 0 10px 18px;border-color:transparent transparent transparent #fff"></span>'
       + '</span></a></body></html>';
@@ -236,20 +251,26 @@
    * Vimeo one once its oEmbed endpoint has returned it) and a play button, so
    * until the reader clicks the page loads from the provider only the
    * thumbnail, and for Vimeo the oEmbed answer that names it; the click then
-   * loads the player in the same iframe, started (playOnClick). An iframe whose src is not a
+   * loads the player in the same iframe, started (playOnClick). The play
+   * control's label is also the iframe's title. An iframe whose src is not a
    * supported video is left unchanged. Meant for an HTML sanitizer's
    * afterSanitizeAttributes hook, once its iframe host check has passed: the
    * sanitizer would remove the srcdoc attribute.
    *
    * @param {Element} iframe a sanitized iframe
+   * @param {String} labelTemplate the translated label of the play control,
+   *          "{0}" standing for the provider's name (YouTube, Vimeo); the
+   *          provider's name alone when it is not given
    */
-  function usePlayerFacade(iframe) {
+  function usePlayerFacade(iframe, labelTemplate) {
     if (iframe?.nodeName !== 'IFRAME') {
       return;
     }
     const playerUrl = getPlayerUrl(iframe.getAttribute('src'));
     if (playerUrl) {
-      iframe.setAttribute('srcdoc', getFacadeHtml(playerUrl));
+      const label = getPlayLabel(playerUrl, labelTemplate);
+      iframe.setAttribute('srcdoc', getFacadeHtml(playerUrl, label));
+      iframe.setAttribute('title', label);
     }
   }
 
