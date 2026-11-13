@@ -18,10 +18,15 @@
  */
 package org.mortbay.cometd.continuation;
 
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.util.Set;
 
 import org.cometd.oort.Oort;
+import org.cometd.oort.Seti;
 import org.junit.Test;
 
 public class EXoContinuationBayeuxTest {
@@ -49,5 +54,15 @@ public class EXoContinuationBayeuxTest {
     bayeux.observeChannel(CHANNEL);
 
     verify(oort).observeChannel(CHANNEL);
+  }
+
+  @Test
+  public void testTheUsersConnectedToAnotherNodeAreConnectedUsers() {
+    EXoContinuationBayeux bayeux = new EXoContinuationBayeux();
+    Seti seti = mock(Seti.class);
+    when(seti.getUserIds()).thenReturn(Set.of("john"));
+    bayeux.setSeti(seti);
+
+    assertTrue(bayeux.getConnectedUserIds().contains("john"));
   }
 }

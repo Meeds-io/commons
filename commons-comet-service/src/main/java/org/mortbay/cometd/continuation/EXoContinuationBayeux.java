@@ -61,7 +61,7 @@ public class EXoContinuationBayeux extends BayeuxServerImpl implements Disposabl
    */
   private ServerSessionImpl               systemClient;
 
-  private Seti                            seti;
+  private volatile Seti                   seti;
 
   private volatile Oort                   oort;
 
@@ -373,7 +373,19 @@ public class EXoContinuationBayeux extends BayeuxServerImpl implements Disposabl
     }
   }
 
+  /**
+   * @return the users connected to this node and, in a cluster, to the other
+   *         nodes, as Seti knows them: a message sent to one of them with
+   *         {@link #sendMessage(String, String, Object, String)} reaches the
+   *         node the user is connected to
+   */
   public Set<String> getConnectedUserIds() {
-    return clientIDs.keySet();
+    Seti currentSeti = seti;
+    if (currentSeti == null) {
+      return clientIDs.keySet();
+    }
+    Set<String> userIds = new HashSet<>(clientIDs.keySet());
+    userIds.addAll(currentSeti.getUserIds());
+    return userIds;
   }
 }
