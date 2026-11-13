@@ -63,7 +63,12 @@ public class EXoContinuationBayeux extends BayeuxServerImpl implements Disposabl
 
   private Seti                            seti;
 
-  private Oort                            oort;
+  private volatile Oort                   oort;
+
+  /**
+   * The channels the services asked Oort to observe, kept until Oort is set
+   */
+  private final Set<String>               observedChannels  = ConcurrentHashMap.newKeySet();
 
   private ServletConfig                   servletConfig;
 
@@ -220,6 +225,28 @@ public class EXoContinuationBayeux extends BayeuxServerImpl implements Disposabl
 
   public void setOort(Oort oort) {
     this.oort = oort;
+    if (oort != null) {
+      observedChannels.forEach(oort::observeChannel);
+    }
+  }
+
+  /**
+   * Relays to this node the messages published on the given channels on the
+   * other nodes of a cluster, as Oort does for the channels its configuration
+   * names. A channel a service publishes on with no session of this node's
+   * subscribed to it, such as a document's channel published on by the node
+   * that receives a third party's callback, reaches the users of the other
+   * nodes only so. May be called before Oort is set.
+   *
+   * @param channel a broadcast channel, or a pattern of them such as
+   *          <code>/a/b/**</code>
+   */
+  public void observeChannel(String channel) {
+    observedChannels.add(channel);
+    Oort currentOort = oort;
+    if (currentOort != null) {
+      currentOort.observeChannel(channel);
+    }
   }
 
   public void setCloudIDSeparator(String cloudIDSeparator) {
