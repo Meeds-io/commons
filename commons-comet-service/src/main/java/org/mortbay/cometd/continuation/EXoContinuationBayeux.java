@@ -21,6 +21,8 @@ package org.mortbay.cometd.continuation;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Consumer;
 
 import jakarta.servlet.ServletConfig;
 
@@ -61,9 +63,16 @@ public class EXoContinuationBayeux extends BayeuxServerImpl implements Disposabl
    */
   private ServerSessionImpl               systemClient;
 
-  private Seti                            seti;
+  private volatile Seti                   seti;
 
-  private Oort                            oort;
+  private volatile Oort                   oort;
+
+  /**
+   * The channels the services asked Oort to observe, kept until Oort is set
+   */
+  private final Set<String>               observedChannels  = ConcurrentHashMap.newKeySet();
+
+  private final List<Consumer<Oort>>      oortActions       = new CopyOnWriteArrayList<>();
 
   private ServletConfig                   servletConfig;
 
@@ -168,20 +177,20 @@ public class EXoContinuationBayeux extends BayeuxServerImpl implements Disposabl
   }
 
   /**
+   * Publishes a message on a channel, even when no session of this node is
+   * subscribed to it: the subscribers of a pattern that matches the channel,
+   * such as the other nodes of a cluster that observe it, receive it too.
+   *
    * @param channel the id of channel.
    * @param data the message
    * @param msgId the message id
    */
   public void sendBroadcastMessage(String channel, Object data, String msgId) {
     ServerSessionImpl fromClient = getSystemClient();
-    ServerChannel ch = getChannel(channel);
-    if (ch != null) {
-      ch.publish(fromClient, data, Promise.noop());
-      if (LOG.isDebugEnabled())
-        LOG.debug("Send broadcast message " + data.toString() + " on channel " + channel);
-    } else {
-      if (LOG.isDebugEnabled())
-        LOG.debug("Message " + data.toString() + " not send. Channel " + channel + " not exist!");
+    ServerChannel ch = createChannelIfAbsent(channel).getReference();
+    ch.publish(fromClient, data, Promise.noop());
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Send broadcast message " + data + " on channel " + channel);
     }
   }
 
@@ -218,8 +227,66 @@ public class EXoContinuationBayeux extends BayeuxServerImpl implements Disposabl
     this.seti = seti;
   }
 
-  public void setOort(Oort oort) {
+  public synchronized void setOort(Oort oort) {
     this.oort = oort;
+    if (oort != null) {
+      observedChannels.forEach(oort::observeChannel);
+      oortActions.forEach(action -> run(action, oort));
+    }
+  }
+
+  /**
+   * Runs an action with this node's Oort once it is set, at once when it is
+   * set already: a service that starts before the CometD servlet reaches the
+   * other nodes of a cluster so, such as to learn when one leaves.
+   *
+   * @param action the action, given this node's Oort
+   */
+  public synchronized void onOort(Consumer<Oort> action) {
+    oortActions.add(action);
+    Oort currentOort = oort;
+    if (currentOort != null) {
+      run(action, currentOort);
+    }
+  }
+
+  private void run(Consumer<Oort> action, Oort currentOort) {
+    try {
+      action.accept(currentOort);
+    } catch (RuntimeException e) {
+      LOG.warn("Error while running an action on the Oort of node {}", currentOort.getURL(), e);
+    }
+  }
+
+  /**
+   * Relays to this node the messages published on the given channels on the
+   * other nodes of a cluster, as Oort does for the channels its configuration
+   * names. A channel a service publishes on with no session of this node's
+   * subscribed to it, such as a document's channel published on by the node
+   * that receives a third party's callback, reaches the users of the other
+   * nodes only so. May be called before Oort is set.
+   *
+   * @param channel a broadcast channel, or a pattern of them such as
+   *          <code>/a/b/**</code>
+   */
+  public void observeChannel(String channel) {
+    observedChannels.add(channel);
+    Oort currentOort = oort;
+    if (currentOort != null) {
+      currentOort.observeChannel(channel);
+    }
+  }
+
+  /**
+   * @param sender the session that published a message
+   * @return true when the message was published on another node and relayed
+   *         to this one by Oort: a handler acting on a client's message acts
+   *         only on the node the client published it to, or it acts once per
+   *         node of a cluster
+   */
+  public boolean isRelayed(ServerSession sender) {
+    Oort currentOort = oort;
+    return currentOort != null && currentOort.isOort(sender);
   }
 
   public void setCloudIDSeparator(String cloudIDSeparator) {
@@ -346,7 +413,19 @@ public class EXoContinuationBayeux extends BayeuxServerImpl implements Disposabl
     }
   }
 
+  /**
+   * @return the users connected to this node and, in a cluster, to the other
+   *         nodes, as Seti knows them: a message sent to one of them with
+   *         {@link #sendMessage(String, String, Object, String)} reaches the
+   *         node the user is connected to
+   */
   public Set<String> getConnectedUserIds() {
-    return clientIDs.keySet();
+    Seti currentSeti = seti;
+    if (currentSeti == null) {
+      return clientIDs.keySet();
+    }
+    Set<String> userIds = new HashSet<>(clientIDs.keySet());
+    userIds.addAll(currentSeti.getUserIds());
+    return userIds;
   }
 }
