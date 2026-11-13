@@ -41,10 +41,12 @@ import org.cometd.client.http.jetty.JettyHttpClientTransport;
 import org.cometd.oort.Oort;
 import org.cometd.oort.Seti;
 import org.eclipse.jetty.client.HttpClient;
+import org.exoplatform.commons.api.settings.SettingService;
 import org.exoplatform.commons.utils.PropertyManager;
 import org.exoplatform.container.ExoContainer;
 import org.exoplatform.container.PortalContainer;
 import org.exoplatform.container.RootContainer.PortalContainerPostInitTask;
+import org.exoplatform.services.cache.CacheService;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 import org.exoplatform.ws.frameworks.cometd.ServletContextWrapper;
@@ -60,6 +62,8 @@ public class EXoContinuationCometdServlet extends CometDServlet {
   private static final long     serialVersionUID   = 9204910608302112814L;
   
   private static final Log      LOG                = ExoLogger.getLogger(CometDServlet.class);
+
+  private static final long     OORT_SECRET_SETTLE_MILLIS = 5000;
 
   private SetiServlet           setiConfig;
   
@@ -166,7 +170,7 @@ public class EXoContinuationCometdServlet extends CometDServlet {
 
       EXoContinuationBayeux bayeux = (EXoContinuationBayeux) getBayeux();
       bayeux.setSeti(seti);
-      bayeux.setOort(oort);
+      applyOortTrust(bayeux, oort, clusterEnabled);
 
       String separator = getInitParameter(CLOUD_ID_SEPARATOR);
       if (separator != null) {
@@ -264,6 +268,70 @@ public class EXoContinuationCometdServlet extends CometDServlet {
     return oort;
   }
   
+  /**
+   * @param clusterEnabled whether the node runs with the cluster profile
+   * @param secret the secret the nodes of the cluster share
+   * @return true when the other nodes of the cluster may be trusted: in a
+   *         cluster, with a secret that is neither blank nor the public
+   *         default one
+   */
+  static boolean isOortTrusted(boolean clusterEnabled, String secret) {
+    return clusterEnabled && OortSecretResolver.isOwnSecret(secret);
+  }
+
+  /**
+   * Sets the Oort on the bayeux, and whether the other nodes of the cluster are
+   * trusted, from the secret the Oort itself holds.
+   *
+   * @param bayeux the bayeux of this node
+   * @param oort the Oort of this node
+   * @param clusterEnabled whether the node runs with the cluster profile
+   * @return whether the other nodes of the cluster are trusted
+   */
+  static boolean applyOortTrust(EXoContinuationBayeux bayeux, Oort oort, boolean clusterEnabled) {
+    boolean oortTrusted = oort != null && isOortTrusted(clusterEnabled, oort.getSecret());
+    bayeux.setOort(oort);
+    bayeux.setOortTrusted(oortTrusted);
+    return oortTrusted;
+  }
+
+  /**
+   * Prepares the Oort of this node before it starts and connects to the other
+   * nodes: the secret they share, then the Oort and the trust on the bayeux.
+   */
+  private void prepareOort(Oort oort) {
+    applyClusterSecret(oort);
+    if (!applyOortTrust((EXoContinuationBayeux) getBayeux(), oort, clusterEnabled) && clusterEnabled) {
+      LOG.error("No secret shared by the nodes of the cluster could be resolved: this node refuses the other nodes and live updates are not relayed between nodes. Set {}oort.secret to the same random value on every node.",
+                PREFIX);
+    }
+  }
+
+  /**
+   * Sets on the Oort of a cluster node the secret its nodes share, before it
+   * connects to them: the configured one when it is the deployment's own,
+   * otherwise the one stored in the global settings.
+   */
+  private void applyClusterSecret(Oort oort) {
+    if (!clusterEnabled) {
+      return;
+    }
+    try {
+      SettingService settingService = container.getComponentInstanceOfType(SettingService.class);
+      CacheService cacheService = container.getComponentInstanceOfType(CacheService.class);
+      String secret = new OortSecretResolver(container, settingService, cacheService, OORT_SECRET_SETTLE_MILLIS)
+                                                                                         .resolve(getInitParameter(OortConfigServlet.OORT_SECRET_PARAM));
+      if (OortSecretResolver.isOwnSecret(secret)) {
+        oort.setSecret(secret);
+      }
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      LOG.error("Interrupted while resolving the secret shared by the nodes of the cluster", e);
+    } catch (RuntimeException e) {
+      LOG.error("Cannot resolve the secret shared by the nodes of the cluster", e);
+    }
+  }
+
   private void warnInvalidUrl(String url) {
     if (url == null || url.isEmpty()) {
       LOG.warn("You didn’t set exo.cometd.oort.url, cometd cannot work in cluster mode without this property, please set it.");
@@ -281,6 +349,12 @@ public class EXoContinuationCometdServlet extends CometDServlet {
 
     
     @Override
+    protected void configureOort(ServletConfig config, Oort oort) throws Exception {
+      super.configureOort(config, oort);
+      prepareOort(oort);
+    }
+
+    @Override
     protected void configureCloud(ServletConfig config, Oort oort) {
       if (clusterEnabled) {
         super.configureCloud(config, oort);
@@ -297,6 +371,12 @@ public class EXoContinuationCometdServlet extends CometDServlet {
   public class OortMulticastConfig extends OortMulticastConfigServlet {
     private static final long serialVersionUID = 6836833932474627776L;
     
+    @Override
+    protected void configureOort(ServletConfig config, Oort oort) throws Exception {
+      super.configureOort(config, oort);
+      prepareOort(oort);
+    }
+
     @Override
     protected void configureCloud(ServletConfig config, Oort oort) throws Exception {
       if (clusterEnabled) {
