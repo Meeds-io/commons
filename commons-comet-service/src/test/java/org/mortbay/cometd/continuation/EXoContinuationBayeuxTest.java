@@ -18,17 +18,23 @@
  */
 package org.mortbay.cometd.continuation;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
 
+import org.cometd.bayeux.server.LocalSession;
 import org.cometd.bayeux.server.ServerSession;
 import org.cometd.oort.Oort;
 import org.cometd.oort.Seti;
+import org.cometd.server.BayeuxServerImpl;
+import org.cometd.server.http.JSONHttpTransport;
 import org.junit.Test;
 
 public class EXoContinuationBayeuxTest {
@@ -81,5 +87,25 @@ public class EXoContinuationBayeuxTest {
 
     assertTrue(bayeux.isRelayed(oortSession));
     assertFalse(bayeux.isRelayed(clientSession));
+  }
+
+  @Test
+  public void testABroadcastReachesTheSubscribersOfAPatternThatMatchesItsChannel() throws Exception {
+    EXoContinuationBayeux bayeux = new EXoContinuationBayeux();
+    bayeux.setOption(BayeuxServerImpl.TRANSPORTS_OPTION, JSONHttpTransport.class.getName());
+    bayeux.start();
+    try {
+      // As another node's Oort client, subscribed to the pattern only
+      List<Object> received = new CopyOnWriteArrayList<>();
+      LocalSession otherNode = bayeux.newLocalSession("otherNode");
+      otherNode.handshake();
+      otherNode.getChannel(CHANNEL).subscribe((channel, message) -> received.add(message.getData()));
+
+      bayeux.sendBroadcastMessage("/eXo/Application/Test/document/42", "saved", null);
+
+      assertEquals(List.of("saved"), received);
+    } finally {
+      bayeux.stop();
+    }
   }
 }

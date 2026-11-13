@@ -173,20 +173,20 @@ public class EXoContinuationBayeux extends BayeuxServerImpl implements Disposabl
   }
 
   /**
+   * Publishes a message on a channel, even when no session of this node is
+   * subscribed to it: the subscribers of a pattern that matches the channel,
+   * such as the other nodes of a cluster that observe it, receive it too.
+   *
    * @param channel the id of channel.
    * @param data the message
    * @param msgId the message id
    */
   public void sendBroadcastMessage(String channel, Object data, String msgId) {
     ServerSessionImpl fromClient = getSystemClient();
-    ServerChannel ch = getChannel(channel);
-    if (ch != null) {
-      ch.publish(fromClient, data, Promise.noop());
-      if (LOG.isDebugEnabled())
-        LOG.debug("Send broadcast message " + data.toString() + " on channel " + channel);
-    } else {
-      if (LOG.isDebugEnabled())
-        LOG.debug("Message " + data.toString() + " not send. Channel " + channel + " not exist!");
+    ServerChannel ch = createChannelIfAbsent(channel).getReference();
+    ch.publish(fromClient, data, Promise.noop());
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Send broadcast message " + data + " on channel " + channel);
     }
   }
 
