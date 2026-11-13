@@ -97,6 +97,22 @@ public class UserStateServiceTest extends BaseCommonsTestCase {
     assertEquals(status, onlines.get(0).getStatus());
   }
 
+  public void testOnlineReadsTheStoredStatusOnACacheMiss() throws Exception {
+    userStateService.saveStatus(SUPER_USER, UserStateService.INVISIBLE);
+    // A node that starts holds no status in its cache
+    userStateService.clearCache();
+    when(continuationService.getConnectedUserIds()).thenReturn(Collections.singleton(SUPER_USER));
+
+    assertEquals(0, userStateService.online().size());
+
+    userStateService.saveStatus(SUPER_USER, "doNotDisturb");
+    userStateService.clearCache();
+
+    List<UserStateModel> onlines = userStateService.online();
+    assertEquals(1, onlines.size());
+    assertEquals("doNotDisturb", onlines.get(0).getStatus());
+  }
+
   public void testLastLogin() {
     assertNull(userStateService.lastLogin());
     loginUser("user1", true);
