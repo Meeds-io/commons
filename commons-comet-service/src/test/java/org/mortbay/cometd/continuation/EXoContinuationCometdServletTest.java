@@ -18,7 +18,9 @@
  */
 package org.mortbay.cometd.continuation;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Map;
@@ -72,5 +74,13 @@ class EXoContinuationCometdServletTest {
     assertTrue(new EXoContinuationBayeux.EXoSecurityPolicy(bayeux).canHandshake(bayeux,
                                                                                Mockito.mock(ServerSession.class),
                                                                                handshake));
+  }
+
+  @Test
+  void testASecretPropertyValueIsNeverLogged() {
+    assertEquals("******", EXoContinuationCometdServlet.loggedValue("exo.cometd.oort.secret", "a-deployment-secret"));
+    assertEquals("******", EXoContinuationCometdServlet.loggedValue("exo.cometd.Oort.Secret", "a-deployment-secret"));
+    assertEquals("http://node1:8080/cometd/cometd", EXoContinuationCometdServlet.loggedValue("exo.cometd.oort.url", "http://node1:8080/cometd/cometd"));
+    assertNull(EXoContinuationCometdServlet.loggedValue("exo.cometd.oort.secret", null));
   }
 }

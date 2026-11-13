@@ -32,6 +32,7 @@ import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Properties;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -395,6 +396,15 @@ public class EXoContinuationCometdServlet extends CometDServlet {
     }
   }
   
+  /**
+   * @param propertyName the name of a cometd property
+   * @param value its value
+   * @return the value to log: masked when the property is a secret
+   */
+  static String loggedValue(String propertyName, String value) {
+    return value != null && propertyName.toLowerCase(Locale.ROOT).contains("secret") ? "******" : value;
+  }
+
   private class ServletConfigWrapper implements ServletConfig {
     private ServletConfig delegate;
     private ServletContext contextWrapper;
@@ -410,10 +420,10 @@ public class EXoContinuationCometdServlet extends CometDServlet {
       String propertyName = PREFIX + name;
       String value = PropertyManager.getProperty(propertyName);
 
-      LOG.debug("Reading cometd property {} from JVM properties, value = {}", propertyName, value);
+      LOG.debug("Reading cometd property {} from JVM properties, value = {}", propertyName, loggedValue(propertyName, value));
       if (value == null) {
         value = delegate.getInitParameter(name);
-        LOG.debug("Reading cometd property {} from Servlet init params, value = {}", propertyName, value);
+        LOG.debug("Reading cometd property {} from Servlet init params, value = {}", propertyName, loggedValue(propertyName, value));
       }
       return value;
     }
