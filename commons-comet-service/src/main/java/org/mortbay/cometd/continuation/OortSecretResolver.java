@@ -96,8 +96,10 @@ class OortSecretResolver {
    *         one may fail: a node that stored, or tried to, waits for the other
    *         stores to land, drops what its settings cache holds and reads the
    *         database, so that every node keeps the value the database kept.
-   *         A stored value this node cannot decode is never replaced: the
-   *         node resolves no secret instead.
+   *         A stored value the codec refuses, or that decodes to no own
+   *         secret, is never replaced: the node resolves no secret instead.
+   *         The codec does not refuse every value encoded under another key,
+   *         but the nodes of a cluster share one key.
    */
   String resolve(String configuredSecret) throws InterruptedException {
     if (isOwnSecret(configuredSecret)) {
