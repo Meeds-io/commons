@@ -69,10 +69,8 @@ public class UserStateService {
     Set<String> connectedUserIds = continuationService.getConnectedUserIds();
     return connectedUserIds.stream()
                            .map(userId -> {
-                             String status = userStateCache.get(userId);
-                             if (status == null) {
-                               status = DEFAULT_STATUS;
-                             } else if (STATUS_OFFLINE.equals(status) || INVISIBLE.equals(status)) {
+                             String status = getStatus(userId);
+                             if (STATUS_OFFLINE.equals(status) || INVISIBLE.equals(status)) {
                                return null;
                              }
                              return new UserStateModel(userId, lastActivity, status);
@@ -102,8 +100,22 @@ public class UserStateService {
     if (!online) {
       return new UserStateModel(userId, 0, STATUS_OFFLINE);
     }
+    return new UserStateModel(userId, System.currentTimeMillis(), getStatus(userId));
+  }
+
+  /**
+   * Reads the status a user chose: from the cache, else from the stored
+   * setting, which a node that has not seen the user's choice yet still
+   * holds
+   *
+   * @param userId user name
+   * @return the status the user chose, or the default status
+   */
+  private String getStatus(String userId) {
     String status = userStateCache.get(userId);
     if (status == null) {
+      // A user who never chose a status costs one settings read per miss,
+      // which the settings cache answers once it holds the user's absence
       SettingValue<?> settingValue = settingService.get(Context.USER.id(userId), USER_STATE_SCOPE, USER_STATUS);
       if (settingValue != null && settingValue.getValue() != null) {
         status = settingValue.getValue().toString();
@@ -112,7 +124,7 @@ public class UserStateService {
         status = DEFAULT_STATUS;
       }
     }
-    return new UserStateModel(userId, System.currentTimeMillis(), status);
+    return status;
   }
 
   /**

@@ -120,12 +120,7 @@ public class CachedWebNotificationStorage implements WebNotificationStorage {
   @Override
   public void hidePopover(String notificationId) {
     storage.hidePopover(notificationId);
-
-    // update data showPopover
-    NotificationInfo infoData = webNotificationCache.get(WebNotifInfoCacheKey.key(notificationId));
-    if (infoData != null) {
-      updateCacheByUser(infoData.getTo());
-    }
+    updateRead(notificationId);
   }
 
   @Override
@@ -232,6 +227,10 @@ public class CachedWebNotificationStorage implements WebNotificationStorage {
   private void updateRead(String notificationId) {
     WebNotifInfoCacheKey key = WebNotifInfoCacheKey.key(notificationId);
     NotificationInfo infoData = webNotificationCache.get(key);
+    if (infoData == null) {
+      // Another node may hold the notification and the lists of its recipient, whom the store names
+      infoData = storage.get(notificationId);
+    }
     if (infoData != null) {
       updateCacheByUser(infoData.getTo());
     }
@@ -245,19 +244,7 @@ public class CachedWebNotificationStorage implements WebNotificationStorage {
 
   private void clearUserWebNotifications(final String userId) {
     try {
-      webNotificationCache.select(new CachedObjectSelector<WebNotifInfoCacheKey, NotificationInfo>() {
-        @Override
-        public boolean select(WebNotifInfoCacheKey key, ObjectCacheInfo<? extends NotificationInfo> ocinfo) {
-          return ocinfo.get() != null && userId.equals(ocinfo.get().getTo());
-        }
-        
-        @Override
-        public void onSelect(ExoCache<? extends WebNotifInfoCacheKey, ? extends NotificationInfo> cache,
-                             WebNotifInfoCacheKey key,
-                             ObjectCacheInfo<? extends NotificationInfo> ocinfo) throws Exception {
-          cache.remove(key);
-        }
-      });
+      webNotificationCache.select(new WebNotificationsOfUserSelector(userId));
     } catch (Exception e) {
       throw new IllegalStateException("Can't update Notifications List Cache entries for user " + userId, e);
     }
@@ -265,19 +252,7 @@ public class CachedWebNotificationStorage implements WebNotificationStorage {
 
   private void clearUserWebNotificationList(final String userId) {
     try {
-      webNotificationsCache.select(new CachedObjectSelector<ListWebNotificationsKey, ListWebNotificationsData>() {
-        @Override
-        public boolean select(ListWebNotificationsKey key, ObjectCacheInfo<? extends ListWebNotificationsData> ocinfo) {
-          return userId.equals(key.getUserId());
-        }
-
-        @Override
-        public void onSelect(ExoCache<? extends ListWebNotificationsKey, ? extends ListWebNotificationsData> cache,
-                             ListWebNotificationsKey key,
-                             ObjectCacheInfo<? extends ListWebNotificationsData> ocinfo) throws Exception {
-          cache.remove(key);
-        }
-      });
+      webNotificationsCache.select(new WebNotificationListsOfUserSelector(userId));
     } catch (Exception e) {
       throw new IllegalStateException("Can't update Notification Cache entries for user " + userId, e);
     }
