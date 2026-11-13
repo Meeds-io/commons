@@ -131,7 +131,7 @@ class OortSecretResolver {
     } catch (RuntimeException e) {
       LOG.debug("Decoding the secret shared by the nodes of the cluster failed", e);
     }
-    LOG.error("The secret shared by the nodes of the cluster, stored in the global settings, cannot be decoded with this node's codec key: it is left as is");
+    LOG.error("The secret shared by the nodes of the cluster, stored in the global settings, is not a secret this node can use: it is left as is");
     return null;
   }
 
