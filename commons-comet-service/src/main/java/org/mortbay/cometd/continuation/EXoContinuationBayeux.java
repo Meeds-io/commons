@@ -21,6 +21,8 @@ package org.mortbay.cometd.continuation;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Consumer;
 
 import jakarta.servlet.ServletConfig;
 
@@ -69,6 +71,8 @@ public class EXoContinuationBayeux extends BayeuxServerImpl implements Disposabl
    * The channels the services asked Oort to observe, kept until Oort is set
    */
   private final Set<String>               observedChannels  = ConcurrentHashMap.newKeySet();
+
+  private final List<Consumer<Oort>>      oortActions       = new CopyOnWriteArrayList<>();
 
   private ServletConfig                   servletConfig;
 
@@ -223,10 +227,34 @@ public class EXoContinuationBayeux extends BayeuxServerImpl implements Disposabl
     this.seti = seti;
   }
 
-  public void setOort(Oort oort) {
+  public synchronized void setOort(Oort oort) {
     this.oort = oort;
     if (oort != null) {
       observedChannels.forEach(oort::observeChannel);
+      oortActions.forEach(action -> run(action, oort));
+    }
+  }
+
+  /**
+   * Runs an action with this node's Oort once it is set, at once when it is
+   * set already: a service that starts before the CometD servlet reaches the
+   * other nodes of a cluster so, such as to learn when one leaves.
+   *
+   * @param action the action, given this node's Oort
+   */
+  public synchronized void onOort(Consumer<Oort> action) {
+    oortActions.add(action);
+    Oort currentOort = oort;
+    if (currentOort != null) {
+      run(action, currentOort);
+    }
+  }
+
+  private void run(Consumer<Oort> action, Oort currentOort) {
+    try {
+      action.accept(currentOort);
+    } catch (RuntimeException e) {
+      LOG.warn("Error while running an action on the Oort of node {}", currentOort.getURL(), e);
     }
   }
 

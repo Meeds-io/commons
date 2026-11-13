@@ -108,4 +108,35 @@ public class EXoContinuationBayeuxTest {
       bayeux.stop();
     }
   }
+
+  @Test
+  public void testAnActionOnOortRunsOnceOortIsSetAndAtOnceAfter() {
+    EXoContinuationBayeux bayeux = new EXoContinuationBayeux();
+    Oort oort = mock(Oort.class);
+    List<Oort> before = new CopyOnWriteArrayList<>();
+    List<Oort> after = new CopyOnWriteArrayList<>();
+
+    bayeux.onOort(before::add);
+    assertEquals(List.of(), before);
+    bayeux.setOort(oort);
+    bayeux.onOort(after::add);
+
+    assertEquals(List.of(oort), before);
+    assertEquals(List.of(oort), after);
+  }
+
+  @Test
+  public void testAFailedActionOnOortLeavesTheOthersRun() {
+    EXoContinuationBayeux bayeux = new EXoContinuationBayeux();
+    Oort oort = mock(Oort.class);
+    List<Oort> ran = new CopyOnWriteArrayList<>();
+    bayeux.onOort(o -> {
+      throw new IllegalStateException("failed");
+    });
+    bayeux.onOort(ran::add);
+
+    bayeux.setOort(oort);
+
+    assertEquals(List.of(oort), ran);
+  }
 }
