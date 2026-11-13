@@ -49,6 +49,9 @@ import org.exoplatform.container.RootContainer.PortalContainerPostInitTask;
 import org.exoplatform.services.cache.CacheService;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
+import org.exoplatform.web.security.codec.AbstractCodec;
+import org.exoplatform.web.security.codec.CodecInitializer;
+import org.exoplatform.web.security.security.TokenServiceInitializationException;
 import org.exoplatform.ws.frameworks.cometd.ServletContextWrapper;
 import org.cometd.oort.jakarta.OortConfigServlet;
 import org.cometd.oort.jakarta.OortMulticastConfigServlet;
@@ -319,15 +322,16 @@ public class EXoContinuationCometdServlet extends CometDServlet {
     try {
       SettingService settingService = container.getComponentInstanceOfType(SettingService.class);
       CacheService cacheService = container.getComponentInstanceOfType(CacheService.class);
-      String secret = new OortSecretResolver(container, settingService, cacheService, OORT_SECRET_SETTLE_MILLIS)
-                                                                                         .resolve(getInitParameter(OortConfigServlet.OORT_SECRET_PARAM));
+      AbstractCodec codec = container.getComponentInstanceOfType(CodecInitializer.class).getCodec();
+      String secret = new OortSecretResolver(container, settingService, cacheService, codec, OORT_SECRET_SETTLE_MILLIS)
+                                                                                                .resolve(getInitParameter(OortConfigServlet.OORT_SECRET_PARAM));
       if (OortSecretResolver.isOwnSecret(secret)) {
         oort.setSecret(secret);
       }
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
       LOG.error("Interrupted while resolving the secret shared by the nodes of the cluster", e);
-    } catch (RuntimeException e) {
+    } catch (TokenServiceInitializationException | RuntimeException e) {
       LOG.error("Cannot resolve the secret shared by the nodes of the cluster", e);
     }
   }

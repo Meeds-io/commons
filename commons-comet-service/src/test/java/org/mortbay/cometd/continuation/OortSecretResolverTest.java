@@ -20,8 +20,10 @@ package org.mortbay.cometd.continuation;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
@@ -39,6 +41,7 @@ import org.exoplatform.commons.api.settings.data.Context;
 import org.exoplatform.container.ExoContainer;
 import org.exoplatform.services.cache.CacheService;
 import org.exoplatform.services.cache.ExoCache;
+import org.exoplatform.web.security.codec.AbstractCodec;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -51,6 +54,8 @@ import org.mockito.quality.Strictness;
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
 class OortSecretResolverTest {
+
+  private static final String                  ENCODED = "encoded:";
 
   @Mock
   private ExoContainer                         container;
@@ -65,13 +70,24 @@ class OortSecretResolverTest {
   @SuppressWarnings("rawtypes")
   private ExoCache                             settingCache;
 
+  @Mock
+  private AbstractCodec                        codec;
+
   private OortSecretResolver                   resolver;
 
   @BeforeEach
   @SuppressWarnings("unchecked")
   void setUp() {
     when(cacheService.getCacheInstance(OortSecretResolver.SETTING_CACHE)).thenReturn(settingCache);
-    resolver = new OortSecretResolver(container, settingService, cacheService, 0);
+    when(codec.encode(anyString())).thenAnswer(invocation -> ENCODED + invocation.getArgument(0));
+    when(codec.decode(anyString())).thenAnswer(invocation -> {
+      String value = invocation.getArgument(0);
+      if (!value.startsWith(ENCODED)) {
+        throw new IllegalStateException("not encoded with this key");
+      }
+      return value.substring(ENCODED.length());
+    });
+    resolver = new OortSecretResolver(container, settingService, cacheService, codec, 0);
   }
 
   @Test
@@ -82,7 +98,7 @@ class OortSecretResolverTest {
 
   @Test
   void testAStoredSecretIsReadWithoutStoringNorClearingTheCache() throws Exception {
-    stubStored("stored-secret");
+    stubStored(ENCODED + "stored-secret");
 
     assertEquals("stored-secret", resolver.resolve(null));
     verify(settingService, never()).set(any(), any(), any(), any());
@@ -101,7 +117,7 @@ class OortSecretResolverTest {
 
     String secret = resolver.resolve("exo");
 
-    assertEquals(stored.get().getValue(), secret);
+    assertEquals(ENCODED + secret, stored.get().getValue());
     assertTrue(OortSecretResolver.isOwnSecret(secret));
     assertTrue(secret.length() >= 40, secret);
   }
@@ -110,7 +126,7 @@ class OortSecretResolverTest {
   void testAfterStoringTheCacheIsClearedBeforeTheDatabaseIsReadBack() throws Exception {
     when(settingService.get(Context.GLOBAL, OortSecretResolver.SETTING_SCOPE, OortSecretResolver.SETTING_KEY))
                                                                                                              .thenReturn(null)
-                                                                                                             .thenAnswer(invocation -> SettingValue.create("other-node-secret"));
+                                                                                                             .thenAnswer(invocation -> SettingValue.create(ENCODED + "other-node-secret"));
 
     assertEquals("other-node-secret", resolver.resolve(" "));
 
@@ -133,9 +149,9 @@ class OortSecretResolverTest {
     }).when(settingCache).clearCache();
     when(settingService.get(Context.GLOBAL, OortSecretResolver.SETTING_SCOPE, OortSecretResolver.SETTING_KEY))
                                                                                                              .thenReturn(null)
-                                                                                                             .thenAnswer(invocation -> SettingValue.create("other-node-secret"));
+                                                                                                             .thenAnswer(invocation -> SettingValue.create(ENCODED + "other-node-secret"));
 
-    new OortSecretResolver(container, settingService, cacheService, 50).resolve(null);
+    new OortSecretResolver(container, settingService, cacheService, codec, 50).resolve(null);
 
     assertTrue(times[1] - times[0] >= 50_000_000L, "settle delay not waited");
   }
@@ -145,10 +161,46 @@ class OortSecretResolverTest {
     doThrow(new IllegalStateException("duplicate key")).when(settingService).set(any(), any(), any(), any());
     when(settingService.get(Context.GLOBAL, OortSecretResolver.SETTING_SCOPE, OortSecretResolver.SETTING_KEY))
                                                                                                              .thenReturn(null)
-                                                                                                             .thenAnswer(invocation -> SettingValue.create("other-node-secret"));
+                                                                                                             .thenAnswer(invocation -> SettingValue.create(ENCODED + "other-node-secret"));
 
     assertEquals("other-node-secret", resolver.resolve(null));
     verify(settingCache).clearCache();
+  }
+
+  @Test
+  void testAStoredValueThisNodeCannotDecodeIsNeitherUsedNorReplaced() throws Exception {
+    stubStored("stored-secret");
+
+    assertNull(resolver.resolve(null));
+    verify(settingService, never()).set(any(), any(), any(), any());
+    verifyNoInteractions(cacheService);
+  }
+
+  @Test
+  void testAStoredValueThatDecodesToNoOwnSecretIsNotUsed() throws Exception {
+    stubStored(ENCODED + "exo");
+
+    assertNull(resolver.resolve(null));
+    verify(settingService, never()).set(any(), any(), any(), any());
+  }
+
+  @Test
+  void testAReadBackValueThisNodeCannotDecodeIsNotUsed() throws Exception {
+    when(settingService.get(Context.GLOBAL, OortSecretResolver.SETTING_SCOPE, OortSecretResolver.SETTING_KEY))
+                                                                                                             .thenReturn(null)
+                                                                                                             .thenAnswer(invocation -> SettingValue.create("other-node-secret"));
+
+    assertNull(resolver.resolve(null));
+  }
+
+  @Test
+  void testABlankStoredValueIsReplaced() throws Exception {
+    when(settingService.get(Context.GLOBAL, OortSecretResolver.SETTING_SCOPE, OortSecretResolver.SETTING_KEY))
+                                                                                                             .thenAnswer(invocation -> SettingValue.create(" "))
+                                                                                                             .thenAnswer(invocation -> SettingValue.create(ENCODED + "new-secret"));
+
+    assertEquals("new-secret", resolver.resolve(null));
+    verify(settingService).set(any(), any(), any(), any());
   }
 
   @Test
