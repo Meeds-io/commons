@@ -252,7 +252,8 @@
    * until the reader clicks the page loads from the provider only the
    * thumbnail, and for Vimeo the oEmbed answer that names it; the click then
    * loads the player in the same iframe, started (playOnClick). The play
-   * control's label is also the iframe's title. An iframe whose src is not a
+   * control's label is also the iframe's title until the click, which titles
+   * the iframe with the provider's name. An iframe whose src is not a
    * supported video is left unchanged. Meant for an HTML sanitizer's
    * afterSanitizeAttributes hook, once its iframe host check has passed: the
    * sanitizer would remove the srcdoc attribute.
@@ -323,6 +324,8 @@
           iframe.setAttribute('allow', 'autoplay; encrypted-media; fullscreen; picture-in-picture');
         }
         iframe.removeAttribute('srcdoc');
+        // The frame now holds the player, not the play control
+        iframe.setAttribute('title', getProviderName(playerUrl));
       }, {once: true});
     }
   }
