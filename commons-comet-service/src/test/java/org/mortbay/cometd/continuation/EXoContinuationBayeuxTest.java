@@ -18,6 +18,7 @@
  */
 package org.mortbay.cometd.continuation;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -25,6 +26,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.Set;
 
+import org.cometd.bayeux.server.ServerSession;
 import org.cometd.oort.Oort;
 import org.cometd.oort.Seti;
 import org.junit.Test;
@@ -64,5 +66,20 @@ public class EXoContinuationBayeuxTest {
     bayeux.setSeti(seti);
 
     assertTrue(bayeux.getConnectedUserIds().contains("john"));
+  }
+
+  @Test
+  public void testAMessageOortRepublishedIsRelayedAndAClientsIsNot() {
+    EXoContinuationBayeux bayeux = new EXoContinuationBayeux();
+    ServerSession oortSession = mock(ServerSession.class);
+    ServerSession clientSession = mock(ServerSession.class);
+    Oort oort = mock(Oort.class);
+    when(oort.isOort(oortSession)).thenReturn(true);
+    assertFalse(bayeux.isRelayed(oortSession));
+
+    bayeux.setOort(oort);
+
+    assertTrue(bayeux.isRelayed(oortSession));
+    assertFalse(bayeux.isRelayed(clientSession));
   }
 }

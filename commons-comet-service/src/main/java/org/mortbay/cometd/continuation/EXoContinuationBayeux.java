@@ -249,6 +249,18 @@ public class EXoContinuationBayeux extends BayeuxServerImpl implements Disposabl
     }
   }
 
+  /**
+   * @param sender the session that published a message
+   * @return true when the message was published on another node and relayed
+   *         to this one by Oort: a handler acting on a client's message acts
+   *         only on the node the client published it to, or it acts once per
+   *         node of a cluster
+   */
+  public boolean isRelayed(ServerSession sender) {
+    Oort currentOort = oort;
+    return currentOort != null && currentOort.isOort(sender);
+  }
+
   public void setCloudIDSeparator(String cloudIDSeparator) {
     if (cloudIDSeparator != null) {
       this.cloudIDSeparator = cloudIDSeparator;
