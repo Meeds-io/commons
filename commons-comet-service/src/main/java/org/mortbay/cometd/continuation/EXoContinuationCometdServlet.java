@@ -301,7 +301,7 @@ public class EXoContinuationCometdServlet extends CometDServlet {
    */
   private void prepareOort(Oort oort) {
     applyClusterSecret(oort);
-    if (!applyOortTrust((EXoContinuationBayeux) getBayeux(), oort, clusterEnabled) && clusterEnabled) {
+    if (!applyOortTrust(getBayeux(), oort, clusterEnabled) && clusterEnabled) {
       LOG.error("No secret shared by the nodes of the cluster could be resolved: this node refuses the other nodes and live updates are not relayed between nodes. Set {}oort.secret to the same random value on every node.",
                 PREFIX);
     }
