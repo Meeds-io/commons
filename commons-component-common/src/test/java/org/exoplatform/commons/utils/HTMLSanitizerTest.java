@@ -429,4 +429,20 @@ public class HTMLSanitizerTest {
     String input = "<iframe src=\"https://www.youtube.com/embed/x\" allow=\"camera; microphone; geolocation; display-capture; payment; clipboard-write; web-share; accelerometer; gyroscope; usb; midi; screen-wake-lock\"></iframe>";
     assertEquals("<iframe src=\"https://www.youtube.com/embed/x\"></iframe>", HTMLSanitizer.sanitize(input));
   }
+  /**
+   * The policy allows noscript, which a browser running scripts reads as raw
+   * text: markup hidden in an attribute or in the text of a noscript element
+   * never closes it early to reach the page as an element
+   */
+  @Test
+  public void testMarkupHiddenInANoscriptElementNeverEscapesIt() throws Exception {
+    assertEquals("<noscript><p data-role=\"&lt;/noscript&gt;&lt;img src&#61;x onerror&#61;alert(1)&gt;\">t</p></noscript>",
+                 HTMLSanitizer.sanitize("<noscript><p data-role=\"</noscript><img src=x onerror=alert(1)>\">t</p></noscript>"));
+    assertEquals("<noscript></noscript>",
+                 HTMLSanitizer.sanitize("<noscript><img alt=\"</noscript><img src=x onerror=alert(1)>\"></noscript>"));
+    assertEquals("<noscript></noscript>",
+                 HTMLSanitizer.sanitize("<noscript><style></noscript><img src=x onerror=alert(1)></style></noscript>"));
+    assertEquals("<noscript>&lt;/noscript&gt;&lt;img src&#61;x onerror&#61;alert(1)&gt;</noscript>",
+                 HTMLSanitizer.sanitize("<noscript>&lt;/noscript&gt;&lt;img src=x onerror=alert(1)&gt;</noscript>"));
+  }
 }
