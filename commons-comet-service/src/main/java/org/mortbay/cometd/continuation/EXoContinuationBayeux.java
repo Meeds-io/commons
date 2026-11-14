@@ -74,6 +74,13 @@ public class EXoContinuationBayeux extends BayeuxServerImpl implements Disposabl
 
   private final List<Consumer<Oort>>      oortActions       = new CopyOnWriteArrayList<>();
 
+  /**
+   * Whether a handshake or a session of another node of the cluster is
+   * accepted: false unless the node runs in a cluster with its own shared
+   * secret.
+   */
+  private volatile boolean                oortTrusted;
+
   private ServletConfig                   servletConfig;
 
   /**
@@ -289,6 +296,18 @@ public class EXoContinuationBayeux extends BayeuxServerImpl implements Disposabl
     return currentOort != null && currentOort.isOort(sender);
   }
 
+  /**
+   * @param oortTrusted whether handshakes and sessions of the other nodes of
+   *          the cluster are accepted
+   */
+  public void setOortTrusted(boolean oortTrusted) {
+    this.oortTrusted = oortTrusted;
+  }
+
+  public boolean isOortTrusted() {
+    return oortTrusted;
+  }
+
   public void setCloudIDSeparator(String cloudIDSeparator) {
     if (cloudIDSeparator != null) {
       this.cloudIDSeparator = cloudIDSeparator;
@@ -362,8 +381,12 @@ public class EXoContinuationBayeux extends BayeuxServerImpl implements Disposabl
      */
     @Override
     public boolean canHandshake(BayeuxServer server, ServerSession client, ServerMessage message) {
-      if (client.isLocalSession() || bayeux.oort.isOortHandshake(message)) {
+      if (client.isLocalSession()) {
         return true;
+      } else if (isOortHandshakeAttempt(message)) {
+        // Another node of the cluster proves itself with the cluster secret,
+        // never with a user's token
+        return isTrustedOortHandshake(message);
       } else if (checkUser(message)) {
         client.addListener(this);
 
@@ -395,7 +418,20 @@ public class EXoContinuationBayeux extends BayeuxServerImpl implements Disposabl
      */
     @Override
     public boolean canSubscribe(BayeuxServer server, ServerSession client, ServerChannel channel, ServerMessage message) {
-      return client != null && (checkUser(message) || client.isLocalSession() || bayeux.oort.isOort(client));
+      return client != null && (checkUser(message) || client.isLocalSession() || isTrustedOortSession(client));
+    }
+
+    private boolean isOortHandshakeAttempt(ServerMessage message) {
+      Map<String, Object> ext = message.getExt();
+      return ext != null && ext.get(Oort.EXT_OORT_FIELD) != null;
+    }
+
+    private boolean isTrustedOortHandshake(ServerMessage message) {
+      return bayeux.oortTrusted && bayeux.oort != null && bayeux.oort.isOortHandshake(message);
+    }
+
+    private boolean isTrustedOortSession(ServerSession client) {
+      return bayeux.oortTrusted && bayeux.oort != null && bayeux.oort.isOort(client);
     }
 
     @Override
