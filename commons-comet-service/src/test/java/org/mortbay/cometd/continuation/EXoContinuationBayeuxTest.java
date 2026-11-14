@@ -75,6 +75,21 @@ public class EXoContinuationBayeuxTest {
   }
 
   @Test
+  public void testNoUserIsPresentBeforeSetiIsSet() {
+    EXoContinuationBayeux bayeux = new EXoContinuationBayeux();
+
+    // A notification is sent while the node starts, before the CometD servlet sets Seti
+    assertFalse(bayeux.isPresent("john"));
+    bayeux.sendMessage("john", CHANNEL, "saved", null);
+
+    Seti seti = mock(Seti.class);
+    when(seti.isPresent("john")).thenReturn(true);
+    bayeux.setSeti(seti);
+
+    assertTrue(bayeux.isPresent("john"));
+  }
+
+  @Test
   public void testAMessageOortRepublishedIsRelayedAndAClientsIsNot() {
     EXoContinuationBayeux bayeux = new EXoContinuationBayeux();
     ServerSession oortSession = mock(ServerSession.class);
