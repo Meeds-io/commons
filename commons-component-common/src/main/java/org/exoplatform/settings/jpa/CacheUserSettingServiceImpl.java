@@ -21,6 +21,8 @@ package org.exoplatform.settings.jpa;
 import static org.exoplatform.settings.jpa.JPAPluginSettingServiceImpl.NOTIFICATION_CHANNEL_STATUS_MODIFIED;
 import static org.exoplatform.settings.jpa.JPAPluginSettingServiceImpl.NOTIFICATION_PLUGIN_STATUS_MODIFIED;
 
+import java.util.Objects;
+
 import org.exoplatform.commons.api.notification.model.UserSetting;
 import org.exoplatform.commons.api.notification.service.setting.UserSettingService;
 import org.exoplatform.services.cache.CacheService;
@@ -42,10 +44,15 @@ public class CacheUserSettingServiceImpl implements UserSettingService {
 
   private FutureExoCache<String, UserSetting, UserSettingService> userSettingFutureCache;
 
+  private JPAUserSettingServiceImpl                               jpaUserSettingService;
+
+  private String                                                  defaultSettingStamp;
+
   public CacheUserSettingServiceImpl(CacheService cacheService,
                                      ListenerService listenerService,
                                      JPAUserSettingServiceImpl userSettingService) {
     this.userSettingService = userSettingService;
+    this.jpaUserSettingService = userSettingService;
 
     userSettingCache = cacheService.getCacheInstance(CACHE_NAME);
 
@@ -81,6 +88,7 @@ public class CacheUserSettingServiceImpl implements UserSettingService {
 
   @Override
   public UserSetting get(String userId) {
+    discardCachedSettingsOnDefaultsChange();
     UserSetting userSetting = userSettingFutureCache.get(userSettingService, userId);
     return userSetting == null ? null : userSetting.clone();
   }
@@ -97,6 +105,7 @@ public class CacheUserSettingServiceImpl implements UserSettingService {
 
   @Override
   public UserSetting getDefaultSettings() {
+    discardCachedSettingsOnDefaultsChange();
     return userSettingService.getDefaultSettings();
   }
 
@@ -116,6 +125,18 @@ public class CacheUserSettingServiceImpl implements UserSettingService {
   public void clearDefaultSetting() {
     userSettingCache.clearCache();
     userSettingService.clearDefaultSetting();
+  }
+
+  /**
+   * The cached user settings derive from the default ones: when the stamp of
+   * the defaults changed, written on any node, they are discarded.
+   */
+  private void discardCachedSettingsOnDefaultsChange() {
+    String stamp = jpaUserSettingService.getDefaultSettingsStamp();
+    if (!Objects.equals(stamp, defaultSettingStamp)) {
+      defaultSettingStamp = stamp;
+      userSettingCache.clearCache();
+    }
   }
 
 }

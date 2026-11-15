@@ -51,11 +51,13 @@ import org.exoplatform.commons.notification.channel.MailChannel;
 import org.exoplatform.commons.notification.impl.AbstractService;
 import org.exoplatform.commons.utils.CommonsUtils;
 import org.exoplatform.jpa.BaseTest;
+import org.exoplatform.services.cache.CacheService;
 import org.exoplatform.services.listener.ListenerService;
 import org.exoplatform.services.organization.OrganizationService;
 import org.exoplatform.services.organization.User;
 import org.exoplatform.services.organization.UserStatus;
 import org.exoplatform.services.organization.idm.UserImpl;
+import org.exoplatform.settings.jpa.CacheUserSettingServiceImpl;
 import org.exoplatform.settings.jpa.JPAPluginSettingServiceImpl;
 import org.exoplatform.settings.jpa.JPAUserSettingServiceImpl;
 
@@ -374,5 +376,65 @@ public class JPAUserSettingServiceTest extends BaseTest {
     userSetting = userSettingService.get(username);
     Set<String> channelActives = userSetting.getChannelActives();
     assertFalse(channelActives.contains(CHANNEL_ID));
+  }
+
+  /**
+   * Two nodes share the settings store, and the events are local to a node:
+   * a plugin status written through the first is seen by the default settings
+   * of the second.
+   */
+  public void testAPluginStatusChangedOnAnotherNodeChangesTheDefaultSettings() throws Exception {
+    JPAUserSettingServiceImpl otherNode = otherNodeUserSettingService();
+    JPAPluginSettingServiceImpl writerNode = otherNodePluginSettingService();
+    assertTrue(otherNode.getDefaultSettings().getPlugins(CHANNEL_ID).contains(PLUGIN_ID));
+
+    writerNode.saveActivePlugin(CHANNEL_ID, PLUGIN_ID, false);
+    assertFalse(otherNode.getDefaultSettings().getPlugins(CHANNEL_ID).contains(PLUGIN_ID));
+
+    writerNode.saveActivePlugin(CHANNEL_ID, PLUGIN_ID, true);
+    assertTrue(otherNode.getDefaultSettings().getPlugins(CHANNEL_ID).contains(PLUGIN_ID));
+  }
+
+  /**
+   * A channel status written on another node reaches the default settings, and
+   * the cached user settings derived from the old defaults are discarded.
+   */
+  public void testAChannelStatusChangedOnAnotherNodeReachesTheCachedUserSettings() throws Exception {
+    JPAUserSettingServiceImpl otherNode = otherNodeUserSettingService();
+    CacheUserSettingServiceImpl cachedOtherNode = new CacheUserSettingServiceImpl(getService(CacheService.class),
+                                                                                  mock(ListenerService.class),
+                                                                                  otherNode);
+    JPAPluginSettingServiceImpl writerNode = otherNodePluginSettingService();
+    String username = "userWithNoStoredSetting";
+    writerNode.saveChannelDefaultValue(CHANNEL_ID, true);
+    cachedOtherNode.clearDefaultSetting();
+    assertTrue(cachedOtherNode.get(username).getChannelActives().contains(CHANNEL_ID));
+    assertTrue(cachedOtherNode.getDefaultSettings().getChannelActives().contains(CHANNEL_ID));
+
+    try {
+      writerNode.saveChannelStatus(CHANNEL_ID, false);
+      assertFalse(cachedOtherNode.getDefaultSettings().getChannelActives().contains(CHANNEL_ID));
+      assertFalse(cachedOtherNode.get(username).getChannelActives().contains(CHANNEL_ID));
+    } finally {
+      writerNode.saveChannelStatus(CHANNEL_ID, true);
+    }
+    assertTrue(cachedOtherNode.get(username).getChannelActives().contains(CHANNEL_ID));
+  }
+
+  private JPAUserSettingServiceImpl otherNodeUserSettingService() throws Exception {
+    return new JPAUserSettingServiceImpl(mock(OrganizationService.class),
+                                         getService(SettingService.class),
+                                         channelManager,
+                                         pluginSettingServiceImpl,
+                                         getService(DataInitializer.class),
+                                         mock(ListenerService.class));
+  }
+
+  private JPAPluginSettingServiceImpl otherNodePluginSettingService() {
+    JPAPluginSettingServiceImpl service = new JPAPluginSettingServiceImpl(getService(SettingService.class),
+                                                                          channelManager,
+                                                                          mock(ListenerService.class));
+    service.registerPluginConfig(PLUGIN_CONFIG);
+    return service;
   }
 }

@@ -25,6 +25,7 @@ import static org.exoplatform.settings.jpa.JPAPluginSettingServiceImpl.NOTIFICAT
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -74,6 +75,8 @@ public class JPAUserSettingServiceImpl extends AbstractService implements UserSe
   private PluginSettingService pluginSettingService;
 
   private UserSetting          defaultSetting;
+
+  private String               defaultSettingStamp;
 
   private ListenerService      listenerService;
 
@@ -255,7 +258,9 @@ public class JPAUserSettingServiceImpl extends AbstractService implements UserSe
 
   @Override
   public UserSetting getDefaultSettings() { // NOSONAR
-    if (defaultSetting == null || PropertyManager.isDevelopping()) {
+    String stamp = getDefaultSettingsStamp();
+    if (defaultSetting == null || !Objects.equals(stamp, defaultSettingStamp) || PropertyManager.isDevelopping()) {
+      defaultSettingStamp = stamp;
       defaultSetting = UserSetting.getInstance();
         for (AbstractChannel channel : channelManager.getChannels()) {
           if (pluginSettingService.isChannelActive(channel.getId())) {
@@ -288,6 +293,18 @@ public class JPAUserSettingServiceImpl extends AbstractService implements UserSe
   @Override
   public void clearDefaultSetting() {
     this.defaultSetting = null;
+  }
+
+  /**
+   * @return the stamp written on each change of a channel or plugin status,
+   *         read through the settings store, thus the same on every node of
+   *         the cluster; null when none has been written
+   */
+  public String getDefaultSettingsStamp() {
+    SettingValue<?> stamp = settingService.get(JPAPluginSettingServiceImpl.DEFAULT_SETTINGS_STAMP_CONTEXT,
+                                               JPAPluginSettingServiceImpl.DEFAULT_SETTINGS_STAMP_SCOPE,
+                                               JPAPluginSettingServiceImpl.DEFAULT_SETTINGS_STAMP_KEY);
+    return stamp == null || stamp.getValue() == null ? null : stamp.getValue().toString();
   }
 
   private String getChannelProperty(String channelId) {
