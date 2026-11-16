@@ -24,9 +24,17 @@ import org.cometd.bayeux.server.ServerMessage;
 import org.cometd.bayeux.server.ServerSession;
 
 /**
- * Ends, at its next connect, the session of a user disabled or deleted since
- * the handshake, on any node: a connect is the request every open client
- * sends again at each long poll.
+ * Ends the session of a user disabled or deleted since the handshake, on any
+ * node, at two points: at its next connect, the request every open client sends
+ * again at each long poll, and at the delivery of a message to it, so that a
+ * held long poll does not carry a message to a user who is gone. A message
+ * delivered to such a session is dropped and the session is disconnected; the
+ * held connection itself returns at its poll timeout.
+ * <p>
+ * Both checks go through {@link EXoContinuationBayeux#isSessionUserActive},
+ * which reads the user only when the user's generation in the conversation
+ * registry differs from the session's. A session that holds no user of the
+ * store and a local session pass unchanged.
  */
 public class GoneUserExtension implements BayeuxServer.Extension {
 
@@ -45,6 +53,17 @@ public class GoneUserExtension implements BayeuxServer.Extension {
       return true;
     }
     session.disconnect();
+    return false;
+  }
+
+  @Override
+  public boolean send(ServerSession from, ServerSession to, ServerMessage.Mutable message) {
+    if (to == null
+        || to.isLocalSession()
+        || bayeux.isSessionUserActive(to)) {
+      return true;
+    }
+    to.disconnect();
     return false;
   }
 

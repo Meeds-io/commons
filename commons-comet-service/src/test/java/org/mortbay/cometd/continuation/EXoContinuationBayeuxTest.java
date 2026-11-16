@@ -457,6 +457,40 @@ public class EXoContinuationBayeuxTest {
     }
   }
 
+  /**
+   * A message delivered to the session of a user disabled after its handshake
+   * is dropped and the session is ended, without waiting for a connect.
+   */
+  @Test
+  public void testTheStartedBayeuxDeliversNothingToTheSessionOfAUserDisabledAfterItsHandshake() throws Exception {
+    EXoContinuationBayeux bayeux = newBayeux();
+    bayeux.setOption(BayeuxServerImpl.TRANSPORTS_OPTION, JSONHttpTransport.class.getName());
+    bayeux.start();
+    try {
+      User mary = storeUser("mary-delivery", true);
+      String token = bayeux.getUserToken("mary-delivery");
+
+      ServerMessage.Mutable reply = handle(bayeux, bayeux.newServerSession(), handshake("mary-delivery", token, null));
+      assertTrue(reply.isSuccessful());
+      String id = reply.getClientId();
+      ServerSessionImpl session = (ServerSessionImpl) bayeux.getSession(id);
+      assertNotNull(session);
+
+      when(mary.isEnabled()).thenReturn(false);
+      generations.put("mary-delivery", "2");
+      AtomicReference<Boolean> delivered = new AtomicReference<>();
+      session.deliver(null, "/service/test", "hello", Promise.from(delivered::set, failure -> {
+        throw new IllegalStateException(failure);
+      }));
+
+      assertFalse(Boolean.TRUE.equals(delivered.get()));
+      assertNull(bayeux.getSession(id));
+      assertTrue(session.getQueue().stream().noneMatch(m -> "/service/test".equals(m.getChannel())));
+    } finally {
+      bayeux.stop();
+    }
+  }
+
   private ServerMessage.Mutable handshake(String userId, String token, String clientId) {
     ServerMessage.Mutable message = new org.cometd.server.ServerMessageImpl();
     message.setChannel(Channel.META_HANDSHAKE);
