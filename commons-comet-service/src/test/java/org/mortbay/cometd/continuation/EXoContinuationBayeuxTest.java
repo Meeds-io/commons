@@ -40,6 +40,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.cometd.bayeux.Channel;
+import org.cometd.bayeux.Message;
 import org.cometd.bayeux.Promise;
 import org.cometd.bayeux.server.BayeuxServer;
 import org.cometd.bayeux.server.LocalSession;
@@ -486,6 +487,50 @@ public class EXoContinuationBayeuxTest {
       assertFalse(Boolean.TRUE.equals(delivered.get()));
       assertNull(bayeux.getSession(id));
       assertTrue(session.getQueue().stream().noneMatch(m -> "/service/test".equals(m.getChannel())));
+    } finally {
+      bayeux.stop();
+    }
+  }
+
+  /**
+   * A broadcast reaches the subscribers of a channel through each session's
+   * own extensions only: a user disabled after subscribing receives nothing of
+   * a message published later by another session, and its session is ended.
+   */
+  @Test
+  public void testTheStartedBayeuxBroadcastsNothingToTheSessionOfAUserDisabledAfterItsSubscription() throws Exception {
+    EXoContinuationBayeux bayeux = newBayeux();
+    bayeux.setOption(BayeuxServerImpl.TRANSPORTS_OPTION, JSONHttpTransport.class.getName());
+    bayeux.start();
+    try {
+      User paul = storeUser("paul-broadcast", true);
+      String token = bayeux.getUserToken("paul-broadcast");
+      String channel = "/eXo/Application/Test/broadcast-paul/updates";
+
+      ServerMessage.Mutable reply = handle(bayeux, bayeux.newServerSession(), handshake("paul-broadcast", token, null));
+      assertTrue(reply.isSuccessful());
+      String id = reply.getClientId();
+      ServerSessionImpl session = (ServerSessionImpl) bayeux.getSession(id);
+      assertNotNull(session);
+      ServerMessage.Mutable subscribe = new org.cometd.server.ServerMessageImpl();
+      subscribe.setChannel(Channel.META_SUBSCRIBE);
+      subscribe.setClientId(id);
+      subscribe.put(Message.SUBSCRIPTION_FIELD, channel);
+      subscribe.put("exoId", "paul-broadcast");
+      subscribe.put("exoToken", token);
+      assertTrue(handle(bayeux, session, subscribe).isSuccessful());
+
+      LocalSession publisher = bayeux.newLocalSession("publisher-paul");
+      publisher.handshake();
+      bayeux.createChannelIfAbsent(channel).getReference().publish(publisher.getServerSession(), "before", Promise.noop());
+      assertTrue(session.getQueue().stream().anyMatch(m -> "before".equals(m.getData())));
+
+      when(paul.isEnabled()).thenReturn(false);
+      generations.put("paul-broadcast", "2");
+      bayeux.createChannelIfAbsent(channel).getReference().publish(publisher.getServerSession(), "after", Promise.noop());
+
+      assertNull(bayeux.getSession(id));
+      assertTrue(session.getQueue().stream().noneMatch(m -> "after".equals(m.getData())));
     } finally {
       bayeux.stop();
     }

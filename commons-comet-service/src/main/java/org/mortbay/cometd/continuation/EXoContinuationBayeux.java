@@ -395,6 +395,7 @@ public class EXoContinuationBayeux extends BayeuxServerImpl implements Disposabl
     storeUserIds.add(userId);
     session.setAttribute(USER_ATTRIBUTE, userId);
     session.setAttribute(GENERATION_ATTRIBUTE, generation);
+    session.addExtension(new GoneUserSessionExtension(this));
     return true;
   }
 
