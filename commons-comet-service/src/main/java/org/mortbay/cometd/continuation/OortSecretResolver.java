@@ -114,6 +114,15 @@ class OortSecretResolver {
    *         secret is never replaced: the node resolves no secret instead. The
    *         codec does not refuse every value encoded under another key, but the
    *         nodes of a cluster share one key.
+   *         <p>
+   *         The wait is a blocking {@link Thread#sleep(long)} of the calling
+   *         thread: called from the Oort configuration of the CometD servlet,
+   *         that is the thread of the portal container's post-init task that
+   *         initializes the servlet. For up to the settle time, it delays the
+   *         rest of the servlet's initialization, the start of the Oort and its
+   *         connections to the other nodes among it, and the tasks that follow
+   *         on that thread. It is spent only by a node that stored a value, or
+   *         found one stored less than {@link #STORE_WINDOW_MILLIS} ago.
    * @throws InterruptedException when interrupted while waiting for the stores
    */
   String resolve(String configuredSecret) throws InterruptedException {
