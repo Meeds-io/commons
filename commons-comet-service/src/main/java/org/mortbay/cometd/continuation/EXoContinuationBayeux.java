@@ -34,16 +34,34 @@ import org.cometd.oort.Seti;
 import org.cometd.server.*;
 import org.picocontainer.Disposable;
 
+import org.exoplatform.container.ExoContainer;
 import org.exoplatform.container.ExoContainerContext;
+import org.exoplatform.container.component.ComponentRequestLifecycle;
+import org.exoplatform.container.component.RequestLifeCycle;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
+import org.exoplatform.services.organization.OrganizationService;
+import org.exoplatform.services.organization.User;
+import org.exoplatform.services.organization.UserStatus;
+import org.exoplatform.services.security.ConversationRegistry;
 
 public class EXoContinuationBayeux extends BayeuxServerImpl implements Disposable {
 
   /**
+   * The session attribute that holds the user of a client's session.
+   */
+  static final String                     USER_ATTRIBUTE       = "exo.cometd.userId";
+
+  /**
+   * The session attribute that holds the generation of the user, in the
+   * conversation registry, at which the user's status was last read.
+   */
+  static final String                     GENERATION_ATTRIBUTE = "exo.cometd.userGeneration";
+
+  /**
    * Map for userToken.
    */
-  private static Map<String, String>      userToken         = new HashMap<>();
+  private static Map<String, String>      userToken         = new ConcurrentHashMap<>();
 
   /**
    * Stores the eXoID <=> clientID association
@@ -83,6 +101,14 @@ public class EXoContinuationBayeux extends BayeuxServerImpl implements Disposabl
 
   private ServletConfig                   servletConfig;
 
+  private final ExoContainer              container;
+
+  /**
+   * The users of the store admitted on this node: one of them the store no
+   * longer holds was deleted, and is refused.
+   */
+  private final Set<String>               storeUserIds      = ConcurrentHashMap.newKeySet();
+
   /**
    * Logger.
    */
@@ -93,7 +119,9 @@ public class EXoContinuationBayeux extends BayeuxServerImpl implements Disposabl
    */
   public EXoContinuationBayeux() {
     super();
+    this.container = ExoContainerContext.getCurrentContainerIfPresent();
     this.setSecurityPolicy(new EXoSecurityPolicy(this));
+    this.addExtension(new GoneUserExtension(this));
     //
     EXoContinuationCometdServlet servlet = EXoContinuationCometdServlet.getInstance();
     if (servlet != null) {
@@ -142,12 +170,11 @@ public class EXoContinuationBayeux extends BayeuxServerImpl implements Disposabl
    * @return token for client
    */
   public String getUserToken(String eXoId) {
-    if (userToken.containsKey(eXoId)) {
-      return (String) userToken.get(eXoId);
+    if (eXoId == null) {
+      // No handshake presents a null id: the token is never checked
+      return newToken();
     }
-    String token = Long.toString(this.getRandom(System.identityHashCode(this) ^ System.currentTimeMillis()), 36);
-    userToken.put(eXoId, token);
-    return token;
+    return userToken.computeIfAbsent(eXoId, id -> newToken());
   }
 
   /**
@@ -311,12 +338,111 @@ public class EXoContinuationBayeux extends BayeuxServerImpl implements Disposabl
     return oortTrusted;
   }
 
+  /**
+   * Reads the user a client handshakes as. A user of the store is kept on the
+   * session with the generation it was read at, so that the session's later
+   * checks see a change of the user. An id the store does not hold, such as a
+   * call guest's, is admitted with no user, unless a user of the store
+   * connected to this node under it and was deleted since. The generation is
+   * read after the user: a change of the user in between is caught by the
+   * registry's second removal of the generation, a few seconds later.
+   *
+   * @param session the session of the handshake
+   * @param userId the id it presents
+   * @return false when the user is disabled, was deleted or cannot be read
+   */
+  boolean admitUser(ServerSession session, String userId) {
+    User user;
+    try {
+      user = findUser(userId);
+    } catch (Exception e) {
+      LOG.warn("Cannot read user {}: its real-time session is refused", userId, e);
+      return false;
+    }
+    if (user == null && !storeUserIds.contains(userId)) {
+      return true;
+    } else if (user == null || !user.isEnabled()) {
+      userToken.remove(userId);
+      return false;
+    }
+    storeUserIds.add(userId);
+    session.setAttribute(USER_ATTRIBUTE, userId);
+    session.setAttribute(GENERATION_ATTRIBUTE, userGeneration(userId));
+    return true;
+  }
+
+  /**
+   * A change of a user, made on any node, changes the user's generation in
+   * the conversation registry: the session's user is read again then only, so
+   * a session whose user is unchanged costs no read. The token of a user found
+   * disabled or deleted is revoked, so that its pages cannot handshake again.
+   *
+   * @param session a session
+   * @return false when the user of the session was disabled or deleted, or
+   *         cannot be read; true for a session that holds no user of the
+   *         store
+   */
+  boolean isSessionUserActive(ServerSession session) {
+    Object userId = session.getAttribute(USER_ATTRIBUTE);
+    if (userId == null) {
+      return true;
+    }
+    String generation = userGeneration((String) userId);
+    if (generation != null && generation.equals(session.getAttribute(GENERATION_ATTRIBUTE))) {
+      return true;
+    }
+    User user;
+    try {
+      user = findUser((String) userId);
+    } catch (Exception e) {
+      LOG.warn("Cannot read user {}: its real-time session is refused", userId, e);
+      return false;
+    }
+    if (user == null || !user.isEnabled()) {
+      userToken.remove(userId);
+      return false;
+    }
+    session.setAttribute(GENERATION_ATTRIBUTE, generation);
+    return true;
+  }
+
   public void setCloudIDSeparator(String cloudIDSeparator) {
     if (cloudIDSeparator != null) {
       this.cloudIDSeparator = cloudIDSeparator;
     } else {
       LOG.warn("Can't set null for cloudIDSeparator");
     }
+  }
+
+  private String userGeneration(String userId) {
+    ConversationRegistry conversationRegistry = service(ConversationRegistry.class);
+    return conversationRegistry == null ? null : conversationRegistry.getUserGeneration(userId);
+  }
+
+  private User findUser(String userId) throws Exception {
+    OrganizationService organizationService = service(OrganizationService.class);
+    if (organizationService == null) {
+      return null;
+    }
+    boolean begun = organizationService instanceof ComponentRequestLifecycle;
+    if (begun) {
+      RequestLifeCycle.begin((ComponentRequestLifecycle) organizationService);
+    }
+    try {
+      return organizationService.getUserHandler().findUserByName(userId, UserStatus.ANY);
+    } finally {
+      if (begun) {
+        RequestLifeCycle.end();
+      }
+    }
+  }
+
+  private String newToken() {
+    return Long.toString(this.getRandom(System.identityHashCode(this) ^ System.currentTimeMillis()), 36);
+  }
+
+  private <T> T service(Class<T> type) {
+    return container == null ? null : container.getComponentInstanceOfType(type);
   }
 
   private ServerSessionImpl getSystemClient() {
@@ -366,7 +492,8 @@ public class EXoContinuationBayeux extends BayeuxServerImpl implements Disposabl
     private boolean checkUser(ServerMessage message) {
       String userId = (String) message.get("exoId");
       String eXoToken = (String) message.get("exoToken");
-      return (userId != null && userToken.containsKey(userId) && userToken.get(userId).equals(eXoToken));
+      String token = userId == null ? null : userToken.get(userId);
+      return token != null && token.equals(eXoToken);
     }
 
     /**
@@ -390,7 +517,7 @@ public class EXoContinuationBayeux extends BayeuxServerImpl implements Disposabl
         // Another node of the cluster proves itself with the cluster secret,
         // never with a user's token
         return isTrustedOortHandshake(message);
-      } else if (checkUser(message)) {
+      } else if (checkUser(message) && bayeux.admitUser(client, (String) message.get("exoId"))) {
         client.addListener(this);
 
         String eXoID = (String) message.get("exoId");
@@ -413,7 +540,7 @@ public class EXoContinuationBayeux extends BayeuxServerImpl implements Disposabl
      */
     @Override
     public boolean canPublish(BayeuxServer server, ServerSession client, ServerChannel channel, ServerMessage message) {
-      return client != null;
+      return client != null && (client.isLocalSession() || bayeux.isSessionUserActive(client));
     }
 
     /**
@@ -421,7 +548,8 @@ public class EXoContinuationBayeux extends BayeuxServerImpl implements Disposabl
      */
     @Override
     public boolean canSubscribe(BayeuxServer server, ServerSession client, ServerChannel channel, ServerMessage message) {
-      return client != null && (checkUser(message) || client.isLocalSession() || isTrustedOortSession(client));
+      return client != null && ((checkUser(message) && bayeux.isSessionUserActive(client)) || client.isLocalSession()
+          || isTrustedOortSession(client));
     }
 
     private boolean isOortHandshakeAttempt(ServerMessage message) {
