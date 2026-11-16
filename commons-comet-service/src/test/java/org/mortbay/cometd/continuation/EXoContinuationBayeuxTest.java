@@ -22,6 +22,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -123,6 +124,25 @@ public class EXoContinuationBayeuxTest {
 
     assertEquals(List.of(oort), before);
     assertEquals(List.of(oort), after);
+  }
+
+  /**
+   * The servlet sets the same Oort before and after starting it: its channels
+   * are observed, and its actions run, once.
+   */
+  @Test
+  public void testTheSameOortSetTwiceRunsItsActionsOnce() {
+    EXoContinuationBayeux bayeux = new EXoContinuationBayeux();
+    Oort oort = mock(Oort.class);
+    List<Oort> ran = new CopyOnWriteArrayList<>();
+    bayeux.observeChannel(CHANNEL);
+    bayeux.onOort(ran::add);
+
+    bayeux.setOort(oort);
+    bayeux.setOort(oort);
+
+    assertEquals(List.of(oort), ran);
+    verify(oort, times(1)).observeChannel(CHANNEL);
   }
 
   @Test
