@@ -135,6 +135,10 @@ public class CacheUserSettingServiceImpl implements UserSettingService {
   /**
    * The cached user settings derive from the default ones: when the stamp of
    * the defaults changed, written on any node, they are discarded.
+   * <p>
+   * Each node that detects the change clears the cache cluster-wide, so a
+   * change costs one clear per node. This is accepted because {@code ExoCache}
+   * has no node-local clear.
    *
    * @return the stamp of the defaults read
    */
