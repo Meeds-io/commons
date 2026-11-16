@@ -174,6 +174,10 @@ public class EXoContinuationBayeux extends BayeuxServerImpl implements Disposabl
       // No handshake presents a null id: the token is never checked
       return newToken();
     }
+    String token = userToken.get(eXoId);
+    if (token != null) {
+      return token;
+    }
     rememberStoreUser(eXoId);
     return userToken.computeIfAbsent(eXoId, id -> newToken());
   }
@@ -182,13 +186,10 @@ public class EXoContinuationBayeux extends BayeuxServerImpl implements Disposabl
    * A token issued for a user of the store marks the id as a store user of
    * this node, so that a handshake with that token is refused once the store
    * no longer holds the user. A token issued for an id the store does not
-   * hold, such as a call guest's, marks nothing. An id already marked is not
-   * read again.
+   * hold, such as a call guest's, marks nothing. It runs only when a token is
+   * minted, so that a repeated call reads nothing, whatever the id.
    */
   private void rememberStoreUser(String eXoId) {
-    if (storeUserIds.contains(eXoId)) {
-      return;
-    }
     try {
       if (findUser(eXoId) != null) {
         storeUserIds.add(eXoId);

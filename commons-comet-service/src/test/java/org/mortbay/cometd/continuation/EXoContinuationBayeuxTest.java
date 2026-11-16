@@ -238,6 +238,21 @@ public class EXoContinuationBayeuxTest {
   }
 
   /**
+   * The store is read when a token is minted only: a repeated call for an id
+   * the store does not hold reads nothing.
+   */
+  @Test
+  public void testATokenIsReadFromTheStoreOnlyWhenMinted() throws Exception {
+    EXoContinuationBayeux bayeux = newBayeux();
+
+    String token = bayeux.getUserToken("guest-bob-7");
+    assertEquals(token, bayeux.getUserToken("guest-bob-7"));
+    assertEquals(token, bayeux.getUserToken("guest-bob-7"));
+
+    verify(userHandler, times(1)).findUserByName("guest-bob-7", UserStatus.ANY);
+  }
+
+  /**
    * A user of the store that connected to this node and was deleted since is
    * refused, and its token revoked: its pages cannot handshake again.
    */
@@ -356,7 +371,8 @@ public class EXoContinuationBayeuxTest {
     assertTrue(bayeux.getSecurityPolicy().canHandshake(bayeux, session, userMessage(bayeux, "john")));
     BayeuxServer.Extension extension = new GoneUserExtension(bayeux);
 
-    // One read when the token was issued, one at the handshake
+    // One read when the token was issued (a repeated call reads nothing), one at the handshake
+    bayeux.getUserToken("john");
     assertTrue(extension.rcvMeta(session, connect()));
     assertTrue(extension.rcvMeta(session, connect()));
     verify(userHandler, times(2)).findUserByName("john", UserStatus.ANY);
@@ -483,17 +499,6 @@ public class EXoContinuationBayeuxTest {
 
     assertFalse(bayeux.getSecurityPolicy().canHandshake(bayeux, session(), handshake));
     assertFalse(token.equals(bayeux.getUserToken("john")));
-  }
-
-  /**
-   * A token issued for an id the store never held keeps being admitted.
-   */
-  @Test
-  public void testATokenIssuedForAnIdTheStoreNeverHeldIsAdmitted() throws Exception {
-    EXoContinuationBayeux bayeux = newBayeux();
-    ServerMessage handshake = userMessage(bayeux, "guest-ann-1");
-
-    assertTrue(bayeux.getSecurityPolicy().canHandshake(bayeux, session(), handshake));
   }
 
   private EXoContinuationBayeux newBayeux() {
