@@ -138,15 +138,19 @@ public class CacheUserSettingServiceImpl implements UserSettingService {
    * <p>
    * Each node that detects the change clears the cache cluster-wide, so a
    * change costs one clear per node. This is accepted because {@code ExoCache}
-   * has no node-local clear.
+   * has no node-local clear. The first stamp a node reads is only recorded:
+   * its cache holds nothing it built from older defaults.
    *
    * @return the stamp of the defaults read
    */
   private String discardCachedSettingsOnDefaultsChange() {
     String stamp = jpaUserSettingService.getDefaultSettingsStamp();
     if (!Objects.equals(stamp, defaultSettingStamp)) {
+      boolean firstRead = defaultSettingStamp == null;
       defaultSettingStamp = stamp;
-      userSettingCache.clearCache();
+      if (!firstRead) {
+        userSettingCache.clearCache();
+      }
     }
     return stamp;
   }

@@ -55,6 +55,26 @@ public class CacheUserSettingTest {
     cacheUserSettingServiceImpl = new CacheUserSettingServiceImpl(cacheService, listenerService, userSettingServiceImpl);
   }
 
+  /**
+   * A node records the first stamp of the defaults it reads without clearing
+   * the cache, and clears it when the stamp changes afterwards.
+   */
+  @Test
+  public void testTheFirstStampIsRecordedWithoutAClearAndAChangeClears() {
+    ConcurrentFIFOExoCache<String, UserSetting> cache = spy(new ConcurrentFIFOExoCache<>());
+    when(cacheService.getCacheInstance(CacheUserSettingServiceImpl.CACHE_NAME)).thenReturn((ConcurrentFIFOExoCache) cache);
+    CacheUserSettingServiceImpl service = new CacheUserSettingServiceImpl(cacheService, listenerService, userSettingServiceImpl);
+    when(userSettingServiceImpl.getDefaultSettingsStamp()).thenReturn("first");
+
+    service.get(USER_ID);
+    service.get(USER_ID);
+    verify(cache, never()).clearCache();
+
+    when(userSettingServiceImpl.getDefaultSettingsStamp()).thenReturn("second");
+    service.get(USER_ID);
+    verify(cache, times(1)).clearCache();
+  }
+
   @Test
   public void testGetUserSetting() {
     cacheUserSettingServiceImpl.get(USER_ID);
