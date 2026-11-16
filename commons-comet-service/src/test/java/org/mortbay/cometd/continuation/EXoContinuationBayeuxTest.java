@@ -356,14 +356,15 @@ public class EXoContinuationBayeuxTest {
     assertTrue(bayeux.getSecurityPolicy().canHandshake(bayeux, session, userMessage(bayeux, "john")));
     BayeuxServer.Extension extension = new GoneUserExtension(bayeux);
 
+    // One read when the token was issued, one at the handshake
     assertTrue(extension.rcvMeta(session, connect()));
     assertTrue(extension.rcvMeta(session, connect()));
-    verify(userHandler, times(1)).findUserByName("john", UserStatus.ANY);
+    verify(userHandler, times(2)).findUserByName("john", UserStatus.ANY);
 
     generations.put("john", "2");
     assertTrue(extension.rcvMeta(session, connect()));
     assertTrue(extension.rcvMeta(session, connect()));
-    verify(userHandler, times(2)).findUserByName("john", UserStatus.ANY);
+    verify(userHandler, times(3)).findUserByName("john", UserStatus.ANY);
     verify(session, never()).disconnect();
   }
 
@@ -464,6 +465,35 @@ public class EXoContinuationBayeuxTest {
       throw new IllegalStateException(failure);
     }));
     return reply.get();
+  }
+
+  /**
+   * A token issued for a user of the store, which the store no longer holds at
+   * the handshake: the handshake is refused and the token is gone. The user
+   * never handshook on this node.
+   */
+  @Test
+  public void testATokenIssuedForAUserDeletedSinceIsRefusedAtTheHandshakeAndRevoked() throws Exception {
+    EXoContinuationBayeux bayeux = newBayeux();
+    storeUser("john", true);
+    ServerMessage handshake = userMessage(bayeux, "john");
+    String token = (String) handshake.get("exoToken");
+
+    when(userHandler.findUserByName("john", UserStatus.ANY)).thenReturn(null);
+
+    assertFalse(bayeux.getSecurityPolicy().canHandshake(bayeux, session(), handshake));
+    assertFalse(token.equals(bayeux.getUserToken("john")));
+  }
+
+  /**
+   * A token issued for an id the store never held keeps being admitted.
+   */
+  @Test
+  public void testATokenIssuedForAnIdTheStoreNeverHeldIsAdmitted() throws Exception {
+    EXoContinuationBayeux bayeux = newBayeux();
+    ServerMessage handshake = userMessage(bayeux, "guest-ann-1");
+
+    assertTrue(bayeux.getSecurityPolicy().canHandshake(bayeux, session(), handshake));
   }
 
   private EXoContinuationBayeux newBayeux() {
