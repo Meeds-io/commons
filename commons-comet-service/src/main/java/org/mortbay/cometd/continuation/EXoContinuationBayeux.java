@@ -367,7 +367,10 @@ public class EXoContinuationBayeux extends BayeuxServerImpl implements Disposabl
    * call guest's, is admitted with no user, unless a user of the store
    * connected to this node under it and was deleted since. The generation is
    * read after the user: a change of the user in between is caught by the
-   * registry's second removal of the generation, a few seconds later.
+   * registry's second removal of the generation, ten seconds later
+   * ({@code ConversationRegistry#REINVALIDATION_DELAY_SECONDS}), unless the
+   * node that made the change stops within that delay: the session then stays
+   * open until the user's next change, the generation's expiry or its own end.
    *
    * @param session the session of the handshake
    * @param userId the id it presents
