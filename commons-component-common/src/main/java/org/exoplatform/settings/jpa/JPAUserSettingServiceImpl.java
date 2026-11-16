@@ -26,7 +26,9 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -73,7 +75,11 @@ public class JPAUserSettingServiceImpl extends AbstractService implements UserSe
 
   private PluginSettingService pluginSettingService;
 
-  private UserSetting          defaultSetting;
+  /**
+   * The memoized default settings with the stamp they were built for,
+   * published once complete
+   */
+  private final AtomicReference<DefaultSettingsHolder> defaultSettings = new AtomicReference<>();
 
   private ListenerService      listenerService;
 
@@ -252,30 +258,37 @@ public class JPAUserSettingServiceImpl extends AbstractService implements UserSe
 
   @Override
   public UserSetting getDefaultSettings() { // NOSONAR
-    if (defaultSetting == null || PropertyManager.isDevelopping()) {
-      defaultSetting = UserSetting.getInstance();
-        for (AbstractChannel channel : channelManager.getChannels()) {
-          if (pluginSettingService.isChannelActive(channel.getId())) {
-            defaultSetting.setChannelActive(channel.getId());
-          }
-          defaultSetting.setChannelDefaultValueActive(channel.getId(),pluginSettingService.getDefaultChannelValue(channel.getId()));
-        }
+    String stamp = getDefaultSettingsStamp();
+    DefaultSettingsHolder holder = defaultSettings.get();
+    if (holder == null || !Objects.equals(stamp, holder.stamp()) || PropertyManager.isDevelopping()) {
+      holder = new DefaultSettingsHolder(stamp, buildDefaultSettings());
+      defaultSettings.set(holder);
+    }
+    return holder.setting().clone();
+  }
 
-      List<PluginInfo> plugins = pluginSettingService.getAllPlugins();
-      for (PluginInfo pluginInfo : plugins) {
-        List<String> pluginChannels = pluginSettingService.getPluginChannels(pluginInfo.getType());
-        for (String defaultConf : pluginInfo.getDefaultConfig()) {
-          for (String channelId : pluginChannels) {
-            if (UserSetting.FREQUENCY.getFrequecy(defaultConf) == UserSetting.FREQUENCY.INSTANTLY) {
-              defaultSetting.addChannelPlugin(channelId, pluginInfo.getType());
-            } else {
-              defaultSetting.addPlugin(pluginInfo.getType(), UserSetting.FREQUENCY.getFrequecy(defaultConf));
-            }
+  private UserSetting buildDefaultSettings() {
+    UserSetting setting = UserSetting.getInstance();
+    for (AbstractChannel channel : channelManager.getChannels()) {
+      if (pluginSettingService.isChannelActive(channel.getId())) {
+        setting.setChannelActive(channel.getId());
+      }
+      setting.setChannelDefaultValueActive(channel.getId(), pluginSettingService.getDefaultChannelValue(channel.getId()));
+    }
+    List<PluginInfo> plugins = pluginSettingService.getAllPlugins();
+    for (PluginInfo pluginInfo : plugins) {
+      List<String> pluginChannels = pluginSettingService.getPluginChannels(pluginInfo.getType());
+      for (String defaultConf : pluginInfo.getDefaultConfig()) {
+        for (String channelId : pluginChannels) {
+          if (UserSetting.FREQUENCY.getFrequecy(defaultConf) == UserSetting.FREQUENCY.INSTANTLY) {
+            setting.addChannelPlugin(channelId, pluginInfo.getType());
+          } else {
+            setting.addPlugin(pluginInfo.getType(), UserSetting.FREQUENCY.getFrequecy(defaultConf));
           }
         }
       }
     }
-    return defaultSetting.clone();
+    return setting;
   }
 
   @Override
@@ -340,7 +353,19 @@ public class JPAUserSettingServiceImpl extends AbstractService implements UserSe
 
   @Override
   public void clearDefaultSetting() {
-    this.defaultSetting = null;
+    this.defaultSettings.set(null);
+  }
+
+  /**
+   * @return the stamp written on each change of a channel or plugin status,
+   *         read through the settings store, thus the same on every node of
+   *         the cluster; null when none has been written
+   */
+  public String getDefaultSettingsStamp() {
+    SettingValue<?> stamp = settingService.get(JPAPluginSettingServiceImpl.DEFAULT_SETTINGS_STAMP_CONTEXT,
+                                               JPAPluginSettingServiceImpl.DEFAULT_SETTINGS_STAMP_SCOPE,
+                                               JPAPluginSettingServiceImpl.DEFAULT_SETTINGS_STAMP_KEY);
+    return stamp == null || stamp.getValue() == null ? null : stamp.getValue().toString();
   }
 
   private String getChannelProperty(String channelId) {
@@ -385,6 +410,9 @@ public class JPAUserSettingServiceImpl extends AbstractService implements UserSe
     } catch (Exception e) {
       LOG.warn("Error broadcasting modification on User Notification Settings '{}'", model, e);
     }
+  }
+
+  private record DefaultSettingsHolder(String stamp, UserSetting setting) {
   }
 
 }
