@@ -46,7 +46,7 @@ public class CacheUserSettingServiceImpl implements UserSettingService {
 
   private JPAUserSettingServiceImpl                               jpaUserSettingService;
 
-  private String                                                  defaultSettingStamp;
+  private volatile String                                          defaultSettingStamp;
 
   public CacheUserSettingServiceImpl(CacheService cacheService,
                                      ListenerService listenerService,
@@ -88,8 +88,13 @@ public class CacheUserSettingServiceImpl implements UserSettingService {
 
   @Override
   public UserSetting get(String userId) {
-    discardCachedSettingsOnDefaultsChange();
+    String stamp = discardCachedSettingsOnDefaultsChange();
     UserSetting userSetting = userSettingFutureCache.get(userSettingService, userId);
+    if (!Objects.equals(stamp, jpaUserSettingService.getDefaultSettingsStamp())) {
+      // The defaults changed while this entry was loaded, which clearing the
+      // cache does not cancel: the entry derives from the old defaults
+      userSettingCache.remove(userId);
+    }
     return userSetting == null ? null : userSetting.clone();
   }
 
@@ -130,13 +135,16 @@ public class CacheUserSettingServiceImpl implements UserSettingService {
   /**
    * The cached user settings derive from the default ones: when the stamp of
    * the defaults changed, written on any node, they are discarded.
+   *
+   * @return the stamp of the defaults read
    */
-  private void discardCachedSettingsOnDefaultsChange() {
+  private String discardCachedSettingsOnDefaultsChange() {
     String stamp = jpaUserSettingService.getDefaultSettingsStamp();
     if (!Objects.equals(stamp, defaultSettingStamp)) {
       defaultSettingStamp = stamp;
       userSettingCache.clearCache();
     }
+    return stamp;
   }
 
 }

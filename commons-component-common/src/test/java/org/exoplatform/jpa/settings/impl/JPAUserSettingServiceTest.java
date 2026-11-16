@@ -31,6 +31,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.exoplatform.commons.api.notification.NotificationContext;
 import org.exoplatform.commons.api.notification.channel.AbstractChannel;
@@ -41,6 +45,7 @@ import org.exoplatform.commons.api.notification.model.ChannelKey;
 import org.exoplatform.commons.api.notification.model.PluginKey;
 import org.exoplatform.commons.api.notification.model.UserSetting;
 import org.exoplatform.commons.api.notification.plugin.config.PluginConfig;
+import org.exoplatform.commons.api.notification.service.setting.PluginSettingService;
 import org.exoplatform.commons.api.notification.service.setting.UserSettingService;
 import org.exoplatform.commons.api.persistence.DataInitializer;
 import org.exoplatform.commons.api.settings.SettingService;
@@ -419,6 +424,73 @@ public class JPAUserSettingServiceTest extends BaseTest {
       writerNode.saveChannelStatus(CHANNEL_ID, true);
     }
     assertTrue(cachedOtherNode.get(username).getChannelActives().contains(CHANNEL_ID));
+  }
+
+  /**
+   * A reader that meets the defaults while another thread rebuilds them never
+   * gets a half-built instance.
+   */
+  public void testDefaultSettingsRebuiltConcurrentlyAreNeverReadHalfBuilt() throws Exception {
+    AbstractChannel channel = mock(AbstractChannel.class);
+    when(channel.getId()).thenReturn("concurrentChannel");
+    ChannelManager channels = mock(ChannelManager.class);
+    when(channels.getChannels()).thenReturn(List.of(channel));
+    AtomicReference<String> stamp = new AtomicReference<>("s1");
+    SettingService settingsStore = mock(SettingService.class);
+    when(settingsStore.get(any(), any(), any())).thenAnswer(i -> SettingValue.create(stamp.get()));
+    CountDownLatch rebuilding = new CountDownLatch(1);
+    CountDownLatch release = new CountDownLatch(1);
+    AtomicBoolean blockNext = new AtomicBoolean(false);
+    PluginSettingService plugins = mock(PluginSettingService.class);
+    when(plugins.isChannelActive("concurrentChannel")).thenAnswer(i -> {
+      if (blockNext.getAndSet(false)) {
+        rebuilding.countDown();
+        release.await(30, TimeUnit.SECONDS);
+      }
+      return true;
+    });
+    JPAUserSettingServiceImpl service = new JPAUserSettingServiceImpl(mock(OrganizationService.class),
+                                                                      settingsStore,
+                                                                      channels,
+                                                                      plugins,
+                                                                      getService(DataInitializer.class),
+                                                                      mock(ListenerService.class));
+    assertTrue(service.getDefaultSettings().getChannelActives().contains("concurrentChannel"));
+
+    stamp.set("s2");
+    blockNext.set(true);
+    Thread rebuilder = new Thread(service::getDefaultSettings);
+    rebuilder.start();
+    try {
+      assertTrue(rebuilding.await(30, TimeUnit.SECONDS));
+      assertTrue(service.getDefaultSettings().getChannelActives().contains("concurrentChannel"));
+    } finally {
+      release.countDown();
+      rebuilder.join(30000);
+    }
+  }
+
+  /**
+   * A user setting loaded while the defaults change is derived from the old
+   * ones, and is not kept in the cache.
+   */
+  public void testAUserSettingLoadedWhileTheDefaultsChangeIsNotCached() throws Exception {
+    JPAUserSettingServiceImpl store = mock(JPAUserSettingServiceImpl.class);
+    String username = "userLoadedDuringDefaultsChange";
+    AtomicReference<String> stamp = new AtomicReference<>("s1");
+    when(store.getDefaultSettingsStamp()).thenAnswer(i -> stamp.get());
+    when(store.get(username)).thenAnswer(i -> {
+      stamp.set("s2");
+      return new UserSetting();
+    });
+    CacheService cacheService = getService(CacheService.class);
+    CacheUserSettingServiceImpl cached = new CacheUserSettingServiceImpl(cacheService,
+                                                                         mock(ListenerService.class),
+                                                                         store);
+
+    cached.get(username);
+
+    assertNull(cacheService.getCacheInstance(CacheUserSettingServiceImpl.CACHE_NAME).get(username));
   }
 
   private JPAUserSettingServiceImpl otherNodeUserSettingService() throws Exception {

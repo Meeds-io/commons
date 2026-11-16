@@ -74,9 +74,11 @@ public class JPAUserSettingServiceImpl extends AbstractService implements UserSe
 
   private PluginSettingService pluginSettingService;
 
-  private UserSetting          defaultSetting;
-
-  private String               defaultSettingStamp;
+  /**
+   * The memoized default settings with the stamp they were built for,
+   * published once complete
+   */
+  private volatile DefaultSettingsHolder defaultSettings;
 
   private ListenerService      listenerService;
 
@@ -259,30 +261,36 @@ public class JPAUserSettingServiceImpl extends AbstractService implements UserSe
   @Override
   public UserSetting getDefaultSettings() { // NOSONAR
     String stamp = getDefaultSettingsStamp();
-    if (defaultSetting == null || !Objects.equals(stamp, defaultSettingStamp) || PropertyManager.isDevelopping()) {
-      defaultSettingStamp = stamp;
-      defaultSetting = UserSetting.getInstance();
-        for (AbstractChannel channel : channelManager.getChannels()) {
-          if (pluginSettingService.isChannelActive(channel.getId())) {
-            defaultSetting.setChannelActive(channel.getId());
-          }
-          defaultSetting.setChannelDefaultValueActive(channel.getId(),pluginSettingService.getDefaultChannelValue(channel.getId()));
-        }
-      List<PluginInfo> plugins = pluginSettingService.getAllPlugins();
-      for (PluginInfo pluginInfo : plugins) {
-        List<String> pluginChannels = pluginSettingService.getPluginChannels(pluginInfo.getType());
-        for (String defaultConf : pluginInfo.getDefaultConfig()) {
-          // The daily and weekly default configurations belonged to the legacy
-          // digest engine, removed in eXIP 7.3.0.22: only instantly counts
-          if (UserSetting.FREQUENCY.getFrequecy(defaultConf) == UserSetting.FREQUENCY.INSTANTLY) {
-            for (String channelId : pluginChannels) {
-              defaultSetting.addChannelPlugin(channelId, pluginInfo.getType());
-            }
+    DefaultSettingsHolder holder = defaultSettings;
+    if (holder == null || !Objects.equals(stamp, holder.stamp()) || PropertyManager.isDevelopping()) {
+      holder = new DefaultSettingsHolder(stamp, buildDefaultSettings());
+      defaultSettings = holder;
+    }
+    return holder.setting().clone();
+  }
+
+  private UserSetting buildDefaultSettings() {
+    UserSetting setting = UserSetting.getInstance();
+    for (AbstractChannel channel : channelManager.getChannels()) {
+      if (pluginSettingService.isChannelActive(channel.getId())) {
+        setting.setChannelActive(channel.getId());
+      }
+      setting.setChannelDefaultValueActive(channel.getId(), pluginSettingService.getDefaultChannelValue(channel.getId()));
+    }
+    List<PluginInfo> plugins = pluginSettingService.getAllPlugins();
+    for (PluginInfo pluginInfo : plugins) {
+      List<String> pluginChannels = pluginSettingService.getPluginChannels(pluginInfo.getType());
+      for (String defaultConf : pluginInfo.getDefaultConfig()) {
+        // The daily and weekly default configurations belonged to the legacy
+        // digest engine, removed in eXIP 7.3.0.22: only instantly counts
+        if (UserSetting.FREQUENCY.getFrequecy(defaultConf) == UserSetting.FREQUENCY.INSTANTLY) {
+          for (String channelId : pluginChannels) {
+            setting.addChannelPlugin(channelId, pluginInfo.getType());
           }
         }
       }
     }
-    return defaultSetting.clone();
+    return setting;
   }
 
   @Override
@@ -292,7 +300,7 @@ public class JPAUserSettingServiceImpl extends AbstractService implements UserSe
 
   @Override
   public void clearDefaultSetting() {
-    this.defaultSetting = null;
+    this.defaultSettings = null;
   }
 
   /**
@@ -369,4 +377,8 @@ public class JPAUserSettingServiceImpl extends AbstractService implements UserSe
       LOG.warn("Error broadcasting modification on User Notification Settings '{}'", model, e);
     }
   }
+
+  private record DefaultSettingsHolder(String stamp, UserSetting setting) {
+  }
+
 }
