@@ -20,6 +20,8 @@ package org.mortbay.cometd.continuation;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -35,8 +37,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.cometd.bayeux.Channel;
+import org.cometd.bayeux.Promise;
 import org.cometd.bayeux.server.BayeuxServer;
 import org.cometd.bayeux.server.LocalSession;
 import org.cometd.bayeux.server.SecurityPolicy;
@@ -45,6 +49,7 @@ import org.cometd.bayeux.server.ServerSession;
 import org.cometd.oort.Oort;
 import org.cometd.oort.Seti;
 import org.cometd.server.BayeuxServerImpl;
+import org.cometd.server.ServerSessionImpl;
 import org.cometd.server.http.JSONHttpTransport;
 import org.junit.Before;
 import org.junit.Test;
@@ -67,13 +72,15 @@ public class EXoContinuationBayeuxTest {
 
   private UserHandler               userHandler;
 
+  private ConversationRegistry      conversationRegistry;
+
   @Before
   public void setUp() {
     container = mock(ExoContainer.class);
     OrganizationService organizationService = mock(OrganizationService.class);
     userHandler = mock(UserHandler.class);
     when(organizationService.getUserHandler()).thenReturn(userHandler);
-    ConversationRegistry conversationRegistry = mock(ConversationRegistry.class);
+    conversationRegistry = mock(ConversationRegistry.class);
     when(conversationRegistry.getUserGeneration(anyString())).thenAnswer(invocation -> generations.computeIfAbsent(invocation.getArgument(0),
                                                                                                                   id -> "1"));
     when(container.getComponentInstanceOfType(OrganizationService.class)).thenReturn(organizationService);
@@ -369,6 +376,94 @@ public class EXoContinuationBayeuxTest {
     when(userHandler.findUserByName("john", UserStatus.ANY)).thenThrow(new IllegalStateException("store down"));
 
     assertFalse(bayeux.getSecurityPolicy().canHandshake(bayeux, session(), userMessage(bayeux, "john")));
+  }
+
+  /**
+   * A generation that cannot be read at a handshake refuses it, as a user that
+   * cannot be read does.
+   */
+  @Test
+  public void testAGenerationThatCannotBeReadAtAHandshakeIsRefused() throws Exception {
+    EXoContinuationBayeux bayeux = newBayeux();
+    storeUser("john", true);
+    when(conversationRegistry.getUserGeneration("john")).thenThrow(new IllegalStateException("registry down"));
+
+    assertFalse(bayeux.getSecurityPolicy().canHandshake(bayeux, session(), userMessage(bayeux, "john")));
+  }
+
+  /**
+   * A generation that cannot be read at a connect refuses it: the session ends.
+   */
+  @Test
+  public void testAGenerationThatCannotBeReadAtAConnectEndsTheSession() throws Exception {
+    EXoContinuationBayeux bayeux = newBayeux();
+    storeUser("john", true);
+    ServerSession session = session();
+    assertTrue(bayeux.getSecurityPolicy().canHandshake(bayeux, session, userMessage(bayeux, "john")));
+
+    when(conversationRegistry.getUserGeneration("john")).thenThrow(new IllegalStateException("registry down"));
+
+    assertFalse(new GoneUserExtension(bayeux).rcvMeta(session, connect()));
+    verify(session).disconnect();
+  }
+
+  /**
+   * Through the started bayeux, a user disabled after its handshake loses its
+   * session at the next connect, and its pages cannot handshake again.
+   */
+  @Test
+  public void testTheStartedBayeuxEndsTheSessionOfAUserDisabledAfterItsHandshake() throws Exception {
+    EXoContinuationBayeux bayeux = newBayeux();
+    bayeux.setOption(BayeuxServerImpl.TRANSPORTS_OPTION, JSONHttpTransport.class.getName());
+    bayeux.start();
+    try {
+      User john = storeUser("john", true);
+      String token = bayeux.getUserToken("john");
+
+      ServerMessage.Mutable reply = handle(bayeux, bayeux.newServerSession(), handshake("john", token, null));
+      assertTrue(reply.isSuccessful());
+      String id = reply.getClientId();
+      ServerSessionImpl session = (ServerSessionImpl) bayeux.getSession(id);
+      assertNotNull(session);
+      assertTrue(handle(bayeux, session, engineConnect(id)).isSuccessful());
+
+      when(john.isEnabled()).thenReturn(false);
+      generations.put("john", "2");
+      reply = handle(bayeux, session, engineConnect(id));
+
+      assertFalse(reply.isSuccessful());
+      assertNull(bayeux.getSession(id));
+      reply = handle(bayeux, bayeux.newServerSession(), handshake("john", token, null));
+      assertFalse(reply.isSuccessful());
+    } finally {
+      bayeux.stop();
+    }
+  }
+
+  private ServerMessage.Mutable handshake(String userId, String token, String clientId) {
+    ServerMessage.Mutable message = new org.cometd.server.ServerMessageImpl();
+    message.setChannel(Channel.META_HANDSHAKE);
+    message.put("exoId", userId);
+    message.put("exoToken", token);
+    message.put("version", "1.0");
+    message.put("supportedConnectionTypes", List.of("long-polling"));
+    return message;
+  }
+
+  private ServerMessage.Mutable engineConnect(String clientId) {
+    ServerMessage.Mutable message = new org.cometd.server.ServerMessageImpl();
+    message.setChannel(Channel.META_CONNECT);
+    message.setClientId(clientId);
+    message.put("connectionType", "long-polling");
+    return message;
+  }
+
+  private ServerMessage.Mutable handle(EXoContinuationBayeux bayeux, ServerSessionImpl session, ServerMessage.Mutable message) {
+    AtomicReference<ServerMessage.Mutable> reply = new AtomicReference<>();
+    bayeux.handle(session, message, Promise.from(reply::set, failure -> {
+      throw new IllegalStateException(failure);
+    }));
+    return reply.get();
   }
 
   private EXoContinuationBayeux newBayeux() {

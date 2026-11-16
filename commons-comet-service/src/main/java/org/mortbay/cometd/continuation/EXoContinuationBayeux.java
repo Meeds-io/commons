@@ -349,12 +349,17 @@ public class EXoContinuationBayeux extends BayeuxServerImpl implements Disposabl
    *
    * @param session the session of the handshake
    * @param userId the id it presents
-   * @return false when the user is disabled, was deleted or cannot be read
+   * @return false when the user is disabled, was deleted or cannot be read,
+   *         the generation included
    */
   boolean admitUser(ServerSession session, String userId) {
     User user;
+    String generation = null;
     try {
       user = findUser(userId);
+      if (user != null && user.isEnabled()) {
+        generation = userGeneration(userId);
+      }
     } catch (Exception e) {
       LOG.warn("Cannot read user {}: its real-time session is refused", userId, e);
       return false;
@@ -367,7 +372,7 @@ public class EXoContinuationBayeux extends BayeuxServerImpl implements Disposabl
     }
     storeUserIds.add(userId);
     session.setAttribute(USER_ATTRIBUTE, userId);
-    session.setAttribute(GENERATION_ATTRIBUTE, userGeneration(userId));
+    session.setAttribute(GENERATION_ATTRIBUTE, generation);
     return true;
   }
 
@@ -387,12 +392,13 @@ public class EXoContinuationBayeux extends BayeuxServerImpl implements Disposabl
     if (userId == null) {
       return true;
     }
-    String generation = userGeneration((String) userId);
-    if (generation != null && generation.equals(session.getAttribute(GENERATION_ATTRIBUTE))) {
-      return true;
-    }
+    String generation;
     User user;
     try {
+      generation = userGeneration((String) userId);
+      if (generation != null && generation.equals(session.getAttribute(GENERATION_ATTRIBUTE))) {
+        return true;
+      }
       user = findUser((String) userId);
     } catch (Exception e) {
       LOG.warn("Cannot read user {}: its real-time session is refused", userId, e);
