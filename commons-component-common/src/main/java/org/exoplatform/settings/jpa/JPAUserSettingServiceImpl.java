@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -78,7 +79,7 @@ public class JPAUserSettingServiceImpl extends AbstractService implements UserSe
    * The memoized default settings with the stamp they were built for,
    * published once complete
    */
-  private volatile DefaultSettingsHolder defaultSettings;
+  private final AtomicReference<DefaultSettingsHolder> defaultSettings = new AtomicReference<>();
 
   private ListenerService      listenerService;
 
@@ -261,10 +262,10 @@ public class JPAUserSettingServiceImpl extends AbstractService implements UserSe
   @Override
   public UserSetting getDefaultSettings() { // NOSONAR
     String stamp = getDefaultSettingsStamp();
-    DefaultSettingsHolder holder = defaultSettings;
+    DefaultSettingsHolder holder = defaultSettings.get();
     if (holder == null || !Objects.equals(stamp, holder.stamp()) || PropertyManager.isDevelopping()) {
       holder = new DefaultSettingsHolder(stamp, buildDefaultSettings());
-      defaultSettings = holder;
+      defaultSettings.set(holder);
     }
     return holder.setting().clone();
   }
@@ -300,7 +301,7 @@ public class JPAUserSettingServiceImpl extends AbstractService implements UserSe
 
   @Override
   public void clearDefaultSetting() {
-    this.defaultSettings = null;
+    this.defaultSettings.set(null);
   }
 
   /**

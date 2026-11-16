@@ -44,7 +44,7 @@ public class CacheUserSettingServiceImpl implements UserSettingService {
 
   private FutureExoCache<String, UserSetting, UserSettingService> userSettingFutureCache;
 
-  private JPAUserSettingServiceImpl                               jpaUserSettingService;
+  private final JPAUserSettingServiceImpl                         jpaUserSettingService;
 
   private volatile String                                          defaultSettingStamp;
 
