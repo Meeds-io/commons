@@ -25,6 +25,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.collections.CollectionUtils;
@@ -56,6 +57,18 @@ public class JPAPluginSettingServiceImpl extends AbstractService implements Plug
   public static final String         NOTIFICATION_CHANNEL_STATUS_MODIFIED = "notification.channel.status.modified";
 
   public static final String         NOTIFICATION_PLUGIN_STATUS_MODIFIED  = "notification.plugin.status.modified";
+
+  /**
+   * Stamp of the notification defaults (channel and plugin statuses): each
+   * write of one of them stores a new value, so that a node serving a
+   * memoized default setting detects, through the cluster-invalidated
+   * settings cache, a change made on another node.
+   */
+  public static final Context        DEFAULT_SETTINGS_STAMP_CONTEXT       = Context.GLOBAL.id("NotificationDefaultSettings");
+
+  public static final Scope          DEFAULT_SETTINGS_STAMP_SCOPE         = Scope.APPLICATION.id("NotificationDefaultSettings");
+
+  public static final String         DEFAULT_SETTINGS_STAMP_KEY           = "stamp";
 
   private static final Log           LOG                                  = ExoLogger.getLogger(JPAPluginSettingServiceImpl.class);
 
@@ -183,6 +196,7 @@ public class JPAPluginSettingServiceImpl extends AbstractService implements Plug
   @Override
   public void saveChannelStatus(String channelId, boolean enable) {
     settingService.set(CHANNEL_CONTEXT, CHANNEL_SCOPE, channelId, SettingValue.create(String.valueOf(enable)));
+    saveDefaultSettingsStamp();
     try {
       listenerService.broadcast(NOTIFICATION_CHANNEL_STATUS_MODIFIED, channelId, null);
     } catch (Exception e) {
@@ -193,6 +207,7 @@ public class JPAPluginSettingServiceImpl extends AbstractService implements Plug
   @Override
   public void saveChannelDefaultValue(String channelId, boolean enable) {
     settingService.set(CHANNEL_CONTEXT, CHANNEL_DEFAULT_VALUE_SCOPE, channelId, SettingValue.create(String.valueOf(enable)));
+    saveDefaultSettingsStamp();
     try {
       listenerService.broadcast(NOTIFICATION_CHANNEL_STATUS_MODIFIED, channelId, null);
     } catch (Exception e) {
@@ -341,11 +356,19 @@ public class JPAPluginSettingServiceImpl extends AbstractService implements Plug
                        (NAME_SPACES + pluginId),
                        SettingValue.create(activeChannelsString));
     savePluginSettingVersion(pluginId);
+    saveDefaultSettingsStamp();
     try {
       listenerService.broadcast(NOTIFICATION_PLUGIN_STATUS_MODIFIED, pluginId, null);
     } catch (Exception e) {
       LOG.warn("Error broadcasting plugin status modification", e);
     }
+  }
+
+  private void saveDefaultSettingsStamp() {
+    settingService.set(DEFAULT_SETTINGS_STAMP_CONTEXT,
+                       DEFAULT_SETTINGS_STAMP_SCOPE,
+                       DEFAULT_SETTINGS_STAMP_KEY,
+                       SettingValue.create(UUID.randomUUID().toString()));
   }
 
   private void savePluginSettingVersion(String pluginId) {
