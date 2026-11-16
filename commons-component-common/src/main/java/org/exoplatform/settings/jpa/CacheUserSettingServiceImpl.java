@@ -48,6 +48,8 @@ public class CacheUserSettingServiceImpl implements UserSettingService {
 
   private volatile String                                          defaultSettingStamp;
 
+  private volatile boolean                                         defaultSettingStampRead;
+
   public CacheUserSettingServiceImpl(CacheService cacheService,
                                      ListenerService listenerService,
                                      JPAUserSettingServiceImpl userSettingService) {
@@ -145,12 +147,12 @@ public class CacheUserSettingServiceImpl implements UserSettingService {
    */
   private String discardCachedSettingsOnDefaultsChange() {
     String stamp = jpaUserSettingService.getDefaultSettingsStamp();
-    if (!Objects.equals(stamp, defaultSettingStamp)) {
-      boolean firstRead = defaultSettingStamp == null;
+    if (!defaultSettingStampRead) {
       defaultSettingStamp = stamp;
-      if (!firstRead) {
-        userSettingCache.clearCache();
-      }
+      defaultSettingStampRead = true;
+    } else if (!Objects.equals(stamp, defaultSettingStamp)) {
+      defaultSettingStamp = stamp;
+      userSettingCache.clearCache();
     }
     return stamp;
   }
