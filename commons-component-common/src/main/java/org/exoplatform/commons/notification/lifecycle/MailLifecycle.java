@@ -31,6 +31,7 @@ import org.exoplatform.commons.api.notification.service.setting.UserSettingServi
 import org.exoplatform.commons.notification.NotificationContextFactory;
 import org.exoplatform.commons.notification.NotificationUtils;
 import org.exoplatform.commons.notification.channel.MailChannel;
+import org.exoplatform.commons.notification.mail.MailPalette;
 import org.exoplatform.commons.utils.CommonsUtils;
 import org.exoplatform.container.ExoContainerContext;
 import org.exoplatform.services.log.ExoLogger;
@@ -84,6 +85,7 @@ public class MailLifecycle extends AbstractNotificationLifecycle {
     if (builder != null) {
       MessageInfo msg = builder.buildMessage(ctx);
       if (msg != null) {
+        MailPalette.wrapMessage(msg, notification.getTo());
         if (NotificationUtils.isValidEmailAddresses(msg.getTo())) {
           try {
             CommonsUtils.getService(QueueMessage.class).sendMessage(msg);
