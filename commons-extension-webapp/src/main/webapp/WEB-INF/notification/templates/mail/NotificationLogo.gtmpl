@@ -1,0 +1,5 @@
+<%
+  // The logo of the recipient's version, or the company name instead of an SVG logo; in Automatic both versions,
+  // the dark one shown by the dark media query of the mail document
+  def mailPalette = org.exoplatform.commons.notification.mail.MailPalette.of(_templateContext)
+%><%=org.exoplatform.commons.notification.mail.MailPalette.logoHtml(mailPalette)%>
