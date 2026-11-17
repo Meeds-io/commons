@@ -19,11 +19,13 @@
 package io.meeds.commons.digest.service;
 
 import java.util.Locale;
+import java.util.Map;
 
 import org.springframework.stereotype.Component;
 
 import org.exoplatform.commons.api.notification.plugin.NotificationPluginUtils;
 import org.exoplatform.commons.notification.NotificationUtils;
+import org.exoplatform.commons.notification.mail.MailPalette;
 import org.exoplatform.commons.utils.CommonsUtils;
 
 /**
@@ -71,6 +73,16 @@ public class DigestRecipientResolver {
   /** The user notification settings page, the same link as the instant emails footer */
   public String getSettingsUrl(String username) {
     return NotificationUtils.getProfileUrl(username);
+  }
+
+  /** The colours and logos of the recipient's display mode, as the instant emails take them */
+  public Map<String, String> getMailPalette(String username) {
+    return MailPalette.forRecipient(username);
+  }
+
+  /** The digest body in the document of the display mode its palette was read in */
+  public String wrapMail(String html, String mode) {
+    return MailPalette.wrapInMode(html, mode);
   }
 
 }
