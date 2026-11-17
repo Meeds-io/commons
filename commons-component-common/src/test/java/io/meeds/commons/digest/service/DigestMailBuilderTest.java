@@ -26,7 +26,9 @@ import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
@@ -153,6 +155,41 @@ public class DigestMailBuilderTest {
     assertTrue(body.contains("Here's what happened today on <a href=\"https://platform/portal\">Meeds &amp; Co</a>:"));
     assertTrue(body.contains("View all on Meeds &amp; Co"));
     assertTrue(body.contains("https://platform/settings"));
+  }
+
+  @Test
+  public void testTheDigestIsWrittenInTheRecipientsPaletteAndDocument() {
+    List<DigestItemEntity> items = new ArrayList<>();
+    items.add(item(1, "PostActivitySpaceStreamPlugin", "feed", "poster", "john"));
+    when(recipientResolver.getMailPalette(USERNAME)).thenReturn(Map.of("surface", "#1E2328",
+                                                                       "text", "#E6E9EB",
+                                                                       "secondaryText", "#9BA3A8",
+                                                                       "link", "#5FA9AC",
+                                                                       "border", "#3A4148",
+                                                                       "mode", "dark",
+                                                                       "logoPath", "/portal/rest/v1/platform/branding/logo?v=7",
+                                                                       "companyName", "ACME"));
+    when(recipientResolver.wrapMail(anyString(), any())).thenAnswer(call -> "<!DOCTYPE html><html>" + call.getArgument(0) + "</html>");
+
+    MessageInfo message = builder.build(user, DigestFrequency.DAILY, settings(List.of("feed"), List.of()), items, FROM, UNTIL);
+
+    String body = message.getBody();
+    assertTrue("the recipient's document", body.startsWith("<!DOCTYPE html>"));
+    verify(recipientResolver).wrapMail(anyString(), eq("dark"));
+    assertTrue(body, body.contains("background-color: #1E2328"));
+    assertTrue(body, body.contains("color: #E6E9EB"));
+    assertTrue(body, body.contains("class=\"mail-link\" style=\"color: #5FA9AC"));
+    assertTrue(body, body.contains("/portal/rest/v1/platform/branding/logo?v=7"));
+    assertFalse("no light literal is left", body.contains("#ffffff") || body.contains("#2f5e92") || body.contains("#333333"));
+  }
+
+  @Test
+  public void testTheDigestOfARecipientWithoutPaletteTakesTheLightDefaults() {
+    List<DigestItemEntity> items = new ArrayList<>();
+    items.add(item(1, "PostActivitySpaceStreamPlugin", "feed", "poster", "john"));
+    MessageInfo message = builder.build(user, DigestFrequency.DAILY, settings(List.of("feed"), List.of()), items, FROM, UNTIL);
+    assertTrue(message.getBody(), message.getBody().contains("background-color: #FFFFFF"));
+    assertFalse(message.getBody().contains("null"));
   }
 
   @Test

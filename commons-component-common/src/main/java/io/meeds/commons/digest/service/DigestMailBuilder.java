@@ -39,6 +39,7 @@ import org.springframework.stereotype.Component;
 
 import org.exoplatform.commons.api.notification.model.MessageInfo;
 import org.exoplatform.commons.notification.NotificationUtils;
+import org.exoplatform.commons.notification.mail.MailPalette;
 
 import io.meeds.commons.digest.DigestCategoryRegistry;
 import io.meeds.commons.digest.entity.DigestItemEntity;
@@ -174,6 +175,14 @@ public class DigestMailBuilder {
     binding.put("manageLabel", commons("Notification.digest.manage", locale));
     binding.put("manageUrl", escape(recipientResolver.getSettingsUrl(username)));
     binding.put("platformName", escape(platformName));
+    // every role has a colour: one the recipient's palette lacks keeps its light default
+    Map<String, String> palette = new HashMap<>(MailPalette.of(null));
+    Map<String, String> recipientPalette = recipientResolver.getMailPalette(username);
+    if (recipientPalette != null) {
+      palette.putAll(recipientPalette);
+    }
+    binding.put("palette", palette);
+    binding.put("logoHtml", MailPalette.logoHtml(palette));
 
     String subjectKey = frequency == DigestFrequency.DAILY ? "Notification.digest.subject.daily"
                                                            : "Notification.digest.subject.weekly";
@@ -182,8 +191,13 @@ public class DigestMailBuilder {
                             .from(recipientResolver.getSender())
                             .to(email)
                             .subject(subject)
-                            .body(renderer.render(binding))
+                            .body(wrap(renderer.render(binding), palette.get(MailPalette.MODE)))
                             .end();
+  }
+
+  private String wrap(String body, String mode) {
+    String document = recipientResolver.wrapMail(body, mode);
+    return document == null ? body : document;
   }
 
   /**
