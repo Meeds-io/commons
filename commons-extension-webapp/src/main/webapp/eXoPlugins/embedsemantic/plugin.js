@@ -39,8 +39,6 @@
 					origInit.call( this );
 
           this.on( 'handleResponse', function( response ) {
-            // Before the default listener (priority 999) builds the markup
-            window.eXo?.videoEmbed?.handleEmbedResponse(response.data);
             editor.fire('embedHandleResponse', response);
           }, this );
           this.on( 'requestCanceled', function() {
