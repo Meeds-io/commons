@@ -217,7 +217,8 @@ public class EXoContinuationBayeux extends BayeuxServerImpl implements Disposabl
   }
 
   public boolean isSubscribed(String eXoID, String clientID) {
-    return (clientIDs.get(eXoID) != null && clientIDs.get(eXoID).contains(clientID));
+    Set<String> ids = clientIDs.get(eXoID);
+    return ids != null && ids.contains(clientID);
   }
 
   /**
@@ -553,14 +554,13 @@ public class EXoContinuationBayeux extends BayeuxServerImpl implements Disposabl
         client.addListener(this);
 
         String eXoID = (String) message.get("exoId");
-        Set<String> cIds = clientIDs.get(eXoID);
-        if (cIds == null) {
-          cIds = ConcurrentHashMap.newKeySet();
-          clientIDs.put(eXoID, cIds);
-        }
         bayeux.seti.associate(eXoID, client);
-
-        cIds.add(client.getId());
+        // Under the lock of the map, so that a session removed at the same time never drops this one
+        clientIDs.compute(eXoID, (userId, ids) -> {
+          Set<String> userClientIds = ids == null ? ConcurrentHashMap.newKeySet() : ids;
+          userClientIds.add(client.getId());
+          return userClientIds;
+        });
         return true;
       } else {
         return false;
@@ -599,14 +599,16 @@ public class EXoContinuationBayeux extends BayeuxServerImpl implements Disposabl
 
     @Override
     public void removed(ServerSession session, ServerMessage message, boolean timeout) {
-      Iterator<Entry<String, Set<String>>> iter = clientIDs.entrySet().iterator();
-
-      while (iter.hasNext()) {
-        Entry<String, Set<String>> client = iter.next();
-        Set<String> ids = client.getValue();
-        ids.remove(session.getId());
-        if (ids.isEmpty()) {
-          iter.remove();
+      // The map is iterated under its lock: sessions are added and removed by several threads
+      synchronized (clientIDs) {
+        Iterator<Entry<String, Set<String>>> iter = clientIDs.entrySet().iterator();
+        while (iter.hasNext()) {
+          Entry<String, Set<String>> client = iter.next();
+          Set<String> ids = client.getValue();
+          ids.remove(session.getId());
+          if (ids.isEmpty()) {
+            iter.remove();
+          }
         }
       }
     }
@@ -619,12 +621,15 @@ public class EXoContinuationBayeux extends BayeuxServerImpl implements Disposabl
    *         node the user is connected to
    */
   public Set<String> getConnectedUserIds() {
-    Seti currentSeti = seti;
-    if (currentSeti == null) {
-      return clientIDs.keySet();
+    Set<String> userIds;
+    // A copy taken under the lock of the map: sessions are added and removed while it is read
+    synchronized (clientIDs) {
+      userIds = new HashSet<>(clientIDs.keySet());
     }
-    Set<String> userIds = new HashSet<>(clientIDs.keySet());
-    userIds.addAll(currentSeti.getUserIds());
+    Seti currentSeti = seti;
+    if (currentSeti != null) {
+      userIds.addAll(currentSeti.getUserIds());
+    }
     return userIds;
   }
 }
