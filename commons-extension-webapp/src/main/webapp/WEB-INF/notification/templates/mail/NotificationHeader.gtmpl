@@ -1,8 +1,16 @@
+<%
+  def palette = org.exoplatform.commons.notification.mail.MailPalette.of(_templateContext)
+%>
 <tr>
     <td align="center"  valign="middle" >
-        <table  cellpadding="0" cellspacing="0" width="100%" bgcolor="#ffffff" align="center" style="border:1px solid #d8d8d8;">
+        <table  cellpadding="0" cellspacing="0" width="100%" bgcolor="${palette.surface}" align="center"<%=org.exoplatform.commons.notification.mail.MailPalette.roleClassAttribute(_templateContext, "mail-surface mail-border")%> style="border:1px solid ${palette.border};">
             <tr>
-                <td  height="45" valign="middle" style="margin:0;height:45px;font-weight:bold;vertical-align:middle;;background-color: #efefef;font-family: 'HelveticaNeue Bold', Helvetica, Arial, sans-serif;color:#2f5e92;font-size:18px;text-align:center">
+                <td align="center" valign="middle"<%=org.exoplatform.commons.notification.mail.MailPalette.roleClassAttribute(_templateContext, "mail-bg")%> style="margin:0;padding:10px 0 0 0;background-color:${palette.background};">
+                    <%=org.exoplatform.commons.notification.mail.MailPalette.logoHtml(palette)%>
+                </td>
+            </tr>
+            <tr>
+                <td  height="45" valign="middle"<%=org.exoplatform.commons.notification.mail.MailPalette.roleClassAttribute(_templateContext, "mail-bg mail-link")%> style="margin:0;height:45px;font-weight:bold;vertical-align:middle;background-color:${palette.background};font-family: 'HelveticaNeue Bold', Helvetica, Arial, sans-serif;color:${palette.link};font-size:18px;text-align:center">
                     <%=header_title%>
                 </td>
             </tr>
