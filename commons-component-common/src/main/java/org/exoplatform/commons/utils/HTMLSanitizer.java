@@ -306,8 +306,7 @@ abstract public class HTMLSanitizer {
                                                                                                                                 .globally()
                                                                                                                                 .allowAttributes("data-role")
                                                                                                                                 .globally()
-                                                                                                                                // the text equivalent of an emoji. Allowed on any span: the policy cannot match children, so a span
-                                                                                                                                // wrapping a link could relabel it for screen readers, which an author can already do with the link text
+                                                                                                                                // the text equivalent of an emoji: the label is kept only beside role="img" (see the span policy below)
                                                                                                                                 .allowAttributes("role")
                                                                                                                                 .matching(IMAGE_ROLE)
                                                                                                                                 .onElements("span")
@@ -541,6 +540,14 @@ abstract public class HTMLSanitizer {
                                                                                                                                                                             "src") ? elementName
                                                                                                                                                                                    : null,
                                                                                                                                                "iframe")
+                                                                                                                                // A span's aria-label is kept only as an emoji's text equivalent, with role="img": on another span it
+                                                                                                                                // would relabel the visible text for screen readers
+                                                                                                                                .allowElements((elementName, attributes) -> {
+                                                                                                                                  if (!hasAttribute(attributes, "role")) {
+                                                                                                                                    removeAttribute(attributes, "aria-label");
+                                                                                                                                  }
+                                                                                                                                  return elementName;
+                                                                                                                                }, "span")
                                                                                                                                 .allowAttributes("allow")
                                                                                                                                 .matching(IFRAME_ALLOW_POLICY)
                                                                                                                                 .onElements("iframe")
@@ -638,6 +645,15 @@ abstract public class HTMLSanitizer {
       }
     }
     return encoded.toString();
+  }
+
+  private static void removeAttribute(List<String> attributes, String name) {
+    for (int i = attributes.size() - 2; i >= 0; i -= 2) {
+      if (name.equals(attributes.get(i))) {
+        attributes.remove(i + 1);
+        attributes.remove(i);
+      }
+    }
   }
 
   private static boolean hasAttribute(List<String> attributes, String name) {

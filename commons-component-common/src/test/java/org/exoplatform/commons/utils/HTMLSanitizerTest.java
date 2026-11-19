@@ -94,8 +94,18 @@ public class HTMLSanitizerTest {
   public void testOtherRoleOnSpanRemoved() {
     String sanitized = HTMLSanitizer.sanitize("<span role=\"button\" aria-label=\"thumbs up\">x</span>");
     assertFalse(sanitized, sanitized.contains("role="));
-    assertTrue(sanitized, sanitized.contains("aria-label=\"thumbs up\""));
+    assertFalse(sanitized, sanitized.contains("aria-label="));
+    // a span left with no attribute is dropped, its text kept
+    assertEquals("x", sanitized);
   }
+
+  @Test
+  public void testLabelOnSpanWithoutRoleRemoved() {
+    String sanitized = HTMLSanitizer.sanitize("<span aria-label=\"other text\"><a href=\"/a\">link</a></span>");
+    assertFalse(sanitized, sanitized.contains("aria-label="));
+    assertTrue(sanitized, sanitized.contains("link</a>"));
+  }
+
 
   @Test
   public void testEmojiLabelWithMarkupRemoved() {
