@@ -87,6 +87,19 @@ public class HTMLSanitizerTest {
     for (String label : new String[] { "twelve o’clock", "keycap #", "keycap *", "japanese “here” button" }) {
       String sanitized = HTMLSanitizer.sanitize("<span role=\"img\" aria-label=\"" + label + "\">x</span>");
       assertFalse(label + " -> " + sanitized, sanitized.contains("aria-label="));
+      // the image role is not kept without its name
+      assertFalse(label + " -> " + sanitized, sanitized.contains("role="));
+    }
+  }
+
+  @Test
+  public void testImageRoleWithoutNameRemoved() {
+    for (String span : new String[] { "<span role=\"img\" aria-label=\"\">x</span>", "<span role=\"img\" aria-label=\" \">x</span>",
+        "<span role=\"img\">x</span>" }) {
+      String sanitized = HTMLSanitizer.sanitize(span);
+      assertFalse(span + " -> " + sanitized, sanitized.contains("role="));
+      assertFalse(span + " -> " + sanitized, sanitized.contains("aria-label="));
+      assertTrue(span + " -> " + sanitized, sanitized.contains("x"));
     }
   }
 

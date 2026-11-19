@@ -540,10 +540,13 @@ abstract public class HTMLSanitizer {
                                                                                                                                                                             "src") ? elementName
                                                                                                                                                                                    : null,
                                                                                                                                                "iframe")
-                                                                                                                                // A span's aria-label is kept only as an emoji's text equivalent, with role="img": on another span it
-                                                                                                                                // would relabel the visible text for screen readers
+                                                                                                                                // A span keeps role="img" and aria-label together, the text equivalent of the image it shows (an emoji): a
+                                                                                                                                // label alone would relabel visible text for screen readers, and the role without a name would hide the glyph
+                                                                                                                                // with nothing read in its place. The policy cannot see the span's content: a label kept beside role="img"
+                                                                                                                                // names whatever the span holds.
                                                                                                                                 .allowElements((elementName, attributes) -> {
-                                                                                                                                  if (!hasAttribute(attributes, "role")) {
+                                                                                                                                  if (!hasAttribute(attributes, "role") || StringUtils.isBlank(getAttribute(attributes, "aria-label"))) {
+                                                                                                                                    removeAttribute(attributes, "role");
                                                                                                                                     removeAttribute(attributes, "aria-label");
                                                                                                                                   }
                                                                                                                                   return elementName;
@@ -654,6 +657,15 @@ abstract public class HTMLSanitizer {
         attributes.remove(i);
       }
     }
+  }
+
+  private static String getAttribute(List<String> attributes, String name) {
+    for (int i = 0; i < attributes.size() - 1; i += 2) {
+      if (name.equals(attributes.get(i))) {
+        return attributes.get(i + 1);
+      }
+    }
+    return null;
   }
 
   private static boolean hasAttribute(List<String> attributes, String name) {
