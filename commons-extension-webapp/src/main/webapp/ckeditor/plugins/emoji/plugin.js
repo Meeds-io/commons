@@ -313,7 +313,10 @@
 						event: 'click',
 						listener: function( event ) {
 							if ( event.data.getTarget().data( 'cke-emoji-name' ) ) {
-								this.editor.execCommand( 'insertEmoji', { emojiText: event.data.getTarget().data( 'cke-emoji-symbol' ) } );
+								this.editor.execCommand( 'insertEmoji', {
+									emojiText: event.data.getTarget().data( 'cke-emoji-symbol' ),
+									emojiName: event.data.getTarget().data( 'cke-emoji-name' )
+								} );
 							}
 						}
 					} );
@@ -617,12 +620,14 @@
 				// HELPER FUNCTIONS:
 
 				function initPlugin() {
-					editor._.emoji.autocomplete = new CKEDITOR.plugins.autocomplete( editor, {
+					var autocomplete = new CKEDITOR.plugins.autocomplete( editor, {
 						textTestCallback: getTextTestCallback(),
 						dataCallback: dataCallback,
 						itemTemplate: '<li data-id="{id}" class="cke_emoji-suggestion_item"><span>{symbol}</span> {name}</li>',
-						outputTemplate: '{symbol}'
+						outputTemplate: '<span role="img" aria-label="{label}">{symbol}</span>'
 					} );
+					moveCaretAfterCommit( autocomplete, editor );
+					editor._.emoji.autocomplete = autocomplete;
 				}
 
 				function getTextTestCallback() {
@@ -668,11 +673,27 @@
 			} );
 
 			editor.addCommand( 'insertEmoji', {
+				// an editor that filters its content keeps the emoji's name
+				allowedContent: 'span[role,aria-label]',
 				exec: function( editor, data ) {
-					editor.insertHtml( data.emojiText );
+					var label = emojiLabel( data.emojiName );
+					if ( label ) {
+						// The emoji is read by its name; the caret goes after it so that the
+						// next typed text is not part of the emoji
+						var element = new CKEDITOR.dom.element( 'span', editor.document );
+						element.setAttributes( { role: 'img', 'aria-label': label } );
+						element.setText( data.emojiText );
+						editor.insertElement( element );
+						var range = editor.createRange();
+						range.moveToPosition( element, CKEDITOR.POSITION_AFTER_END );
+						range.select();
+					} else {
+						editor.insertHtml( data.emojiText );
+					}
 					document.dispatchEvent(new CustomEvent('editor-option-added', {detail: 'useEmoji'}));
 				}
 			} );
+			editor.addFeature( editor.getCommand( 'insertEmoji' ) );
 
 			if ( editor.plugins.toolbar ) {
 				new EmojiDropdown( editor, this );
@@ -689,7 +710,73 @@
 		if ( !item.name ) {
 			item.name = htmlEncode( item.id.replace( /::.*$/, ':' ).replace( /^:|:$/g, '' ) );
 		}
+		// plain text: the autocomplete encodes every field it puts in its output template
+		item.label = emojiLabel( item.name );
 		return item;
+	}
+
+	function isEmoji( node ) {
+		return node?.type === CKEDITOR.NODE_ELEMENT && node.is( 'span' ) && node.getAttribute( 'role' ) === 'img';
+	}
+
+	// an emoji chosen in the suggestions leaves the caret after it, as one chosen in the panel does
+	function moveCaretAfterCommit( autocomplete, editor ) {
+		var commit = autocomplete.commit;
+		autocomplete.commit = function() {
+			commit.apply( this, arguments );
+			deferMoveCaretAfterEmoji( editor );
+		};
+	}
+
+	// after the editor has settled the selection of the inserted markup
+	function deferMoveCaretAfterEmoji( editor ) {
+		setTimeout( function() {
+			moveCaretAfterEmoji( editor );
+		}, 0 );
+	}
+
+	// The caret leaves the emoji just inserted, so that the next typed text is not part of its name
+	function moveCaretAfterEmoji( editor ) {
+		var selection = editor.getSelection(),
+			start = selection?.getStartElement(),
+			emoji = start?.getAscendant( isEmoji, true ),
+			caret = !emoji && selection?.getRanges()[ 0 ];
+		// the caret may also sit right after the emoji, past empty text nodes, where typing still extends it
+		if ( caret && caret.startContainer.type === CKEDITOR.NODE_ELEMENT ) {
+			for ( var index = caret.startOffset - 1; index >= 0; index-- ) {
+				var previous = caret.startContainer.getChild( index );
+				if ( previous.type === CKEDITOR.NODE_TEXT && !previous.getText().replaceAll( '\u200B', '' ).length ) {
+					continue;
+				}
+				emoji = isEmoji( previous ) ? previous : null;
+				break;
+			}
+		}
+		if ( emoji ) {
+			var range = editor.createRange();
+			range.moveToPosition( emoji, CKEDITOR.POSITION_AFTER_END );
+			range.select();
+		}
+	}
+
+	// The emoji's spoken name, in the characters the server's HTML policy keeps in an aria-label
+	// (HTMLSanitizer HTML_TITLE): 'thumbs_up' gives 'thumbs up', 'keycap_#' 'keycap number sign'
+	function emojiLabel( name ) {
+		if ( !name ) {
+			return '';
+		}
+		// the name may be encoded twice: some emoji ids already hold '&amp;', which the plugin encodes again
+		var text = String( name );
+		while ( text.includes( '&amp;' ) ) {
+			text = text.replaceAll( '&amp;', '&' );
+		}
+		return text
+			.replaceAll( '&lt;', '<' ).replaceAll( '&gt;', '>' )
+			.replace( /[‘’]/g, '\'' ).replace( /[“”"]/g, '' )
+			.replaceAll( '#', ' number sign ' ).replaceAll( '*', ' asterisk ' )
+			.replaceAll( '_', ' ' )
+			.replace( /[^\p{L}\p{N}\s\-',:[\]!./\\()&]/gu, ' ' )
+			.replace( /\s+/g, ' ' ).trim();
 	}
 } )();
 
