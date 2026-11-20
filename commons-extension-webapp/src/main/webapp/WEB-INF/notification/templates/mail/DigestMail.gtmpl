@@ -1,31 +1,45 @@
-<table border="0" cellpadding="0" cellspacing="0" width="600" bgcolor="#ffffff" align="center" style="background-color: #ffffff; font-size: 14px; color: #333333; line-height: 20px; font-family: HelveticaNeue, Helvetica, Arial, sans-serif;">
+<%
+  String font = io.meeds.portal.mail.EmailLayout.fontStack();
+  String link = io.meeds.portal.mail.EmailLayout.linkColor();
+  boolean rtl = io.meeds.portal.mail.EmailLayout.isRtl(language);
+  String start = io.meeds.portal.mail.EmailLayout.start(language);
+%>
+<table border="0" cellpadding="0" cellspacing="0" width="100%" bgcolor="#ffffff" align="center" style="width:100%;overflow-wrap:anywhere;word-break:break-word;background-color: #ffffff; font-size: 15px; color: #1d2327; line-height: 1.7; font-family: ${font};" dir="${io.meeds.portal.mail.EmailLayout.dir(language)}">
+  <%=io.meeds.portal.mail.EmailLayout.darkStyle()%>
+  <%=io.meeds.portal.mail.EmailLayout.headerRow(io.meeds.portal.mail.EmailBrand.current(), title, language)%>
   <tr>
-    <td style="padding: 24px 24px 8px 24px;">
-      <p style="margin: 0 0 12px 0;">${greeting}</p>
-      <p style="margin: 0 0 20px 0;">${intro}</p>
-    </td>
+    <td style="padding:0 24px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;"><tr><td align="${start}" style="padding: 30px 0 8px 0;" dir="auto">
+      <p style="margin: 0 0 14px; font-size: 15px; color: #1d2327; font-family: ${font};">${greeting}</p>
+      <p style="margin:0 0 14px; color:#1d2327; line-height:1.7; font-size:15px; font-family: ${font};" dir="auto">${intro}</p>
+    </td></tr></table></td>
   </tr>
   <% for (section in sections) { %>
   <tr>
-    <td style="padding: 0 24px 16px 24px;">
-      <p style="margin: 0 0 6px 0; font-weight: bold; color: #333333;">${section.label} (${section.count})</p>
-      <ul style="margin: 0; padding-left: 20px; color: #333333;">
+    <td style="padding:0 24px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;"><tr><td align="${start}" style="padding: 0 0 16px 0;" dir="auto">
+      <p style="margin:0 0 6px; color:#1d2327; line-height:1.7; font-size:15px; font-weight: bold; font-family: ${font};" dir="auto">${section.label} (${section.count})</p>
+      <ul style="margin: 0; padding: ${rtl ? '0 20px 0 0' : '0 0 0 20px'}; color: #1d2327;">
         <% for (line in section.lines) { %>
         <li style="margin: 0 0 4px 0;">
-          <% if (line.url) { %><a href="${line.url}" style="color: #2f5e92; text-decoration: none;">${line.text}</a><% } else { %>${line.text}<% } %>
+          <% if (line.url) { %><a href="${line.url}" style="color: ${link}; text-decoration: underline; font-family: ${font};">${line.text}</a><% } else { %>${line.text}<% } %>
         </li>
         <% } %>
       </ul>
       <% if (section.remaining > 0) { %>
-      <p style="margin: 6px 0 0 20px;"><a href="${moreUrl}" style="color: #2f5e92; text-decoration: none;">${section.moreLabel}</a></p>
+      <p style="margin: 6px ${rtl ? '20px 0 0' : '0 0 20px'}; font-size: 15px; font-family: ${font};"><a href="${moreUrl}" style="color: ${link}; text-decoration: underline; font-family: ${font};">${section.moreLabel}</a></p>
       <% } %>
-    </td>
+    </td></tr></table></td>
   </tr>
   <% } %>
   <tr>
-    <td style="padding: 16px 24px 24px 24px; border-top: 1px solid #d8d8d8; font-size: 13px;">
-      <p style="margin: 0 0 6px 0;"><a href="${viewAllUrl}" style="color: #2f5e92; text-decoration: none;">${viewAllLabel}</a></p>
-      <p style="margin: 0;"><a href="${manageUrl}" style="color: #999999; text-decoration: none;">${manageLabel}</a></p>
-    </td>
+    <td style="padding:0 24px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;"><tr><td align="${start}" style="padding: 0 0 8px 0;" dir="auto">
+      <div dir="${rtl ? 'rtl' : 'ltr'}" style="margin: 4px 0 8px 0;">
+        <%=io.meeds.portal.mail.EmailLayout.actionLink(viewAllLabel, viewAllUrl, true)%>
+      </div>
+    </td></tr></table></td>
+  </tr>
+  <tr>
+    <td style="padding:0 24px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;"><tr><td align="${start}" style="padding: 8px 0 24px 0;" dir="auto">
+      <p style="margin: 0; font-size: 13px; font-family: ${font};"><a href="${manageUrl}" style="color: #5d676d; text-decoration: underline; font-family: ${font};">${manageLabel}</a></p>
+    </td></tr></table></td>
   </tr>
 </table>
