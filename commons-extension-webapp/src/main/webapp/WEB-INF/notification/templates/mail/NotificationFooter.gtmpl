@@ -1,1 +1,1 @@
-<%=io.meeds.portal.mail.EmailLayout.closingRow()%>
+<%=io.meeds.portal.mail.util.EmailLayout.closingRow()%>

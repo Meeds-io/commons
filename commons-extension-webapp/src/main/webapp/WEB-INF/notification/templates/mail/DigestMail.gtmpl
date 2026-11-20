@@ -1,12 +1,12 @@
 <%
-  String font = io.meeds.portal.mail.EmailLayout.fontStack();
-  String link = io.meeds.portal.mail.EmailLayout.linkColor();
-  boolean rtl = io.meeds.portal.mail.EmailLayout.isRtl(language);
-  String start = io.meeds.portal.mail.EmailLayout.start(language);
+  String font = io.meeds.portal.mail.util.EmailLayout.fontStack();
+  String link = io.meeds.portal.mail.util.EmailLayout.linkColor();
+  boolean rtl = io.meeds.portal.mail.util.EmailLayout.isRtl(language);
+  String start = io.meeds.portal.mail.util.EmailLayout.start(language);
 %>
-<table border="0" cellpadding="0" cellspacing="0" width="100%" bgcolor="#ffffff" align="center" style="width:100%;overflow-wrap:anywhere;word-break:break-word;background-color: #ffffff; font-size: 15px; color: #1d2327; line-height: 1.7; font-family: ${font};" dir="${io.meeds.portal.mail.EmailLayout.dir(language)}">
-  <%=io.meeds.portal.mail.EmailLayout.darkStyle()%>
-  <%=io.meeds.portal.mail.EmailLayout.headerRow(io.meeds.portal.mail.EmailBrand.current(), title, language)%>
+<table border="0" cellpadding="0" cellspacing="0" width="100%" bgcolor="#ffffff" align="center" style="width:100%;overflow-wrap:anywhere;word-break:break-word;background-color: #ffffff; font-size: 15px; color: #1d2327; line-height: 1.7; font-family: ${font};" dir="${io.meeds.portal.mail.util.EmailLayout.dir(language)}">
+  <%=io.meeds.portal.mail.util.EmailLayout.darkStyle()%>
+  <%=io.meeds.portal.mail.util.EmailLayout.headerRow(io.meeds.portal.mail.model.EmailBrand.current(), title, language)%>
   <tr>
     <td style="padding:0 24px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;"><tr><td align="${start}" style="padding: 30px 0 8px 0;" dir="auto">
       <p style="margin: 0 0 14px; font-size: 15px; color: #1d2327; font-family: ${font};">${greeting}</p>
@@ -33,7 +33,7 @@
   <tr>
     <td style="padding:0 24px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;"><tr><td align="${start}" style="padding: 0 0 8px 0;" dir="auto">
       <div dir="${rtl ? 'rtl' : 'ltr'}" style="margin: 4px 0 8px 0;">
-        <%=io.meeds.portal.mail.EmailLayout.actionLink(viewAllLabel, viewAllUrl, true)%>
+        <%=io.meeds.portal.mail.util.EmailLayout.actionLink(viewAllLabel, viewAllUrl, true)%>
       </div>
     </td></tr></table></td>
   </tr>
