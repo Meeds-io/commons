@@ -164,7 +164,14 @@ public class DigestMailBuilder {
     String platformLink = "<a href=\"" + escape(platformUrl) + "\">" + escape(platformName) + "</a>";
     String firstName = recipientResolver.getFirstName(username);
 
+    String subjectKey = frequency == DigestFrequency.DAILY ? "Notification.digest.subject.daily"
+                                                           : "Notification.digest.subject.weekly";
+    String subject = format(commons(subjectKey, locale), platformName, totalCount);
+
     Map<String, Object> binding = new HashMap<>();
+    // the header of the email: the subject as plain text, in the reading direction of the recipient
+    binding.put("title", subject);
+    binding.put("language", locale.toLanguageTag());
     binding.put("greeting", format(commons("Notification.digest.greeting", locale), escape(StringUtils.defaultString(firstName, username))));
     binding.put("intro", intro(frequency, locale, zone, from, until, platformLink));
     binding.put("sections", sections);
@@ -175,9 +182,6 @@ public class DigestMailBuilder {
     binding.put("manageUrl", escape(recipientResolver.getSettingsUrl(username)));
     binding.put("platformName", escape(platformName));
 
-    String subjectKey = frequency == DigestFrequency.DAILY ? "Notification.digest.subject.daily"
-                                                           : "Notification.digest.subject.weekly";
-    String subject = format(commons(subjectKey, locale), platformName, totalCount);
     return new MessageInfo().pluginId(MESSAGE_PLUGIN_ID)
                             .from(recipientResolver.getSender())
                             .to(email)
