@@ -1,0 +1,1 @@
+{"errors":true,"took":0,"items":[{"index":{"_index":"dst","_id":"9","status":400,"error":{"type":"document_parsing_exception","reason":"[1:7] failed to parse field [n] of type [long] in document with id '9'. Preview of field's value: 'It's the secret\nline two'","caused_by":{"type":"illegal_argument_exception","reason":"For input string: \"It's the secret\nline two\""}}}}]}

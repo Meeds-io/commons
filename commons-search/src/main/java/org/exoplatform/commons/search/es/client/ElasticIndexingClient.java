@@ -345,12 +345,12 @@ public class ElasticIndexingClient extends ElasticClient {
                      null,
                      index,
                      response.getStatusCode(),
-                     response.getMessage(),
+                     ElasticIndexingAuditTrail.hideAnswerValues(response.getMessage()),
                      (System.currentTimeMillis() - startTime));
     if (response.getStatusCode() != HttpStatus.SC_OK) {
       throw new ElasticClientException("Can't reindex index " + index + ", response code = "
           + response.getStatusCode()
-          + ", message = " + response.getMessage());
+          + ", message = " + ElasticIndexingAuditTrail.hideAnswerValues(response.getMessage()));
     }
   }
 
