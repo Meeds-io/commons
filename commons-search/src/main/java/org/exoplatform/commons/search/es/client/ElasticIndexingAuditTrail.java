@@ -18,6 +18,8 @@
  */
 package org.exoplatform.commons.search.es.client;
 
+import java.util.regex.Pattern;
+
 import org.apache.commons.lang3.StringUtils;
 
 import org.exoplatform.commons.utils.PropertyManager;
@@ -44,6 +46,12 @@ public class ElasticIndexingAuditTrail {
   public static final String  CREATE_DOC_PIPELINE = "create_doc_pipeline";
 
   private static final Log    AUDIT_TRAIL         = ExoLogger.getExoLogger("org.exoplatform.es.audittrail");
+
+  private static final Pattern VALUE_PREVIEW      = Pattern.compile("(Preview of field's value: )'.*'", Pattern.DOTALL);
+
+  private static final Pattern TERM_PREFIX        = Pattern.compile("(The prefix of the first immense term is: )'[^']*'");
+
+  private static final String  VALUE_NOT_LOGGED   = "[not logged]";
 
   private static final char   SEPARATOR           = ';';
 
@@ -161,10 +169,81 @@ public class ElasticIndexingAuditTrail {
         executionTime);
   }
 
-  private String escape(String message) {
+  /**
+   * @return the message as logged: with no separator, and without the value
+   *         preview or the term prefix of the reason the search engine gives
+   *         when it rejects a document
+   */
+  static String escape(String message) {
+    String loggedMessage = hideValues(message);
+    return loggedMessage == null ? null : loggedMessage.replace(SEPARATOR, ',');
+  }
+
+  /**
+   * @return the search engine's whole answer without the reasons it gives,
+   *         which quote the indexed values of a rejected document
+   */
+  static String hideAnswerValues(String answer) {
+    return answer == null ? null : hideValues(hideReasons(answer));
+  }
+
+  private static String hideReasons(String answer) {
+    StringBuilder hidden = new StringBuilder(answer.length());
+    int index = 0;
+    boolean reasonKey = false;
+    while (index < answer.length()) {
+      char character = answer.charAt(index);
+      if (character != '"') {
+        hidden.append(character);
+        if (!Character.isWhitespace(character) && character != ':') {
+          reasonKey = false;
+        }
+        index++;
+        continue;
+      }
+      int end = endOfString(answer, index);
+      if (reasonKey) {
+        hidden.append('"').append(VALUE_NOT_LOGGED).append('"');
+        reasonKey = false;
+      } else {
+        String text = answer.substring(index, end);
+        hidden.append(text);
+        // a key is followed by a colon, a value by a comma or a closing bracket
+        reasonKey = "\"reason\"".equals(text);
+      }
+      index = end;
+    }
+    return hidden.toString();
+  }
+
+  /**
+   * @return the index after the string that starts at the given quote, or the
+   *         answer's length when the string is not closed
+   */
+  private static int endOfString(String answer, int quote) {
+    int index = quote + 1;
+    while (index < answer.length()) {
+      char character = answer.charAt(index);
+      if (character == '\\') {
+        index += 2;
+      } else if (character == '"') {
+        return index + 1;
+      } else {
+        index++;
+      }
+    }
+    return answer.length();
+  }
+
+  /**
+   * @return the message without the value preview or the term prefix of the
+   *         reason the search engine gives when it rejects a document
+   */
+  static String hideValues(String message) {
     if (message == null) {
       return null;
     }
-    return message.replace(SEPARATOR, ',');
+    String loggedMessage = VALUE_PREVIEW.matcher(message).replaceAll("$1" + VALUE_NOT_LOGGED);
+    return TERM_PREFIX.matcher(loggedMessage).replaceAll("$1" + VALUE_NOT_LOGGED);
   }
 }
