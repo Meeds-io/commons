@@ -25,6 +25,11 @@ import org.springframework.stereotype.Component;
 import org.exoplatform.commons.api.notification.plugin.NotificationPluginUtils;
 import org.exoplatform.commons.notification.NotificationUtils;
 import org.exoplatform.commons.utils.CommonsUtils;
+import org.exoplatform.container.component.ComponentRequestLifecycle;
+import org.exoplatform.container.component.RequestLifeCycle;
+import org.exoplatform.services.organization.OrganizationService;
+import org.exoplatform.services.organization.User;
+import org.exoplatform.services.organization.UserStatus;
 
 /**
  * What the digest email needs to know about its recipient and about the
@@ -34,11 +39,24 @@ import org.exoplatform.commons.utils.CommonsUtils;
 @Component
 public class DigestRecipientResolver {
 
+  private final OrganizationService organizationService;
+
+  public DigestRecipientResolver(OrganizationService organizationService) {
+    this.organizationService = organizationService;
+  }
+
   /**
    * @return the recipient in the "Full Name&lt;email&gt;" form the mail queue
-   *         expects, null when the user has no email
+   *         expects, null when the user has no email or when his account is
+   *         disabled: a username that is itself an address would otherwise be
+   *         used as the recipient by the fallback of
+   *         {@link NotificationPluginUtils#getTo(String)}. A username that
+   *         is no account at all is just an address and is kept.
    */
   public String getEmail(String username) {
+    if (isDisabledAccount(username)) {
+      return null;
+    }
     return NotificationPluginUtils.getTo(username);
   }
 
@@ -71,6 +89,25 @@ public class DigestRecipientResolver {
   /** The user notification settings page, the same link as the instant emails footer */
   public String getSettingsUrl(String username) {
     return NotificationUtils.getProfileUrl(username);
+  }
+
+  private boolean isDisabledAccount(String username) {
+    boolean lifecycle = organizationService instanceof ComponentRequestLifecycle;
+    if (lifecycle) {
+      RequestLifeCycle.begin((ComponentRequestLifecycle) organizationService);
+    }
+    try {
+      User user = organizationService.getUserHandler().findUserByName(username, UserStatus.ANY);
+      return user != null && !user.isEnabled();
+    } catch (Exception e) {
+      // Not swallowed: the occurrence is rolled back and retried, never sent
+      // to an account whose status is unknown
+      throw new IllegalStateException("Cannot read the status of the digest recipient " + username, e);
+    } finally {
+      if (lifecycle) {
+        RequestLifeCycle.end();
+      }
+    }
   }
 
 }
