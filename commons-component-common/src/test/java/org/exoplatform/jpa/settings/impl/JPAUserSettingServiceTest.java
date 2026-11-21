@@ -41,7 +41,9 @@ import org.exoplatform.commons.api.notification.channel.AbstractChannel;
 import org.exoplatform.commons.api.notification.channel.ChannelManager;
 import org.exoplatform.commons.api.notification.channel.template.AbstractTemplateBuilder;
 import org.exoplatform.commons.api.notification.channel.template.TemplateProvider;
+import org.exoplatform.commons.api.notification.lifecycle.DefaultLifecycle;
 import org.exoplatform.commons.api.notification.model.ChannelKey;
+import org.exoplatform.commons.api.notification.model.NotificationInfo;
 import org.exoplatform.commons.api.notification.model.PluginKey;
 import org.exoplatform.commons.api.notification.model.UserSetting;
 import org.exoplatform.commons.api.notification.plugin.config.PluginConfig;
@@ -54,6 +56,7 @@ import org.exoplatform.commons.api.settings.data.Context;
 import org.exoplatform.commons.api.settings.data.Scope;
 import org.exoplatform.commons.notification.channel.MailChannel;
 import org.exoplatform.commons.notification.impl.AbstractService;
+import org.exoplatform.commons.notification.impl.NotificationContextImpl;
 import org.exoplatform.commons.utils.CommonsUtils;
 import org.exoplatform.jpa.BaseTest;
 import org.exoplatform.services.cache.CacheService;
@@ -339,6 +342,74 @@ public class JPAUserSettingServiceTest extends BaseTest {
     assertNull(organizationService.getUserHandler().findUserByName("removedaccount", UserStatus.ANY));
 
     assertFalse(userSettingService.get("removedaccount").isEnabled());
+  }
+
+  public void testAMalformedLastReadDateIsIgnoredAndTheOtherSettingsAreKept() throws Exception {
+    String username = "malformed.lastread@example.com";
+    userSettingService.save(createUserSetting(username, Arrays.asList(PLUGIN_ID)));
+    storeNotificationSetting(username, AbstractService.EXO_LAST_READ_DATE, "not-a-number");
+
+    UserSetting userSetting = userSettingService.get(username);
+
+    assertNotNull(userSetting);
+    assertEquals(0, userSetting.getLastReadDate());
+    assertTrue(userSetting.isChannelActive(MailChannel.ID, PLUGIN_ID));
+  }
+
+  public void testAMalformedMutedSpaceIsIgnoredAndTheOtherSettingsAreKept() throws Exception {
+    String username = "malformed.muted@example.com";
+    userSettingService.save(createUserSetting(username, Arrays.asList(PLUGIN_ID)));
+    storeNotificationSetting(username, AbstractService.EXO_MUTED_SPACES, "12,not-a-number");
+
+    UserSetting userSetting = userSettingService.get(username);
+
+    assertNotNull(userSetting);
+    assertEquals(Arrays.asList(12L), userSetting.getMutedSpaces());
+    assertTrue(userSetting.isChannelActive(MailChannel.ID, PLUGIN_ID));
+  }
+
+  public void testAWellFormedLastReadDateAndMutedSpaceAreRead() throws Exception {
+    String username = "wellformed@example.com";
+    userSettingService.save(createUserSetting(username, Arrays.asList(PLUGIN_ID)));
+    storeNotificationSetting(username, AbstractService.EXO_LAST_READ_DATE, "1234");
+    storeNotificationSetting(username, AbstractService.EXO_MUTED_SPACES, "12,13");
+
+    UserSetting userSetting = userSettingService.get(username);
+
+    assertEquals(1234, userSetting.getLastReadDate());
+    assertEquals(Arrays.asList(12L, 13L), userSetting.getMutedSpaces());
+  }
+
+  public void testANotificationReachesEveryRecipientWhenOneHasAMalformedSetting() throws Exception {
+    String[] recipients = { "before@example.com", "malformed@example.com", "after@example.com" };
+    UserSettingService cachedUserSettingService = getService(UserSettingService.class);
+    for (String recipient : recipients) {
+      UserSetting model = new UserSetting();
+      model.setUserId(recipient);
+      model.setChannelActive(CHANNEL_ID);
+      model.setChannelPlugins(CHANNEL_ID, Arrays.asList(PLUGIN_ID));
+      userSettingService.save(model);
+    }
+    storeNotificationSetting("malformed@example.com", AbstractService.EXO_LAST_READ_DATE, "not-a-number");
+    storeNotificationSetting("malformed@example.com", AbstractService.EXO_MUTED_SPACES, "not-a-number");
+    NotificationContext ctx = NotificationContextImpl.cloneInstance()
+                                                     .setNotificationInfo(NotificationInfo.instance()
+                                                                                          .key(PLUGIN_ID)
+                                                                                          .setSpaceId(99));
+    DefaultLifecycle lifecycle = new DefaultLifecycle();
+    lifecycle.setChannel(specificChannel);
+
+    lifecycle.process(ctx, recipients);
+
+    assertEquals(Arrays.asList(recipients), dispatchedUsers);
+    assertNotNull(cachedUserSettingService.get("malformed@example.com"));
+  }
+
+  private void storeNotificationSetting(String username, String key, String value) {
+    getService(SettingService.class).set(Context.USER.id(username),
+                                         JPAUserSettingServiceImpl.NOTIFICATION_SCOPE,
+                                         key,
+                                         SettingValue.create(value));
   }
 
   private JPAUserSettingServiceImpl userSettingService(OrganizationService identityStore,

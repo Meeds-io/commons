@@ -465,6 +465,29 @@ class NotificationServiceImplTest {
   }
 
   /**
+   * A recipient whose settings cannot be read is left out of the page every
+   * channel receives, and no channel is dropped for the next pages.
+   */
+  @Test
+  void testEveryChannelGetsThePageWithoutTheUserWhoseSettingsCannotBeRead() throws Exception {
+    PluginConfig pluginConfig = mock(PluginConfig.class);
+    when(pluginConfig.isMutable()).thenReturn(true);
+    when(pluginSettingService.getPluginConfig(PLUGIN_ID)).thenReturn(pluginConfig);
+    UserSetting defaultSetting = mock(UserSetting.class);
+    when(userSettingService.get(anyString())).thenReturn(defaultSetting);
+    when(userSettingService.get("user3")).thenReturn(null);
+
+    notificationService.process(sendAllNotification().setSpaceId(1L));
+
+    String[] firstPage = USERS.subList(0, 100).stream().filter(user -> !user.equals("user3")).toArray(String[]::new);
+    String[] lastPage = USERS.subList(200, USERS_COUNT).toArray(String[]::new);
+    verify(mailLifecycle).process(any(NotificationContext.class), eq(firstPage));
+    verify(webLifecycle).process(any(NotificationContext.class), eq(firstPage));
+    verify(mailLifecycle).process(any(NotificationContext.class), eq(lastPage));
+    verify(webLifecycle).process(any(NotificationContext.class), eq(lastPage));
+  }
+
+  /**
    * A lifecycle leaves its last per-recipient clone in the shared context:
    * every channel, on every page, still starts from the notification itself.
    */

@@ -217,14 +217,18 @@ public class JPAUserSettingServiceImpl extends AbstractService implements UserSe
             }
           });
         } else if (EXO_LAST_READ_DATE.equals(key)) {
-          userSettings.setLastReadDate(Long.parseLong(value));
+          try {
+            userSettings.setLastReadDate(Long.parseLong(value));
+          } catch (NumberFormatException e) {
+            LOG.warn("The setting {} of user {} is not a number, the default value is used", key, userId);
+          }
         } else if (EXO_DAILY.equals(key) || EXO_WEEKLY.equals(key)) {
           // Settings written by the legacy digest engine, removed in eXIP
           // 7.3.0.22: still present in the database of upgraded platforms,
           // deliberately ignored
           continue;
         } else if (EXO_MUTED_SPACES.equals(key)) {
-          userSettings.setMutedSpaces(getArrayListValue(value, mutedSpaces).stream().map(Long::parseLong).toList());
+          userSettings.setMutedSpaces(readMutedSpaces(userId, key, getArrayListValue(value, mutedSpaces)));
         } else if (channelPluginByName.containsKey(key)) {
           AbstractChannel channel = channelPluginByName.get(key);
           userSettings.setChannelPlugins(channel.getId(), getArrayListValue(value, new ArrayList<>()));
@@ -326,6 +330,26 @@ public class JPAUserSettingServiceImpl extends AbstractService implements UserSe
 
   private void saveUserSetting(String userId, Scope scope, String key, String value) {
     settingService.set(USER.id(userId), scope, key, SettingValue.create(value));
+  }
+
+  /**
+   * Keeps the muted spaces that are numbers and skips the others: the valid
+   * ones must survive the next save of the user's settings.
+   */
+  private List<Long> readMutedSpaces(String userId, String key, List<String> values) {
+    List<Long> spaceIds = new ArrayList<>();
+    boolean skipped = false;
+    for (String spaceId : values) {
+      try {
+        spaceIds.add(Long.parseLong(spaceId));
+      } catch (NumberFormatException e) {
+        skipped = true;
+      }
+    }
+    if (skipped) {
+      LOG.warn("The setting {} of user {} holds a value that is not a number, it is skipped", key, userId);
+    }
+    return spaceIds;
   }
 
   private List<String> getArrayListValue(String value, List<String> defaultValue) {
