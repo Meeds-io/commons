@@ -129,6 +129,13 @@ class RESTContinuationServiceTest {
   }
 
   @Test
+  void testIsSubscribedOfAnotherUserIsForbiddenBeforeTheChannelIsChecked() {
+    signIn("john", "users");
+    assertEquals(403, service.isSubscribed("mary", null).getStatus());
+    verify(continuationService, never()).isSubscribe(anyString(), anyString());
+  }
+
+  @Test
   void testIsSubscribedWithoutChannelIsABadRequest() {
     signIn("john", "users");
     assertEquals(400, service.isSubscribed("john", null).getStatus());
