@@ -499,9 +499,10 @@
 						return;
 					}
 
-					this.elements.statusIcon.setText( htmlEncode( element.getText() ) );
-					this.elements.statusDescription.setText( htmlEncode( element.data( 'cke-emoji-name' ) ) );
-					this.elements.statusName.setText( htmlEncode( element.data( 'cke-emoji-full-name' ) ) );
+					// setText writes a text node: the values are already decoded by the attribute read.
+					this.elements.statusIcon.setText( element.getText() );
+					this.elements.statusDescription.setText( element.data( 'cke-emoji-name' ) );
+					this.elements.statusName.setText( element.data( 'cke-emoji-full-name' ) );
 				},
 				clearStatusbar: function() {
 					this.elements.statusIcon.setText( '' );
@@ -662,7 +663,13 @@
 								return a.id > b.id ? 1 : -1;
 							}
 						} );
-					data = arrTools.map( data, addEncodedName );
+					// A copy built like a picker item, then given the raw name: the autocomplete
+					// encodes every field once itself, and the shared item keeps the picker's name.
+					data = arrTools.map( data, function( item ) {
+						var suggestion = addEncodedName( CKEDITOR.tools.extend( {}, item ) );
+						suggestion.name = getRawName( item );
+						return suggestion;
+					} );
 					callback( data );
 				}
 			} );
@@ -687,9 +694,13 @@
 
 	function addEncodedName( item ) {
 		if ( !item.name ) {
-			item.name = htmlEncode( item.id.replace( /::.*$/, ':' ).replace( /^:|:$/g, '' ) );
+			item.name = htmlEncode( getRawName( item ) );
 		}
 		return item;
+	}
+
+	function getRawName( item ) {
+		return item.id.replace( /::.*$/, ':' ).replace( /^:|:$/g, '' );
 	}
 } )();
 
