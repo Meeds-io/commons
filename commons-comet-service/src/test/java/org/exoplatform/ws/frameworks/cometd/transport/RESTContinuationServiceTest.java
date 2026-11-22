@@ -128,6 +128,14 @@ class RESTContinuationServiceTest {
     assertNotStorable(response);
   }
 
+  @Test
+  void testIsSubscribedWithoutChannelIsABadRequest() {
+    signIn("john", "users");
+    assertEquals(400, service.isSubscribed("john", null).getStatus());
+    assertEquals(400, service.isSubscribed("john", " ").getStatus());
+    verify(continuationService, never()).isSubscribe(anyString(), anyString());
+  }
+
   /**
    * The operation is closed over HTTP ({@code @DenyAll}): this pins its body
    * for a direct call only.

@@ -77,7 +77,7 @@ public class RESTContinuationService
     * @param exoID the id of client, which must be the signed-in user's own id.
     * @param channel the id of channel
     * @return true if client subscribed on channel else false, not storable by
-    *         caches; 403 when exoID is another user's id
+    *         caches; 403 when exoID is another user's id, 400 when channel is missing or blank
     */
    @GET
    @Path("/issubscribed/{exoID}/")
@@ -87,6 +87,8 @@ public class RESTContinuationService
    {
       if (!isSignedInUser(exoID))
          return Response.status(Response.Status.FORBIDDEN).build();
+      if (channel == null || channel.isBlank())
+         return Response.status(Response.Status.BAD_REQUEST).build();
       Boolean b = continuation.isSubscribe(exoID, channel);
       if (LOG.isDebugEnabled())
          LOG.debug("Is subcribed client " + exoID + " on channel " + channel + " " + b);

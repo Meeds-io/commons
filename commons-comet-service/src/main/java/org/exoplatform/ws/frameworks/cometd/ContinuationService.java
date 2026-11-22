@@ -107,11 +107,14 @@ public class ContinuationService {
    * 
    * @param eXoId the client id (as eXoId).
    * @param channel the id of channel.
-   * @return true if client subscribe to channel else false.
+   * @return true if client subscribe to channel else false, also when the channel does not exist.
    */
   @Deprecated 
   public boolean isSubscribe(String eXoId, String channel) {
     ServerChannelImpl channelImpl = (ServerChannelImpl) bayeux.getChannel(channel);
+    if (channelImpl == null) {
+      return false;
+    }
     Collection<ServerSession> collection = channelImpl.getSubscribers();
     for (Iterator<ServerSession> iterator = collection.iterator(); iterator.hasNext();) {
       ServerSession client = (ServerSession) iterator.next();
