@@ -51,6 +51,8 @@ public class ElasticIndexingAuditTrail {
 
   private static final Pattern VALUE_PREVIEW      = Pattern.compile("(Preview of field's value: )'.*'", Pattern.DOTALL);
 
+  private static final Pattern PARSE_ERROR        = Pattern.compile("(failed to parse: ).*", Pattern.DOTALL);
+
   private static final String  VALUE_NOT_LOGGED   = "[not logged]";
 
   private static final char   SEPARATOR           = ';';
@@ -236,13 +238,14 @@ public class ElasticIndexingAuditTrail {
   }
 
   /**
-   * @return the message without the value preview of the reason the search
-   *         engine gives when it rejects a document
+   * @return the message without the value preview or the parse details of the
+   *         reason the search engine gives when it rejects a document
    */
   static String hideValues(String message) {
     if (message == null) {
       return null;
     }
-    return VALUE_PREVIEW.matcher(message).replaceAll("$1" + VALUE_NOT_LOGGED);
+    String loggedMessage = VALUE_PREVIEW.matcher(message).replaceAll("$1" + VALUE_NOT_LOGGED);
+    return PARSE_ERROR.matcher(loggedMessage).replaceAll("$1" + VALUE_NOT_LOGGED);
   }
 }

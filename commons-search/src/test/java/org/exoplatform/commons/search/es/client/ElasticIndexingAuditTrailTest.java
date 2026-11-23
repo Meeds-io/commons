@@ -83,6 +83,16 @@ public class ElasticIndexingAuditTrailTest {
   }
 
   @Test
+  public void aMalformedDocumentOfABulkAnswerIsAuditedWithoutItsText() throws Exception {
+    ElasticIndexingAuditTrail auditTrail = mock(ElasticIndexingAuditTrail.class);
+    sendBulk(auditTrail, engineAnswer(ES_9_5_3, "bulk-malformed-document.json"));
+
+    String logged = ElasticIndexingAuditTrail.escape(auditedBulkReason(auditTrail, "7", "dst"));
+
+    assertEquals("[1:2] failed to parse: [not logged]", logged);
+  }
+
+  @Test
   public void aBulkRequestRefusedAsAWholeIsAuditedWithItsReason() throws Exception {
     ElasticIndexingAuditTrail auditTrail = mock(ElasticIndexingAuditTrail.class);
     sendBulk(auditTrail, engineAnswer(ES_9_5_3, "bulk-refused-request.json"));
