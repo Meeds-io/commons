@@ -31,6 +31,7 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -47,6 +48,10 @@ import org.mockito.ArgumentCaptor;
  */
 public class ElasticIndexingAuditTrailTest {
 
+  private static final String ES_9_3_4 = "elasticsearch-9.3.4";
+
+  private static final String ES_9_5_3 = "elasticsearch-9.5.3";
+
   /** The reason Elasticsearch 9.3.4 gives for a value it cannot parse. */
   private static final String REJECTED_FIELD = "[1:7] failed to parse field [n] of type [long] in document with id '1'."
       + " Preview of field's value: 'It's the article's secret\nsecond line 'quoted' end'";
@@ -58,19 +63,50 @@ public class ElasticIndexingAuditTrailTest {
   }
 
   @Test
-  public void aTooLongTermIsLoggedWithoutItsPrefix() throws Exception {
-    JSONObject answer = (JSONObject) new JSONParser().parse(engineAnswer("bulk-immense-term.json"));
-    JSONObject error = (JSONObject) ((JSONObject) ((JSONObject) ((JSONArray) answer.get("items")).get(0)).get("index")).get("error");
-    String immenseTerm = (String) ((JSONObject) error.get("caused_by")).get("reason");
+  public void aRejectedDocumentOfABulkAnswerIsAuditedWithoutItsValue() throws Exception {
+    ElasticIndexingAuditTrail auditTrail = mock(ElasticIndexingAuditTrail.class);
+    sendBulk(auditTrail, engineAnswer(ES_9_3_4, "bulk-rejected-document.json"));
 
-    assertEquals("Document contains at least one immense term in field=\"body.raw\" (whose UTF8 encoding is longer than"
-        + " the max length 32766), all of which were skipped. Please correct the analyzer to not produce such terms."
-        + " The prefix of the first immense term is: [not logged]", ElasticIndexingAuditTrail.escape(immenseTerm));
+    assertEquals("[1:7] failed to parse field [n] of type [long] in document with id '9'."
+        + " Preview of field's value: [not logged]", ElasticIndexingAuditTrail.escape(auditedBulkReason(auditTrail, "9", "dst")));
+  }
+
+  @Test
+  public void aTooLongTermOfABulkAnswerIsAuditedWithoutItsValue() throws Exception {
+    ElasticIndexingAuditTrail auditTrail = mock(ElasticIndexingAuditTrail.class);
+    sendBulk(auditTrail, engineAnswer(ES_9_3_4, "bulk-immense-term.json"));
+
+    String logged = ElasticIndexingAuditTrail.escape(auditedBulkReason(auditTrail, "3", "probe2"));
+
+    assertEquals("[1:10] failed to parse field [body.raw] of type [keyword] in document with id '3'."
+        + " Preview of field's value: [not logged]", logged);
+  }
+
+  @Test
+  public void aBulkRequestRefusedAsAWholeIsAuditedWithItsReason() throws Exception {
+    ElasticIndexingAuditTrail auditTrail = mock(ElasticIndexingAuditTrail.class);
+    sendBulk(auditTrail, engineAnswer(ES_9_5_3, "bulk-refused-request.json"));
+
+    verify(auditTrail).logRejectedDocumentBulkOperation(eq(ElasticIndexingAuditTrail.BULK_REQUEST),
+                                                        isNull(),
+                                                        isNull(),
+                                                        eq(400),
+                                                        eq("Malformed action/metadata line [1], expected field [create],"
+                                                            + " [delete], [index] or [update] but found [bogus]"),
+                                                        anyLong());
+  }
+
+  @Test
+  public void aBulkAnswerWithNeitherItemNorErrorIsNotAudited() {
+    ElasticIndexingAuditTrail auditTrail = mock(ElasticIndexingAuditTrail.class);
+    sendBulk(auditTrail, "{\"took\":1}");
+
+    verifyNoInteractions(auditTrail);
   }
 
   @Test
   public void aRejectedDocumentAnswerIsLoggedWithoutTheValuesItQuotes() throws Exception {
-    String answer = engineAnswer("bulk-rejected-document.json");
+    String answer = engineAnswer(ES_9_3_4, "bulk-rejected-document.json");
 
     String logged = ElasticIndexingAuditTrail.hideAnswerValues(answer);
 
@@ -82,7 +118,7 @@ public class ElasticIndexingAuditTrailTest {
   @Test
   public void aFailedIndexCopyIsReportedWithoutTheValuesItQuotes() throws Exception {
     ElasticIndexingClient client = spy(new ElasticIndexingClient(mock(ElasticIndexingAuditTrail.class)));
-    doReturn(new ElasticResponse(engineAnswer("reindex-rejected-documents.json"), 400)).when(client)
+    doReturn(new ElasticResponse(engineAnswer(ES_9_3_4, "reindex-rejected-documents.json"), 400)).when(client)
                                                                                        .sendHttpPostRequest(anyString(),
                                                                                                             anyString());
 
@@ -119,7 +155,7 @@ public class ElasticIndexingAuditTrailTest {
   public void aFailedIndexCopyIsAuditedWithoutTheValuesItQuotes() throws Exception {
     ElasticIndexingAuditTrail auditTrail = mock(ElasticIndexingAuditTrail.class);
     ElasticIndexingClient client = spy(new ElasticIndexingClient(auditTrail));
-    doReturn(new ElasticResponse(engineAnswer("reindex-rejected-documents.json"), 400)).when(client)
+    doReturn(new ElasticResponse(engineAnswer(ES_9_3_4, "reindex-rejected-documents.json"), 400)).when(client)
                                                                                        .sendHttpPostRequest(anyString(),
                                                                                                             anyString());
 
@@ -136,9 +172,23 @@ public class ElasticIndexingAuditTrailTest {
     assertTrue(audited.getValue(), audited.getValue().contains("\"id\":\"2\""));
   }
 
-  /** An answer captured from Elasticsearch 9.3.4. */
-  private static String engineAnswer(String name) throws Exception {
-    try (InputStream answer = ElasticIndexingAuditTrailTest.class.getResourceAsStream("/elasticsearch-9.3.4/" + name)) {
+  /** Sends the answer to the client as a 200 answer of its bulk request. */
+  private static void sendBulk(ElasticIndexingAuditTrail auditTrail, String answer) {
+    ElasticIndexingClient client = spy(new ElasticIndexingClient(auditTrail));
+    doReturn(new ElasticResponse(answer, 200)).when(client).sendHttpPostRequest(anyString(), anyString());
+    client.sendCUDRequest("{}");
+  }
+
+  /** @return the reason the client audited for the rejected document of the given id */
+  private static String auditedBulkReason(ElasticIndexingAuditTrail auditTrail, String id, String index) {
+    ArgumentCaptor<String> audited = ArgumentCaptor.forClass(String.class);
+    verify(auditTrail).logRejectedDocumentBulkOperation(eq("index"), eq(id), eq(index), eq(400), audited.capture(), anyLong());
+    return audited.getValue();
+  }
+
+  /** An answer captured from the given Elasticsearch version. */
+  private static String engineAnswer(String version, String name) throws Exception {
+    try (InputStream answer = ElasticIndexingAuditTrailTest.class.getResourceAsStream("/" + version + "/" + name)) {
       return new String(answer.readAllBytes(), StandardCharsets.UTF_8);
     }
   }

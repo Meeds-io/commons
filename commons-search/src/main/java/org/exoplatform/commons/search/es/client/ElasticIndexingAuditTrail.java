@@ -45,11 +45,11 @@ public class ElasticIndexingAuditTrail {
 
   public static final String  CREATE_DOC_PIPELINE = "create_doc_pipeline";
 
+  public static final String  BULK_REQUEST        = "bulk_request";
+
   private static final Log    AUDIT_TRAIL         = ExoLogger.getExoLogger("org.exoplatform.es.audittrail");
 
   private static final Pattern VALUE_PREVIEW      = Pattern.compile("(Preview of field's value: )'.*'", Pattern.DOTALL);
-
-  private static final Pattern TERM_PREFIX        = Pattern.compile("(The prefix of the first immense term is: )'[^']*'");
 
   private static final String  VALUE_NOT_LOGGED   = "[not logged]";
 
@@ -171,8 +171,8 @@ public class ElasticIndexingAuditTrail {
 
   /**
    * @return the message as logged: with no separator, and without the value
-   *         preview or the term prefix of the reason the search engine gives
-   *         when it rejects a document
+   *         preview of the reason the search engine gives when it rejects a
+   *         document
    */
   static String escape(String message) {
     String loggedMessage = hideValues(message);
@@ -236,14 +236,13 @@ public class ElasticIndexingAuditTrail {
   }
 
   /**
-   * @return the message without the value preview or the term prefix of the
-   *         reason the search engine gives when it rejects a document
+   * @return the message without the value preview of the reason the search
+   *         engine gives when it rejects a document
    */
   static String hideValues(String message) {
     if (message == null) {
       return null;
     }
-    String loggedMessage = VALUE_PREVIEW.matcher(message).replaceAll("$1" + VALUE_NOT_LOGGED);
-    return TERM_PREFIX.matcher(loggedMessage).replaceAll("$1" + VALUE_NOT_LOGGED);
+    return VALUE_PREVIEW.matcher(message).replaceAll("$1" + VALUE_NOT_LOGGED);
   }
 }
