@@ -20,8 +20,8 @@ package org.exoplatform.commons.testing.mock;
 
 import java.util.concurrent.Future;
 
-import javax.mail.Session;
-import javax.mail.internet.MimeMessage;
+import jakarta.mail.Session;
+import jakarta.mail.internet.MimeMessage;
 
 import org.exoplatform.services.mail.MailService;
 import org.exoplatform.services.mail.Message;
