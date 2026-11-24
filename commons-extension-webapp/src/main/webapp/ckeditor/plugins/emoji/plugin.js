@@ -663,12 +663,11 @@
 								return a.id > b.id ? 1 : -1;
 							}
 						} );
-					// A copy built like a picker item, then given the raw name: the autocomplete
-					// encodes every field once itself, and the shared item keeps the picker's name.
+					// A copy, because the autocomplete encodes every field itself and the item
+					// the picker shares must stay unchanged. `true` replaces the encoded name the
+					// picker may already have set on that item.
 					data = arrTools.map( data, function( item ) {
-						var suggestion = addEncodedName( CKEDITOR.tools.extend( {}, item ) );
-						suggestion.name = getRawName( item );
-						return suggestion;
+						return CKEDITOR.tools.extend( {}, item, { name: getRawName( item ) }, true );
 					} );
 					callback( data );
 				}
