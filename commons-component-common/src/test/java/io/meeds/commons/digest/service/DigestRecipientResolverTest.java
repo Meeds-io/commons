@@ -78,9 +78,10 @@ class DigestRecipientResolverTest {
   void testUnreadableAccountStatusIsAnErrorNotAMail() throws Exception {
     try (MockedStatic<NotificationPluginUtils> utils = Mockito.mockStatic(NotificationPluginUtils.class)) {
       when(organizationService.getUserHandler()).thenReturn(userHandler);
-      when(userHandler.findUserByName(ADDRESS, UserStatus.ANY)).thenThrow(new IllegalStateException("db down"));
+      when(userHandler.findUserByName(ADDRESS, UserStatus.ANY)).thenThrow(new Exception("db down"));
       utils.when(() -> NotificationPluginUtils.getTo(ADDRESS)).thenReturn(ADDRESS);
-      assertThrows(IllegalStateException.class, () -> resolver.getEmail(ADDRESS));
+      IllegalStateException thrown = assertThrows(IllegalStateException.class, () -> resolver.getEmail(ADDRESS));
+      assertEquals("db down", thrown.getCause().getMessage());
     }
   }
 
