@@ -25,6 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.util.Collections;
@@ -126,6 +127,21 @@ class RESTContinuationServiceTest {
     assertEquals(200, response.getStatus());
     assertEquals("true", response.getEntity());
     assertNotStorable(response);
+  }
+
+  @Test
+  void testIsSubscribedOfAnotherUserIsForbiddenBeforeTheChannelIsChecked() {
+    signIn("john", "users");
+    assertEquals(403, service.isSubscribed("mary", null).getStatus());
+    verifyNoInteractions(continuationService);
+  }
+
+  @Test
+  void testIsSubscribedWithoutChannelIsABadRequest() {
+    signIn("john", "users");
+    assertEquals(400, service.isSubscribed("john", null).getStatus());
+    assertEquals(400, service.isSubscribed("john", " ").getStatus());
+    verifyNoInteractions(continuationService);
   }
 
   /**
