@@ -71,6 +71,8 @@ abstract public class HTMLSanitizer {
   // force non-empty with a '+' at the end instead of '*'
   private static final Pattern                                                HTML_TITLE               = Pattern.compile("[\\p{L}\\p{N}\\s\\-_',:\\[\\]!\\./\\\\\\(\\)&]*");
 
+  private static final Pattern                                                IMAGE_ROLE               = Pattern.compile("img");
+
   private static final Pattern                                                HTML_CLASS               = Pattern.compile("[a-zA-Z0-9\\s,\\-_]+");
 
   // URLs are accepted decoded as well as percent-encoded: some browsers (Safari) copy them
@@ -304,6 +306,13 @@ abstract public class HTMLSanitizer {
                                                                                                                                 .globally()
                                                                                                                                 .allowAttributes("data-role")
                                                                                                                                 .globally()
+                                                                                                                                // the text equivalent of an emoji: the label is kept only beside role="img" (see the span policy below)
+                                                                                                                                .allowAttributes("role")
+                                                                                                                                .matching(IMAGE_ROLE)
+                                                                                                                                .onElements("span")
+                                                                                                                                .allowAttributes("aria-label")
+                                                                                                                                .matching(HTML_TITLE)
+                                                                                                                                .onElements("span")
                                                                                                                                 .allowAttributes("data-object")
                                                                                                                                 .globally()
                                                                                                                                 .allowAttributes("nohref")
@@ -531,6 +540,17 @@ abstract public class HTMLSanitizer {
                                                                                                                                                                             "src") ? elementName
                                                                                                                                                                                    : null,
                                                                                                                                                "iframe")
+                                                                                                                                // A span keeps role="img" and aria-label together, the text equivalent of the image it shows (an emoji): a
+                                                                                                                                // label alone would relabel visible text for screen readers, and the role without a name would hide the glyph
+                                                                                                                                // with nothing read in its place. The policy cannot see the span's content: a label kept beside role="img"
+                                                                                                                                // names whatever the span holds.
+                                                                                                                                .allowElements((elementName, attributes) -> {
+                                                                                                                                  if (!hasAttribute(attributes, "role") || StringUtils.isBlank(getAttribute(attributes, "aria-label"))) {
+                                                                                                                                    removeAttribute(attributes, "role");
+                                                                                                                                    removeAttribute(attributes, "aria-label");
+                                                                                                                                  }
+                                                                                                                                  return elementName;
+                                                                                                                                }, "span")
                                                                                                                                 .allowAttributes("allow")
                                                                                                                                 .matching(IFRAME_ALLOW_POLICY)
                                                                                                                                 .onElements("iframe")
@@ -628,6 +648,24 @@ abstract public class HTMLSanitizer {
       }
     }
     return encoded.toString();
+  }
+
+  private static void removeAttribute(List<String> attributes, String name) {
+    for (int i = attributes.size() - 2; i >= 0; i -= 2) {
+      if (name.equals(attributes.get(i))) {
+        attributes.remove(i + 1);
+        attributes.remove(i);
+      }
+    }
+  }
+
+  private static String getAttribute(List<String> attributes, String name) {
+    for (int i = 0; i < attributes.size() - 1; i += 2) {
+      if (name.equals(attributes.get(i))) {
+        return attributes.get(i + 1);
+      }
+    }
+    return null;
   }
 
   private static boolean hasAttribute(List<String> attributes, String name) {
