@@ -190,7 +190,7 @@ public abstract class ElasticClient {
       LOG.error("Error when trying to send request to ES. Url: {}, StatusCode: {}, Message: {}",
           url,
           response.getStatusCode(),
-          response.getMessage());
+          ElasticIndexingAuditTrail.hideAnswerValues(response.getMessage()));
     } else {
       LOG.debug("Success request to ES. Url: {}, StatusCode: {}, Message: {}",
           url,

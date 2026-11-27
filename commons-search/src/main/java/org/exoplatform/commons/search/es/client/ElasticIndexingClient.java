@@ -345,12 +345,12 @@ public class ElasticIndexingClient extends ElasticClient {
                      null,
                      index,
                      response.getStatusCode(),
-                     response.getMessage(),
+                     ElasticIndexingAuditTrail.hideAnswerValues(response.getMessage()),
                      (System.currentTimeMillis() - startTime));
     if (response.getStatusCode() != HttpStatus.SC_OK) {
       throw new ElasticClientException("Can't reindex index " + index + ", response code = "
           + response.getStatusCode()
-          + ", message = " + response.getMessage());
+          + ", message = " + ElasticIndexingAuditTrail.hideAnswerValues(response.getMessage()));
     }
   }
 
@@ -403,9 +403,30 @@ public class ElasticIndexingClient extends ElasticClient {
           }
           logBulkResponseItem((JSONObject) item, executionTime);
         }
+      } else {
+        logRefusedBulkRequest((JSONObject) parsedResponse, executionTime);
       }
     } catch (ParseException e) {
       throw new ElasticClientException("Unable to parse Bulk response", e);
+    }
+  }
+
+  /**
+   * A bulk request the search engine refuses as a whole is answered with a
+   * top-level error and no item: its reason is the only trace of the refused
+   * documents.
+   */
+  private void logRefusedBulkRequest(JSONObject answer, long executionTime) {
+    Object error = answer.get("error");
+    if (error instanceof JSONObject) {
+      Object reason = ((JSONObject) error).get("reason");
+      Object status = answer.get("status");
+      auditTrail.logRejectedDocumentBulkOperation(ElasticIndexingAuditTrail.BULK_REQUEST,
+                                                  null,
+                                                  null,
+                                                  status instanceof Number ? ((Number) status).intValue() : null,
+                                                  reason instanceof String ? (String) reason : null,
+                                                  executionTime);
     }
   }
 
