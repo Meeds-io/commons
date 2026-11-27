@@ -499,9 +499,10 @@
 						return;
 					}
 
-					this.elements.statusIcon.setText( htmlEncode( element.getText() ) );
-					this.elements.statusDescription.setText( htmlEncode( element.data( 'cke-emoji-name' ) ) );
-					this.elements.statusName.setText( htmlEncode( element.data( 'cke-emoji-full-name' ) ) );
+					// setText writes a text node: the values are already decoded by the attribute read.
+					this.elements.statusIcon.setText( element.getText() );
+					this.elements.statusDescription.setText( element.data( 'cke-emoji-name' ) );
+					this.elements.statusName.setText( element.data( 'cke-emoji-full-name' ) );
 				},
 				clearStatusbar: function() {
 					this.elements.statusIcon.setText( '' );
@@ -662,7 +663,7 @@
 								return a.id > b.id ? 1 : -1;
 							}
 						} );
-					data = arrTools.map( data, addEncodedName );
+					data = arrTools.map( data, toSuggestion );
 					callback( data );
 				}
 			} );
@@ -687,9 +688,20 @@
 
 	function addEncodedName( item ) {
 		if ( !item.name ) {
-			item.name = htmlEncode( item.id.replace( /::.*$/, ':' ).replace( /^:|:$/g, '' ) );
+			item.name = htmlEncode( getRawName( item ) );
 		}
 		return item;
+	}
+
+	function getRawName( item ) {
+		return item.id.replace( /::.*$/, ':' ).replace( /^:|:$/g, '' );
+	}
+
+	// A copy, because the autocomplete encodes every field itself and the item
+	// the picker shares must stay unchanged. `true` replaces the encoded name the
+	// picker may already have set on that item.
+	function toSuggestion( item ) {
+		return CKEDITOR.tools.extend( {}, item, { name: getRawName( item ) }, true );
 	}
 } )();
 
