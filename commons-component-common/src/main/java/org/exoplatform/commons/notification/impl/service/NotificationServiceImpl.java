@@ -37,6 +37,7 @@ import org.exoplatform.commons.api.notification.channel.ChannelManager;
 import org.exoplatform.commons.api.notification.lifecycle.AbstractNotificationLifecycle;
 import org.exoplatform.commons.api.notification.model.ChannelKey;
 import org.exoplatform.commons.api.notification.model.NotificationInfo;
+import org.exoplatform.commons.api.notification.model.UserSetting;
 import org.exoplatform.commons.api.notification.plugin.config.PluginConfig;
 import org.exoplatform.commons.api.notification.service.NotificationCompletionService;
 import org.exoplatform.commons.api.notification.service.SendAllRecipientProvider;
@@ -379,7 +380,10 @@ public class NotificationServiceImpl extends AbstractService implements Notifica
       PluginConfig pluginConfig = pluginSettingService.getPluginConfig(notificationInfo.getKey().getId());
       if (pluginConfig.isMutable()) {
         userIds = userIds.stream()
-                         .filter(username -> !pluginConfig.isMutable() || !userService.get(username).isSpaceMuted(spaceId))
+                         .filter(username -> {
+                           UserSetting userSetting = userService.get(username);
+                           return userSetting != null && !userSetting.isSpaceMuted(spaceId);
+                         })
                          .toList();
       }
     }
