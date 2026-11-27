@@ -183,6 +183,20 @@ public class ElasticIndexingAuditTrailTest {
   }
 
   /** Sends the answer to the client as a 200 answer of its bulk request. */
+  @Test
+  public void anyOtherMessageKeepsItsTextWithoutTheSeparator() {
+    assertEquals("index not found, news_v3", ElasticIndexingAuditTrail.escape("index not found; news_v3"));
+    assertNull(ElasticIndexingAuditTrail.escape(null));
+  }
+
+  @Test
+  public void aDebugLineKeepsTheWholeAnswerEvenWhenItsTextQuotesAParseError() {
+    String answer = "{\"hits\":[{\"_source\":{\"body\":\"the log says: failed to parse: 'x'; see below\"}},{\"_id\":\"12\"}]}";
+
+    assertEquals(answer.replace(';', ','), ElasticIndexingAuditTrail.withoutSeparator(answer));
+    assertNull(ElasticIndexingAuditTrail.withoutSeparator(null));
+  }
+
   private static void sendBulk(ElasticIndexingAuditTrail auditTrail, String answer) {
     ElasticIndexingClient client = spy(new ElasticIndexingClient(auditTrail));
     doReturn(new ElasticResponse(answer, 200)).when(client).sendHttpPostRequest(anyString(), anyString());
@@ -201,11 +215,5 @@ public class ElasticIndexingAuditTrailTest {
     try (InputStream answer = ElasticIndexingAuditTrailTest.class.getResourceAsStream("/" + version + "/" + name)) {
       return new String(answer.readAllBytes(), StandardCharsets.UTF_8);
     }
-  }
-
-  @Test
-  public void anyOtherMessageKeepsItsTextWithoutTheSeparator() {
-    assertEquals("index not found, news_v3", ElasticIndexingAuditTrail.escape("index not found; news_v3"));
-    assertNull(ElasticIndexingAuditTrail.escape(null));
   }
 }

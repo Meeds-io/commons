@@ -164,11 +164,20 @@ public class ElasticIndexingAuditTrail {
                         long executionTime) {
     AUDIT_TRAIL.debug(LOG_PATTERN,
         action,
-        StringUtils.isBlank(entityId) ? "" : escape(entityId),
-        StringUtils.isBlank(index) ? "" : escape(index),
+        StringUtils.isBlank(entityId) ? "" : withoutSeparator(entityId),
+        StringUtils.isBlank(index) ? "" : withoutSeparator(index),
         httpStatusCode == null ? "" : httpStatusCode,
-        StringUtils.isBlank(message) ? "" : escape(message),
+        StringUtils.isBlank(message) ? "" : withoutSeparator(message),
         executionTime);
+  }
+
+  /**
+   * @return the message as a debug line logs it: whole, with no separator. A
+   *         debug line may carry a search answer, whose indexed text the value
+   *         patterns of {@link #escape(String)} would cut short.
+   */
+  static String withoutSeparator(String message) {
+    return message == null ? null : message.replace(SEPARATOR, ',');
   }
 
   /**
