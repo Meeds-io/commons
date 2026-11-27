@@ -663,12 +663,7 @@
 								return a.id > b.id ? 1 : -1;
 							}
 						} );
-					// A copy, because the autocomplete encodes every field itself and the item
-					// the picker shares must stay unchanged. `true` replaces the encoded name the
-					// picker may already have set on that item.
-					data = arrTools.map( data, function( item ) {
-						return CKEDITOR.tools.extend( {}, item, { name: getRawName( item ) }, true );
-					} );
+					data = arrTools.map( data, toSuggestion );
 					callback( data );
 				}
 			} );
@@ -700,6 +695,13 @@
 
 	function getRawName( item ) {
 		return item.id.replace( /::.*$/, ':' ).replace( /^:|:$/g, '' );
+	}
+
+	// A copy, because the autocomplete encodes every field itself and the item
+	// the picker shares must stay unchanged. `true` replaces the encoded name the
+	// picker may already have set on that item.
+	function toSuggestion( item ) {
+		return CKEDITOR.tools.extend( {}, item, { name: getRawName( item ) }, true );
 	}
 } )();
 
